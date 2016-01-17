@@ -1,0 +1,7 @@
+name = wiw
+description = Who Is Where
+package = myPear
+core = 6.x
+dependencies[] = myPear
+dependencies[] = ea
+version = 5.11.rc

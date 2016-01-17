@@ -1,0 +1,6 @@
+name = "Page load Progress"
+description = "Locks the screen and adds a progress icon to indicate progress when a page takes a long time to reload"
+configure = admin/config/user-interface/page_load_progress
+core = "7.x"
+project = "page_load_progress"
+version = 7.x-1.2

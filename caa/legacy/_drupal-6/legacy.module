@@ -1,0 +1,23 @@
+<?php
+
+/**
+ * @file
+ * Legacy allows you ...
+ */
+
+/**
+ * Implements hook_menu().
+ */
+function legacy_menu() {
+  return array();
+}
+
+/**
+ * Implements hook_init().
+ */
+function legacy_init() {
+
+  myPear_init();
+  $path = drupal_get_path('module','legacy');
+  require_once "$path/config.inc";
+}

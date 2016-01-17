@@ -1,0 +1,6 @@
+#! /bin/bash 
+set -e
+
+. /setup/installation/FUNCTIONS.sh
+srcdir=`cd \`dirname $0\`; pwd -P`
+addToCrontab  often10 "cd $srcdir; ./collector.php"

@@ -1,0 +1,108 @@
+<?php
+
+/**
+ * Implementation of hook_init()
+ */
+function myPear_init() {
+  static $dejaVu = 0;
+  require_once drupal_get_path('module','myPear').'/config.inc';
+  if (!$dejaVu++){
+    // 
+    // Load the essential classes - translation, authentication, common library.
+    // The other required files will be autoloaded by the applications only if needed.
+    //
+    $path = drupal_get_path('module','myPear');
+    drupal_add_js ("$path/js/myPear.js",'file');
+
+    drupal_add_css("$path/css/myPear.css");
+    drupal_add_css("$path/css/bIcal.css");
+    drupal_add_css("$path/css/messages.css");
+    drupal_add_css("$path/css/drp.css");
+    b_cms::setTheme();
+
+    //
+    // Workaround... 
+    // Strange things happen in the install, sometimes it is not executed...
+    //
+    if (!myPear_db()->isReady()){
+      if (!function_exists('myPear_install')) require_once str_replace('myPear.module', 'myPear.install', __FILE__);
+      myPear_install();
+    }
+  }
+}
+
+function _myPear_output($arg){
+  myPear_init();
+  $file_cache = new b_cache_file();
+  if ($file_cache->notYetReady())  myPear::_MENU()->processTemplates($arg);
+  return $file_cache->get();
+}
+
+function myPear_menu() {
+  myPear_init();
+
+  // The myPear settings root
+  $myPear = array('title' => 'myPear settings',
+		  'description'   => 'Configure database and SMTP server for the myPear package', 	
+		  'page callback' => 'drupal_get_form',
+		  'page arguments' => array('myPear_settings'),
+		  'access arguments' => array('administer myPear'),
+		  );
+  
+  // Build the menu
+  $menu = myPear::_MENU()->build_menuTree('_myPear_output');
+
+  /*  
+replaced by a simple config.priv.php file...
+  if (defined('VERSION')){  
+    // drupal 7
+    $myPear['file'] = 'myPear.admin.inc';
+    $myPear['type'] = MENU_NORMAL_ITEM;
+    $menu['admin/config/user-interface/myPear'] = $myPear;
+  }else{
+    // drupal 6
+    $myPear[] = array('!block'  => url('admin/build/block'));
+    $menu['admin/settings/myPear'] = $myPear;
+    
+    foreach (myPear::_SETUP()->setup as $block=>$array){
+      $menu['admin/settings/myPear/'.$block] = array('title'         => $array['title'],
+						     'menu_name'     => 'myPear',
+						     'page callback' => 'drupal_get_form',
+						     'page arguments'=> array('myPear_admin_settings',$block),
+						     'access arguments' => array('administer site configuration'),
+						     array('!block'  => url('admin/build/block')));
+      $menu['admin/settings/myPear']['page arguments'] = $menu['admin/settings/myPear/'.$block]['page arguments'];
+    }
+  }
+  */
+
+  return $menu;
+}
+
+function myPear__menu_access($module){
+  myPear_init();
+  $reply = ($module === b_reg::$current_module);
+  return $reply;
+}
+
+function ZZZ_myPear_admin_settings($arg1,$arg2,$arg3=Null) {
+  myPear_init();
+  
+  // drupal-7 compatibility
+  if    (is_string($arg2)) $what = $arg2;
+  elseif (is_array($arg2)) $what = $arg3;
+  
+  $menu = array();
+  foreach (myPear::_SETUP()->setup[$what] as $variable=>$a){
+    if (is_array($a)){
+      $i = myPear::_SETUP()->setup[$what]['id'] .'_' . $variable;
+      $menu[$i] = array('#type'         => 'textfield',
+			'#title'        => t($a['name']),
+			'#default_value'=> variable_get($i,@$a['default']),
+			'#size'         => 50,
+			'#maxlength'    => 254,
+			'#description'  => t(str_replace('-BR-',' ',$a['descr'])));
+    }
+  }
+  return system_settings_form($menu);
+}

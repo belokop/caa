@@ -1,0 +1,20 @@
+CREATE TABLE IF NOT EXISTS `abs_expenses` (
+  `exp_id` int(11) NOT NULL,
+  `exp_closed` varchar(8) COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
+  `exp_vid` int(11) DEFAULT NULL,
+  `exp_travel` int(11) DEFAULT NULL,
+  `exp_travel_est` int(11) DEFAULT NULL,
+  `exp_perdiem` int(11) DEFAULT NULL,
+  `exp_perdiem_est` int(11) DEFAULT NULL,
+  `exp_living` int(11) DEFAULT NULL,
+  `exp_living_est` int(11) DEFAULT NULL,
+  `exp_other` int(11) DEFAULT NULL,
+  `exp_other_est` int(11) DEFAULT NULL,
+  `exp_currency` varchar(8) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'SEK',
+  `exp_owner_avid` int(11) DEFAULT NULL,
+  `exp_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`exp_id`),
+  KEY `exp_closed` (`exp_closed`),
+  KEY `exp_owner_avid` (`exp_owner_avid`),
+  KEY `exp_avid` (`exp_vid`)
+) AUTO_INCREMENT=1;

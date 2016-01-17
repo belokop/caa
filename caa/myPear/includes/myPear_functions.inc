@@ -1,0 +1,641 @@
+<?php
+
+/*
+ * bAuth class wrapper.
+ * Keep the bAuth instance
+ */
+function bAuth(){
+  static $bAuth = Null;
+  static $inside_bAuth = 0;
+  
+  if (!myPear::$isReady){
+    myPear_startup_queue(__function__,array(),True);
+  }elseif (($bAuth === Null) && !$inside_bAuth++){
+    if (($bTiming=!bAuth::$isReady && function_exists('bTiming'))) bTiming()->cpu(__FUNCTION__);
+    
+    // Load the class file
+    locateAndInclude('bAuth');
+    locateAndInclude('bForm_Avatar');
+    
+    // Get the class instance
+    $bAuth = new bAuth();
+    
+    // Try to "auto-login", 
+    // i.e. check if the SERVER[QUERY_STRING] contains the encoded password.
+    // Auto-logout if the session is too old.
+    if (!bAuth::authenticated())    $bAuth->autoLogin();
+      
+    // set the developer email address, to which ALL the emails should be sent when running in the "cnf_dev/cnf_demo" mode
+    if (!defined('cnf_demo_email')){
+      define('cnf_demo_email',(cnf_demo && is_object(bAuth::$av) && !bAuth::weak_authentication()
+			       ? bAuth::$av->getEmail()
+			       : cnf_test_email));
+      if (cnf_demo || cnf_dev) myPear::MESSAGE_once('',"All the Emails are redirected to '".cnf_demo_email."'");
+    }
+    
+    // Create the first Avatar for the empty database
+    switch(HOSTED_BY_CMS){
+    case 'drupal':
+      //      bAuth::drupal_hook_user();
+      break;
+    }
+    
+    // Get flag "superUser is logged in" 
+    if (!isset($_SESSION[CONST_cnfOptions]['superUser_here'])){
+      myPear_sessionStart();
+      
+      if (bAuth::authenticated()){
+	// Give the superuser access to myPear API
+	$su = ((bAuth::$av->getValue('av_email')==bMailer_noreply) || myPear::_UNIT(RANK__superuser)->isMember(bAuth::$av));
+	if ($su) b_reg::set_module_component(myPear_MODULE,array('d'=>myPear_MODULE));
+	$_SESSION[CONST_cnfOptions]['superUser_here'] = $su;
+      }else{
+	$_SESSION[CONST_cnfOptions]['superUser_here'] = False;
+      }
+    }
+    define('superUser_here', $_SESSION[CONST_cnfOptions]['superUser_here']);
+    
+    
+    // Set the current module
+    b_reg::load_module(b_reg::_(False));
+    
+    // Fit the Authenticated Avatar to the current module
+    myPear_set_roles();
+    bForm_Avatar::set_context(bAuth::$av);
+    
+    // See who is currently connected
+    myPear_logs()->who_is_connected();
+    
+    $inside_bAuth = 0;
+    if ($bTiming) bTiming()->cpu();
+    b_debug::xxx(exiting.(is_object(bAuth::$av) ? bAuth::$av->fmtName() : ''));
+  }
+  return $bAuth;
+}
+
+      // Get the superuser email
+function cnf_superUser_email(){
+  if (!defined('cnf_superUser_email')){
+    foreach(myPear::_UNIT(RANK__superuser)->getMembers() as $k=>$v){
+      $av = new bForm_Avatar($v['um_avid']);
+      $su_emails[] = $av->getEmail();
+    }
+    define('cnf_superUser_email',(empty($su_emails)
+				  ? cnf_demo_email
+				  : join(',',$su_emails)));
+  }
+  return cnf_superUser_email;
+}
+
+/*
+ * Define constants, set the debug level. 
+ * There are 4 debug levels: 
+ *    0 production, no debug 
+ *   >0 some debug
+ *  >10 more debug 
+ * >100 detailed debug
+ */
+function myPear_setConstants(){
+  static $dejaVu = 0;
+  if ($dejaVu++) return;
+
+  // In the non-developer mode the debug printouts are switched on only if 'YBhere' is also set,
+  //  Naive protection against someone switching on debug options on the production server by mistake 
+  if (!defined('YBhere')) define('YBhere',((bool)b_cnf::get('YBhere') || cnf_localhost));
+  
+  // Switch on/off the debug printout
+  // Fine grade the debugging option
+  if (!defined('cnf_debug_level'))define('cnf_debug_level',(int)b_cnf::get('debug'));
+  if (!defined('cnf_debug'))      define('cnf_debug',(cnf_debug_level > 0));
+
+  // No File System
+  if (!defined('cnf_noFS'))       define('cnf_noFS',      (bool)b_cnf::get('noFS')); 
+
+  // Xxx-debug options 
+  if (isset($_GET['debug'])){
+    foreach(array('auth','form') as $opt)if (!isset($_GET[$opt.'debug']))       $_GET[$opt.'debug'] = $_GET['debug'];
+  }
+  
+  // cnf_show_XXX options 
+  if (isset($_GET['ii'])) $_GET['i'] = $_GET['ii'];
+  $debug_options = array('show' =>array('a','b','c','cd','d','dd','dupl','h','gv','l','m','i','ii','r','e','pe','pv','v','acl',
+					's','t','w','z','hook','cache','ic','db','dp','st','er',
+					'sm','ms','en','exec','mrg','pdf','sem','auth','reg'),
+			 'debug'=>array('auth','form','db'));
+  foreach($debug_options as $prefix=>$opts){
+    foreach($opts as $opt){
+      $get = ($prefix == 'show' 
+	      ? $prefix . $opt
+	      : $opt . $prefix);
+      if (YBhere){
+	// "showii" forces "showi"
+	if (isset($_GET[$get.$opt]))                      $_GET[$get] = $_GET[$get.$opt];
+	if (isset($_GET['debug']) && !isset($_GET[$get])) $_GET[$get] = $_GET['debug'];
+	$value = b_cnf::get($get); 
+	if (empty($_GET[$get])) unset($_GET[$get]);
+      }else{
+	unset($value);
+      }
+      if (!defined($d = 'cnf_show_'.$opt)) define($d,!empty($value));    
+    }
+  }
+
+  ///
+  // Are we in the development or demo mode?
+  ///
+  if (!defined('cnf_dev')){
+    if (cnf_localhost)      define('cnf_dev',True);
+    else                    define('cnf_dev',(bool)(empty($_GET['demo']) && b_cnf::get('dev',cnf_localhost) && YBhere));
+  }
+  
+  if (!defined('cnf_demo')){
+    if (cnf_dev)            define('cnf_demo',False);
+    else                    define('cnf_demo',(bool)b_cnf::get('demo',
+								   preg_match('/(test|^192.168|130.242.129.1[01])/',@$_SERVER["HTTP_HOST"])));
+  }
+  if (cnf_dev && cnf_inside_fb) myPear::DEBUG(cnf_inside_fb_iframe
+					      ?'cnf_inside_fb_iframe YES'
+					      :(cnf_inside_fb_ajax
+						?'cnf_inside_fb_ajax YES'
+						:''));
+}
+
+/*
+ *
+ */
+function myPear_access($module=Null)   {
+
+  b_reg::_();
+
+  if (empty($module)) $module = b_reg::$current_module;
+  $access_function = (empty($module) ? myPear_MODULE : strToUpper($module)) . '_access';
+
+  // Look for the current module access class
+  locateAndInclude('APIaccess');
+  if (!locateAndInclude('APIaccess_'.strToLower($module.'.inc')) ||
+      !function_exists($access_function)) $access_function = myPear_MODULE . '_access';
+
+  if ($access_function === myPear_MODULE . '_access'){
+    static $_ACCESS = Null;
+    if ($_ACCESS === Null) $_ACCESS = new APIaccess();
+    $reply = $_ACCESS;
+  }else{
+    $reply = call_user_func($access_function);
+  }
+  return $reply;
+}
+
+/*
+ * APIaccess_ea wrapper
+ */
+function EA_access(){
+  static $_ACCESS = Null;
+  if ($_ACCESS === Null){
+    b_reg::load_module(EA_MODULE);
+    locateAndInclude('APIaccess_ea','fatal');
+    $_ACCESS = new APIaccess_ea();
+  }
+  return $_ACCESS;
+}
+
+/*
+ * Search-class instance holder
+ */
+function myPear_search(){
+  static $instance = Null;
+  if ($instance === Null){
+    locateAndInclude('bForm_Avatar_Search');
+    $instance = new bForm_Avatar_Search();
+  }
+  return $instance;
+}
+
+/*
+ * Store myPear roles
+ */
+function myPear_set_roles($what='roles',$roles=array()){
+  switch($what){
+  case 'roles':
+    static $myPear_role = array();
+    if (empty($roles)){
+      foreach($myPear_role as $module=>$ranks){
+	b_reg_bUnit::register($module,$ranks);
+      }
+    }else{
+      $myPear_role = $roles;
+    }
+    break;
+    
+  case 'affiliation':
+    // Save the default affiliation table
+    static $myPear_affiliation = array();
+    if (empty($roles)) return $myPear_affiliation;
+    else  $myPear_affiliation = $roles;
+  }
+}
+
+/*
+ * Start the session
+ */
+function myPear_sessionStart(){
+  static $dejaVu = 0;
+  
+  if (!isset($_SESSION)){
+    // Rewrite the default session lifetime
+    if (!$dejaVu++ && defined('myPear_autoLogoutTime')) ini_set('session.gc_maxlifetime',myPear_autoLogoutTime);
+    
+    // Start the session
+    if (function_exists('drupal_session_start'))              drupal_session_start();
+    else                                                      session_start();
+  }
+}
+
+/*
+ * helper
+ */
+function myPear_register_config_parser($config_files,&$path){
+  static $includes = array('includes','templates','custom');
+
+  if (!is_array($config_files)) $config_files = array($config_files);
+  foreach(array_values($config_files) as $config){
+    if (!is_file($config))  continue;
+    foreach($includes as $src){
+      $d = dirname($config) . "/$src";
+      if (is_dir($d)) $path[] = $d;
+    }
+  }
+  $path = array_unique($path);
+  sort($path);
+  return $path;
+}
+
+/*
+ * Database access class
+ */
+function myPear_db(){
+    static $db = Null;
+    if ($db === Null){      
+        // Locate the source file and create the class instance
+        locateAndInclude('bDB_myPear');
+        $db = new bDB_myPear();
+    }
+    return $db;
+} 
+
+/*
+ * Log file
+ */
+function myPear_logs(){
+  static $logs = Null;
+  if ($logs === Null){
+    locateAndInclude('bHolder_Logs','fatal');
+    $logs = new bHolder_Logs();
+  }
+  return $logs;
+}
+
+function myPear_mailer(){
+  static $mailer = Null;
+  if ($mailer === Null){
+    locateAndInclude('bMailer');
+    $mailer = new bMailer();
+  }
+  return $mailer;
+}
+
+function bIcons(){
+  static $class = Null;
+  if ($class === Null){
+    locateAndInclude('bIcons');
+    $class = new bIcons();
+  }
+  return $class;
+}
+
+function bJS(){
+  static $class = Null;
+  if ($class === Null){
+    locateAndInclude('bJS');
+    $class = new bJS();
+  }
+  return $class;
+}
+
+/*
+ *
+ */
+function myPear_cronjob(){
+  static $cronjob = Null;
+  if ($cronjob === Null){
+    $cronjobs = bForm_Avatar::hookByEmail(bMailer_noreply);
+    $cronjob = (empty($cronjobs)
+		? new bForm_Avatar('empty')
+		: array_pop($cronjobs));
+    $cronjob->updateDB(array('av_email'    => bMailer_noreply,
+			     'av_firstname'=> 'Cronjob',
+			     'av_lastname' => 'Task',
+			     'av_institute'=> 'crontab'));
+    
+  }
+  return $cronjob;
+}
+
+
+/*
+ * Holder of the Organization class(es)
+ */
+function myOrg($org_id=Null){
+  
+  if (!myPear::$isReady){
+    myPear_startup_queue(__FUNCTION__,array(),True);
+    return;
+  }
+  
+  if (!defined('myOrg_dummy')) define('myOrg_dummy',-999);
+  
+  // Define the default organization
+  if (!defined('myOrg_ID') && empty($org_id)){
+    locateAndInclude('bForm_Organization');
+    $org =  bForm_Organization::get_myOrg($org_id);
+    if (is_object($org)){
+      // The database is ready, get the "true" organization
+      if (!defined('myOrg_ID')){
+	define('myOrg_ID',      ($org_id = $org->ID));
+	define('myOrg_name',    $org->name());
+	define('myOrg_nameS',   $org->name(True));
+	define('myOrg_domain',  $org->domain());
+	define('myOrg_favicon', $org->getFavicon());
+	define('myOrg_code',    $org->getCode());
+	define('myOrg_theme',   $org->getTheme());
+      }
+    }else{
+      // The database is not yet configured, get "a dummy" organization 
+      define('myOrg_ID',      ($org_id = myOrg_dummy));
+      define('myOrg_name',    'Example Organization');
+      define('myOrg_nameS',   'Organization');
+      define('myOrg_domain',  'example.com');
+      define('myOrg_favicon', 'example.ico');
+      define('myOrg_code',    'example');
+      define('myOrg_theme',   '');
+    }
+    
+    if (cnf_debug){
+      $dbg = array('');
+      foreach(array('myOrg_favicon',
+		    'myOrg_ID', 
+		    'myOrg_name',
+		    'myOrg_nameS',
+		    'myOrg_domain',
+		  'myOrg_code',
+		    'myOrg_theme',  
+		    ) as $k ) $dbg[] = "$k = ".constant($k);
+      b_debug::xxx(join('<br/>',$dbg));
+    }
+
+    // Define the roles which people play in myPear
+    myPear_set_roles();
+  }
+  
+  if(empty($org_id)) $org_id = myOrg_ID;
+  
+  if ($org_id == myOrg_dummy) return Null;
+  else                        return bForm_Organization::get_myOrg($org_id);
+}
+
+/*
+ * Master class wrapper
+ */
+function bMaster(){
+  static $class = Null;
+  if ($class === Null){
+    locateAndInclude('bMasterClass');
+    $class = new bMasterClass();
+  }
+  return $class;
+}
+
+/*
+ * b_tabs wrapper
+ */
+function myPear_tabs($tabs=array(),$selected=0){
+  static $myPear_tabs = array();
+  $id = serialize($tabs);
+  if ($myPear_tabs[$id] === Null){
+    locateAndInclude('b_tabs');
+    $myPear_tabs[$id] = new b_tabs_myPear($tabs,$selected);
+  }
+  return $myPear_tabs[$id];
+}
+
+/*
+ * Task Manager wrapper
+ */
+function myPear_taskManager(){
+  static $myPear_taskManager = Null;
+  if ($myPear_taskManager === Null){
+    locateAndInclude('myPear_taskManager','fatal');
+    $myPear_taskManager = new myPear_taskManager();
+  }
+  return $myPear_taskManager;
+}
+
+/*
+ * Start brackets
+ */
+function x($tag, $text=''){
+  if     ($text === Null) return 'Null';
+  elseif (empty($tag))    return $text;
+  elseif (cnf_CLI)        return strip_tags($text);
+
+  if(class_exists('b_fmt',False))  $text = b_fmt::_($text);
+  
+  // 'x' is an "empty" tag
+  $tag_clean = preg_replace('/ .*/','',$tag);
+  if ($tag_clean === 'x') return $text;
+
+  // Usual brackets
+  switch($tag){
+  case '"':  if (!isset($reply))  $reply = '"'.str_replace('"',"'",$text).'"'; return $reply; 
+  case "'":  if (!isset($reply))  $reply = "'".str_replace("'",'"',$text)."'"; return $reply;
+  case "[":  if (!isset($reply))  $reply = '['.$text.']';
+  case "(":  if (!isset($reply))  $reply = '('.$text.')';
+  case "<":  if (!isset($reply))  $reply = '<'.$text.'>';
+    if(class_exists('b_fmt',False))  $reply = b_fmt::escape($reply);
+    return $reply;
+  default:
+  }
+  
+  // HTML tag as a "bracket"
+  if (preg_match('/^(form|select|style)/i',$tag)) $delim="\n"; else $delim="";
+  $reply = join($delim,array("",
+			     "<".$tag.">",
+			     $text,
+			     "</$tag_clean>",
+			     ""));
+  return $reply;
+}
+
+
+/*
+ * Escape spaces in one a text of "simple html" (i.e. <x>text</x>) string
+ */ 
+function no_wrap($text) { 
+  $text = trim($text);
+  if (strpos($text,'<') == False){
+    list($o,$txt,$c) = array('',$text,'');
+  }elseif(preg_match('/(^<[^>]*>)([^<]*)(<[^>]*>)$/',$text,$m)){
+    list($o,$txt,$c) = array($m[1],$m[2],$m[3]);
+  }else{
+    $reply = $text;
+  }
+
+  if (empty($reply))    $reply = $o . str_replace(' ','&nbsp;',str_replace('  ',' ',$txt)) . $c; 
+
+  return $reply;
+}
+
+/*
+ * Escape spaces in one a "not simple html" (i.e. <x>text</x><br><y>text2</y>) string
+ */ 
+function nbsp($text) { 
+  $dejaVu = array();
+  
+  $r = array();  
+  foreach(preg_split(';<( *)?br( *)?/?( *)?>;',trim($text)) as $line){
+    $escaped_line = no_wrap($line);
+    $txt = trim(strip_tags($escaped_line));
+    if (!empty($txt) && !@$dejaVu[mb_strToLower($txt,'utf-8')]++)  $r[] = $escaped_line;
+  }
+  $reply = join('<br/>',$r);
+  return $reply;
+}
+
+/*
+ *
+ */
+function start_myPear(){
+
+  bTiming()->cpu(__FUNCTION__);
+  if (cnf_localhost) b_debug::xxx(starting);
+
+  // Decode $_SERVER["QUERY_STRING"];
+  b_crypt::decodeURL();
+  
+  // Please the php interpreter
+  if (empty($_POST))   $_POST = array();
+  if (empty($_GET))    $_GET = array();
+  if (empty($_REQUEST))$_REQUEST = array();
+  
+  ///
+  // Save the "clean" (i.e. without <xxx>_once) query string in a cache.
+  // We will need it to build the forms' action URL  
+  ///
+  $unsets = explode(',',@$_REQUEST['clean_once']);
+  foreach(array_intersect(array('v_avid','mode','tab'),$unsets) as $why){
+    $unsets = array_diff($unsets,array($why));
+    if (cnf_dev) myPear::WARNING_T("?????????????? clean_once $why");
+    if (cnf_dev) myPear::WARNING("?????????????? clean_once $why");
+  }
+  $unsets = array_diff($unsets,array('x','y'));  // ????????????????????????????????????????????????????? why
+  b_cnf::_unset($unsets);
+  
+  // Save the query string
+  foreach(preg_grep('#^(?!(.*_once)$)#i',array_keys($_GET))as $item) b_cnf::get($item);
+  
+  // Debug...
+  if (cnf_show_d || cnf_show_dd) b_debug::dumpOptions();
+  if (cnf_dev)    b_cnf::set('warnings', True);
+  
+  // Turn off all error reporting in the production & demo modes
+  if (cnf_dev || b_cnf::get('warnings'))  error_reporting(E_ALL);
+  else                                    error_reporting(0);  
+    
+  // some useful strings
+  define('nobody_at_nowhere' , 'nobody@nowhere.earth');
+      
+  /*
+   * Check repositories
+   */
+  foreach(array('myPear_tmp',
+		'myPear_bin',
+		'myPear_images',
+		'myPear_photos',
+		'myPear_languages') as $p){
+    $path = b_os::url2path(constant($p),True);
+    if (!cnf_noFS){
+      if (!is_dir($path) && ! cnf_CLI)  myPear::ERROR("Configuration error - can't create '$p' ($path)");
+    }
+    $key = "${p}_path";
+    define($key, $path); 
+  }
+
+  // Load that first, it is used by all the modules
+  locateAndInclude(array('bAuth',         // authentication
+			 'bForm_Avatar',  // Basic Avatar class
+			 'b_table',       // frequently used class...
+			 'b_cache_file',  // cache HTML pages
+			 'b_registry',    // Registry for modules, ranks, lists
+			 ));
+
+  //
+  // Instantiate the myPear class.
+  // Describe the myPear module and register it
+  $myPear = new myPear();
+
+  // Start the ranks
+  myPear_set_roles();
+
+  // Choose the preferred theme if possible  
+  myPear::myPear_enabled_theme();
+  
+  ///
+  // Instantiate the Organization we happen to serve
+  ///
+  myOrg();
+  
+  // Apply the updates
+  require_once dirname(__FILE__).DIRECTORY_SEPARATOR.'b_updates.inc';
+  
+  ///
+  // Start translation
+  ///
+  if (locateAndInclude('bText'))  bText::getLangName();
+  
+  ///
+  // Initialize first day for the bIcal matrices as Sunday of the selected week.
+  // Let every module to have its local "day1" by including the module name in the "day1 id" (module_day1)
+  ///
+  b_reg::_();
+  b_cnf::set(b_reg::$current_module.'_day1',
+	     b_time::f_sunday(b_cnf::get(b_reg::$current_module.'_day1',time()),'week'));
+  
+  ///
+  // Print "demo welcome" message
+  ///
+  if (cnf_demo||cnf_dev) myPear::INFO_once(array('This portal is a mirror of our real system, '.
+						 'it is  used for testing and validation of the new versions of software.',
+						 ' You are welcome to use this portal.<br/> ',
+						 'Please send us your comments and keep in mind:'.
+						 '<br/>- the code is NOT guaranteed to be bug-free'.
+						 '<br/>- be aware that all your changes will be removed during the next data '.
+						 'synchronization with the real system.'),
+					   (cnf_demo ? 'Demo version' : 'Developer sandbox'));
+  // Now myPear is ready
+  myPear::$isReady = True;
+  if (cnf_localhost) b_debug::xxx(exiting);
+  bTiming()->cpu();
+
+  // Now we can do everything what was postponed before...
+  // Nice moment...
+  myPear_startup_queue();
+
+  // Start authentication
+  bAuth();
+
+  /*
+  // To be replaced my bTaskManager...
+  // Mails should be sent asynchronioucly...
+  locateAndInclude('bMailer');
+  myPear_taskManager_queue();
+  */
+}

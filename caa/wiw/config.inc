@@ -1,0 +1,68 @@
+<?php
+$releaseDate = '2016-01-02';
+define('WIW_MODULE'   , 'wiw');
+define('WIW_VERSION','5.11.rc');
+
+define('wiw_acl_public',   'public');
+define('wiw_acl_protected','protected');
+define('wiw_acl_private',   'private');
+
+define('RANK_wiw_admin', 11);
+define('RANK_wiw_manager', 12);
+
+/*
+ * Describe the WIW module
+ *  'm'  - module name 
+ *  'v'  - module version number
+ *  'r'  - module release date
+ *  'tm' - module name for the "top" hirizontal menu
+ *  'd'  - module name for the "navigation" menu
+ *  'c'  - absolute path to the configuration file 
+ *  'i'  - module favicon
+ *  'classes' - bUnit / bList classes used by the module
+ */
+b_reg::add_module(WIW_MODULE,
+		  array('v' =>WIW_VERSION,
+			'tm'=>'WhoIsWhere?',
+			'd' =>'Who Is Where?',
+			'c' =>__FILE__,
+			'r' =>$releaseDate,
+			'i' =>'i-traveler',
+			'classes'=>array('bList_wiw_tripTypes' => array('p'=>'bList',
+									'd'=>'Trip Types'),
+					 'bForm_Avatar_wiw'    => array('p'=>'bForm_Avatar'),
+					 'bForm_wiw_trip'      => array('t' =>'wiw_trips',
+									'i'=> 't_id')),
+			'ranks' =>array(RANK_wiw_manager=>array('class'=>'bUnit',
+								'd' => 'WIW manager',
+								'i' => 'i-user1'))));
+
+
+/*
+ * WIW dispatching class
+ */
+class WIW extends myPear{
+
+  /* bList_wiw_tripTypes anker
+   */
+  static public function _TT($org_id=Null){ 
+    if (empty($org_id))  $org_id = myOrg_ID;
+    return self::_fromCache('bList_wiw_tripTypes',$org_id); 
+  }
+  
+  /* Menu anker
+   */
+  static public function _MENU()  { 
+    locateAndInclude('APIaccess_wiw.inc');
+    WIW_access();
+    return self::_fromCache('APImenu_wiw'); 
+  }
+
+  /*
+   * Shortcuts "who can do what"
+   */
+  static public function has_rightToModifyTrips($t_avid=0){
+    $reply = (bAuth::authenticated() && (WIW_manager_here || ($t_avid == bAuth::$av->ID)));
+    return $reply;
+  }
+}

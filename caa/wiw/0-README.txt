@@ -1,0 +1,530 @@
+Changes log
+
+2016-01-17, Version 5.12.rc, test
+A       wiw
+A       wiw/_drupal-6
+A       wiw/_drupal-6/includes
+A       wiw/_drupal-6/index.html
+A       wiw/_drupal-6/sql
+A       wiw/_drupal-6/wiw.install
+A       wiw/_drupal-6/wiw.module
+A       wiw/_drupal-7
+A       wiw/_drupal-7/includes
+A       wiw/_drupal-7/index.html
+A       wiw/_drupal-7/sql
+A       wiw/_drupal-7/wiw.install
+A       wiw/_drupal-7/wiw.module
+A       wiw/includes
+A       wiw/includes/APIaccess_wiw.inc
+A       wiw/includes/APImenu_wiw.inc
+A       wiw/includes/bForm_Avatar_wiw.inc
+A       wiw/includes/bForm_wiw_trip.inc
+A       wiw/includes/bHolder_wiw_trip.inc
+A       wiw/includes/bIcal_matrix_wiw.inc
+A       wiw/includes/bList_wiw_tripTypes.inc
+A       wiw/includes/index.html
+A       wiw/includes/wiw_updates.inc
+A       wiw/index.html
+A       wiw/language
+A       wiw/language/index.html
+A       wiw/language/sv-SE
+A       wiw/sql
+A       wiw/sql/index.html
+A       wiw/sql/wiw_trips.sql
+
+2016-01-17, Version 5.12.rc, test
+A       wiw
+A       wiw/_drupal-6
+A       wiw/_drupal-6/includes
+A       wiw/_drupal-6/index.html
+A       wiw/_drupal-6/sql
+A       wiw/_drupal-6/wiw.install
+A       wiw/_drupal-6/wiw.module
+A       wiw/_drupal-7
+A       wiw/_drupal-7/includes
+A       wiw/_drupal-7/index.html
+A       wiw/_drupal-7/sql
+A       wiw/_drupal-7/wiw.install
+A       wiw/_drupal-7/wiw.module
+A       wiw/includes
+A       wiw/includes/APIaccess_wiw.inc
+A       wiw/includes/APImenu_wiw.inc
+A       wiw/includes/bForm_Avatar_wiw.inc
+A       wiw/includes/bForm_wiw_trip.inc
+A       wiw/includes/bHolder_wiw_trip.inc
+A       wiw/includes/bIcal_matrix_wiw.inc
+A       wiw/includes/bList_wiw_tripTypes.inc
+A       wiw/includes/index.html
+A       wiw/includes/wiw_updates.inc
+A       wiw/index.html
+A       wiw/language
+A       wiw/language/index.html
+A       wiw/language/sv-SE
+A       wiw/sql
+A       wiw/sql/index.html
+A       wiw/sql/wiw_trips.sql
+
+2016-01-17, Version 5.12.rc, test
+A       wiw
+A       wiw/_drupal-6
+A       wiw/_drupal-6/includes
+A       wiw/_drupal-6/index.html
+A       wiw/_drupal-6/sql
+A       wiw/_drupal-6/wiw.install
+A       wiw/_drupal-6/wiw.module
+A       wiw/_drupal-7
+A       wiw/_drupal-7/includes
+A       wiw/_drupal-7/index.html
+A       wiw/_drupal-7/sql
+A       wiw/_drupal-7/wiw.install
+A       wiw/_drupal-7/wiw.module
+A       wiw/includes
+A       wiw/includes/APIaccess_wiw.inc
+A       wiw/includes/APImenu_wiw.inc
+A       wiw/includes/bForm_Avatar_wiw.inc
+A       wiw/includes/bForm_wiw_trip.inc
+A       wiw/includes/bHolder_wiw_trip.inc
+A       wiw/includes/bIcal_matrix_wiw.inc
+A       wiw/includes/bList_wiw_tripTypes.inc
+A       wiw/includes/index.html
+A       wiw/includes/wiw_updates.inc
+A       wiw/index.html
+A       wiw/language
+A       wiw/language/index.html
+A       wiw/language/sv-SE
+A       wiw/sql
+A       wiw/sql/index.html
+A       wiw/sql/wiw_trips.sql
+
+2016-01-17, Version 5.12.rc, test
+A       wiw
+A       wiw/_drupal-6
+A       wiw/_drupal-6/includes
+A       wiw/_drupal-6/index.html
+A       wiw/_drupal-6/sql
+A       wiw/_drupal-6/wiw.install
+A       wiw/_drupal-6/wiw.module
+A       wiw/_drupal-7
+A       wiw/_drupal-7/includes
+A       wiw/_drupal-7/index.html
+A       wiw/_drupal-7/sql
+A       wiw/_drupal-7/wiw.install
+A       wiw/_drupal-7/wiw.module
+A       wiw/includes
+A       wiw/includes/APIaccess_wiw.inc
+A       wiw/includes/APImenu_wiw.inc
+A       wiw/includes/bForm_Avatar_wiw.inc
+A       wiw/includes/bForm_wiw_trip.inc
+A       wiw/includes/bHolder_wiw_trip.inc
+A       wiw/includes/bIcal_matrix_wiw.inc
+A       wiw/includes/bList_wiw_tripTypes.inc
+A       wiw/includes/index.html
+A       wiw/includes/wiw_updates.inc
+A       wiw/index.html
+A       wiw/language
+A       wiw/language/index.html
+A       wiw/language/sv-SE
+A       wiw/sql
+A       wiw/sql/index.html
+A       wiw/sql/wiw_trips.sql
+
+2016-01-17, Version 5.12.rc, test
+A       wiw
+A       wiw/_drupal-6
+A       wiw/_drupal-6/includes
+A       wiw/_drupal-6/index.html
+A       wiw/_drupal-6/sql
+A       wiw/_drupal-6/wiw.install
+A       wiw/_drupal-6/wiw.module
+A       wiw/_drupal-7
+A       wiw/_drupal-7/includes
+A       wiw/_drupal-7/index.html
+A       wiw/_drupal-7/sql
+A       wiw/_drupal-7/wiw.install
+A       wiw/_drupal-7/wiw.module
+A       wiw/includes
+A       wiw/includes/APIaccess_wiw.inc
+A       wiw/includes/APImenu_wiw.inc
+A       wiw/includes/bForm_Avatar_wiw.inc
+A       wiw/includes/bForm_wiw_trip.inc
+A       wiw/includes/bHolder_wiw_trip.inc
+A       wiw/includes/bIcal_matrix_wiw.inc
+A       wiw/includes/bList_wiw_tripTypes.inc
+A       wiw/includes/index.html
+A       wiw/includes/wiw_updates.inc
+A       wiw/index.html
+A       wiw/language
+A       wiw/language/index.html
+A       wiw/language/sv-SE
+A       wiw/sql
+A       wiw/sql/index.html
+A       wiw/sql/wiw_trips.sql
+
+2016-01-17, Version 5.12.rc, test
+A       wiw
+A       wiw/_drupal-6
+A       wiw/_drupal-6/includes
+A       wiw/_drupal-6/index.html
+A       wiw/_drupal-6/sql
+A       wiw/_drupal-6/wiw.install
+A       wiw/_drupal-6/wiw.module
+A       wiw/_drupal-7
+A       wiw/_drupal-7/includes
+A       wiw/_drupal-7/index.html
+A       wiw/_drupal-7/sql
+A       wiw/_drupal-7/wiw.install
+A       wiw/_drupal-7/wiw.module
+A       wiw/includes
+A       wiw/includes/APIaccess_wiw.inc
+A       wiw/includes/APImenu_wiw.inc
+A       wiw/includes/bForm_Avatar_wiw.inc
+A       wiw/includes/bForm_wiw_trip.inc
+A       wiw/includes/bHolder_wiw_trip.inc
+A       wiw/includes/bIcal_matrix_wiw.inc
+A       wiw/includes/bList_wiw_tripTypes.inc
+A       wiw/includes/index.html
+A       wiw/includes/wiw_updates.inc
+A       wiw/index.html
+A       wiw/language
+A       wiw/language/index.html
+A       wiw/language/sv-SE
+A       wiw/sql
+A       wiw/sql/index.html
+A       wiw/sql/wiw_trips.sql
+
+2016-01-17, Version 5.12.rc, test
+A       wiw
+A       wiw/_drupal-6
+A       wiw/_drupal-6/includes
+A       wiw/_drupal-6/index.html
+A       wiw/_drupal-6/sql
+A       wiw/_drupal-6/wiw.install
+A       wiw/_drupal-6/wiw.module
+A       wiw/_drupal-7
+A       wiw/_drupal-7/includes
+A       wiw/_drupal-7/index.html
+A       wiw/_drupal-7/sql
+A       wiw/_drupal-7/wiw.install
+A       wiw/_drupal-7/wiw.module
+A       wiw/includes
+A       wiw/includes/APIaccess_wiw.inc
+A       wiw/includes/APImenu_wiw.inc
+A       wiw/includes/bForm_Avatar_wiw.inc
+A       wiw/includes/bForm_wiw_trip.inc
+A       wiw/includes/bHolder_wiw_trip.inc
+A       wiw/includes/bIcal_matrix_wiw.inc
+A       wiw/includes/bList_wiw_tripTypes.inc
+A       wiw/includes/index.html
+A       wiw/includes/wiw_updates.inc
+A       wiw/index.html
+A       wiw/language
+A       wiw/language/index.html
+A       wiw/language/sv-SE
+A       wiw/sql
+A       wiw/sql/index.html
+A       wiw/sql/wiw_trips.sql
+
+2016-01-17, Version 5.12.rc, test
+A       wiw
+A       wiw/_drupal-6
+A       wiw/_drupal-6/includes
+A       wiw/_drupal-6/index.html
+A       wiw/_drupal-6/sql
+A       wiw/_drupal-6/wiw.install
+A       wiw/_drupal-6/wiw.module
+A       wiw/_drupal-7
+A       wiw/_drupal-7/includes
+A       wiw/_drupal-7/index.html
+A       wiw/_drupal-7/sql
+A       wiw/_drupal-7/wiw.install
+A       wiw/_drupal-7/wiw.module
+A       wiw/includes
+A       wiw/includes/APIaccess_wiw.inc
+A       wiw/includes/APImenu_wiw.inc
+A       wiw/includes/bForm_Avatar_wiw.inc
+A       wiw/includes/bForm_wiw_trip.inc
+A       wiw/includes/bHolder_wiw_trip.inc
+A       wiw/includes/bIcal_matrix_wiw.inc
+A       wiw/includes/bList_wiw_tripTypes.inc
+A       wiw/includes/index.html
+A       wiw/includes/wiw_updates.inc
+A       wiw/index.html
+A       wiw/language
+A       wiw/language/index.html
+A       wiw/language/sv-SE
+A       wiw/sql
+A       wiw/sql/index.html
+A       wiw/sql/wiw_trips.sql
+
+2016-01-17, Version 5.12.rc, test
+A       wiw
+A       wiw/_drupal-6
+A       wiw/_drupal-6/includes
+A       wiw/_drupal-6/index.html
+A       wiw/_drupal-6/sql
+A       wiw/_drupal-6/wiw.install
+A       wiw/_drupal-6/wiw.module
+A       wiw/_drupal-7
+A       wiw/_drupal-7/includes
+A       wiw/_drupal-7/index.html
+A       wiw/_drupal-7/sql
+A       wiw/_drupal-7/wiw.install
+A       wiw/_drupal-7/wiw.module
+A       wiw/includes
+A       wiw/includes/APIaccess_wiw.inc
+A       wiw/includes/APImenu_wiw.inc
+A       wiw/includes/bForm_Avatar_wiw.inc
+A       wiw/includes/bForm_wiw_trip.inc
+A       wiw/includes/bHolder_wiw_trip.inc
+A       wiw/includes/bIcal_matrix_wiw.inc
+A       wiw/includes/bList_wiw_tripTypes.inc
+A       wiw/includes/index.html
+A       wiw/includes/wiw_updates.inc
+A       wiw/index.html
+A       wiw/language
+A       wiw/language/index.html
+A       wiw/language/sv-SE
+A       wiw/sql
+A       wiw/sql/index.html
+A       wiw/sql/wiw_trips.sql
+
+2016-01-17, Version 5.12.rc, test
+A       wiw
+A       wiw/_drupal-6
+A       wiw/_drupal-6/includes
+A       wiw/_drupal-6/index.html
+A       wiw/_drupal-6/sql
+A       wiw/_drupal-6/wiw.install
+A       wiw/_drupal-6/wiw.module
+A       wiw/_drupal-7
+A       wiw/_drupal-7/includes
+A       wiw/_drupal-7/index.html
+A       wiw/_drupal-7/sql
+A       wiw/_drupal-7/wiw.install
+A       wiw/_drupal-7/wiw.module
+A       wiw/includes
+A       wiw/includes/APIaccess_wiw.inc
+A       wiw/includes/APImenu_wiw.inc
+A       wiw/includes/bForm_Avatar_wiw.inc
+A       wiw/includes/bForm_wiw_trip.inc
+A       wiw/includes/bHolder_wiw_trip.inc
+A       wiw/includes/bIcal_matrix_wiw.inc
+A       wiw/includes/bList_wiw_tripTypes.inc
+A       wiw/includes/index.html
+A       wiw/includes/wiw_updates.inc
+A       wiw/index.html
+A       wiw/language
+A       wiw/language/index.html
+A       wiw/language/sv-SE
+A       wiw/sql
+A       wiw/sql/index.html
+A       wiw/sql/wiw_trips.sql
+
+2016-01-17, Version 5.12.rc, test
+A       wiw
+A       wiw/_drupal-6
+A       wiw/_drupal-6/includes
+A       wiw/_drupal-6/index.html
+A       wiw/_drupal-6/sql
+A       wiw/_drupal-6/wiw.install
+A       wiw/_drupal-6/wiw.module
+A       wiw/_drupal-7
+A       wiw/_drupal-7/includes
+A       wiw/_drupal-7/index.html
+A       wiw/_drupal-7/sql
+A       wiw/_drupal-7/wiw.install
+A       wiw/_drupal-7/wiw.module
+A       wiw/includes
+A       wiw/includes/APIaccess_wiw.inc
+A       wiw/includes/APImenu_wiw.inc
+A       wiw/includes/bForm_Avatar_wiw.inc
+A       wiw/includes/bForm_wiw_trip.inc
+A       wiw/includes/bHolder_wiw_trip.inc
+A       wiw/includes/bIcal_matrix_wiw.inc
+A       wiw/includes/bList_wiw_tripTypes.inc
+A       wiw/includes/index.html
+A       wiw/includes/wiw_updates.inc
+A       wiw/index.html
+A       wiw/language
+A       wiw/language/index.html
+A       wiw/language/sv-SE
+A       wiw/sql
+A       wiw/sql/index.html
+A       wiw/sql/wiw_trips.sql
+
+2016-01-17, Version 5.15.rc, test
+A       wiw
+A       wiw/_drupal-6
+A       wiw/_drupal-6/includes
+A       wiw/_drupal-6/index.html
+A       wiw/_drupal-6/sql
+A       wiw/_drupal-6/wiw.install
+A       wiw/_drupal-6/wiw.module
+A       wiw/_drupal-7
+A       wiw/_drupal-7/includes
+A       wiw/_drupal-7/index.html
+A       wiw/_drupal-7/sql
+A       wiw/_drupal-7/wiw.install
+A       wiw/_drupal-7/wiw.module
+A       wiw/includes
+A       wiw/includes/APIaccess_wiw.inc
+A       wiw/includes/APImenu_wiw.inc
+A       wiw/includes/bForm_Avatar_wiw.inc
+A       wiw/includes/bForm_wiw_trip.inc
+A       wiw/includes/bHolder_wiw_trip.inc
+A       wiw/includes/bIcal_matrix_wiw.inc
+A       wiw/includes/bList_wiw_tripTypes.inc
+A       wiw/includes/index.html
+A       wiw/includes/wiw_updates.inc
+A       wiw/index.html
+A       wiw/language
+A       wiw/language/index.html
+A       wiw/language/sv-SE
+A       wiw/sql
+A       wiw/sql/index.html
+A       wiw/sql/wiw_trips.sql
+
+2016-01-17, Version 5.14.rc, test
+A       wiw
+A       wiw/_drupal-6
+A       wiw/_drupal-6/includes
+A       wiw/_drupal-6/index.html
+A       wiw/_drupal-6/sql
+A       wiw/_drupal-6/wiw.install
+A       wiw/_drupal-6/wiw.module
+A       wiw/_drupal-7
+A       wiw/_drupal-7/includes
+A       wiw/_drupal-7/index.html
+A       wiw/_drupal-7/sql
+A       wiw/_drupal-7/wiw.install
+A       wiw/_drupal-7/wiw.module
+A       wiw/includes
+A       wiw/includes/APIaccess_wiw.inc
+A       wiw/includes/APImenu_wiw.inc
+A       wiw/includes/bForm_Avatar_wiw.inc
+A       wiw/includes/bForm_wiw_trip.inc
+A       wiw/includes/bHolder_wiw_trip.inc
+A       wiw/includes/bIcal_matrix_wiw.inc
+A       wiw/includes/bList_wiw_tripTypes.inc
+A       wiw/includes/index.html
+A       wiw/includes/wiw_updates.inc
+A       wiw/index.html
+A       wiw/language
+A       wiw/language/index.html
+A       wiw/language/sv-SE
+A       wiw/sql
+A       wiw/sql/index.html
+A       wiw/sql/wiw_trips.sql
+
+2016-01-08, Version 5.13.rc, initial import
+A       wiw
+A       wiw/_drupal-6
+A       wiw/_drupal-6/includes
+A       wiw/_drupal-6/index.html
+A       wiw/_drupal-6/sql
+A       wiw/_drupal-6/wiw.install
+A       wiw/_drupal-6/wiw.module
+A       wiw/_drupal-7
+A       wiw/_drupal-7/includes
+A       wiw/_drupal-7/index.html
+A       wiw/_drupal-7/sql
+A       wiw/_drupal-7/wiw.install
+A       wiw/_drupal-7/wiw.module
+A       wiw/_drupal-8
+A       wiw/_drupal-8/includes
+A       wiw/_drupal-8/index.html
+A       wiw/_drupal-8/sql
+A       wiw/_drupal-8/wiw.install
+A       wiw/_drupal-8/wiw.module
+A       wiw/includes
+A       wiw/includes/APIaccess_wiw.inc
+A       wiw/includes/APImenu_wiw.inc
+A       wiw/includes/bForm_Avatar_wiw.inc
+A       wiw/includes/bForm_wiw_trip.inc
+A       wiw/includes/bHolder_wiw_trip.inc
+A       wiw/includes/bIcal_matrix_wiw.inc
+A       wiw/includes/bList_wiw_tripTypes.inc
+A       wiw/includes/index.html
+A       wiw/includes/wiw_updates.inc
+A       wiw/index.html
+A       wiw/language
+A       wiw/language/index.html
+A       wiw/language/sv-SE
+A       wiw/sql
+A       wiw/sql/index.html
+A       wiw/sql/wiw_trips.sql
+
+2016-01-08, Version 5.12.rc, initial import
+A       wiw
+A       wiw/_drupal-6
+A       wiw/_drupal-6/includes
+A       wiw/_drupal-6/index.html
+A       wiw/_drupal-6/sql
+A       wiw/_drupal-6/wiw.install
+A       wiw/_drupal-6/wiw.module
+A       wiw/_drupal-7
+A       wiw/_drupal-7/includes
+A       wiw/_drupal-7/index.html
+A       wiw/_drupal-7/sql
+A       wiw/_drupal-7/wiw.install
+A       wiw/_drupal-7/wiw.module
+A       wiw/_drupal-8
+A       wiw/_drupal-8/includes
+A       wiw/_drupal-8/index.html
+A       wiw/_drupal-8/sql
+A       wiw/_drupal-8/wiw.install
+A       wiw/_drupal-8/wiw.module
+A       wiw/includes
+A       wiw/includes/APIaccess_wiw.inc
+A       wiw/includes/APImenu_wiw.inc
+A       wiw/includes/bForm_Avatar_wiw.inc
+A       wiw/includes/bForm_wiw_trip.inc
+A       wiw/includes/bHolder_wiw_trip.inc
+A       wiw/includes/bIcal_matrix_wiw.inc
+A       wiw/includes/bList_wiw_tripTypes.inc
+A       wiw/includes/index.html
+A       wiw/includes/wiw_updates.inc
+A       wiw/index.html
+A       wiw/language
+A       wiw/language/index.html
+A       wiw/language/sv-SE
+A       wiw/sql
+A       wiw/sql/index.html
+A       wiw/sql/wiw_trips.sql
+
+2016-01-02, Version 5.11.rc, prp updates
+M       wiw/w2w_org.php
+
+2015-04-19, Version 5.10.rc,
+M       wiw/w2w_org.php
+
+2015-04-01, Version 5.9.rc,
+M       wiw/includes/APIaccess_wiw.inc
+M       wiw/includes/wiw_updates.inc
+M       wiw/sql/wiw_trips.sql
+M       wiw/w2w.php
+A       wiw/w2w.sh
+M       wiw/w2w_org.php
+
+2015-03-03, Version 5.8.rc, fix orgGroups minor bug
+M       wiw/w2w_org.php
+
+2015-02-10, Version 5.7.rc,
+M       wiw/includes/wiw_updates.inc
+
+2015-02-08, Version 5.6.rc, Optimizing the performance
+M       wiw/includes/bHolder_wiw_trip.inc
+
+2015-02-01, Version 5.5.rc, workaround - problem with getValue for the list members
+M       wiw/includes/bForm_wiw_trip.inc
+
+2015-01-26, Version 5.4.rc, clean SQL indices
+M       wiw/w2w.php
+
+2015-01-25, Version 5.3.rc, release 2015-01-25
+M       wiw/sql/wiw_trips.sql
+
+2015-01-24, Version 5.2.rc, minor cleanup
+M       wiw/includes/bHolder_wiw_trip.inc
+
+2015-01-24, Version 5.1.rc, Code cleanup

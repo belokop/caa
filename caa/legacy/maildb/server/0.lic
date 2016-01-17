@@ -1,0 +1,26 @@
+################################################################################
+### This program is free software; you can redistribute it and/or modify
+### it under the terms of either:
+###
+###    a) the GNU General Public License as published by the Free
+###    Software Foundation; either version 1, or (at your option) any
+###    later version, or
+###
+###    b) the "Artistic License" (Read the README file that comes with
+###    the standard Perl Distribution)
+###
+###    This program is distributed in the hope that it will be useful,
+###    but WITHOUT ANY WARRANTY; without even the implied warranty of
+###    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See either
+###    the GNU General Public License or the Artistic License for more details.
+#################################################################################
+###          Author: Iouri Belokopytov <iouri@onestudio.ch>
+###          Version: 1.0
+###          Created:                    1999 
+###          Updated:                    2000
+###                                      2001
+###                                      2002
+###                                      2005
+###          Purpose: Simple Users database
+### Required Modules: DBD::mysql
+#################################################################################

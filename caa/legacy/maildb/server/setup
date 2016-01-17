@@ -1,0 +1,27 @@
+#!/bin/bash
+set -e 
+
+DIR=`cd \`dirname $0\`; pwd; `
+db=`basename $DIR` 
+
+toInstall() {
+    ip=`ifconfig eth0|grep 'inet addr:'|sed -e 's/.*inet addr://' -e 's/ .*//'`
+    host $1|grep address|grep $ip$
+}
+[ "$db" = "maildb" -a -z "`toInstall mail1`" ] && \
+    { echo "*** Wrong host"; exit 1; } 
+[ "$db" = "hostdb" -a -z "`toInstall syshostdb`" ] && \
+    { echo "*** Wrong host"; exit 1; } 
+
+# $DIR/etc/services/Editor $DIR/etc/services/list.$db 
+grep ^$db /etc/services || {
+    if [ $db = hostdb ]; then echo  hostdb          998/tcp >> /etc/services
+    else                      echo  maildb          999/tcp >> /etc/services
+    fi
+}
+ 
+$DIR/../src/run/export.pl $db 
+rsync -a $DIR/../src/run/$db /etc/xinetd.d/ || exit 1
+
+/etc/init.d/xinetd stop
+/etc/init.d/xinetd start

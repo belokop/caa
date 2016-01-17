@@ -1,0 +1,81 @@
+<?php
+/**
+ * @file
+ *
+ */
+
+/**
+ * Implementation of hook_init()
+ */
+function vm_init(){
+  static $dejaVu = 0;
+  if (!$dejaVu++){
+
+    if (function_exists('myPear_init'))  myPear_init();
+    else  die('??? myPear module is not yet loaded');
+    
+    if (function_exists('ea_init')) ea_init();
+    else  die('??? ea module is not yet loaded');
+    
+    require_once drupal_get_path('module','vm') . '/config.inc';
+    drupal_add_css($f='./'.drupal_get_path('module','vm').'/css/vm.css');
+  }
+}
+
+function _vm_access_callback($tab){
+  vm_init();
+  return VM::_MENU()->access($tab);
+}
+
+/**
+ * Implementation of hook_menu()
+ */
+function vm_menu(){
+  vm_init();
+  $menu = VM::_MENU()->build_menuTree('_vm_output');
+  return $menu;
+}
+
+/*
+ * Display output
+ */
+function _vm_output($arg=Null,$arg2=Null){
+  vm_init();
+  $file_cache = new b_cache_file();
+  if ($file_cache->notYetReady())    VM::_MENU()->process($arg,$arg2);
+  return $file_cache->get();
+}
+
+/*
+ * Drupal 6
+ */
+function vm_footer(){
+  vm_init();
+  ob_start();
+  bJS()->flush(); 
+  $output = ob_get_contents();
+  ob_end_clean();
+  return $output;
+}
+
+/**
+ * Implements hook_page_alter(), drupal7 replacemt of hook_footer
+ */
+function vm_page_alter(&$page) {
+  vm_init();
+  $page['page_bottom']['devel']=array('#type' => 'markup',
+				      '#markup' => vm_footer());
+}
+
+/*
+ * Implements hook_user
+ */
+function vm_user($type, $array, $account, $category){
+  vm_init();
+  bAuth::drupal_hook_user($account);
+}
+
+function vm_user_login(&$edit, $account) {
+  vm_init();
+  bAuth::drupal_hook_user($account);
+}

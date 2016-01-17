@@ -1,0 +1,72 @@
+<?php
+/**
+ * @file
+ *
+ */
+
+function wiw_init(){
+  static $dejaVu = 0;
+  if (!$dejaVu++) {
+    myPear_init();
+    if (function_exists('ea_init')) ea_init();
+    else die("??? ea_init is not yet loaded");
+    require_once drupal_get_path('module','wiw') . "/config.inc";
+  }
+}
+
+/*
+ * Chanell the auto-learn translations
+ */
+function wiw_t($text){
+  return t(bText::_(array('key' =>"WIW_MENU_$text",
+			   'item'=>$text)));
+}
+
+function _wiw_access_callback($tab){
+  wiw_init();
+  locateAndInclude('APImenu_wiw');
+  return WIW::_MENU()->access($tab);
+}
+
+/**
+ * Implementation of hook_menu()
+ */
+function wiw_menu(){
+  wiw_init();
+  $menu = WIW::_MENU()->build_menuTree('_wiw_output');
+  return $menu; 
+}
+
+function wiw_footer(){
+  wiw_init();
+}
+
+
+/*
+ * Display output
+ */
+function _wiw_output($arg='',$arg2='') {
+  myPear_init();
+  $file_cache = new b_cache_file();
+  if ($file_cache->notYetReady())    WIW::_MENU()->process($arg,$arg2);
+  return $file_cache->get();
+}
+
+function wiw_page_alter(&$page) {
+  wiw_init();
+  $page['page_bottom']['devel']=array('#type' => 'markup',
+				      '#markup' => wiw_footer());
+}
+
+/*
+ * Implements hook_user
+ */
+function wiw_user($type, $array, $account, $category){
+  wiw_init();
+  bAuth::drupal_hook_user($account);
+}
+
+function wiw_user_login(&$edit, $account) {
+  wiw_init();
+  bAuth::drupal_hook_user($account);
+}

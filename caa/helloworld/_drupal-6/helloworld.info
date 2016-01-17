@@ -1,0 +1,5 @@
+name = Drupal helloworld
+description = Hello World module
+package = myPear
+core = 6.x
+version = 1.6

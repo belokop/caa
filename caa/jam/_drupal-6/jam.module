@@ -1,0 +1,76 @@
+<?php
+/**
+ * @file
+ *
+ */
+
+/**
+ * Implementation of hook_init()
+ *
+ * The explicit load of myPear config file is needed to solve
+ * the egg/chicken problem of bAuth
+ */
+function jam_init(){
+  myPear_init();
+  require_once drupal_get_path('module','jam') . '/config.inc';
+}
+
+function jam_footer(){
+  jam_init();
+  ob_start();
+  if (function_exists('bJS')) bJS()->flush();
+  $output = ob_get_contents();
+  ob_end_clean();
+  return $output;
+}
+
+/**
+ * Implements hook_page_alter(), drupal7 replacemt of hook_footer
+ */
+function jam_page_alter(&$page) {
+  jam_init();
+  $page['page_bottom']['devel']=array('#type' => 'markup',
+				      '#markup' => jam_footer());
+}
+
+function _jam_access_callback($tab,$dTab=''){
+  jam_init();
+  return JAM::j_MENU()->access($tab,$dTab);
+}
+
+/**
+ * Implementation of hook_menu()
+ */
+function jam_menu(){
+  jam_init();
+  $menu = JAM::j_MENU()->build_menuTree('_jam_output');
+  return $menu;
+}
+
+/*
+ * Display output
+ */
+function _jam_output($arg=Null,$arg2=Null){
+  jam_init();
+  $file_cache = new b_cache_file();
+  if ($file_cache->notYetReady()){
+    JAM::j_MENU()->process($arg,$arg2);
+    JAM_mailer()->showMailsSent();
+  }
+  return $file_cache->get();
+}
+
+/*
+ * Implements hook_user
+ */
+function jam_user($type, $array, $account, $category){
+  jam_init();
+  locateAndInclude('bAuth');
+  bAuth::drupal_hook_user($account);
+}
+
+function jam_user_login(&$edit, $account) {
+  jam_init();
+  locateAndInclude('bAuth');
+  bAuth::drupal_hook_user($account);
+}

@@ -1,0 +1,7 @@
+name = Visits Manager 
+description = Administration portal to manage various aspects of visits: apartments & offices booking, budget monitoring, setting social events, etc.
+package = myPear
+core = 7.x
+dependencies[] = myPear
+dependencies[] = ea
+version = 5.78

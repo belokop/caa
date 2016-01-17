@@ -1,0 +1,79 @@
+<?php
+/**
+ * @file
+ *
+ * Monitoring FlexNet Publisher (formerly known as FLEXlm) licenses usage  
+ */
+
+function lic_init(){
+  myPear_init();
+  require_once drupal_get_path('module','lic').'/config.inc';
+}
+
+function lic_t($text){
+  // do not translate software name 
+  switch($text){
+  case 'title':  return bText::_(array('key' =>"LIC_MENU_1",   'item'=>'FLEXlm statistics'));
+  case 'ALL':    return bText::_(array('key' =>"LIC_MENU_ALL", 'item'=>'ALL'));
+  default:       return $text;
+  }
+}
+
+/**
+ * Implementation of hook_menu()
+ */
+function lic_menu(){
+  lic_init();
+  locateAndInclude('APImenu_lic');
+  return LIC::_MENU()->build_menuTree('lic_output');
+}
+
+function _lic_access_callback($tab){
+  lic_init();
+  return LIC::_MENU()->access($tab);
+}
+
+/*
+ * Display output
+ */
+function lic_output($arg=NULL,$arg2=Null) {
+  lic_init();
+  if (empty($arg)) b_url::header(b_url::same("?q=lic/".APImenu::tab_code('ALL')));
+  ob_start();
+  locateAndInclude('lic_functions');
+  locateAndInclude('lBasic');
+  lic_showDB($arg);
+  $output = ob_get_contents();
+  ob_end_clean();
+  return $output;
+}
+
+function lic_footer(){
+  lic_init();
+  ob_start();
+  bJS()->flush(); 
+  $output = ob_get_contents();
+  ob_end_clean();
+  return $output;
+}
+
+/**
+ * Implements hook_page_alter(), drupal7 replacemt of hook_footer
+ */
+function lic_page_alter(&$page) {
+  lic_init();
+  $page['page_bottom']['devel']=array('#type'=>'markup','#markup'=>lic_footer());
+}
+
+/*
+ * Implements hook_user
+ */
+function lic_user($type, $array, $account, $category){
+  lic_init();
+  bAuth::drupal_hook_user($account);
+}
+
+function lic_user_login(&$edit, $account) {
+  lic_init();
+  bAuth::drupal_hook_user($account);
+}

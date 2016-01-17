@@ -1,0 +1,80 @@
+<?php
+/**
+ * @file
+ *
+ */
+
+/**
+ * Implementation of hook_init()
+ */
+function ea_init(){
+  static $dejaVu = 0;
+  if (!$dejaVu++){
+    if (function_exists('myPear_init')) myPear_init();
+    else  drupal_set_message('??? myPear module is not yet loaded','warning');
+    $config = drupal_get_path('module','ea') . '/config.inc';
+    require_once $config;
+    drupal_add_css('./'.drupal_get_path('module','ea').'/css/ea.css');
+  }
+}
+
+function _ea_access_callback($tab){
+  ea_init();
+  locateAndInclude('APImenu_ea');
+  return EA::_MENU()->access($tab);
+}
+
+/**
+ * Implementation of hook_menu()
+ */
+function ea_menu(){
+  ea_init();
+  $menu = EA::_MENU()->build_menuTree('_ea_output');
+  return $menu;
+}
+
+/*
+ * Display output
+ */
+function _ea_output($arg=Null,$arg2=Null){
+  ea_init();
+  $file_cache = new b_cache_file();
+  if ($file_cache->notYetReady())    EA::_MENU()->process($arg,$arg2);
+  return $file_cache->get();
+}
+
+/*
+ * Drupal 6
+ */
+function ea_footer(){
+  ea_init();
+  ob_start();
+  if (function_exists('bJS')) bJS()->flush(); 
+  $output = ob_get_contents();
+  ob_end_clean();
+  return $output;
+}
+
+/**
+ * Implements hook_page_alter(), drupal7 replace-mt of hook_footer
+ */
+function ea_page_alter(&$page) {
+  ea_init();
+  $page['page_bottom']['devel']=array('#type' => 'markup',
+				      '#markup' => ea_footer());
+}
+
+/*
+ * Implements hook_user
+ */
+function ea_user($type, $array, $account, $category){
+  ea_init();
+  locateAndInclude('bAuth');
+  bAuth::drupal_hook_user($account);
+}
+
+function ea_user_login(&$edit, $account) {
+  ea_init();
+  locateAndInclude('bAuth');
+  bAuth::drupal_hook_user($account);
+}

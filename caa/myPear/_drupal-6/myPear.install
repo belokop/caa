@@ -1,0 +1,94 @@
+<?php
+/**
+ * @file
+ * Installation functions for myPear
+ */
+
+/**
+ * Implementation of hook_install().
+ */
+function myPear_install() {
+  _myPear_install_bDB('myPear');
+}
+
+/*
+ * Install the myPear database
+ */
+function _myPear_install_bDB($module) {
+
+  if (!function_exists('myPear_init')) require_once str_replace('install','module',__FILE__);
+  myPear_init();
+  myPear_db();
+  myPear_db()->debug=1;
+  b_debug::xxx(array('M',2));
+  
+  if (myPear_db()->isReady()){
+    if (variable_get('api_install_'.$module,'') != 'ok'){
+      $sql = './'.drupal_get_path('module',$module).'/sql';
+      if (is_dir($sql) && ($handle = opendir($sql))) {
+	while (false !== ($file = readdir($handle))) {
+	  if (preg_match("/.sql$/",$file)){
+	    $table = str_replace('.sql','',$file);
+	    if (!myPear_db()->tableExists($table)){
+	      foreach(explode(";\n",file_get_contents(b_os::url2path("$sql/$file"))) as $query){
+		$query = trim($query);
+		if (!empty($query)) myPear_db()->query($query);
+	      }
+	      myPear::MESSAGE(sprintf("Creating $module database table %s@%s.%s",myPear_db()->Database,myPear_db()->Host,$table));
+	    }
+	  }
+	}
+	closedir($handle);
+      }  
+      variable_set('api_install_'.$module,'ok');
+    }
+  }else{
+    myPear::WARNING($msg = "myPear database is not configured");
+    myPear::_SETUP('db',$msg);
+  }  
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function myPear_uninstall_module($module='myPear') {
+  if ($module != 'myPear'){
+    myPear_init();
+  }
+}
+
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function myPear_uninstall() {
+  // Delete the variables we created.
+  if (cnf_dev) b_debug::xxx(__FUNCTION__);
+  if (0)
+    foreach(array('bDB','bMailer') as $class){
+      foreach(array('name','user','pass','host','port') as $var)      variable_del($class.'_'.$var);
+    }
+}
+
+/**
+ * Implementation of hook_requirements().
+ */
+function myPear_requirements($phase) {
+  if (variable_get('bDB_name',Null))
+    return array();
+  else
+    return array('myPear' => array('title' => t('myPear module'),
+				   'description' => t("The applications database is not configured, please run the administration page"),
+				   'severity' => REQUIREMENT_WARNING,
+				   'value' => t('Not configured'),
+				   ));
+}
+
+/*
+ * Update function	
+ */	
+function myPear_update_1() {
+  $ret = array();
+  //$ret[] = update_sql('UPDATE {variable} SET name="lightbox2_lite"WHERE name="lightbox2_plus";');
+  return $ret;
+}

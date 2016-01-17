@@ -1,0 +1,78 @@
+#! /usr/bin/perl
+use Socket;
+use strict;
+our  $networks = "130.237.205.0/24 130.237.208.0/24 130.242.128.0/24 130.242.129.0/24 130.237.179.160/27 130.237.168.32/27 130.237.244.128/27";
+our  %ports = (
+	     1032  => 'ideas',
+	     1700  => 'idl',
+	     1716  => 'nag',
+	     1718  => 'comsol',
+	     16286 => 'math',
+	     27000 => 'FlexLM',
+	     27001 => 'FlexLM',
+	     27002 => 'FlexLM',
+	     27003 => 'FlexLM',
+	     27004 => 'FlexLM',
+	     27005 => 'FlexLM',
+	     27006 => 'FlexLM',
+	     27007 => 'FlexLM',
+	     27008 => 'FlexLM',
+	     27009 => 'Matlab',
+	     28518 => 'intel',
+	     );
+
+#if (@ARGV[0] == 'yb') {
+#  printf "idl  -> %s\n\n" ,&host2lm('syslx08.fysik.su.se','idl');
+#  printf "math -> %s\n\n", &host2lm('syslx08.fysik.su.se','math');
+#  printf "idl  -> %s\n\n" ,&host2lm('syslx53.fysik.su.se','idl');
+#  exit;
+#}
+  
+$|++;
+my ($server, $counter,
+    %table,
+    );
+open SCAN,"nmap -p".join(',',keys %ports)." ".$networks."|" or die $!;
+while (<SCAN>) {
+  s/[\r\n]+//g;
+  $server = $1 if /Interesting ports on (\S+) /;
+  $server = $1 if /Nmap scan report for (\S+) /;
+  next unless /^\d/;
+  next unless /open/;
+  print STDERR ".";
+  my ($port,$protocol) = (split /\s+/)[0,2];
+  $port =~ s/\/.*//;
+  #$server =~ s/.fysik.su.se//;
+  unless ($server =~ /[0-9]-[1-9]\./) { $table{$server}{$port} = $protocol; }
+}
+
+print STDERR "\n\n";
+my $compactOutput = shift;
+foreach my $s (sort keys %table) {
+  print "$s\n" unless $compactOutput;
+  foreach my $port (keys %{$table{$s}}) { #my ($port,$protocol) = split;
+    my $protocol = $table{$s}{$port};
+    $protocol =~ s/unknown/$ports{$port}/i;
+    if ($compactOutput) { printf "%s@%s\n", $port,&host2lm($s,$ports{$port}); }
+    else                { printf "%30d %s\n", $port, $protocol; }
+  }
+}
+
+sub host2lm {
+  my ($host,$lm) = @_;
+  my ($name,$aliases,$addr,$length,@addrs) = gethostbyname($host); 
+  my $ip = inet_ntoa($addrs[0]);
+  printf STDERR "...%s  %s  lm=%s\n",$host,$ip,$lm if @ARGV[0] == 'yb';
+  foreach my $d ('fysik.su.se','fysik.su.se','albanova.se','nordita.org') {
+    my $server = $lm."lm.$d";
+    ($name,$aliases,$addr,$length,@addrs) = gethostbyname($server); 
+    print STDERR "$server -> $name,$aliases,$addr,$length\n" if @ARGV[0] == 'yb';
+    next unless $name=~/\w/;
+    return $server if $host=~/$name/;
+    foreach (@addrs) {
+      printf STDERR "...%s %s\n",inet_ntoa($_),$ip if @ARGV[0] == 'yb';
+      inet_ntoa($_) =~ /$ip$/ and       return $server;
+    }
+  }
+  return $host;
+}

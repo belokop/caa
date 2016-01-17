@@ -1,0 +1,68 @@
+#! /bin/bash
+#
+# Discover the license servers running on the local network,
+# run license usage utility for all of them.
+# For the perfomance reason the server discovery is done only once a day
+#
+#                                   YB 2001 - 2010
+
+# area to keep the result of the license server discovery
+lmDir=/afs/fysik.su.se/common/scratch/flexlm/conf/`date +%Y-%m-%d`
+lmDir=/tmp/delete.me.LSdiscovered/`date +%Y-%m-%d`
+
+LM=`cd \`dirname $0\`; pwd -P`
+export PATH=$LM:$PATH
+
+function name2ips() {
+    host $1|grep address|sed "s/.*address //" | sort -u
+}
+
+function discoverServers {
+    [ -d "$lmDir" -a -n "`ls $lmDir/*`" ] && return
+    rm -rf `dirname $lmDir`/*
+    mkdir -p $lmDir || exit 1
+    for item in `$LM/licenseServerDiscoverer compact`; do
+	p=`echo $item|awk -F@ '{print $1}'`
+	s=`echo $item|awk -F@ '{print $2}'`
+	echo SERVER $s 00000000 $p > $lmDir/license.dat.$s.$p
+    done
+}
+
+function getServersByPort {
+    port=$1
+    servers=
+    for s in `ls -1 $lmDir|grep "\.$port$" | sed -e s/license.dat.// -e s/\.$port$//`; do
+	name2ips $s
+    done
+}
+
+function flexlm() {
+    for lfile in `ls -1 $lmDir/license.dat* |grep -vE '16286$'`; do
+	[ -s $lfile ] || continue
+	echo ------------------------------------------------------------------------------------------------------- `basename $lfile`
+	lmutil lmstat -c $lfile -a | grep -vE "Copyright|Flexible License Manager status|$lmDir|^$"
+    done
+}
+
+function mathlm() {
+    tpl=/tmp/delete.me.mathematica.tpl
+    rm -rf $tpl
+    cat >$tpl <<EOF
+%REP_GENERAL_CHECKOUT_LINE = "mathematica %PROC_USER %PROC_IP %PROC_FQDN %PROC_VERSION \n"
+%TEXT
+mathematica start %CONST_SERVER_FQDN %CONST_SERVER_VERSION 
+%REP_GENERAL_CHECKOUT_LINE
+mathematica end
+EOF
+    for ip in `getServersByPort 16286`; do
+	[ -n "`echo $ip|grep ^[1-9]`" ] && name=`host $ip|grep pointer|sed -e "s/.*pointer //" -e s/\.$//` || name=$ip
+	echo ------------------------------------------------------------------------------------------------------- mathematica $name
+	monitorlm $name -template $tpl
+    done
+    rm -rf $tpl
+}
+
+discoverServers
+mathlm
+flexlm
+exit 0

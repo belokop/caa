@@ -1,0 +1,6 @@
+name = FLEXlm licenses usage monitor
+description = Monitoring the FlexNet Publisher (formerly known as FLEXlm) licenses usage
+package = myPear
+core = 6.x
+dependencies[] = myPear
+version = 5.8
