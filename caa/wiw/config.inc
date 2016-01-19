@@ -1,5 +1,5 @@
 <?php
-$releaseDate = '2016-01-02';
+$releaseDate = '2016-01-19';
 define('WIW_MODULE'   , 'wiw');
 define('WIW_VERSION','5.11.rc');
 

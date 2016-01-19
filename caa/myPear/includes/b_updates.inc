@@ -88,7 +88,6 @@ function myPear_updates(){
 	  }
 	}
       }
-
       // Drop the local legacy sql table, not used any more
       if (myPear_db()->tableExists('legacy_maildb')) myPear_db()->qquery("DROP TABLE `legacy_maildb`");
     }
@@ -101,17 +100,18 @@ function myPear_updates(){
  *
  */
 function myPear_update31(){
-  myPear_db()->query("ALTER TABLE `zzz_variables` CHANGE `var_value` `var_value` text");
-
-  myPear_update_DBdefaults(array('zzz_lists'        =>array('varchar(200)'=>array('l_name')),
+  
+  myPear_update_DBdefaults(array('zzz_variables'    =>array('text'        =>array('var_value')),
+				 'zzz_lists'        =>array('varchar(200)'=>array('l_name')),
 				 'zzz_unit_members' =>array('text'        =>array('um_option')),
 				 'zzz_avatars'      =>array('int(11)'     =>array('av_ddate'),
+							    'text'        =>array('av_http',),
 							    'varchar(4)'  =>array('av_sex'),
 							    'varchar(8)'  =>array('av_birthcountry'),
 							    'varchar(32)' =>array('av_ssn','av_von','av_salutation','av_citizenship','av_residentship',
 										  'av_identity','av_ms_country','av_phd_country','av_zip'),
 							    'varchar(64)' =>array('av_phone','av_city','av_pwd'),
-							    'varchar(128)'=>array('av_photo','av_email','av_firstname','av_lastname','av_http',
+							    'varchar(128)'=>array('av_photo','av_email','av_firstname','av_lastname',
 										  'av_position','av_position'),
 							    'varchar(230)'=>array('av_birthplace','av_pwd2','av_identity','av_institute','av_ms_institute',
 										  'av_address','av_institute','av_pwd2','av_phd_institute')),

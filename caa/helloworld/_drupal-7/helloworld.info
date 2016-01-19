@@ -2,4 +2,4 @@ name = Drupal helloworld
 description = Hello World module
 package = myPear
 core = 7.x
-version = 1.6
+version = 7.x-1.6
