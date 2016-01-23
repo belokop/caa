@@ -2,7 +2,7 @@
 /**
  * Visitors Manager (VM) configuration file
  */
-$releaseDate = '2016-01-02';
+$releaseDate = '2016-01-23';
 define('VM_MODULE'   , 'vm');
 define('VM_VERSION','5.78');
 
@@ -11,6 +11,8 @@ define('VM_VERSION','5.78');
 //
 define('modal_sendmail_dialog',cnf_dev||cnf_demo);
 define('send_automatically_infoMail_to_registrants',cnf_dev);
+// Office space distribution
+define('distribute_offices',cnf_def);
 // Final welcome mail settings
 define('send_finalWelcomeEmail_to_registrants',cnf_dev||cnf_demo);
 define('include_personalPage_in_finalWelcomeEmail', send_finalWelcomeEmail_to_registrants && cnf_dev||cnf_demo);
@@ -66,9 +68,9 @@ define('VM_V_scrtrInfoSent',32);     // Flag 'guest invitation communicated'
 define('VM_V_payAccommodation',64);  // Flag 'cover living expenses'
 define('VM_V_provideOffice',128);    // Flag 'assign office for the visit'
 define('VM_V_infoMailSent',256);     // Flag 'informal informational mail sent'
-define('VM_V_enMailSent',512);       // Flag '"Event is endorced" mail to organizer sent'
+define('VM_V_enMailSent',512);       // Flag '"Event is endorsed" mail to organizer sent'
 define('VM_V_payOther',2048);        // Flag 'pay other expenses, (whatever "other expenses" mean)' 
-define('VM_V_rdlMailSent',4096);     // Flag 'registation-deadline mail to organizer sent'
+define('VM_V_rdlMailSent',4096);     // Flag 'registration-deadline mail to organizer sent'
 
 /*
  * Some policies are "human defined", like "to pay OR not to pay",
@@ -428,7 +430,7 @@ class VM extends myPear{
 							     't'=> auto_maintained),
 			       VM_V_rdlMailSent     => array('d'=>'Was the appl. deadline communicated?',
 							     't'=> auto_maintained),
-			       VM_V_enMailSent      => array('d'=>'Was the endorcement communicated?',
+			       VM_V_enMailSent      => array('d'=>'Was the endorsement communicated?',
 							     't'=> auto_maintained),
 			       );
   
@@ -785,8 +787,8 @@ if (file_exists($f='../myPear/config.inc'))  require_once $f;
  *
  */
 function start_VM(){
-  static $devaVu = 0;
-  if (!VM::$isReady && !$devaVu++){
+  static $dejaVu = 0;
+  if (!VM::$isReady && !$dejaVu++){
     b_debug::xxx(starting);
     bTiming()->cpu(__FUNCTION__);
     VM::start();
@@ -875,7 +877,7 @@ function VM_visit_policies($visit_type,$new_value=Null,$e=Null){
     $reply = b_vars::get($var_id,VM_MODULE);
   }
 
-  // Check for the decomissioned policies
+  // Check for the decommissioned policies
   if ($bogus=array_diff($reply,array_keys(VM::$v_policies))){
     $reply = array_diff($reply,$bogus);
     b_debug::xxx("DROP BOGUS policy ".join(', ',$bogus));

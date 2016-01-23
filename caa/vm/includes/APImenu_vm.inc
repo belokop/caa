@@ -81,13 +81,21 @@ $VM_menu=array('tab_vm_home'              => 'Home',
 foreach($VM_menu as $name=>$descr)  APItabs::define_tab($name,$descr);
 
 /*
- * Check that the given person has registered trips OR is a future visitor
+ * Check that the given person is related to VM module:
+ * - has registered trips 
+ * - is a future visitor
+ * - EA member
  */
 function vm_after_search_check($av_id,$_after_search=''){
   $our_man = (stripos($_after_search,'vm_Visit') !== False);
   if (!$our_man){
     $q = myPear_db()->query("SELECT v_avid FROM abs_visits WHERE v_avid = '$av_id'");
     $our_man = (myPear_db()->num_rows($q) > 0);
+  }
+  // EA member?
+  if (!$our_man){
+    $ea = new bUnit_ea_members(myOrg_ID);
+    $our_man = $ea->isMember($av_id);
   }
   return $our_man;
 }
