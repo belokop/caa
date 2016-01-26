@@ -3,7 +3,11 @@
 # Script to update the /etc/password file 
 #
 
-repository=https://plushkin.googlecode.com/svn/trunk/setup/maintenance/mail/2leif
+##### Not used since the end of 2015
+# repository=https://plushkin.googlecode.com/svn/trunk/setup/maintenance/mail/2leif
+
+# In production since 2016-01-13
+repository=https://svn.csc.kth.se/~iourib/setup/maintenance/mail/2leif
 
 function usage(){
     msg="$1"
@@ -34,6 +38,7 @@ l2=`echo $user|cut -c2`
 [ -z "$l1" ] && usage
 [ -z "$l2" ] && usage
 home=/afs/kth.se/home/$l1/$l2/$user
+[ -d $home ]   || { home=/home/$user; }
 [ -d $home ]   || { usage "the expected home_dir '$home' does not exist"; }
 
 #
@@ -56,9 +61,9 @@ else
 fi
 
 id $user >/dev/null 2>&1 && {
-    echo ... User already done exist, `id $user`  >&2
+    echo ... User already known, `id $user`  >&2
     echo -n "... "
-    grep ^$user.*$home: /etc/passwd
+    grep ^$user:.*$home: /etc/passwd
     echo
     exit 1
 }

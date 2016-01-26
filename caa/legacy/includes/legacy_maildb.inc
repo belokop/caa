@@ -26,7 +26,7 @@ class legacy_maildb{
 
   public $possible_hooks = array('m_myorg' => array('d'=>'maildb name'),
 				 'acc_su'  => array('d'=>'SU account',
-//						    'h'=>'/afs/su.se/home', // SU abandones AFS
+//						    'h'=>'/afs/su.se/home', // SU abandoned AFS
 						    'h'=>'/home',
 						    ),
 				 'acc_kth' => array('d'=>'KTH account',
