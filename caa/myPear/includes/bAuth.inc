@@ -379,6 +379,8 @@ class bAuth{
       if ($av instanceof bForm_Avatar){
 	self::$av_real = self::$av;
 	self::$av = $av;
+	self::dbg("authenticated as ".self::$av_real->fmtName('fL'),cnf_dev);
+	self::dbg("login as ".self::$av->fmtName('fL'),cnf_dev);
       }else{
 	self::dbg($msg="Can't login as '$_REQUEST[login_as]'");
 	myPear::WARNING_T($msg,$this);

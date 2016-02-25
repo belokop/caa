@@ -69,8 +69,8 @@ class bHolder_Logs extends bHolder{
     }
 
     if ($log_avid===Null){
-      if (is_object(bAuth::$av))  $log_avid = bAuth::$av->ID;
-      else                        $log_avid = 0;
+      if (is_object(bAuth::$av_real))  $log_avid = bAuth::$av_real->ID;
+      else                             $log_avid = 0;
     }
 
     foreach (array('log_ip'    => @$_SERVER['REMOTE_ADDR'],
@@ -115,7 +115,7 @@ class bHolder_Logs extends bHolder{
     // The updates might not be applied yet, wait for them
     if ($ok = (!cnf_CLI && bAuth::authenticated())){
       if (myPear_db()->isReady()){
-	$log_avid = (is_object(bAuth::$av) ? bAuth::$av->ID : 0);
+	$log_avid = (is_object(bAuth::$av_real) ? bAuth::$av_real->ID : 0);
 	foreach(array('log_avid'=>$log_avid,
 		      'log_type'=> CONST_wic,
 		      'log_ip'  => @$_SERVER["REMOTE_ADDR"],
@@ -142,8 +142,8 @@ class bHolder_Logs extends bHolder{
 	// Update the current activity
 	myPear_db()->qquery("UPDATE zzz_logs SET ".join(',',array("log_time = ".time(),
 								  myPear_db()->quote(date('Y-m-d H:i:s'),True,'timestamp'),
-								  myPear_db()->quote(b_fmt::unEscape(is_object(bAuth::$av) 
-												     ? bAuth::$av->fmtName('Lf') 
+								  myPear_db()->quote(b_fmt::unEscape(is_object(bAuth::$av_real) 
+												     ? bAuth::$av_real->fmtName('Lf') 
 												     : 'Anonymous'),
 										     True,
 										     'log_comment'))) . " WHERE ".join(' AND ',$id),$verbose);
@@ -165,8 +165,8 @@ class bHolder_Logs extends bHolder{
    */
   public function add_access() { 
     static $logfile = '/log/www/log';
-    if (is_object(bAuth::$av) && file_exists($logfile)){
-      $user = bAuth::$av->getEmail();
+    if (is_object(bAuth::$av_real) && file_exists($logfile)){
+      $user = bAuth::$av_real->getEmail();
       
       list ($OS,$browser) = b_fmt::parse_HTTP_USER_AGENT();
       
