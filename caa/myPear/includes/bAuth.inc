@@ -24,9 +24,10 @@ class bAuth{
   public  static $isReady = False;
   private static $justLoggedIn = False;
 
-  public  static $av    = Null; // Avatar class object for the authenticated person    
-  public  static $email = '';   // email (avatar av_email)
-  public  static $gecos = '';   // name (avatar av_firstname + av_lastname)
+  public  static $av_real= Null; // Avatar class object for the authenticated person    
+  public  static $av     = Null; // Avatar class object for the "login as" person    
+  public  static $email  = '';   // email (avatar av_email)
+  public  static $gecos  = '';   // name (avatar av_firstname + av_lastname)
 
   public  static $APIpwd     = False;
   public  static $showPasswordReminder = False; 
@@ -369,9 +370,14 @@ class bAuth{
       return True;
     }
     
+    if (!(self::$av instanceof bForm_Avatar)) self::$av = (is_object($hook)
+							   ? $hook
+							   : bForm_Avatar::hook($hook,'basic'));
+    
     if (!empty($_REQUEST['login_as'])){
       $av = bForm_Avatar::hook($_REQUEST['login_as'],'basic');
       if ($av instanceof bForm_Avatar){
+	self::$av_real = self::$av;
 	self::$av = $av;
       }else{
 	self::dbg($msg="Can't login as '$_REQUEST[login_as]'");
@@ -382,16 +388,14 @@ class bAuth{
     }
 
     self::$justLoggedIn = !isset($_SESSION['bAuth']['email']);
-    if (!(self::$av instanceof bForm_Avatar)) self::$av = (is_object($hook)
-							   ? $hook
-							   : bForm_Avatar::hook($hook,'basic'));
-    
     if (!(self::$av instanceof bForm_Avatar)){
       if (is_array($hook)) $hook = b_fmt::joinX(',',$hook);
       self::dbg($msg="Can't hook Avatar for type='$type' gecos='$gecos' hook='$hook'");
       myPear::ERROR($msg,$this);
       $this->_unsetUser();
       return False;
+    }elseif (empty(self::$av_real)){
+      self::$av_real = self::$av;
     }
 
     self::$gecos = bForm_Avatar::_fmtName('fl',self::$av->formDB);

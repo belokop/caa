@@ -10,14 +10,14 @@ define('VM_VERSION','5.78');
 // transition problems...
 //
 define('modal_sendmail_dialog',cnf_dev||cnf_demo);
-define('send_automatically_infoMail_to_registrants',cnf_dev);
+define('send_automatically_infoMail_to_registrants',cnf_dev||cnf_demo);
 // Office space distribution
 define('distribute_offices',cnf_dev);
 // Final welcome mail settings
 define('send_finalWelcomeEmail_to_registrants',cnf_dev||cnf_demo);
 define('include_personalPage_in_finalWelcomeEmail', send_finalWelcomeEmail_to_registrants && cnf_dev||cnf_demo);
 define('include_accommodation_in_finalWelcomeEmail',send_finalWelcomeEmail_to_registrants && cnf_dev||cnf_demo);
-define('include_payForms_in_finalWelcomeEmail', False); //     send_finalWelcomeEmail_to_registrants && cnf_dev);
+define('include_payForms_in_finalWelcomeEmail', send_finalWelcomeEmail_to_registrants);
 define('send_denialEmail_to_registrants',cnf_dev||cnf_demo); 
 define('see_mails_exchange_with_attenders',(send_automatically_infoMail_to_registrants ||
 					    send_finalWelcomeEmail_to_registrants ||
