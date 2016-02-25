@@ -1649,7 +1649,7 @@ class b_debug{
       }
       print x('h1',__METHOD__);
       print x('pre',__method__."($txt)");
-      self::var_dump($class,'Second argument');
+      if ($class !== Null) self::var_dump($class,'Second argument');
       if (is_object(bAuth::$av)){
 	print "\n<h2>---__AUTHENTICATION</h2>\n";
 	print bAuth::$av->__toString()."\n";

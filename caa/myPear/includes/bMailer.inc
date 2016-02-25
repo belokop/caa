@@ -86,8 +86,9 @@ if (locateAndInclude(array('Mail',
       }
       
       // Do not remove 'cnf_localhost'...
-      $realTO_massaged = (cnf_localhost || cnf_dev || cnf_demo);
-      $realTO = ($realTO_massaged ? cnf_demo_email : $to);
+      $realTO = (cnf_localhost || cnf_dev || cnf_demo
+		 ? cnf_demo_email 
+		 : $to);
       $semi_rand = md5(time());
       $charset   = 'iso-8859-1';
       $charset   = 'utf8';

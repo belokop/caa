@@ -26,7 +26,6 @@ class bList_vm_reimbursementRates extends bList_vm{
   protected $agenda  = Null;
   public    $default_source = 'Nordita';
   private   $e_id = Null;
-  public    $vcb_code = Null;
 
   /*
    * The class parent might be either Event or Organization
@@ -83,7 +82,7 @@ class bList_vm_reimbursementRates extends bList_vm{
       // (the budget code might be missing for the "out of scope" events or when it was not yet assigned)
       //
       if (!$this->e->budgetSource()->get_budgetSource()){
-	myPear::ERROR("No budget for the event!");
+	myPear::ERROR("!! No budget for \"".$this->e->name()."\"");
       }else{
 	foreach(bList::getListInstance(myOrg_ID,get_class($this))->getMembers() as $lm_id=>$r){
 	  if (in_array($r['lm_value'],array(VISIT_TYPE_COLLABORATION,

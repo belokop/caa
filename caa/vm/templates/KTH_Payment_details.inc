@@ -1,10 +1,10 @@
 <?php
 locateAndInclude('pdf_form');
-function Payment_details(){
-  return Betalningsuppgifter();
+function KTH_Payment_details(){
+  return KTH_Betalningsuppgifter();
 }
 
-function Betalningsuppgifter(){
+function KTH_Betalningsuppgifter(){
   return array(
 	       't1' => array('t'=>'Efternamn  Surname',                  'c'=>'pdf_l'),
 	       't2' => array('t'=>'Fornamn  First name',                 'c'=>'pdf_f'),

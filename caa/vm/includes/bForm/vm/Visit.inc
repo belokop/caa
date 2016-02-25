@@ -1290,7 +1290,7 @@ class bForm_vm_Visit extends bForm_vm {
 
     // Show the contact info first
     if ($this->av->isOwner()){
-      if (is_object($this->exp) && $this->exp->getBlanks('button')) $this->exp->getBlanks('message');
+      if (is_object($this->exp) && $this->exp->getBlanketts('button')) $this->exp->getBlanketts('message');
     }else{
       $this->av->avInfoBlock();
     }

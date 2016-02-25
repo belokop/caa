@@ -187,7 +187,13 @@ class bMailer_vm extends bMailer{
     if (!($e instanceof bForm_vm_Event)) $e = myPear::getInstance('bForm_vm_Event',$e);
     
     // Guess the visit if not given explicitly
-    if (empty($v)) $v = new bForm_vm_Visit($e->getVisit_ID($av->ID));
+    if (empty($v)){
+      if (!($v_id = $e->getVisit_ID($av->ID))){
+	myPear::WARNING($av->fmtName('fl').' is not yet registered for "'.$e->name().'"<br>No mail sent');
+	return;
+      }
+      $v = new bForm_vm_Visit($v_id);
+    }
 
     // Is the mail should be sent once only?
     // Don't send it if it is too late...
@@ -394,6 +400,10 @@ $subject by $endorser.
     // Get visit class    
     if ($v_id instanceof bForm_vm_Visit) $this->visit = $v_id;
     else                                 $this->visit = myPear::getInstance('bForm_vm_Visit',$v_id);
+    if (!($this->visit  instanceof bForm_vm_Visit)){
+      myPear::WARNING_T("??? Wrong argument function m_registrant_info(v_id=$v_id)");
+      return;
+    }
 
     // Sanity, don't be too verbose
     if($this->visit->getPolicy(VM_V_denialMailSent))  $this->visit->setPolicy(VM_V_infoMailSent,1);

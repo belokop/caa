@@ -63,7 +63,7 @@ class bForm_vm_Expenses extends bForm_vm{
   function __construct($id, $mode='RO') {
     bTiming()->cpu(__FUNCTION__);
     parent::__construct($id, $mode);
-    if (@$_GET['blanks_once'] === 'yes') $this->getBlanks('message');
+    if (@$_GET['blanks_once'] === 'yes') $this->getBlanketts('message');
     bTiming()->cpu();
   }
 
@@ -386,7 +386,7 @@ class bForm_vm_Expenses extends bForm_vm{
    * Get the pre-filled PDF blanks for the payments and show the download button
    */ 
   private $blanks = array();
-  function getBlanks($what='message'){
+  function getBlanketts($what='message'){
     $reply = array();
 
     switch($what){
@@ -514,7 +514,7 @@ class bForm_vm_Expenses extends bForm_vm{
       $dialog['exp_owner_avid'] = array('textHidden');
     }
     
-    if ($this->getBlanks('button'))  $this->getBlanks('message');
+    if ($this->getBlanketts('button'))  $this->getBlanketts('message');
     $this->textHidden('exp_vid',$this->visit->ID);
 
     // Show the dialog
@@ -715,7 +715,7 @@ class bForm_vm_Expenses extends bForm_vm{
       }
       return pdf_form::fill($fdf,vm_root."templates/$template.pdf",$filename);
     }else{
-      myPear::WARNING("Can't find the pdf template for \"$template\"");
+      myPear::ERROR("Can't find the pdf template for \"$template\"");
     }
   }
 }

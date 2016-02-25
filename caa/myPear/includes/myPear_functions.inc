@@ -27,10 +27,10 @@ function bAuth(){
       
     // set the developer email address, to which ALL the emails should be sent when running in the "cnf_dev/cnf_demo" mode
     if (!defined('cnf_demo_email')){
-      define('cnf_demo_email',(cnf_demo && is_object(bAuth::$av) && !bAuth::weak_authentication()
+      define('cnf_demo_email',(cnf_demo && is_object(bAuth::$av)
 			       ? bAuth::$av->getEmail()
-			       : cnf_test_email));
-      if (cnf_demo || cnf_dev) myPear::MESSAGE_once('',"All the Emails are redirected to '".cnf_demo_email."'");
+			       : cnf_dev_email));
+      if (cnf_demo || cnf_dev) myPear::MESSAGE_forced('',"All the Emails are redirected to '".cnf_demo_email."'");
     }
     
     // Create the first Avatar for the empty database
@@ -440,7 +440,7 @@ function myPear_taskManager(){
 }
 
 /*
- * Start brackets
+ * Brackets
  */
 function x($tag, $text=''){
   if     ($text === Null) return 'Null';

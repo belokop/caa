@@ -1,9 +1,12 @@
 <?php
 // myPear module 
-$releaseDate = '2016-01-23';
+$releaseDate = '2016-02-25';
 define('myPear_VERSION','5.120');
 define('myPear_MODULE', 'myPear');
 define('myPear_DATE',    $releaseDate);
+
+define('cnf_dev_email','yb@nordita.org');
+define('cnf_test_email','test@nordita.org');
 
 ///
 // Avoid problems with the locales,
@@ -38,7 +41,6 @@ $GLOBALS['imapServers'] = array('kth.se'     => array('imap'=>array('ssl://webma
 				'mbox.su.se' => array('imap'=>array('ssl://mbox.su.se','mbox.su.se'),
 						      'port'=>993,
 						      'alias'=>array('su.se','nordita.org','physto.se','albanova.se','fysik.su.se')));
-define('cnf_test_email','test@nordita.org');
 
 //
 // myPear recognizers 3 levels of the software robustness:
@@ -49,13 +51,14 @@ define('cnf_test_email','test@nordita.org');
 //              - implicitly, True if the http server is localhost
 //           When myPear is in "cnf_dev" mode:
 //              - All php errors/warnings/notices are reported
-//              - All e-mails are redirected to the developer e-mail address, defined by "cnf_demo_email"
+//              - All e-mails are redirected to the developer e-mail address, defined by "cnf_dev_email"
 //              - Debug printout of the critical algorithms is ON
 //              - The user passwords are (almost) ignored, so the developer can login as any user
 //  * "cnf_demo" demo / test area
 //           Activated either
 //              - explicitly by setting $_GET[demo]=1 (or "&demo=1" in the URL)
 //              - implicitly if the http server name contains 'test'
+//              - All e-mails are redirected to the tester e-mail address, defined by "cnf_demo_email"
 //           When myPear is in "cnf_dev" mode:
 //              - All e-mails are redirected to the person logged-in
 //  * production area

@@ -9,11 +9,11 @@ locateAndInclude('pdf_form');
 /*
  * KTH "Application & decision re Travel Scholarship, granted by KTH ́s Schools"
  */
-function Application_re_Travel_Scholarship(){
-  return scholarship();
+function KTH_Application_re_Travel_Scholarship(){
+  return KTH_scholarship();
 }
 
-function scholarship(){
+function KTH_scholarship(){
   return array(
 	       't01' => array('t'=>'Text1',      'c'=>'',                               'x'=>'File no'),
 	       't02' => array('t'=>'Text2',      'd'=>$GLOBALS['blank_data']['dossier'],'x'=>'Doss no'),

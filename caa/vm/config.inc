@@ -2,7 +2,7 @@
 /**
  * Visitors Manager (VM) configuration file
  */
-$releaseDate = '2016-01-23';
+$releaseDate = '2016-02-25';
 define('VM_MODULE'   , 'vm');
 define('VM_VERSION','5.78');
 
@@ -12,7 +12,7 @@ define('VM_VERSION','5.78');
 define('modal_sendmail_dialog',cnf_dev||cnf_demo);
 define('send_automatically_infoMail_to_registrants',cnf_dev);
 // Office space distribution
-define('distribute_offices',cnf_def);
+define('distribute_offices',cnf_dev);
 // Final welcome mail settings
 define('send_finalWelcomeEmail_to_registrants',cnf_dev||cnf_demo);
 define('include_personalPage_in_finalWelcomeEmail', send_finalWelcomeEmail_to_registrants && cnf_dev||cnf_demo);
@@ -276,7 +276,7 @@ b_reg::add_module(VM_MODULE,
 									     'dd'=>'rate'),
 					 'bList_vm_projects'         =>array('p'=>'bList',
 									     'd'=>'Financial Projects',
-									     'dd'=>'VCB code'),
+									     'dd'=>'project code'),
 					 'bList_vm_budgetSource'     =>array('p'=>'bList',
 									     'd'=>'Budget source'),
 					 'bList_vm_reimbursementRates'=>array('p'=>'bList',
@@ -327,9 +327,7 @@ class VM extends myPear{
    * Which forms (blankets) to send to the Visitors in the welcome mail
    * The forms are kept in the /templates directory
    */
-  static $forms2send  = array('Payment_details',
-			      'Application_re_Travel_Scholarship',
-			      );
+  static $forms2send  = array();
 
   /*
    * Define default travel expenses in the default currency by zones
@@ -554,7 +552,7 @@ class VM extends myPear{
    * Instantiate the Build-in accommodation objects
    */
   static function start_HUT_BI(){
-    if (!is_object(VM::$hut_bi)){
+    if (!is_object(self::$hut_bi)){
       foreach(array(// "the build-in hut" 
 		    self::$hut_bi  =>array('class' =>'bForm_vm_Hut',
 					   'key'   =>'hut_code',
@@ -672,19 +670,19 @@ class VM extends myPear{
     bTiming()->cpu(__FUNCTION__);
     locateAndInclude('bList_vm_agendaEvents');
     self::e_ID();
-    if ($e === Null) $e = VM::$e;
+    if ($e === Null) $e = self::$e;
     $reply = (bool)(is_object($e) && bList_vm_agendaEvents::eventOutOfScope($e->getValue('e_code')));
     bTiming()->cpu();
     return $reply;
   }
 
   static function isArchived($e=Null){
-    if ($e === Null)  $e = VM::$e;
+    if ($e === Null)  $e = self::$e;
     return (bool)(is_object($e) && $e->isArchived());
   }
 
   static function isEventEndorsed($e=Null){
-    if (is_null($e)) $e = VM::$e;
+    if (is_null($e)) $e = self::$e;
     return (is_object($e) && $e->isEventEndorsed());
   }
 
@@ -712,11 +710,11 @@ class VM extends myPear{
       
     case 'setup_SE':
       $reply = (VM_booker_here || VM_organizer_here);
-      if (VM::isArchived())       $reply = False;
+      if (self::isArchived())       $reply = False;
       break;
       
     case 'book_ah': 
-      if (!($reply = (VM_booker_here || (VM_organizer_here && is_object(VM::$e) && bAuth::$av->isOrganizer(VM::$e->ID))))){
+      if (!($reply = (VM_booker_here || (VM_organizer_here && is_object(self::$e) && bAuth::$av->isOrganizer(self::$e->ID))))){
 	$reply = (is_object($visit=$argv) && $visit->isWritable());
       }
       break;
@@ -730,8 +728,8 @@ class VM extends myPear{
       break;
       
     case 'send_info_mail':  
-      if (VM::isArchived())$reply = False;
-      else                 $reply = (!VM::isEventEndorsed() && (VM_observer_here || VM_organizer_here));
+      if (self::isArchived())$reply = False;
+      else                 $reply = (!self::isEventEndorsed() && (VM_observer_here || VM_organizer_here));
       break;
       
       case 'send_finalWelcomeEmail':  
@@ -740,8 +738,8 @@ class VM extends myPear{
 	break;
 	
     case 'endorse_event':
-      if (VM::isArchived()) $reply = False;
-      else                  $reply = bAuth::$av->isEndorser(VISIT_TYPE_PROGRAM);
+      if (self::isArchived()) $reply = False;
+      else                    $reply = bAuth::$av->isEndorser(VISIT_TYPE_PROGRAM);
       break;
       
     case 'approve_guest_invitation':
@@ -754,7 +752,7 @@ class VM extends myPear{
       break;
       
     case 'approve_registrant_application':
-      $reply = (VM_organizer_here || VM_manager_here) && !VM::isArchived();
+      $reply = (VM_organizer_here || VM_manager_here) && !self::isArchived();
       break;
       
     case 'edit_visit':
@@ -764,9 +762,9 @@ class VM extends myPear{
       }
       $e = Null;
     case 'setup_reimbursement':
-      if (!isset($e)) $e = VM::$e;
-      $reply = (!VM::isEventEndorsed($e) && ( ((int)@$argv['v_eid'] && VM_organizer_here) ||
-					      (@$argv['v_host_avid'] == bAuth::$av->ID)) );
+      if (!isset($e)) $e = self::$e;
+      $reply = (!self::isEventEndorsed($e) && ( ((int)@$argv['v_eid'] && VM_organizer_here) ||
+			   		      (@$argv['v_host_avid'] == bAuth::$av->ID)) );
       break;
       
     default:
@@ -793,6 +791,12 @@ function start_VM(){
     bTiming()->cpu(__FUNCTION__);
     VM::start();
     VM::_MENU()->start();
+    // From 2016 we are administrated by SU :-/
+    if (is_object(VM::$e)) VM::$forms2send = (VM::$e->getValue('e_start') < mktime(12,0,0,1,1,2016)
+					      ? array('KTH_Payment_details',
+						      'KTH_Application_re_Travel_Scholarship')
+					      : array('SU_9009',
+						      'SU_Travel_reimbursement_form'));
     VM::$isReady = True;
     bTiming()->cpu();
     b_debug::xxx(exiting);

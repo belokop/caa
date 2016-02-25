@@ -142,6 +142,7 @@ class bForm_vm_Event extends bForm_vm {
   }
 
   function getVisit_ID($av_id){
+    $reply = Null;
     $q = myPear_db()->query("SELECT v_id FROM abs_visits WHERE v_avid = '$av_id' AND v_eid = ".$this->ID);
     while ($r = myPear_db()->next_record($q)) $reply = $r['v_id'];
     return $reply;

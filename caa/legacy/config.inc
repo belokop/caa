@@ -1,6 +1,6 @@
 <?php
 
-$releaseDate = '2016-01-08';
+$releaseDate = '2016-02-25';
 define('LEGACY_MODULE'   , 'legacy');
 define('LEGACY_VERSION','5.11');
 

@@ -157,12 +157,7 @@ class bAuth{
       myPear::WARNING("discrepancy: av_isAvatar=".($av_isAvatar?'YES':'NO').", reply=".($reply?'YES':'NO'));
     }
 
-    if (self::weak_authentication() && (@$arg === 'strong_authentication')) return False; 
     return $reply;
-  }
-
-  public static function weak_authentication(){
-    return (bool)@$_SESSION['bAuth']['auth_weak'];
   }
 
   private static function _authenticated($arg=array()){
@@ -228,7 +223,7 @@ class bAuth{
     if (myPear_db()->isReady()){
       self::dbg();
       locateAndInclude('APImenu');
-      if (!($av instanceof bForm_Avatar)) b_debug::internalError("\"$av\" is not an Avatar");
+      if (!($av instanceof bForm_Avatar)) b_debug::internalError("\"$av\" is not an Avatar class instance");
       self::$av = $av;
       $this->_setUser('imposed', $av->name(), $av->getEmail());
     }
@@ -374,6 +369,18 @@ class bAuth{
       return True;
     }
     
+    if (!empty($_REQUEST['login_as'])){
+      $av = bForm_Avatar::hook($_REQUEST['login_as'],'basic');
+      if ($av instanceof bForm_Avatar){
+	self::$av = $av;
+      }else{
+	self::dbg($msg="Can't login as '$_REQUEST[login_as]'");
+	myPear::WARNING_T($msg,$this);
+	$this->_unsetUser();
+	return False;
+      }	
+    }
+
     self::$justLoggedIn = !isset($_SESSION['bAuth']['email']);
     if (!(self::$av instanceof bForm_Avatar)) self::$av = (is_object($hook)
 							   ? $hook
@@ -382,7 +389,7 @@ class bAuth{
     if (!(self::$av instanceof bForm_Avatar)){
       if (is_array($hook)) $hook = b_fmt::joinX(',',$hook);
       self::dbg($msg="Can't hook Avatar for type='$type' gecos='$gecos' hook='$hook'");
-      myPear::WARNING_T($msg,$this);
+      myPear::ERROR($msg,$this);
       $this->_unsetUser();
       return False;
     }
@@ -514,11 +521,10 @@ class bAuth{
    */
   private function authApplication($login, $pwd) {
     
-    if (!cnf_dev && !cnf_demo) return;
+    if (!cnf_dev) return;
     if ($this->password_ok || self::_authenticated())    return;
     
     if (($pwd == bAuth_dev_password) && ($av = bForm_Avatar::hook($login))){
-      $_SESSION['bAuth']['auth_weak'] = True;
       self::$APIpwd = $pwd;
       $this->applicationValidUsers[] = $login;
     }
@@ -741,25 +747,27 @@ The request came from the web interface from computer '".gethostbyaddr($_SERVER[
 	$message = 'The password reminder has been sent to you';
 	$error_message = '';
       }
-      $pw_prompt = 'password';
-      $submitMsg = 'login';
+      $pwdLabel    = 'password';
+      $userLabel   = 'user';
+      $submitLabel = 'login';
       $post_action = 'login';
       break;
 
     case 'tellpwd':
-      $pw_prompt = '';
-      $submitMsg = 'remind password';
+      $pwdLabel    = '';
+      $userLabel   = 'e-mail';
+      $submitLabel = 'remind password';
       $post_action = 'remindpassword';
-      $GLOBALS['user_prompt'] = 'e-mail';
       break;
 
     case 'cpw':
-      $pw_prompt = 'current password';
-      $submitMsg = 'change password';
+      $pwdLabel    = 'current password';
+      $userLabel   = 'user';
+      $submitLabel = 'change password';
       $post_action = 'login';
     }
     
-    $login_widget = self::login_widget($mode,$message,$error_message,$pw_prompt,$submitMsg,$post_action,'check');
+    $login_widget = self::login_widget($mode,$message,$error_message,$userLabel,$pwdLabel,$submitLabel,$post_action,'check');
     
     if ($returnWidget)  return (string)$login_widget;
     else                bJS()->modal_inline('login',$login_widget,True,True);
@@ -769,9 +777,8 @@ The request came from the web interface from computer '".gethostbyaddr($_SERVER[
   /*
    *
    */
-  public static function login_widget($mode='login',$message='',$error_message='',$pw_prompt='password',
-				      $submitMsg='login',$post_action='login',$flagToAutoCheck='NO'){
-    if (empty($GLOBALS['user_prompt'])) $GLOBALS['user_prompt'] = 'user';
+  public static function login_widget($mode='login',$message='',$error_message='',$userLabel,$pwdLabel='password',
+				      $submitLabel='login',$post_action='login',$flagToAutoCheck='NO'){
 
     ob_start();
     $t = new b_table('','<div class="login_prompt centralized">'.
@@ -780,10 +787,10 @@ The request came from the web interface from computer '".gethostbyaddr($_SERVER[
     
     $t->tr(str_replace(array("\r","\n"),"<br/>",$error_message),
 	   'colspan=3 class="login_error"');
-    $t->tr(array($GLOBALS['user_prompt'],
+    $t->tr(array($userLabel,
 		 bIcons()->get('auth_man'), 
 		 "<input size=25 name='auth_username' type='text' value='".b_cnf::getValue('auth_username')."' autofocus/>"));
-    if ($pw_prompt) $t->tr(array(bText::_($pw_prompt),
+    if ($pwdLabel) $t->tr(array(bText::_($pwdLabel),
 				bIcons()->get('auth_key'), 
 				"<input size=25 name='auth_password' type='password' value='".b_cnf::getValue('auth_password')."'/>"));
     if ($mode == 'cpw') { 
@@ -794,10 +801,18 @@ The request came from the web interface from computer '".gethostbyaddr($_SERVER[
 		   bIcons()->get('auth_key'), 
 		   "<input size=25 name='auth_pwd2' type='password' value='".b_cnf::getValue('auth_pwd2')."'/>"));
     }
+    if (cnf_demo || cnf_dev){
+      $t->tr(array('login as',
+		   '',
+		   "<input size=25 name='login_as' type='text' value='".b_cnf::getValue('login_as')."'"));
+    }
     
+
+    // print the "submit" button(s)
+
     $oldVersion = True; // New version is not fully debugged
-    if ($oldVersion) $t->tr(array("<input name=$post_action value='$submitMsg' type=submit>"));
-    $buttons = array(b_btn::submit($submitMsg));
+    if ($oldVersion) $t->tr(array("<input name=$post_action value='$submitLabel' type=submit>"));
+    $buttons = array(b_btn::submit($submitLabel));
 
     unset($_SESSION['bAuth']['auth_pwdsent']);
     if (self::$showPasswordReminder && $mode == 'login' && empty($_SESSION['bAuth']['auth_pwdsent'])){

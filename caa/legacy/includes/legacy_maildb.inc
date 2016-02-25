@@ -5,8 +5,7 @@
  * Obviously myPear does not keep those, since it is very much customer-oriented,
  * we leave this for the "plug-ins" like this one.
  */
-define('maildb_RO',!bAuth::authenticated('strong_authentication') || !in_array(bAuth::$av->ID,array(4710,4722)));
-// define('maildb_RO',False);
+define('maildb_RO',!bAuth::authenticated() || cnf_demo || cnf_dev);
 
 class legacy_maildb{
   

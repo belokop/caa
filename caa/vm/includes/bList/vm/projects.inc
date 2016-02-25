@@ -106,7 +106,8 @@ class bList_vm_projects extends bList_vm{
     $this->f->checkBox('lm_option');
     $this->f->textField('lm_key');
     $this->f->textField('lm_value');
-    if ((int)$this->formDB_member['lm_value'] || strstr($this->formDB_member['lm_value'],'VCB')){
+    $lm_value = @$this->formDB_member['lm_value'];
+    if ((int)$lm_value || strstr($lm_value,'VCB')){
       $this->f->defineVariable('event','lm_status');
       $this->f->selectMenu('lm_status',$this->getEvents());
     }
