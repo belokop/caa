@@ -111,7 +111,7 @@ class bMailer_vm extends bMailer{
    */
   private $info = array();
   public function cronjob_remind_organizers(){
-    $verbose = cnf_dev;    
+    $verbose = cnf_dev || VM_observer_here;    
     $this->dbg(starting); 
    
     // Do it ones per session...

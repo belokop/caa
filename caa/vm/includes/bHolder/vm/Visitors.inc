@@ -23,7 +23,7 @@ define('ICON_mail_sent_y',  bIcons()->get(array('d'=>'The mail was sent',
 locateAndInclude('bHolder_vm');
 class bHolder_vm_Visitors extends bHolder_vm{
   
-  var $debug = False;
+  var $debug = True;
   var $autoOpenHeader = False;
   
   var $photosPerRow =   5;   // number of photos per printing row
@@ -219,10 +219,10 @@ class bHolder_vm_Visitors extends bHolder_vm{
       if (!VM::$e->attenders()) myPear::MESSAGE_once(x('strong',"No applications yet for <em>".VM::$e->name()."</em>"));
 
       // Say (only once per session) when the event starts
-      if (cnf_dev) if ($e_start > time() && $e_start < time() + 365*24*3600){
-	  myPear::MESSAGE_once(x('strong',b_time::delta(time(),$e_start).' before the event starts'));
-	  if ($e_reg_end > time()) myPear::MESSAGE_once(x('strong',b_time::delta(time(),$e_reg_end).' before the applications deadline'));
-	}
+      if ($e_start > time() && $e_start < time() + 365*24*3600){
+	myPear::MESSAGE_once(x('strong',b_time::delta(time(),$e_start).' before the event starts'));
+	if ($e_reg_end > time()) myPear::MESSAGE_once(x('strong',b_time::delta(time(),$e_reg_end).' before the applications deadline'));
+      }
       if (VM::outOfScope())	myPear::MESSAGE("This event is out of VM scope");
     }else{
       $this->bList_parent = myOrg_ID;
@@ -997,10 +997,12 @@ class bHolder_vm_Visitors extends bHolder_vm{
       //
       b_debug::print_r($this->mails_which_are_not_yet_sent);
       if ((!empty($this->mails_which_are_not_yet_sent[VM_V_welcomeMailSent])  ||
-	   !empty($this->mails_which_are_not_yet_sent[VM_V_denialMailSent])) &&
-	  ($e_start > time()) && 
-	  VM::hasRightTo('send_finalWelcomeEmail') && 
-	  VM::isEventEndorsed()){ // && !empty($this->collected_highlights) 
+	   !empty($this->mails_which_are_not_yet_sent[VM_V_denialMailSent]))
+	  && ($e_start > time()) 
+	  && VM::hasRightTo('send_finalWelcomeEmail') 
+	  && VM::isEventEndorsed()
+	  // && !empty($this->collected_highlights)
+	  ){ 
 	$to_show[] = b_btn::big_button('Send welcome/denial Emails to the attenders',array('mail2all_once'=>1,'resetcache_once'=>1));
       }
       break;
@@ -1534,7 +1536,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
   private function get_sendMail_buttons($policy,$id,$title,$vm_f){
 
     // Count the mails which are still in a queue
-    if (!($already_sent = bForm_vm_Visit::_getPolicy($policy,$this->rec,True))){
+    if (!($already_sent = (bool)bForm_vm_Visit::_getPolicy($policy,$this->rec,True))){
       if (empty($this->mails_which_are_not_yet_sent[$policy])) $this->mails_which_are_not_yet_sent[$policy] = 0; 
       $this->mails_which_are_not_yet_sent[$policy]++;
     }
@@ -1562,7 +1564,8 @@ class bHolder_vm_Visitors extends bHolder_vm{
 	$rec["${vm_f}_2"] = $this->sendMail_btn($id,$title,($policy != VM_V_infoMailSent),$already_sent);
       }
     }
-    $this->dbg(join(', ',array_keys($rec)));
+    $this->dbg(join(', ',array_keys($rec)).', already_sent='.var_export($already_sent,True));
+    // b_debug::var_dump($rec);
     if (!empty($rec)) $this->rec = array_merge($rec,$this->rec);
   }      
 
@@ -1582,11 +1585,12 @@ class bHolder_vm_Visitors extends bHolder_vm{
 		  'preview_once'   =>$preview_only,
 		  );
     $reply = (modal_sendmail_dialog
-	      ? bJS()->modal_ajax(b_url::same($args),
-				  bIcons()->get($already_sent?'i-mail-open':'i-mail-send'))
+	      ? bJS()->modal_iframe(b_url::same($args),
+				    bIcons()->get(array('d'=>$text,
+							'i'=>($already_sent?'i-mail-open':'i-mail-send'))))
 	      : bIcons()->getButton(array('d'=>$text,
-					  'l'=>b_url::same($args),
-					  'i'=>($already_sent?'i-mail-open':'i-mail-send')))
+					  'i'=>($already_sent?'i-mail-open':'i-mail-send'),
+					  'l'=>b_url::same($args)))
 	      );
     return $reply;
   }

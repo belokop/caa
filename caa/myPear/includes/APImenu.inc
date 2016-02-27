@@ -10,6 +10,7 @@ locateAndInclude('bUnit');
 foreach(array('tab__empty'    =>'emptytab',
 	      'tab__bText'    =>'Dictionary',
 	      'tab__syslog'   =>'Syslog',
+	      'tab__tasks'    =>'Task Manager',
 	      'tab__login'    =>'Login',
 	      'tab__search'   =>'Search',
 	      'tab__update'   =>'Check for updates',
@@ -82,6 +83,7 @@ class APImenu{
 			   tab__units  =>array(),
 			   tab__lists  =>array(),
 			   tab__syslog =>array(),
+			   tab__tasks  =>array(),
 			   tab__fixes  => array(tab__fixes_bList,
 						tab__cleanup),
 			   );
@@ -137,6 +139,7 @@ class APImenu{
     case tab__configure:
     case tab__fixes:
     case tab__fixes_bList:
+    case tab__tasks:
       $reply = superUser_here;
       break;
 
@@ -496,6 +499,11 @@ class APImenu{
       $m->executor();
       break;
       
+    case tab__tasks:
+      $common = True;
+      myPear_taskManager()->info();
+      break;
+
       //syslog
     case tab__syslog:
       $common = True;

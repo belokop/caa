@@ -608,7 +608,7 @@ class bForm_Avatar_ea extends bForm_Avatar{
 	$this->avInfoBlock();
 	$this->studyBlock();
 	$this->officeBlock();
-	$this->addressBlock();
+	$this->residentshipBlock();
 	
 	// Hook the "legacy software" block if available
 	if ($this->connect_legacy_maildb()){

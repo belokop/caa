@@ -1294,7 +1294,7 @@ class bForm_vm_Visit extends bForm_vm {
     }else{
       $this->av->avInfoBlock();
     }
-    if ($this->need_av_residentship) $this->av->addressBlock();
+    if ($this->need_av_residentship) $this->av->residentshipBlock();
 
     /*
      * This dialog starts after the visit type is selected,

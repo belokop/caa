@@ -132,7 +132,7 @@ class bForm_Avatar_jam extends bForm_Avatar{
 			     ));
     $this->avInfoBlock();
     $this->studyBlock();
-    $this->addressBlock();
+    $this->residentshipBlock();
   }
 
   /*

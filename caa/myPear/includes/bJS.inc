@@ -295,7 +295,7 @@ $(document).ready(function() {
   }
 
   /**
-   * As far as i understand the ajax calls works (or might be used for)  only for  local (i.e. the "same" URL as the referrer) pages, 
+   * As far as i understand the ajax call works only for (or might be used for) local (i.e. the "same" URL as the referrer) pages, 
    * i.e. I can't show yuotube.com with ajax - just does not load the page, issues ERROR
    */
   function modal_ajax($url, $title='',$description=Null, $galery=False){

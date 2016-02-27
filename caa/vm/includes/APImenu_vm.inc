@@ -113,6 +113,7 @@ class APImenu_vm extends APImenu{
 
 			    tab_vm_adm               => +700, // admin block
 			    tab__syslog              => -785,
+			    tab__tasks               => -784,
 			    tab_vm_adm_projects      => -783,
 			    tab_vm_adm_unitOrganizers=> -780,
 			    tab_vm_adm_sync          => +730,
@@ -172,7 +173,7 @@ class APImenu_vm extends APImenu{
 						       tab_vm_adm_sync,tab_vm_ogz_se_setup,tab_vm_org_photos,tab_vm_org_dup),
 			     tab_vm_adm       => array(tab_vm_adm_projects, tab_vm_adm_unitOrganizers,
 						       tab_vm_adm_sync,tab_vm_adm_agendaList,tab__mergeAV, tab__templates,
-						       tab_vm_adm_se_setup,tab_vm_adm_sc_setup,tab__syslog,tab_vm_adm_dup,tab_vm_org_dup,
+						       tab_vm_adm_se_setup,tab_vm_adm_sc_setup,tab__syslog,tab__tasks,tab_vm_adm_dup,tab_vm_org_dup,
 						       tab_vm_ogz_se_setup,
 						       //tab_vm_adm_acl,tab_vm_adm_fixClashes,   // too early...
 						       ),
@@ -332,7 +333,7 @@ class APImenu_vm extends APImenu{
 	
       case tab_vm_end_mails:
 	if (!see_mails_exchange_with_attenders || cnf_dontSendMails_Point){
-	  $reply = cnf_dev;
+	  $reply = False;
 	  break;
 	}
       case tab_vm_end:
@@ -341,11 +342,11 @@ class APImenu_vm extends APImenu{
       case tab_vm_end_vmatrix:
       case tab_vm_end_amatrix:
       case tab_vm_end_omatrix:
-	        $reply = 
-		  is_object(bAuth::$av) &&
-		  !myPear::is_empty(bAuth::$av->eventsToEndorse()) &&
+	$reply = 
+	  is_object(bAuth::$av) &&
+	  !myPear::is_empty(bAuth::$av->eventsToEndorse()) &&
        	  bAuth::$av->isEndorser(VISIT_TYPE_PROGRAM);
-		//$reply = False;
+	//$reply = False;
 	break;
 	
       case tab_vm_vis_mails:
@@ -500,7 +501,7 @@ class APImenu_vm extends APImenu{
       
     case tab_vm_reg:
       $this->eventSelector();
-      $v = new bForm_vm_Visit('v_avid='.bAuth::$av->ID.' AND v_eid='.VM::$e->ID);
+      $v = new bForm_vm_Visit('v_avid='.bAuth::$av->ID.' AND v_eid="'.VM::$e->ID.'"');
       $v->getForm();
       break;
       

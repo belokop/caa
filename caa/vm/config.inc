@@ -2,14 +2,14 @@
 /**
  * Visitors Manager (VM) configuration file
  */
-$releaseDate = '2016-02-25';
+$releaseDate = '2016-02-27';
 define('VM_MODULE'   , 'vm');
 define('VM_VERSION','5.78');
 
 //
 // transition problems...
 //
-define('modal_sendmail_dialog',cnf_dev||cnf_demo);
+define('modal_sendmail_dialog',cnf_dev||cnf_demo); // Doesn't want to work...
 define('send_automatically_infoMail_to_registrants',cnf_dev||cnf_demo);
 // Office space distribution
 define('distribute_offices',cnf_dev);

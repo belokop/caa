@@ -24,10 +24,9 @@ class bAuth{
   public  static $isReady = False;
   private static $justLoggedIn = False;
 
-  public  static $av_real= Null; // Avatar class object for the authenticated person    
+  public  static $av_authenticated= Null; // Avatar class object for the authenticated person    
   public  static $av     = Null; // Avatar class object for the "login as" person    
   public  static $email  = '';   // email (avatar av_email)
-  public  static $gecos  = '';   // name (avatar av_firstname + av_lastname)
 
   public  static $APIpwd     = False;
   public  static $showPasswordReminder = False; 
@@ -107,18 +106,15 @@ class bAuth{
   /*
    * Save the current user Email address in _SESSION
    */
-  public static function authenticated($arg=array()){
+  public static function authenticated(){
     if(!self::$isReady) return False;
 
     global $user;
     static $reply = Null;
     if ($reply === Null){
-      $reply = (self::$av instanceof bForm_Avatar
-		? True
-		: (bool)self::_authenticated($arg));
-      $reply = (bool)($reply && self::_authenticated($arg));
+      $reply = (bool)self::_authenticated();
       self::dbg($reply);
-
+      
       // Update the identity for local users
       if ($reply && !empty($_SESSION['authenticated_localUser'])) self::$av->setIdentity($_SESSION['authenticated_localUser']);
       unset($_SESSION['authenticated_localUser']);
@@ -147,14 +143,12 @@ class bAuth{
 	  if    (function_exists('user_authenticate_finalize')) user_authenticate_finalize($form);
 	  elseif(function_exists('user_login_finalize'))        user_login_finalize($form);
 	  b_debug::xxx(sprintf("accepted as drupal name='%s' roles='%s'",$user->name,join(',',$user->roles)));
-	  //	  b_debug::var_dump($user,'user');
-	  //	  b_debug::var_dump($form,'form');
 	}
       }
     }
 
     // Sanity
-    if (cnf_dev && $reply && !$av_isAvatar=(self::$av instanceof bForm_Avatar)){
+    if (cnf_dev && $reply && !($av_isAvatar=(self::$av instanceof bForm_Avatar))){
       myPear::WARNING("discrepancy: av_isAvatar=".($av_isAvatar?'YES':'NO').", reply=".($reply?'YES':'NO'));
     }
 
@@ -162,21 +156,28 @@ class bAuth{
   }
 
   private static function _authenticated($arg=array()){
-    if(   @$arg['reset']==='yes')$_SESSION['bAuth'] = array();
-    if($l=@$arg['set'])          $_SESSION['bAuth']['email'] = $l;
-    if ($av_email = @$_SESSION['bAuth']['email']){
-      if (self::$isReady && empty(self::$av)){
-	$av = bForm_Avatar::hook($av_email,'basic');
-	bAuth()->imposeAvatar($av);
-      }
-    }else{
-      $av_email = False;
+
+    $av_email = !empty($_SESSION['bAuth']['email_authenticated']);
+    if(@$arg['reset']==='yes')$_SESSION['bAuth'] = array();
+
+    foreach(array('email_authenticated','email_login_as') as $e){
+      if ($set=@$arg[$e]) $_SESSION['bAuth'][$e] = $set;
+      if (!self::$isReady) continue;
+
+      if ($email = @$_SESSION['bAuth'][$e]) switch($e){
+	case 'email_authenticated':
+	  if (empty(self::$av_authenticated)) self::$av_authenticated = bForm_Avatar::hook($email,'basic');
+	  $av_email = $email;
+	  break;
+	case 'email_login_as':
+	  if (empty(self::$av)) bAuth()->imposeAvatar(bForm_Avatar::hook($email,'basic'));
+	}
     }
-    self::dbg($av_email);
+    
     // Sanity
+    self::dbg($av_email);
     if (!empty($av_email) && !(self::$av instanceof bForm_Avatar) && self::$isReady){
       myPear::WARNING_T('bAuth::$av is not an object'); 
-      // b_debug::internalError('bAuth::$av is not an object'); 
     }
     return $av_email;
   }
@@ -226,19 +227,17 @@ class bAuth{
       locateAndInclude('APImenu');
       if (!($av instanceof bForm_Avatar)) b_debug::internalError("\"$av\" is not an Avatar class instance");
       self::$av = $av;
-      $this->_setUser('imposed', $av->name(), $av->getEmail());
+      $this->_setUser('imposed', $av->getEmail());
     }
   }
   
   /*
    *
    */
-  private $checkPwdOnly = False;
   private $password_ok  = False;
-  public function authenticate($login='',$pwd='',$checkPwdOnly=False) {
+  public function authenticate($login='',$pwd=''){
     
     if (self::_authenticated()) return True;
-    $this->checkPwdOnly = $checkPwdOnly;
     
     if (empty($login)){
       $login = @$_SERVER['PHP_AUTH_USER'];
@@ -304,8 +303,8 @@ class bAuth{
       }
       
       if (isset($drupal_user)) myPear::MESSAGE("logout '$drupal_user'");
-      self::dbg("logout ".self::$gecos,cnf_dev);
-
+      self::dbg("logout ",cnf_dev);
+      
       // Optionally empty the session, keeping the theme & organization
       if ($resetSession)       $this->resetSession();
     }
@@ -320,7 +319,7 @@ class bAuth{
     
     // Unset all of the session variables.
     $_GET = $_SESSION = array();
-    $this->_unsetUser();
+    self::_unsetUser();
     
     // If it's desired to kill the session, also delete the session cookie.
     // Note: This will destroy the session, and not just the session data!
@@ -363,46 +362,46 @@ class bAuth{
    *  - True in case of success
    *  - False if fail (i.e. the user is not known to the local database)
    */
-  private function _setUser($type,$gecos,$hook=array()){
+  private function _setUser($type,$hook=array()){
 
-    if ($this->checkPwdOnly){
-      $this->password_ok  = True;
-      return True;
-    }
-    
     if (!(self::$av instanceof bForm_Avatar)) self::$av = (is_object($hook)
 							   ? $hook
 							   : bForm_Avatar::hook($hook,'basic'));
     
+    // Process request "login as another user with my credentials"
     if (!empty($_REQUEST['login_as'])){
       $av = bForm_Avatar::hook($_REQUEST['login_as'],'basic');
       if ($av instanceof bForm_Avatar){
-	self::$av_real = self::$av;
+	self::$av_authenticated = self::$av;
 	self::$av = $av;
-	self::dbg("authenticated as ".self::$av_real->fmtName('fL'),cnf_dev);
+	self::dbg("authenticated as ".self::$av_authenticated->fmtName('fL'),cnf_dev);
 	self::dbg("login as ".self::$av->fmtName('fL'),cnf_dev);
       }else{
 	self::dbg($msg="Can't login as '$_REQUEST[login_as]'");
-	myPear::WARNING_T($msg,$this);
-	$this->_unsetUser();
+	myPear::WARNING($msg);
+	self::_unsetUser();
 	return False;
       }	
     }
 
-    self::$justLoggedIn = !isset($_SESSION['bAuth']['email']);
+    // Give up if the Avatar can't be hooked
     if (!(self::$av instanceof bForm_Avatar)){
       if (is_array($hook)) $hook = b_fmt::joinX(',',$hook);
-      self::dbg($msg="Can't hook Avatar for type='$type' gecos='$gecos' hook='$hook'");
-      myPear::ERROR($msg,$this);
-      $this->_unsetUser();
+      self::dbg($msg="Can't hook Avatar for type='$type' hook='$hook'");
+      myPear::ERROR($msg);
+      self::_unsetUser();
       return False;
-    }elseif (empty(self::$av_real)){
-      self::$av_real = self::$av;
     }
 
-    self::$gecos = bForm_Avatar::_fmtName('fl',self::$av->formDB);
-    self::_authenticated(array('set' => self::$av->formDB['av_email'])); // SICK, not $av->getEmail() !
-    if (!self::_authenticated()) b_debug::internalError("_setUser without email",$this);
+    // The user is logged in as himself, good...
+    if (empty(self::$av_authenticated)) self::$av_authenticated = self::$av;
+
+    // Save the emails in _SESSION
+    self::$justLoggedIn = empty($_SESSION['bAuth']['email_authenticated']);
+    self::_authenticated(array('email_authenticated' => self::$av_authenticated->getValue('av_email'),
+			       'email_login_as'      => self::$av->getValue('av_email'))); // SICK, not $av->getEmail() !
+
+    if (!self::_authenticated()) b_debug::internalError("_setUser without email");
 
     if (self::$justLoggedIn){
       self::dbg('---------------> login');
@@ -422,12 +421,12 @@ class bAuth{
   }
   
   /*
-   * Reset the options cache, but keep some environment variables, like theme & organization
+   * Reset the options cache, but keep some "permanent" environment variables, like theme & organization
    */
   private function reset_options($action='all'){
     static $env_values = array();
 
-    // Save the vital values
+    // Save the "permanent" values
     if (in_array($action,array('all','get'))){
       foreach(b_cnf::$_GET_to_keep as $key){
 	$env_values[$key] = ($key == 'q'
@@ -436,7 +435,6 @@ class bAuth{
       }
     }
     
-    // Set the values
     if (in_array($action,array('all','set'))){
       $_SESSION[CONST_cnfOptions]  = array();
       foreach($env_values as $k=>$v) b_cnf::set($k,($_GET[$k]=$v));
@@ -445,9 +443,9 @@ class bAuth{
     if (self::$debugIsOn) b_debug::print_r($env_values,'env_values');
   }
     
-  private function _unsetUser(){
+  private static function _unsetUser(){
     self::dbg('REMOVING AUTHENTICATION');
-    if (self::_authenticated()) myPear::WARNING_T("REMOVING AUTHENTICATION av=".self::$av,$this);
+    if (self::_authenticated()) myPear::WARNING_T("REMOVING AUTHENTICATION av=".self::$av);
     self::_authenticated(array('reset'=>'yes'));
   }
 
@@ -498,7 +496,7 @@ class bAuth{
 	if (@$user){
 	  self::dbg(' YES - drupal password accepted');
 	  if (!self::_authenticated()) myPear_logs()->syslog("Accepted drupal password for $login from ".$_SERVER["REMOTE_ADDR"]);
-	  $this->_setUser('drupal', "User $login", $user->mail);
+	  $this->_setUser('drupal', $user->mail);
 	}else{
 	  self::dbg(' NO');
 	}
@@ -511,7 +509,7 @@ class bAuth{
 	$options = array();
 	$response = $auth->authenticate($credentials, $options);
 	if ($response->status === JAUTHENTICATE_STATUS_SUCCESS){
-	  $this->_setUser('joomla',"User $login",$response->email);
+	  $this->_setUser('joomla',$response->email);
 	}
 	break;
 	
@@ -545,7 +543,7 @@ class bAuth{
       if (in_array($login,$this->applicationValidUsers)){
 	self::dbg('YES - '.__function__);
 	myPear_logs()->syslog("Accepted demo password for $login (".$av->fmtName('fl').") from ".$_SERVER["REMOTE_ADDR"]);
-	return $this->_setUser('apps',$login,$av);
+	return $this->_setUser('apps',$av);
       }
     }
     self::dbg($this->password_ok);
@@ -576,7 +574,7 @@ class bAuth{
 	  if (is_object(self::$av)){
 	    $this->password_ok = True;
 	    self::dbg("YES - identity '$login'");
-	    return $this->_setUser('pam_auth',self::$av->name());
+	    return $this->_setUser('pam_auth');
 	  }else{
 	    foreach ($GLOBALS['imapServers'] as $domain=>$s){
 	      foreach(array_merge(array($domain),$s['alias']) as $d){
@@ -585,12 +583,12 @@ class bAuth{
 		  $this->password_ok = True;
 		  self::$av = $av;
 		  self::dbg("YES - $email");
-		  return $this->_setUser('pam_auth',self::$av->name());
+		  return $this->_setUser('pam_auth');
 		}		  
 	      }
 	    }
 	  }
-	  // Create the authenticated local user on the fly
+	  // Create Avatar for the authenticated local user on the fly
 	  if (isset($_SESSION['authenticated_localUser'])){
 	    $account = posix_getpwnam($_SESSION['authenticated_localUser']);
 	    list($name,$lastname) = explode(' ',preg_replace('/,.*/','',$account['gecos']),2);
@@ -599,10 +597,10 @@ class bAuth{
 				      'av_lastname'  => $lastname,
 				      'av_institute' => myOrg_name,
 				      'av_identity'  => $account['name'],
-	      'av_email'     => bForm_Avatar::generate_email($name,$lastname)));
+				      'av_email'     => bForm_Avatar::generate_email($name,$lastname)));
 	    self::dbg("YES - authenticated local stranger");
 	    unset($_SESSION['authenticated_localUser']);
-	    return $this->_setUser('pam_auth',self::$av->name());
+	    return $this->_setUser('pam_auth');
 	  }else{
 	    myPear::WARNING_T("$login is authenticated by ".__METHOD__.", but Avatar is not found. AUTHENTICATION CANCELED");
 	  }
@@ -638,13 +636,12 @@ class bAuth{
 	      self::dbg("YES - $srv",cnf_show_a);
 	      myPear_logs()->syslog("Accepted Net_IMAP for $login@$domain from ".$_SERVER["REMOTE_ADDR"]);
 	      $this->password_ok  = True;
-	      if ($this->checkPwdOnly)		return True;
 	      if (!(self::$av = bForm_Avatar::hook(array('av_identity'=>$login),'basic'))) {
 		foreach(array_merge(array($domain),$s['alias']) as $d){
 		  if (self::$av = bForm_Avatar::hook("$login@$d",'basic')) break;
 		}
 	      }
-	      if (is_object(self::$av)) return $this->_setUser('Net_IMAP',"$login IMAP");
+	      if (is_object(self::$av)) return $this->_setUser('Net_IMAP');
 	    }
 	  }
 	}
@@ -702,7 +699,7 @@ The request came from the web interface from computer '".gethostbyaddr($_SERVER[
     // kill the credentials
     if ($login == self::_authenticated()) {
       self::dbg("destroying credentials for $login");
-      $this->_unsetUser();
+      self::_unsetUser();
     }
     return preg_replace("/$this->pwdchanger:/","",$e); # return the stderr output
   }  

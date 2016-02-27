@@ -1251,7 +1251,7 @@ class bForm_Avatar extends bForm {
     $this->whoAmIBlock();
     $this->contactsBlock();
     $this->studyBlock();
-    $this->addressBlock();
+    $this->residentshipBlock();
   }
   
   protected function needFullInformation(){ 
@@ -1312,24 +1312,33 @@ class bForm_Avatar extends bForm {
   }
   
   /*
-   *
+   * This is private information, show it only for the authorized viewers
    */  
-  function addressBlock(){
+  function residentshipBlock(){
 
+    if (!$this->isWritable()) return;
     $this->defineVariables_fine_tuning();
 
     $home = array('i'=>'bb-home',
 		  'l'=>$this->sameURL_but(array('mode'=>'RW','av_id'=>$this->ID)));
     if ($this->askHomeAddress()){
-      $methods = $values = array();
-      foreach(array('av_address'     =>'textArea',
-		    'av_zip'         =>'textField',
-		    'av_city'        =>'textField',
-		    'av_residentship'=>'textFieldCountry') as $name=>$method){
-	if ($v = $this->getValue($name,True)) $values[] = ($name == 'av_residentship'
-							   ? b_cc::getName($v)
-							   : $v);
-	$methods[$name] = array($method);
+      foreach(array('values','methods') as $item){
+	$$item = array();
+	foreach(array('av_address'     =>'textArea',
+		      'av_zip'         =>'textField',
+		      'av_city'        =>'textField',
+		      'av_residentship'=>'textFieldCountry') as $name=>$method){
+	  if ($item == 'methods'){
+	    $methods[$name] = array($method);
+	  }elseif ($v = $this->getValue($name,True)){
+	    switch($name){
+	    case 'av_city':         break;
+	    case 'av_residentship': $values[] = b_cc::getName($v); break;
+	    case 'av_zip':          $values[] = $v .' '.$this->getValue('av_city',True); break;
+	    default:	            $values[] = $v;
+	    }
+	  }
+	}
       }
       $this->formDB['_av_address'] = join('-BR-',$values);
       $this->formBlock('address',

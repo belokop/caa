@@ -24,15 +24,16 @@ function bAuth(){
     // i.e. check if the SERVER[QUERY_STRING] contains the encoded password.
     // Auto-logout if the session is too old.
     if (!bAuth::authenticated())    $bAuth->autoLogin();
+    $bAuth->authenticate();
       
     // set the developer email address, to which ALL the emails should be sent when running in the "cnf_dev/cnf_demo" mode
     if (!defined('cnf_demo_email')){
-      define('cnf_demo_email',(cnf_demo && is_object(bAuth::$av_real)
-			       ? bAuth::$av_real->getEmail()
+      define('cnf_demo_email',(cnf_demo && is_object(bAuth::$av_authenticated)
+			       ? bAuth::$av_authenticated->getEmail()
 			       : cnf_dev_email));
       if (cnf_demo || cnf_dev){
 	myPear::MESSAGE_forced('',$msg="All the Emails are redirected to '".cnf_demo_email."'");
-	myPear::DEBUG($msg);
+	myPear::DEBUG($msg,True);
       }
     }
     
