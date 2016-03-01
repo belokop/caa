@@ -171,7 +171,7 @@ class b_table{
   }
   
   function tr($body=' ',$atTD='',$atTR=''){
-    if ($thisIsTH = (is_array($atTD))) $atTD = @$atTD[0];
+    if ($thisIsTH = is_array($atTD)) $atTD = @$atTD[0];
     $this->tro($atTR);
     $this->td($body,$atTD,$thisIsTH);
     $this->trc(); }

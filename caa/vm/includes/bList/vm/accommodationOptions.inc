@@ -307,6 +307,12 @@ class bList_vm_accommodationOptions extends bList_vm{
     static $ao_was = '?';
 
     if ($ao_was != ($ao_now=$this->getHutInfo($this->r['lm_key'],'hut_code'))){
+      if (empty($ao_now)){
+	$this->dbg('??? empty "\$ao_now"',cnf_dev);
+	if (cnf_dev) b_debug::var_dump($this->r);
+	$this->r = array();
+	return;
+      }
       $this->t->showLineCounter = False;
       print $this->t->tr(x('strong',VM::$default_hut_codes[$ao_now]['prefix'].'s'),'colspan=3');
       $ao_was = $ao_now;

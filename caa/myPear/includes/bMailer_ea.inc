@@ -38,7 +38,7 @@ For each individual, the database will contain information about education, empl
 Most of the entries are still incomplete and the purpose of this e-mail is to ask you to check and update the information about yourself in the database. 
 
 You can see your entry via a password protected web page, which has been created for you on our server.  For your convenience the password for your personal page is encoded into the following URL, providing direct access to the page:
-<packPWD>
+{login_url}
 
 Please save this e-mail or book-mark the URL to facilitate return access.
 
@@ -62,7 +62,7 @@ http://cms.nordita.org?q=ea
 We now ask you to help us by reviewing and completing the information about yourself: dates for your degrees, major positions you have held before coming to $org_name, your current address, etc. The only data for any alumnus or employee that will be publicly available is: the name, current position, a photo if available, and dates for the stay at $org_name. All other information is for internal $org_name use only.
 
 To access your information you need to login to a personalized editing web page. For your convenience the password is encoded into the following web address, hence you can access your web page directly by clicking:
-<packPWD>
+{login_url}
 
 If this does not work, please copy the web address above and paste it into the address field of your web browser. Remember to save this mail or book-mark the address to facilitate later access to the editing web page.
 

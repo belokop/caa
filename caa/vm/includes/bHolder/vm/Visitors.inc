@@ -1821,7 +1821,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
   
   /*
    * Reject / Approve the applicant
-   * @return array of 2 buttons/icons 
+   * @return array of 2 buttons/icons (yes/no)
    */
   private function btn_approve_reject(){
 
@@ -1836,9 +1836,15 @@ class bHolder_vm_Visitors extends bHolder_vm{
 
     // The event is endorsed (i.e. changes are locked), show only pending applicants and return
     if (VM::isEventEndorsed() || ($this->rec['v_end'] < time())){
-      $reply = array('');
-      if ($this->fnc_beslut) $reply[] = $this->highlights['fnc'][$this->fnc_beslut]['i'];
-      else                   $reply[] = '';
+      if (False){ // ? Strange... To be changed?
+	$reply = array('');
+	if ($this->fnc_beslut) $reply[] = $this->highlights['fnc'][$this->fnc_beslut]['i'];
+	else                   $reply[] = '';
+	if (stripos(serialize($reply),'send mail') !== False) var_dump('fnc_beslut',$this->fnc_beslut,date('Y-m-d',$this->rec['v_end']),$reply);
+	if (stripos(serialize($reply),'send mail') !== False) b_debug::internalError();
+      }else{   
+	$reply = array('','');
+      }
       return $reply;
     }
 
@@ -2004,34 +2010,42 @@ class bHolder_vm_Visitors extends bHolder_vm{
 
   /*
    * Button 
-   * array($edit_visit,$delete_v);
+   * $reply = array($edit_visit,$delete_v,$exp_arePayed);
    */
   private function btn_admin(){
 
     // no admin buttons for some lists
     if (in_array($this->doing,array('show_mails_exchange',)))   return array();
-
+    
     bTiming()->cpu(__FUNCTION__);
-    $edit_visit = bIcons()->getButton(array('d'=>'see/update the visit information',
-					    'c'=>'only_online',
-					    'i'=>'i-edit',
-					    'l'=>b_url::same("?form=vm_Visit&id=".$this->rec['v_id'])));
-    
-    $delete_v  = ((!bForm_vm_Visit::_isVisitType_program($this->rec) && 
-		   VM::hasRightTo('book') && 
-		   bForm_vm_Visit::_getStatus($this->rec)==STATUS_NO)
-		  ? b_btn::submit_icon('i-drop',
-				       txt_deleteVisit,
-				       b_url::same("?function=vm_cancel_visit&v_id=".$this->rec['v_id']),
-				       $confirm=True)
-		  : '');
-    
     locateAndInclude('bForm_vm_Expenses');    
-    $exp_arePayed = (bForm_vm_Expenses::_exp_arePayed($this->rec)
-		     ? bIcons()->get(array('d'=>'Paid up',
-					   'c'=>'only_online',
-					   'i'=>'i-bundle'))
-		     : '');
+    
+    $notTooLate = (!VM::isEventEndorsed() || $this->rec['v_end'] < time() || 
+		   (VM::isEventEndorsed() && bForm_vm_Visit::_getStatus($this->rec) == STATUS_PENDING));
+    
+    $exp_arePayed= (bForm_vm_Expenses::_exp_arePayed($this->rec)
+		    ? bIcons()->get(array('d'=>'Paid up',
+					  'c'=>'only_online',
+					  'i'=>'i-bundle'))
+		    : '');
+    
+    $edit_visit  = ($notTooLate
+		    ? bIcons()->getButton(array('d'=>'see/update the visit information',
+						'c'=>'only_online',
+						'i'=>'i-edit',
+						'l'=>b_url::same("?form=vm_Visit&id=".$this->rec['v_id'])))
+		    : '');
+    
+    $delete_v    = ($notTooLate
+		    ? ((!bForm_vm_Visit::_isVisitType_program($this->rec) && 
+			VM::hasRightTo('book') && 
+			bForm_vm_Visit::_getStatus($this->rec)==STATUS_NO)
+		       ? b_btn::submit_icon('i-drop',
+					    txt_deleteVisit,
+					    b_url::same("?function=vm_cancel_visit&v_id=".$this->rec['v_id']),
+					    $confirm=True)
+		       : '')
+		    : '');
     
     $reply = array($edit_visit,$delete_v,$exp_arePayed);
     if ($this->doing == 'budget_byProjects'){

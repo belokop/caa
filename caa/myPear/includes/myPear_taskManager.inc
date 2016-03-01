@@ -13,6 +13,7 @@ class myPear_taskManager{
    * 
    */
   public function __construct(){
+    
     // Eventually add a new task, i.e. put the following command into the task execution queue:
     //  - method $_REQUEST{addTask_class_once}->$_REQUEST{addTask_function_once}
     //  - arguments $_REQUEST{addTask_args_once}
@@ -37,13 +38,16 @@ class myPear_taskManager{
     }else{
       $t = new b_table_zebra(array('n'       =>'#',
 				   'cmt'     =>' ',
-				   'module'  => 'Module',
+				   'module'  => 'M',
 				   'class'   => 'Class',
 				   'function'=> 'Function',
 				   '_args'   => 'Args',
-				   'var_timestamp' => ' ',
+				   'var_timestamp' => 'Started',
+				   'ended'   => 'Ended',
+				   'wait'    => 'Waiting',
 				   ));
       $dejaVu = array();
+      $n_ended = 0;
       foreach($taskManager as $module=>$tasks){
 	$module_was = '';
 	$class_was = '';
@@ -57,7 +61,12 @@ class myPear_taskManager{
 	  $task['n'] = x('tt',(int)str_replace(taskManager_ID,'',$task['var_name']));
 	  $task['_args'] = (empty($task['args']) ? '' : str_replace(array(';',','),array('; ',', '),x('(',join(',',$task['args']))));
 	  $task['module'] = ($module == $module_was ? '' : $module);
-	  $task['var_timestamp'] = str_replace(' ','&nbsp;',$task['var_timestamp']);
+	  if (!empty($task['ended'])){
+	    $task['wait']  = x('i',b_time::delta(b_time::txt2unix($task['var_timestamp']),$task['ended']));
+	    $task['ended'] = date('Y-m-d H:i',$task['ended']);
+	    $n_ended++;
+	  }
+	  $task['var_timestamp'] = date('Y-m-d H:i',b_time::txt2unix($task['var_timestamp']));
 	  $t->prt($task);
 	  $module_was = $module;
 	  $class_was  = $now;
@@ -104,9 +113,8 @@ class myPear_taskManager{
    * Execute tasks from the queue. 
    * By default the tasks are NOT executed, unless $_REQUEST['execute'] is set.
    */  
-  function executeTasks($nmax=10){
+  function executeTasks($nmax=10,$removeAfterExecution=False){
     static $class_instance = array();
-
 
     // Show and eventually clean the queue
     $toExecute = !empty($_REQUEST['execute']);
@@ -117,7 +125,6 @@ class myPear_taskManager{
     // Execute the queue
     set_time_limit(0);
     $info = array();
-    $n_tasks_executed = 0;
     foreach(b_vars::get(taskManager_ID,Null,True) as $module=>$tasks){
 
       // Be sure that the module is loaded
@@ -128,6 +135,7 @@ class myPear_taskManager{
       
       // Walk thru the tasks
       foreach($tasks as $task){
+	if (!empty($task['ended'])) continue;
 	$args = (empty($task['args'])
 		 ? array()
 		 : b_fmt::safe_decode($task['args']));
@@ -156,17 +164,29 @@ class myPear_taskManager{
 	if (!empty($reply)) b_debug::xxx($reply);
 
 	// Log the task execution	
-	$log_info = sprintf("%s - %s %s",__CLASS__,$task['var_timestamp'],$log_info);
+	$log_info = sprintf("%s - %s %s",__METHOD__,$task['var_timestamp'],$log_info);
 	myPear_logs()->syslog($log_info);
 	$info[] = x('p',$log_info);
 	
+	// Remove (or mark as executed) the task
+	if ($removeAfterExecution){
+	  // Optionally remove the task after completion
+	  b_vars::delete($task['var_name'],$module);	
+	}else{
+	  // Or leave it, but mark the execution time
+	  $task['ended'] = time();
+	  b_vars::set($task['var_name'],$task);
+	}
+
+	// Sleep for 30 seconds to make the SMTP server happy
+	sleep(30);
 	// Don't go too far...
-	++$n_tasks_executed;
-	if (isset($class_instance[$task['class']]->sent_mails_counter)) $n_tasks_executed = $class_instance[$task['class']]->sent_mails_counter;
-	
-	// remove the task after completion
-	b_vars::delete($task['var_name'],$module);	
-	if ($n_tasks_executed > $nmax) return;
+	if (False){
+	  if (empty($n_tasks_executed)) $n_tasks_executed = 0;
+	  ++$n_tasks_executed;
+	  if (isset($class_instance[$task['class']]->sent_mails_counter)) $n_tasks_executed = $class_instance[$task['class']]->sent_mails_counter;
+	  if ($n_tasks_executed > $nmax) return;
+	}
       }
     }
     if (!empty($info)){

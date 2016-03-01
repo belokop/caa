@@ -26,7 +26,7 @@ class bMailer_prp extends bMailer{
 		$this->prp_info($action).'
 
 When you have published this preprint in a Public Archive (i.e. you know the URL to the abstract) please return to
-<packPWD>
+{login_url}
 and complete the form.
 
 You can correct eventual typos at any time (button "edit"), you may also cancel (button "delete") the preprint reservation.
@@ -100,7 +100,7 @@ If you want to publish ONLY at '.myOrg_name.' you can upload your paper now ("ed
     switch (strToLower($action)){
     case 'reminder':
       $tit = 'Preprint '.$this->prp_formDB['prp_status'].' '. b_time::long_date($this->prp_formDB['prp_tm']).
-	' ('.b_time::delta(time(),(int)$this->prp_formDB['prp_tm'])." ago) but has not being completed yet.\n\nURL:     <packPWD>";
+	' ('.b_time::delta(time(),(int)$this->prp_formDB['prp_tm'])." ago) but has not being completed yet.\n\nURL:     {login_url}";
       $act = "Reminded by a cronjob";
       break;
       

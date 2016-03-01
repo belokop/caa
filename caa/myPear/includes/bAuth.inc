@@ -151,19 +151,18 @@ class bAuth{
     if (cnf_dev && $reply && !($av_isAvatar=(self::$av instanceof bForm_Avatar))){
       myPear::WARNING("discrepancy: av_isAvatar=".($av_isAvatar?'YES':'NO').", reply=".($reply?'YES':'NO'));
     }
-
     return $reply;
   }
-
+  
   private static function _authenticated($arg=array()){
 
     $av_email = !empty($_SESSION['bAuth']['email_authenticated']);
     if(@$arg['reset']==='yes')$_SESSION['bAuth'] = array();
 
-    foreach(array('email_authenticated','email_login_as') as $e){
+    foreach(array('email_authenticated','email_login_as','email_to_autologged') as $e){
       if ($set=@$arg[$e]) $_SESSION['bAuth'][$e] = $set;
       if (!self::$isReady) continue;
-
+      
       if ($email = @$_SESSION['bAuth'][$e]) switch($e){
 	case 'email_authenticated':
 	  if (empty(self::$av_authenticated)) self::$av_authenticated = bForm_Avatar::hook($email,'basic');
@@ -171,6 +170,9 @@ class bAuth{
 	  break;
 	case 'email_login_as':
 	  if (empty(self::$av)) bAuth()->imposeAvatar(bForm_Avatar::hook($email,'basic'));
+	  break;
+	case 'email_to_autologged':
+	  self::set_cnf_demo_email($email);
 	}
     }
     
@@ -182,21 +184,20 @@ class bAuth{
     return $av_email;
   }
   
-  private function forceAuthentication($printNow=False){
-    if (self::_authenticated()){
-      self::dbg(True);
-      return True;
-    }else{
-      ob_start();
-      $this->loginPrompt();
-      $authenticationPrompt = ob_get_contents();
-      ob_end_clean();
-      if (!HOSTED_BY_CMS || $printNow){
-	print $authenticationPrompt;
-      }else{
-	$GLOBALS['authenticationPrompt'] = $authenticationPrompt;
-      }
-      return False;
+  /*
+   * set the developer email address, to which ALL the emails should be sent when running in the "cnf_dev/cnf_demo" mode                                                                             
+   */
+  public static function set_cnf_demo_email($forced=''){
+    if (defined('cnf_demo_email')) return;
+
+    if (empty($forced)) define('cnf_demo_email',(cnf_demo && is_object(bAuth::$av_authenticated)
+						 ? bAuth::$av_authenticated->getEmail()
+						 : cnf_dev_email));
+    else                define('cnf_demo_email',$forced);
+    if (cnf_demo || cnf_dev){
+      myPear::MESSAGE_forced('',$msg="All the Emails are redirected to '".cnf_demo_email."'");
+      myPear::DEBUG($msg,True);
+    var_dump($msg);
     }
   }
 
@@ -399,7 +400,8 @@ class bAuth{
     // Save the emails in _SESSION
     self::$justLoggedIn = empty($_SESSION['bAuth']['email_authenticated']);
     self::_authenticated(array('email_authenticated' => self::$av_authenticated->getValue('av_email'),
-			       'email_login_as'      => self::$av->getValue('av_email'))); // SICK, not $av->getEmail() !
+			       'email_login_as'      => self::$av->getValue('av_email'), // SICK, not $av->getEmail() !
+			       'email_to_autologged' => @$_REQUEST['email_to_autologged']));
 
     if (!self::_authenticated()) b_debug::internalError("_setUser without email");
 
@@ -887,6 +889,10 @@ The request came from the web interface from computer '".gethostbyaddr($_SERVER[
       if ($this->see_you_later()) return;
       b_crypt::$debug = self::$debugIsOn;
       list($login_pwd,$loginData) = b_crypt::decodeX($_GET['x']);
+      if ($email = @$loginData['email_to_autologged']){
+	self::set_cnf_demo_email($email);
+	unset($loginData['email_to_autologged']);
+      }
     }elseif ($s=@$_GET['z']){ // new "lightweight" encryption
       // "lightweight" encryption, version 2012
       if (strpos($s,'atidron') === False) $s = "atidron$s";      // hot fix... To be(???) understood

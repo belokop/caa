@@ -2,7 +2,7 @@
 /**
  * Visitors Manager (VM) configuration file
  */
-$releaseDate = '2016-02-27';
+$releaseDate = '2016-03-01';
 define('VM_MODULE'   , 'vm');
 define('VM_VERSION','5.78');
 
@@ -35,6 +35,7 @@ define('VISIT_TYPE_OTHER',        '_OTHER');
 
 // Old convention, to be removed...
 define('cancel_LODGING_REQ_ONLY',True);
+define('reimbursement_email','reimbursement@nordita.org');
 
 /*
  * VM root directory

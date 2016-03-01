@@ -95,7 +95,7 @@ Best regards,
 You recently applied for the position of \"".$ap->pos->name()."\" here at ".myOrg_name.", and this e-mail is to acknowledge that your application has been received and registered.
 
 We have created a web page for you on our Applications Processing server, which you can access here:
-<packPWD>
+{login_url}
 
 You can use this page to check the status of your application, correct any errors, refresh/change the documents you submitted, etc.
 
@@ -150,7 +150,7 @@ During the processing we have noticed that some important information is missing
 "
 
 We have created a web page for you on our Applications Processing server, which you can access here:
-<packPWD>
+{login_url}
 
 Please use this page to correct the errors, refresh/change the documents you submitted, check the status of your application, etc.
 
@@ -219,7 +219,7 @@ and they have given your name as a reference for the position.
 
 In connection with this application, we have created a secure web-page 
 where you can upload your letter of recommendation:
-<packPWD>
+{login_url}
 
 Here you can also check your personal data the applicant provided, 
 and you can correct errors in this information by clicking on the 'modify my personal data' link.
@@ -252,7 +252,7 @@ All correspondence is treated confidentially.",
 this e-mail is to acknowledge receipt of your letter of recommendation for ".$av->name()."
 
 You uploaded this file as '$file' and can always access it through the web-page we created for you:
-<packPWD>
+{login_url}
 ",
 		$syslog_thisMail=True);
   }
@@ -273,7 +273,7 @@ You uploaded this file as '$file' and can always access it through the web-page 
 you recently applied for the position at ".myOrg_name.", and this e-mail is to acknowledge receipt of the supporting document.
 
 You uploaded this file as '$file' and can always access it through the web-page we created for your application
-<packPWD>
+{login_url}
 
 Good luck with your application.
 ",

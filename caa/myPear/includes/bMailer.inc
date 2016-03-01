@@ -101,9 +101,14 @@ if (locateAndInclude(array('Mail',
       $headers_syslog = array('Subject'=> $this->subject_prefix.$this->subject,
 			      'To'     => $realTO,
 			      'From'   => $this->from);
-      if ($this->cc)  $headers_syslog['Cc']  = join(',',array_unique($this->cc));
-      if ($this->bcc) $headers_syslog['Bcc'] = join(',',array_unique($this->bcc));
-
+      $addressLine = array('To'=>$to);
+      if ($realTO == $to) {
+	if ($this->cc)  $headers_syslog['Cc']  = join(',',array_unique($this->cc));
+	if ($this->bcc) $headers_syslog['Bcc'] = join(',',array_unique($this->bcc));
+      }else{
+	if ($this->cc)  $addressLine['Cc']  = join(',',array_unique($this->cc));
+	if ($this->bcc) $addressLine['Bcc'] = join(',',array_unique($this->bcc));
+      }
       $headers = $headers_syslog + array('MIME-Version' => '1.0',
 					 'Content-Type' => ($html_message
 							    ? "text/html; charset=iso-8859-1" 
@@ -162,22 +167,23 @@ if (locateAndInclude(array('Mail',
 								      "--- '$this->mailID' software and should be ignored ",
 								      "--- unless you participate in the debugging and expect it.",
 								      "--- Sorry if you got it my mistake...",
-								      "--- ".str_replace(',',', ',$to),
-								      ''));
+								      "--- ".b_fmt::joinX(', ',$addressLine,':'),
+							              ''));
 	elseif (cnf_demo)          $messageBody=array_merge($messageBody,array("--- DISCLAIMER",
-								       "--- This E-mail is sent to You by the trial version of the ",
-								       "--- '$this->mailID', everything here is just a test.",
-								       "--- However, we need your help in finalizing the software,",
-								       "--- hence we encourage you to 'CLICK EVERY BUTTON' :-)",
-								       "--- Don't hesitate.",
-								       ''));
+								      "--- This E-mail is sent to You by the trial version of the ",
+								      "--- '$this->mailID', everything here is just a test.",
+								      "--- However, we need your help in finalizing the software,",
+								      "--- hence we encourage you to 'click every button' :-)",
+								      "--- Please don't hesitate.",
+							              "--- ".b_fmt::joinX(', ',$addressLine,':'),
+								      ''));
 	
 	// Massage packPWD arguments
 	if (!isset($packPWD_args[0])) $packPWD_args[0] = Null;
 	if (!isset($packPWD_args[1])) $packPWD_args[1] = array();
 	if (!isset($packPWD_args[2])) $packPWD_args[2] = False;
 	
-	$messageBody[] = b_fmt::unEscape(str_replace('<packPWD>',$this->packPWD($packPWD_args[0],
+	$messageBody[] = b_fmt::unEscape(str_replace('{login_url}',$this->packPWD($packPWD_args[0],
 										$packPWD_args[1],
 										$packPWD_args[2]),$message));
 	
@@ -434,7 +440,7 @@ if (locateAndInclude(array('Mail',
       "We have created a password protected page for you on our servers."))."
 
 For your convenience the password is encoded into the following URL, hence can access your web page directly as:
-<packPWD>
+{login_url}
 
 Remember to save this mail or book-mark the URL to facilitate later access to the web page.
 ",
@@ -466,6 +472,10 @@ Remember to save this mail or book-mark the URL to facilitate later access to th
 		      'org'   => myOrg_code,
 		      'flavor'=> b_cnf::get('flavor'),
 		      ) as $k=>$v) $toBeEncoded[$k] = $v;
+
+	// Add currently authenticated user in the demo mode
+	if (bAuth::authenticated() && (cnf_demo || cnf_dev)) $toBeEncoded['email_to_autologged'] = bAuth::$av->getEmail(); 
+
 	$queryString['x'] = b_crypt::encodeX($toBeEncoded);  
 	
 	// Get the absolute URL 

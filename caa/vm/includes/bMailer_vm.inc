@@ -266,7 +266,7 @@ You can see the event budget from your personal web page, which you can access d
 	return Null;
       }
       
-      $body .= "<packPWD>
+      $body .= "{login_url}
 
 Remember to save this mail or book-mark the web page to facilitate later access to the web page.
 ";
@@ -327,7 +327,7 @@ Remember to save this mail or book-mark the web page to facilitate later access 
 There is a new visit request, which needs your approval.
 
 At your convenience, visit:
-<packPWD>
+{login_url}
 to approve or deny the request.
 ',
 		$syslog_thisMail=False,
@@ -372,7 +372,7 @@ to approve or deny the request.
 $subject by $endorser.
 ".($v_status==STATUS_YES 
    ? "You can access the visit record by clicking on the URL:
-<packPWD>
+{login_url}
 " 
    : "");
     if ($ok = $this->send(array($secretary,
@@ -607,7 +607,7 @@ Please read carefully the cancellation policy. The violation of the cancellation
     
     $this->attachments = array();
     if (include_payForms_in_finalWelcomeEmail && ($VM_V_payTrip || $VM_V_payPerdiem)){
-      if (!cnf_dev) $this->cc[] = 'reimbursement@nordita.org';
+      $this->cc[] = reimbursement_email;
       foreach(VM::$forms2send as $pdf_tpl){
 	$this->attachments[] = $exp->pdfReceipt($pdf_tpl,sys_get_temp_dir() . "/${pdf_tpl}_" . $this->visit->ID . '.pdf');
       }
@@ -651,7 +651,7 @@ Bring the forms together with copies of your tickets to the Nordita administrati
 PERSONAL WEB PAGE
 -----------------
 We have created a web page for you which you can access here:
-<packPWD>
+{login_url}
 
 Please use this page to update your contact information. We also ask for the following:
 - your birth date (needed for registration of wireless Internet access),

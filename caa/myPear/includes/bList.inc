@@ -102,12 +102,12 @@ class bList extends myPear_getValue{
 	  }
 	  
 	  while($r = myPear_db()->next_record($q)){
-	    if ($alarm)b_debug::print_r($r);
+	    if ($alarm)b_debug::var_dump($r);
 	    if (empty($bList)) $bList = $r["${l}_class"];
 	    if ($bList !== $r["${l}_class"]) b_debug::traceBack("$bList !== ".$r["${l}_class"]);
 	    if (locateAndInclude($bList)){
 	      if ($rank = @$r['u_rank']) $instances[$instance_ID] = new $bList($r["${l}_parent"],$rank);
-	      else                       $instances[$instance_ID]  = new $bList($r["${l}_parent"]);
+	      else                       $instances[$instance_ID] = new $bList($r["${l}_parent"]);
 	      break 2;
 	    }
 	  }
@@ -467,7 +467,7 @@ class bList extends myPear_getValue{
 
     // Then delete 
     if ($n_toBeDeleted > 0){
-      $this->cache_bList_getMembers = array();
+      $this->reset_cache_bList_getMembers();
       myPear_db()->query("DELETE FROM ".$this->TABLE_member." WHERE ".join(' AND ',$w));
       $this->report_changes('delete',$w);
     }
@@ -595,7 +595,7 @@ class bList extends myPear_getValue{
 
 
     // Reset the cache
-    $this->cache_bList_getMembers = array();
+    $this->reset_cache_bList_getMembers();
     
     // Update the database
     $w[]= $this->hookParent();
@@ -614,7 +614,8 @@ class bList extends myPear_getValue{
       myPear_db()->qquery("UPDATE $this->TABLE_member SET ".join(',',$w).
 			  " WHERE $this->TABLEID_member=$member_ID",$debug);
       $this->report_changes('update',$report_changes);
-      
+      $this->reset_cache_bList_getMembers();
+
       // reread back the record 
       if ($set_as_current_member){
 	$this->member_ID = $member_ID;
@@ -692,6 +693,16 @@ class bList extends myPear_getValue{
       $this->formDB_member = $reply;
     }
     return $reply;
+  }
+
+  /*
+   *
+   */
+  private $reset_counter = 0;
+  private function reset_cache_bList_getMembers(){
+    $this->dbg('Reseting cache_bList_getMembers#'.(++$this->reset_counter));
+    unset(self::$counterL[get_class($this)]);
+    $this->cache_bList_getMembers = array();
   }
 
   /*
