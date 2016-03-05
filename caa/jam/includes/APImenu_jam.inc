@@ -225,8 +225,8 @@ class APImenu_jam extends APImenu{
      * see what we can do, see which menu tab is pressed
      */
     $rank = JAM_access()->getRank();
-    if (JAM_posID()) myPear::getPageHeader(JAM_pos()->name());
-    else             myPear::getPageHeader('Job Applications Manager (JAM)');
+    if (JAM_posID()) myPear::setPageHeader(JAM_pos()->name());
+    else             myPear::setPageHeader('Job Applications Manager (JAM)');
 
     $tab = $this->processTemplates($tab);
     switch ($tab){
@@ -355,7 +355,7 @@ class APImenu_jam extends APImenu{
       
     case tab_jam_myApplications:
       // Discover the position for the logged in person
-      myPear::getPageHeader("My applications");
+      myPear::setPageHeader("My applications");
       $table = array();
       $n_positions = 0;
       foreach(bAuth::$av->positionsConserned($asReferee=False) as $pos_id=>$ap_id){

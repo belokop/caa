@@ -38,6 +38,11 @@ class bAuth{
   /*
    *
    */
+  function __toString() { return 'bAuth'; }
+  
+  /*
+   *
+   */
   public function __construct(){
     if (self::$isReady) b_debug::internalError('second call',$this);
     if (b_cnf::get('authdebug')) self::$debugIsOn = True;
@@ -190,19 +195,21 @@ class bAuth{
   public static function set_cnf_demo_email($forced=''){
     if (defined('cnf_demo_email')) return;
 
-    if (empty($forced)) define('cnf_demo_email',(cnf_demo && is_object(bAuth::$av_authenticated)
-						 ? bAuth::$av_authenticated->getEmail()
-						 : cnf_dev_email));
-    else                define('cnf_demo_email',$forced);
+    if ($deep_bug=True){
+      define('cnf_demo_email',cnf_dev_email);
+    }else{
+      if (empty($forced)) define('cnf_demo_email',(cnf_demo && is_object(bAuth::$av_authenticated)
+						   ? bAuth::$av_authenticated->getEmail()
+						   : cnf_dev_email));
+      else                define('cnf_demo_email',$forced);
+    }
     if (cnf_demo || cnf_dev){
       myPear::MESSAGE_forced('',$msg="All the Emails are redirected to '".cnf_demo_email."'");
       myPear::DEBUG($msg,True);
-    var_dump($msg);
+      var_dump($msg);
     }
   }
-
-  function __toString() { return 'bAuth'; }
-
+  
   /*
    * auto-logout after a too long period of inactivity
    */

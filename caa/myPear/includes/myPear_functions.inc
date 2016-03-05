@@ -506,6 +506,24 @@ function nbsp($text) {
 }
 
 /*
+ * Workaround (may be there is a better one...)
+ */
+function set_cb_expected(&$data,$name='',$value_to_set='off'){
+  if (empty($name))         $names = array_keys($data);
+  elseif (!is_array($name)) $names = array($name);
+
+  foreach($names as $ff){
+    $f = str_replace('_cb_expected','',$ff);
+    if ( isset($data[$f]) && isset($data["${f}_cb_expected"])) unset($data["${f}_cb_expected"]);
+    if (!isset($data[$f]) && isset($data["${f}_cb_expected"])){
+      $data[$f] = $value_to_set;
+      unset($data["${f}_cb_expected"]);
+      if (cnf_dev) b_debug::xxx(sprintf("impose %s = '%s'",$f,$data[$f]),array(3,'redText',True));
+    }
+  }
+}
+
+/*
  *
  */
 function start_myPear(){
@@ -520,6 +538,10 @@ function start_myPear(){
   if (empty($_POST))   $_POST = array();
   if (empty($_GET))    $_GET = array();
   if (empty($_REQUEST))$_REQUEST = array();
+
+  // Remove checkbox flag from _POST
+  set_cb_expected($_POST);
+  set_cb_expected($_REQUEST);
   
   ///
   // Save the "clean" (i.e. without <xxx>_once) query string in a cache.

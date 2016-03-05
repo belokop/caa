@@ -284,8 +284,7 @@ class bList_vm_accommodationOptions extends bList_vm{
    * Do not show buttons if there is no huts left for the selection
    */
   protected function draw_buttons(){
-    if(0)if (is_object($this->e)) $this->extra_buttons[] = b_btn::submit("back home ",
-									 b_url::same(array('tab_force'=>tab_vm_ogz_vlist)));
+    return array();
     //    $huts = $this->hutSelectMenu(Null,True);
     //    if (!empty($huts)) 
     $reply = parent::draw_buttons();
@@ -295,9 +294,9 @@ class bList_vm_accommodationOptions extends bList_vm{
   /*
    *
    */
-  private $getPageHeader_dejaVu = 0;
-  protected function getPageHeader(){
-    if (!$this->getPageHeader_dejaVu++) myPear::getPageHeader(b_fmt::unescape($this->title));
+  private $setPageHeader_dejaVu = 0;
+  protected function setPageHeader(){
+    if (!$this->setPageHeader_dejaVu++) myPear::setPageHeader(b_fmt::unescape($this->title.' usage'));
   }
 
   /*
@@ -306,6 +305,7 @@ class bList_vm_accommodationOptions extends bList_vm{
   protected function format($secondCall=False){
     static $ao_was = '?';
 
+    // Split by the accommodation options
     if ($ao_was != ($ao_now=$this->getHutInfo($this->r['lm_key'],'hut_code'))){
       if (empty($ao_now)){
 	$this->dbg('??? empty "\$ao_now"',cnf_dev);

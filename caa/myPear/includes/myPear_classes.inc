@@ -4131,8 +4131,6 @@ class b_cnf{
 	                                           list($value,$r) = array(strip_tags(@$_POST[$name]),    '_POST');
       if($value===Null)                            list($value,$r) = array(@$class->formDB_modified[$name],'formDB_modified'); 
       if($value===Null)                            list($value,$r) = array(@$class->formDB[$name],        'formDB'); 
-      if($value===Null &&$class->myPost_bForm() && isset($_POST[$name.'_expected']))
-	                                           list($value,$r) = array('no','_expected');
     }else{
       $debug = cnf_debug_level;
       if($value===Null && isset($_POST[$name]))  list($value,$r) = array(strip_tags($_POST[$name]),   '_POST');

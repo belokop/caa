@@ -191,6 +191,7 @@ class bHolder_vm_Apartments extends bHolder_vm{
   }
 
   private function format_record_axi(&$rec){
+    if (!is_object($this->a)) return; 
     $this->t->extraTD[]= ($this->a->isWritable()
 			  ? bIcons()->getButton(array('l'=>b_url::same("?form=vm_Apartment&id=".$this->a->ID),
 						      'd'=>'modify',
@@ -262,8 +263,8 @@ class bHolder_vm_Apartments extends bHolder_vm{
    */
   public static function _queryAps($where=''){
     if (!myPear_db()->columnExists(@$_GET['sBy'],'abs_apartments')) $_GET['sBy'] = 'a_name';
-    $q = myPear_db()->query("SELECT * FROM abs_apartments ".
-			    " LEFT JOIN abs_huts ON hut_id = a_hutid ".
+    $q = myPear_db()->query("SELECT * FROM abs_huts ".
+			    " LEFT JOIN abs_apartments ON hut_id = a_hutid ".
 			    $where.
 			    " ORDER BY hut_name,$_GET[sBy] ".@$_GET['sByDir']);
     return $q;

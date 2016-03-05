@@ -33,7 +33,7 @@ class myPear_getValue{
   protected $getValue_recursion = array();
   private   $getValue_cache = array();
   private   $getValue_cache_asIs = array();
-  private static $tech_fields = array('_id','_select','_expected','timestamp'); // end by
+  private static $tech_fields = array('_id','_select','timestamp'); // end by
   private static $virt_fields = array('btn','button_','_button','_spacer','_virt');        // start from 
   
   var $isUL         = array(); // the value to be interpreted as <UL>...</UL>
@@ -127,7 +127,6 @@ class myPear_getValue{
   protected function myPost($arg=Null){
     b_debug::internalError(__METHOD__.' is not defined');
   }
-  
 
   /*
    * Get the value of the variable
@@ -201,9 +200,6 @@ class myPear_getValue{
     $hint  = $no_descr;
 
     if ($this->myPost()){
-      // checkbox is off
-      if (!isset($_POST[$name]) && isset($_POST["${name}_expected"])) $_POST[$name] = 'off';
-      
       if ( isset($_POST[$name])){   
 	//      
 	// 1. Check $_POST

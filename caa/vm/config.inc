@@ -2,7 +2,7 @@
 /**
  * Visitors Manager (VM) configuration file
  */
-$releaseDate = '2016-03-01';
+$releaseDate = '2016-03-05';
 define('VM_MODULE'   , 'vm');
 define('VM_VERSION','5.78');
 
@@ -126,6 +126,7 @@ define('VM_ev_budget_D',  'Allocated budget');
  * Ignore the missing information (like missing accommodation) for the old events
  */
 define('AUTO_EXPIRATION', 365);  // in days
+define('VM_OLD_PROJECTS',5); // in years
 
 /*
  * How much in history should we go showing the events
@@ -329,6 +330,7 @@ class VM extends myPear{
    * The forms are kept in the /templates directory
    */
   static $forms2send  = array();
+  static $forms2admin = array();
 
   /*
    * Define default travel expenses in the default currency by zones
@@ -452,7 +454,7 @@ class VM extends myPear{
 								   'f'=>'debit', 
 								   'p'=>array(VM_V_payTrip,VM_V_payAccommodation,// VM_V_payPerdiem, 
 									      VM_V_scrtrInfoSent)),
-				   VISIT_TYPE_PROGRAM      =>array('d'=>'Conference attender',
+				   VISIT_TYPE_PROGRAM      =>array('d'=>'Program attender',
 								   'i'=>'a_conf',
 								   'f'=>'debit',
 								   'p'=>array(VM_V_payTrip,VM_V_payAccommodation, 
@@ -672,7 +674,7 @@ class VM extends myPear{
     locateAndInclude('bList_vm_agendaEvents');
     self::e_ID();
     if ($e === Null) $e = self::$e;
-    $reply = (bool)(is_object($e) && bList_vm_agendaEvents::eventOutOfScope($e->getValue('e_code')));
+    $reply = (is_object($e) && bList_vm_agendaEvents::eventOutOfScope($e->getValue('e_code')));
     bTiming()->cpu();
     return $reply;
   }
@@ -792,12 +794,20 @@ function start_VM(){
     bTiming()->cpu(__FUNCTION__);
     VM::start();
     VM::_MENU()->start();
-    // From 2016 we are administrated by SU :-/
-    if (is_object(VM::$e)) VM::$forms2send = (VM::$e->getValue('e_start') < mktime(12,0,0,1,1,2016)
-					      ? array('KTH_Payment_details',
-						      'KTH_Application_re_Travel_Scholarship')
-					      : array('SU_9009',
-						      'SU_Travel_reimbursement_form'));
+
+    if (is_object(VM::$e)){
+      // From 2016 we are administrated by SU :-/
+      $swap = mktime(12,0,0,1,1,2016);
+      VM::$forms2admin= (VM::$e->getValue('e_start') < $swap
+			 ? array('KTH_Payment_details',
+				 'KTH_Application_re_Travel_Scholarship')
+			 : array('SU_9009',
+				 'SU_Travel_reimbursement_form'));
+      VM::$forms2send = (VM::$e->getValue('e_start') < $swap
+			 ? array('KTH_Payment_details',
+				 'KTH_Application_re_Travel_Scholarship')
+			 : array('SU_Travel_reimbursement_form'));
+    }
     VM::$isReady = True;
     bTiming()->cpu();
     b_debug::xxx(exiting);

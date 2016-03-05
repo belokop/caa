@@ -90,6 +90,8 @@ function vm_updates(){
       vm_compat_update_40();
     }
 
+    vm_compat_update_41();
+
     myPear_logs()->doNotLog = False;
     myPear_db()->noAutoCommit('end');
     bTiming()->cpu();
@@ -109,6 +111,17 @@ function vm_compat_update_ad_hocks(){
     myPear_db()->truncateTable('zzz_templates');
     myPear_update_zzz_lists(VM_MODULE);
   }
+}
+
+/*
+ * Where it comes from ???
+ */
+function vm_compat_update_41(){
+  $q = myPear_db()->qquery("SELECT COUNT(*),u_id,u_parent,u_class FROM zzz_units WHERE u_class='bUnit_vm_organizers' GROUP BY u_parent HAVING COUNT(*)>1",cnf_dev);
+  while($r = myPear_db()->next_record($q)){
+    myPear_db()->qquery("DELETE FROM zzz_units WHERE u_id=$r[u_id]",True);
+    myPear_db()->qquery("DELETE FROM zzz_unit_members WHERE um_uid=$r[u_id]",True);
+  }  
 }
 
 /*

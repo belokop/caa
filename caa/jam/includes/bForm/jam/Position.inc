@@ -397,7 +397,7 @@ class bForm_jam_Position extends bForm_jam {
 		    ? '[ update ]' // . bIcons()->get('i-edit')
 		    : '');
     
-    myPear::getPageHeader($this->name());
+    myPear::setPageHeader($this->name());
     
     //
     // Open the form with the status

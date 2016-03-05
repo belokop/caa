@@ -1161,7 +1161,10 @@ class bForm extends myPear_getValue{
     foreach ($data as $k=>$v) {
       if ($k == $this->TABLEID ||
 	  in_array($k,$ignoreFields) ||
-	  preg_match("/(^[0-9]*|_select)$/", $k)) continue;
+	  preg_match("/(^[0-9]*|_select)$/", $k)){
+	$this->dbg("IGNORE input value $k='$v'");
+	continue;
+      }
       if (is_array($v)) b_debug::internalError("array not expected: ".var_export($v,True));
       if (is_string($v)) $v = trim($v); 
       if (stripos($k,'mail')!==False) $v = mb_strToLower($v);
@@ -1174,10 +1177,12 @@ class bForm extends myPear_getValue{
 	    $pars[] = myPear_db()->quote($v,True,$k);
 	    if (in_array($k,$this->keepRW)) $this->keepRW_changed++;
 	  }else{
-	    if (stristr($k,'bForm_post')!==False){
-	      $this->dbg10("Unknown database column '$this->TABLE.$k' = '$v'");
+	    if (stripos($k,'_post_')===False){
+	      $this->dbg("Unknown database column '$this->TABLE.$k' = '$v'");
 	    }
 	  }
+	}else{
+	  $this->dbg("x IGNORE input value $k='$v' - same as in DB");
 	}
       }
       $this->formDB[$k] = $this->formDB_modified[$k] = $v; 
@@ -1323,7 +1328,7 @@ class bForm extends myPear_getValue{
       $r = ($this->isRO($name) ? 'disabled': '');
       if (empty($r)) $this->all_RWfields[] = $name;
       $this->fData("<input type='checkbox' name='${name}' $c $r border=0 ".$this->submit_onchange($name,'')."/>".
-		   "<input type='hidden'   name='${name}_expected' value='off'/>\n");
+		   "<input type='hidden'   name='${name}_cb_expected' value='off'/>\n");
     }else{
       // in the RO mode show the value as YES/NO icon (in RW as a normal checkbox)
       if ($this->isRO($name)){
@@ -1331,7 +1336,7 @@ class bForm extends myPear_getValue{
       }else{
 	$this->all_RWfields[] = $name;
 	$this->fData("<input type='checkbox' name='${name}' $c border=0 ".$this->submit_onchange($name,'')."/>".
-		     "<input type='hidden'   name='${name}_expected' value='no'/>\n");
+		     "<input type='hidden'   name='${name}_cb_expected' value='off'/>\n");
       }
     }
     $this->t->trc();

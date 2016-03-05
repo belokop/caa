@@ -279,7 +279,6 @@ class bForm_vm_Visit extends bForm_vm {
     
     $isChanged = $this->setBitMask($policy,'v_policy',$value,$check_only=True);
     if ($isChanged){
-      if ( $force && $this->myPost_bForm())  unset($_POST["_virt_policy_${value}_expected"]);
       if (!$force && $this->exp_arePayed()){
 	if ($verbose || cnf_show_pv) myPear::WARNING(x('i',$this->av->name()."'s record is LOCKED, <em>".VM::$v_policies[$policy]['d']."</em> is not changed"));
       }else{      
@@ -331,6 +330,7 @@ class bForm_vm_Visit extends bForm_vm {
     * get the visit status
     */
    public function getStatus(){
+
      // Copy the formDB to an array
      $buffer = $this->formDB;
      if ($this->hookEvent()){
@@ -498,7 +498,7 @@ class bForm_vm_Visit extends bForm_vm {
        break;
 
      case VM_visit_lease:
-       if ($this->visitOutOfScope()){
+       if (VM::outOfScope($this->e) || $this->visitOutOfScope()){
 	 $reply = False;
        }else{
 	 $reply = (int)$this->ID; //  && $this->isApproved();
@@ -526,7 +526,7 @@ class bForm_vm_Visit extends bForm_vm {
        break;
 
      case VM_visit_policy:
-       if ($this->visitOutOfScope() || !VM_administrator_here){
+       if (VM::outOfScope($this->e) || $this->visitOutOfScope() || !VM_administrator_here){
 	 $reply = False;
        }else{
 	 $this->hookEvent();
@@ -1459,7 +1459,7 @@ class bForm_vm_Visit extends bForm_vm {
    *
    */
   function visitOutOfScope(){
-    return self::_visitOutOfScope(array('v_type'=>$this->getValue('v_type',True,True)));
+    return VM::outOfScope($this->e) || self::_visitOutOfScope(array('v_type'=>$this->getValue('v_type',True,True)));
   }
 
   static function _visitOutOfScope($buffer){
@@ -1903,7 +1903,7 @@ class bForm_vm_Visit extends bForm_vm {
     
     // Update policy 
     foreach(array_keys(VM::$v_policies) as $p){
-      if (isset($_POST["_virt_policy_${p}_expected"])){
+      if (isset($_POST["_virt_policy_${p}"])){
 	$OnOff = $this->checkBoxIsOn("_virt_policy_$p");
 	$this->dbg(VM::$v_policies[$p]['d']." = '$OnOff'",cnf_dev);
 	$this->setPolicy($p,$OnOff);

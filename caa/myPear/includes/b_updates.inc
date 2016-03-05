@@ -100,16 +100,21 @@ function myPear_updates(){
  *
  */
 function myPear_update31(){
+
+  // Clean bogus records
+  myPear_db()->qquery("DELETE FROM zzz_unit_members WHERE (um_avid IS NULL OR um_avid = '' OR um_avid = 0)",True);
   
+  // Update sql definitions
   myPear_update_DBdefaults(array('zzz_variables'    =>array('text'        =>array('var_value')),
 				 'zzz_lists'        =>array('varchar(200)'=>array('l_name')),
+				 'zzz_list_members' =>array('varchar(128)'=>array('lm_status')),
 				 'zzz_unit_members' =>array('text'        =>array('um_option')),
 				 'zzz_avatars'      =>array('int(11)'     =>array('av_ddate'),
 							    'text'        =>array('av_http',),
 							    'varchar(4)'  =>array('av_sex'),
 							    'varchar(8)'  =>array('av_birthcountry'),
 							    'varchar(32)' =>array('av_ssn','av_von','av_salutation','av_citizenship','av_residentship',
-										  'av_identity','av_ms_country','av_phd_country','av_zip'),
+										  'av_ms_country','av_phd_country','av_zip'),
 							    'varchar(64)' =>array('av_phone','av_city','av_pwd'),
 							    'varchar(128)'=>array('av_photo','av_email','av_firstname','av_lastname',
 										  'av_position','av_position'),
@@ -120,7 +125,7 @@ function myPear_update31(){
 							    'varchar(32)' =>array('org_country','org_name_short','org_theme'))),
 			   'NULL');
   myPear_update_DBdefaults(array('zzz_units'        =>array('varchar(128)'=>array('u_name','u_class','u_member_title')),
-				 'zzz_list_members' =>array('varchar(128)'=>array('lm_key','lm_value','lm_status')),
+				 'zzz_list_members' =>array('varchar(128)'=>array('lm_key','lm_value')),
 				 'zzz_logs'         =>array('varchar(128)'=>array('log_ip','log_type','log_api','log_comment','log_org'))));
   
 }

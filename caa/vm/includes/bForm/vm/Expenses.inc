@@ -397,7 +397,7 @@ class bForm_vm_Expenses extends bForm_vm{
 	  $tr = $this->visit->getPolicy(VM_V_payTrip);
 	  $pd = $this->visit->getPolicy(VM_V_payPerdiem);
 	  if ($this->visit->getValue('v_projectid') && ((bool)$tr || (bool)$pd)){
-	    foreach(VM::$forms2send as $pdf_tpl){
+	    foreach(VM::$forms2admin as $pdf_tpl){
 	      $this->blanks[$pdf_tpl] = $this->pdfReceipt($pdf_tpl,
 							  myPear_tmp . "/${pdf_tpl}_" . $this->visit->ID . '.pdf',
 							  $verbose=True);

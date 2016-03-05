@@ -169,7 +169,7 @@ class APImenu_prp extends APImenu{
     case tab_prp_update:
       if (bAuth()->loginPrompt()){
 	locateAndInclude('bHolder_prp_preprints');
-	myPear::getPageHeader('Preprints management');
+	myPear::setPageHeader('Preprints management');
 	$h = new bHolder_prp_preprints('managing');
 	$h->listEntries();
       }else{

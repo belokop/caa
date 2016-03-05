@@ -82,6 +82,7 @@ class bDB extends mysqli{
       
     case 'end':
       $this->query('COMMIT');
+      $this->query('SET autocommit=1');
       $this->in_autocommit = False;
     }
   }

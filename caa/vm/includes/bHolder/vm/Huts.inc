@@ -1,6 +1,6 @@
 <?php
-locateAndInclude("bHolder");
-class bHolder_vm_Huts extends bHolder{
+locateAndInclude("bHolder_vm");
+class bHolder_vm_Huts extends bHolder_vm{
 
   var $debug = False;
   var $repetValuesCol1only = True;
@@ -29,6 +29,24 @@ class bHolder_vm_Huts extends bHolder{
     return $header; 
   }
 
+  function isWritable(){
+    return VM_rooms_updater_here || VM_administrator_here;
+  }
+
+  /*
+   * Add buttons "new Building"
+   */
+  function listEntries_summary(){
+    bIcons()->reset();
+    $edit_buttons = array();
+    if ($this->isWritable()){
+    $edit_buttons[] = b_btn::submit('add new '.
+				    join(' / ',array_values(VM_hutCodes()->getCodes(Null,array(time(),time()+720*24*3600)))),
+				    b_url::same('?id=new&form=vm_Hut&clean_once=act_code,act_id'));
+    }
+    $this->t->tr(b_btn::UL_buttons($edit_buttons),'colspan=6');
+  }
+
   /*
    *
    */  
@@ -41,7 +59,6 @@ class bHolder_vm_Huts extends bHolder{
   }
 
   protected function isDeletable(){
-
     return True;
   }
 

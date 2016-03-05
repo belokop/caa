@@ -274,7 +274,7 @@ class bList_vm_socialEvents extends bList_vm{
   /*
    * Page header
    */
-  protected function getPageHeader() {
+  protected function setPageHeader() {
     myPear::H1($this->e->name(),'reset');
   }
 

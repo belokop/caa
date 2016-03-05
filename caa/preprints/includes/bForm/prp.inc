@@ -176,9 +176,9 @@ class bForm_prp extends bForm{
 
   protected function getFormHeader(){
     if ((int)$this->ID){
-      myPear::getPageHeader($this->serial());
+      myPear::setPageHeader($this->serial());
     }else{
-      myPear::getPageHeader('Reservation of new Preprint Number');
+      myPear::setPageHeader('Reservation of new Preprint Number');
     }
   }
 

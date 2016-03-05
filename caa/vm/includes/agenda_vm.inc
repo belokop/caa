@@ -60,6 +60,10 @@ class agenda_vm extends agenda{
 
     bTiming()->cpu(__FUNCTION__);
     myPear::H1("Synchronizing visitors database with Agenda");
+
+    // Update list of events
+    VM_agendaEvents()->syncEventsInCategories(False);
+
     myPear_logs()->doNotLog = True;
 
     $this->noCache = True; 

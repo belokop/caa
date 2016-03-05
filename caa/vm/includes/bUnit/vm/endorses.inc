@@ -64,7 +64,7 @@ class bUnit_vm_endorses extends bUnit_vm{
     $rec = $this->get_unitMember($av_id);
     $rec['v_types'] = $this->arg_explode(@$rec['v_types']);
 
-    myPear::getPageHeader('Endorser '.bForm_Avatar::_fmtName('fl',$rec,False));
+    myPear::setPageHeader('Endorser '.bForm_Avatar::_fmtName('fl',$rec,False));
 
     $this->bForm(array());
     foreach(VM::$endorsements as $v_type=>$groups){
@@ -144,7 +144,8 @@ class bUnit_vm_endorses extends bUnit_vm{
     foreach($this->get_unitMemberIDs() as $av_id){
       $rec = $this->getMember(array('um_avid'=>$av_id));
       if (empty($rec['um_id'])) {
-	b_debug::traceBack("??? empty 'um_id' for av_id=$av_id");
+	b_debug::var_dump($rec);
+	b_debug::traceBack("??? empty 'um_id' for av_id='$av_id'");
 	continue;
       }
       if (@$rec['reminder']+VM_reminding_period*24*3600  < time()){

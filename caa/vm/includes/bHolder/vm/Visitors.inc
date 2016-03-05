@@ -948,59 +948,46 @@ class bHolder_vm_Visitors extends bHolder_vm{
     $e_start   = VM::$e->getValue('e_start',1);
     $e_end     = VM::$e->getValue('e_end',1);
     
+    VM::$e->budgetSource()->get_budgetSource($default_only=False,$verbose=False);
+    $mightBeEndorced = ($e_reg_end < time()) && ($e_end > time()) && (VM::$e->budgetSource()->total > 0);
+
     switch ($this->doing){
       
     case 'lists':
     case 'budget':
-      if (($e_reg_end < time()) && ($e_end     > time())){
-	VM::$e->budgetSource()->get_budgetSource($default_only=False,$verbose=False);
-	if (VM::$e->budgetSource()->total <= 0){
-	}else{	
-	  // Build the FNC message if something goes wrong
-	  if (!empty($this->fatal_fnc) && (time()+VM_booking_zapas*24*3600 > $e_start) &&
-	      (VM_organizer_here || VM_manager_here || VM::hasRightTo('endorse_event'))){
-	    $fatal_p = "style='font-weight:bold;color:red;'";
-	    foreach($this->fatal_fnc as $msg=>$n) $li[] = x("li $fatal_p","$n $msg");
-	    $fnc_message = (VM::$e->isEventEndorsed()
-			    ? (x("p $fatal_p","The event is already approved, however some formalities are NOT completed:".x('ul',join("\n",$li))).
-			       x("p $fatal_p","Please unlock the budget and resolve the issue"))
-			    : (x("p $fatal_p","It is about the time to approve &amp; lock the budget, the event starts in ".b_time::delta(time(),$e_start).
-				 ' and we need time to reserve accommodation for the visitors.').
-			       x("p $fatal_p","However, the budget can't be approved since some formalities are NOT completed:".x('ul',join("\n",$li))).
-			       x("p $fatal_p","Please resolve the issue.")));
-	    if (time() + VM_booking_zapas*24*3600 < $e_start) unset($fnc_message);
-	  }
-	  
-	  // Show button "Release lock"
-	  if (VM::$e->isEventEndorsed()){ 
-	    if (!empty($fnc_message)) myPear::WARNING($fnc_message);
-	    if (VM::hasRightTo('endorse_event')) $to_show[] = b_btn::big_button('Unlock the budget & allow changes',array('e_endorse_once'=>0,
-															  'resetcache_once'=>1),'red');
-	  // Show button "Endorse the event and lock changes" 
-	  // for the events where the applications deadline is over
-	  }elseif(empty($this->fatal_fnc) && VM::hasRightTo('endorse_event')){
-	    $message = ($e_start > time()
-			? '&nbsp;&nbsp;&nbsp;'.b_time::delta(time(),$e_start) . ' until the event starts'
-			: 'By some reason the event is not endorsed');
-	    $to_show[] = b_btn::big_button("$message. &nbsp;&nbsp;&nbsp; ".
-					   'Approve & Lock the budget',array('e_endorse_once'=>1,
-									     'resetcache_once'=>1));
-	    // Warning message for the organizers
-	  }elseif (!empty($fnc_message)){
-	    myPear::WARNING($fnc_message);
-	  }
+      if ($mightBeEndorced){
+	// Build the FNC message if something goes wrong
+	$fnc_message = '';
+	if (!empty($this->fatal_fnc) && (time()+VM_booking_zapas*24*3600 > $e_start) &&
+	    (VM_organizer_here || VM_manager_here || VM::hasRightTo('endorse_event'))){
+	  $fatal_p = "style='font-weight:bold;color:red;'";
+	  foreach($this->fatal_fnc as $msg=>$n) $li[] = x("li $fatal_p","$n $msg");
+	  $fnc_message = (VM::$e->isEventEndorsed()
+			  ? (x("p $fatal_p","The event is already approved, however some formalities are NOT completed:".x('ul',join("\n",$li))).
+			     x("p $fatal_p","Please unlock the budget and resolve the issue"))
+			  : (x("p $fatal_p","It is time now to approve &amp; lock the budget.<br>".
+			       "The event starts in ".b_time::delta(time(),$e_start).
+			       " and we need time to reserve accommodation for the visitors.").
+			     x("p $fatal_p","However, the budget can't be approved since some formalities are NOT yet completed:".x('ul',join("\n",$li))).
+			     x("p $fatal_p","Please resolve the issue asap.")));
+	  if (time() + VM_booking_zapas*24*3600 < $e_start) $fnc_message = '';
 	}
+	$this->boss_button_endorse($fnc_message);
       }
+
     case 'show_mails_exchange':
+      
+      $this->boss_button_endorse();
+
       //
       // Big-Button "Send E-mails to all attenders"
       //
       b_debug::print_r($this->mails_which_are_not_yet_sent);
       if ((!empty($this->mails_which_are_not_yet_sent[VM_V_welcomeMailSent])  ||
 	   !empty($this->mails_which_are_not_yet_sent[VM_V_denialMailSent]))
-	  && ($e_start > time()) 
-	  && VM::hasRightTo('send_finalWelcomeEmail') 
-	  && VM::isEventEndorsed()
+	  && (VM::$e->getValue('e_start',1) > time()) 
+	  &&  VM::hasRightTo('send_finalWelcomeEmail') 
+	  &&  VM::isEventEndorsed()
 	  // && !empty($this->collected_highlights)
 	  ){ 
 	$to_show[] = b_btn::big_button('Send welcome/denial Emails to the attenders',array('mail2all_once'=>1,'resetcache_once'=>1));
@@ -1024,7 +1011,6 @@ class bHolder_vm_Visitors extends bHolder_vm{
       break;
     }
 
-    //if (empty($to_show)) $to_show[] = b_btn::big_button('ну сделай чтоньть...',array());
     if (!empty($to_show)){
       $t = new b_table("style='width:100%'");
       $t->tr($to_show);
@@ -1032,6 +1018,33 @@ class bHolder_vm_Visitors extends bHolder_vm{
     }
   }
 
+  /*
+   *
+   */
+  private function boss_button_endorse($fnc_message=''){
+    static $dejaVu = 0;
+    if ($dejaVu++) return;
+    
+    // Show button "Release lock"
+    if (VM::$e->isEventEndorsed()){ 
+      if (!empty($fnc_message)) myPear::WARNING($fnc_message);
+      if (VM::hasRightTo('endorse_event')) $to_show[] = b_btn::big_button('Unlock the budget & allow changes',array('e_endorse_once'=>0,
+														    'resetcache_once'=>1),'red');
+      // Show button "Endorse the event and lock changes" 
+      // for the events where the applications deadline is over
+    }elseif(empty($this->fatal_fnc) && VM::hasRightTo('endorse_event')){
+      $message = (VM::$e->getValue('e_start',1) > time()
+		  ? '&nbsp;&nbsp;&nbsp;'.b_time::delta(time(),VM::$e->getValue('e_start',1)) . ' until the event starts'
+		  : 'By some reason the event is not endorsed');
+      $to_show[] = b_btn::big_button("$message. &nbsp;&nbsp;&nbsp; ".
+				     'Approve & Lock the budget',array('e_endorse_once'=>1,
+								       'resetcache_once'=>1));
+      // Warning message for the organizers
+    }elseif (!empty($fnc_message)){
+      myPear::WARNING($fnc_message);
+    }
+  }
+  
   /*
    *
    */
@@ -1826,7 +1839,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
   private function btn_approve_reject(){
 
     // Skip the unduly cases
-    if ($not_my_case = (False
+    if ($not_my_case = (VM::outOfScope()
 			|| ($this->rec['v_type'] == VISIT_OUT_OF_SCOPE) 
 			|| !in_array($this->doing,array('lists','budget',)) 
 			)){
@@ -1952,7 +1965,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
    */
   private function btn_payments(){
     $reply = array('','');
-    if ($not_my_case = False
+    if ($not_my_case = VM::outOfScope()
 	|| ($this->rec['v_type'] === VISIT_OUT_OF_SCOPE) 
 	|| ($this->rec['v_status']!= STATUS_YES)         
 	|| !in_array($this->doing,array('lists','budget',)) 
@@ -2015,7 +2028,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
   private function btn_admin(){
 
     // no admin buttons for some lists
-    if (in_array($this->doing,array('show_mails_exchange',)))   return array();
+    if (VM::outOfScope() || in_array($this->doing,array('show_mails_exchange',)))   return array();
     
     bTiming()->cpu(__FUNCTION__);
     locateAndInclude('bForm_vm_Expenses');    

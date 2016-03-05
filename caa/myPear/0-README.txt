@@ -650,7 +650,7 @@ M       myPear/includes/bList.inc
    However, the open FPDI does not support pdf v1.5, hence the pdf merges are still done with pdftk.
 
 2012-07-05 version 3.18
- - Fix "feature" around lm_status_expected
+ - Fix "feature" around lm_status_cb_expected
 
 2012-07-05 version 3.17
  - Redesign the edit/add/drop actions in bList

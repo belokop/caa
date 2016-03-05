@@ -298,7 +298,7 @@ class APImenu_vm extends APImenu{
       case tab_vm_vis_welcome:
       case tab_vm_vis_badges:    
       case tab_vm_vis_list:
-	$reply = VM_observer_here;
+	$reply = !VM::outOfScope() && VM_observer_here;
 	break;
 	
       case tab_vm_ogz_omatrix:

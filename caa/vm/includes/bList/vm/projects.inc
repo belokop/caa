@@ -3,6 +3,7 @@
  * List of financial projects for the organization.
  * The projects are identified by the "project code", 
  * and (optionally) by the human-readable "project name".
+ * Usually projects are valid for 1 financial year.
  *
  * Record structure:
  * lm_key    - project name, human readable 
@@ -12,6 +13,7 @@
  * p_year    - (optional) year when the project is valid
  */
 locateAndInclude('bList_vm');
+locateAndInclude('b_checkBox');
 
 define('project_builtin' , 'Built-in');
 define('project_basic'   , 'Basic');
@@ -37,8 +39,16 @@ class bList_vm_projects extends bList_vm{
 			    False);
       }
     }
+    $VM_show_old_projects = b_cnf::get('VM_show_old_projects');
+    $this->extra_buttons[] = b_btn::submit(($VM_show_old_projects?'Hide':'Show')." old projects",
+					   b_url::same('?VM_show_old_projects='.($VM_show_old_projects?'0':'1')),
+					   $confirm=False);
   }
   
+  protected function isMemberDeletable(){
+    return False;
+  }
+
   function isWritable(){
     return VM_access()->mayDoAccounting() || parent::isWritable();
   }
@@ -109,7 +119,7 @@ class bList_vm_projects extends bList_vm{
     $lm_value = @$this->formDB_member['lm_value'];
     if ((int)$lm_value || strstr($lm_value,'VCB')){
       $this->f->defineVariable('event','lm_status');
-      $this->f->selectMenu('lm_status',$this->getEvents());
+      $this->f->selectMenu('lm_status',$this->get_events_selector());
     }
     $this->f->closeForm();
   }
@@ -121,7 +131,8 @@ class bList_vm_projects extends bList_vm{
   }
 
   function is_projectActive($rec){
-    return (($rec['lm_option'] === 'no') ? '' : 'checked');
+    $reply = (in_array($rec['lm_option'],b_checkBox::$OFF) ? '' : 'checked');
+    return $reply;
   }
 
   function set_projectActivity($id,$value=True){
@@ -133,17 +144,13 @@ class bList_vm_projects extends bList_vm{
 
     $this->sortArgs = " ORDER BY lm_status ";
     foreach($this->getMembers() as $id=>$r){
+      if ($this->record_rejected($r)) continue;
+      
       unset($tab);
-      foreach(explode(',',$r['lm_status']) as $id){
-	if (!is_numeric($id) || (int)$id == 0) continue;
-	if (is_object($e = myPear::getInstance('bForm_vm_Event',$id,'strict'))) $tab = date('Y',$e->getValue('e_start'));
-      }
-      if (!isset($tab)){
-	if ($r['lm_status'] == 'RO')	continue;
-	if ($r['lm_status'] == 'RO')	$tab = project_builtin;
-	else	                        $tab = project_basic;
-      }
-      @self::$tabs[$tab]++;
+      foreach($this->extract_events($r) as $e) $tab = date('Y',$e->getValue('e_start'));
+      
+      if (!isset($tab) && ($r['lm_status'] != 'RO')) $tab = project_basic;
+      if ( isset($tab)) @self::$tabs[$tab]++;
     }
     krsort(self::$tabs);
     return array_keys(self::$tabs);
@@ -181,21 +188,58 @@ class bList_vm_projects extends bList_vm{
       return $this->getMembers();
     }
   }
-
-  protected function format(){
-    $this->r['event_name'] = '';
-    $names = array();
-    foreach(explode(',',$this->r['lm_status']) as $id){
-      if (is_object($e = myPear::getInstance('bForm_vm_Event',$id,'strict'))){
-	// Check that the project is in the agenda sync list
-	if ($e_code = (int)$e->getValue('e_code',1)){
-	  VM_agendaEvents()->addMember(array('lm_key'=>'conf','lm_value'=>$e_code));
-	  $names[] = bJS()->modal_iframe("http://agenda.albanova.se/conferenceDisplay.py?confId=$e_code",
-						 b_fmt::strcut($e->name(),60,'...'));
+  
+  /*
+   * Do not show old/non-active projects by default
+   */
+  protected function record_rejected($r=Null) {
+    if (empty($r)) $r = $this->r;
+    $to_show = b_cnf::get('VM_show_old_projects');
+    if (!$to_show){
+      if ($this->is_projectActive($r)){
+	if ($events = $this->extract_events($r)){
+	  foreach($events as $e){
+	    if (date('Y',$e->getValue('e_start',1)) > date('Y',time()) - VM_OLD_PROJECTS) $to_show = True;
+	  }
+	}else{
+	  $to_show = True;
 	}
       }
     }
-    $this->r['event_name'] = join('<br/>',$names);
+    return !$to_show;
+  }
+
+  /*
+   * Helper - extract event(s) year/agenda_code for the project
+   */  
+  private function extract_events($r){
+    $dejaVu = 0;
+    static $events = array();
+
+    if ($dejaVu != $r['lm_id']) $events = array();
+    $dejaVu = $r['lm_id'];
+
+    if (empty($events)){
+      foreach(explode(',',$r['lm_status']) as $id){
+	if (is_object($e = myPear::getInstance('bForm_vm_Event',$id,'strict'))){
+	  $events[] = $e; 
+	}
+      }
+    }
+    return $events;
+  }
+
+  protected function format(){
+    $event_urls = array();
+    foreach($this->extract_events($this->r) as $e){
+      // Check that the event associated with the project is in agenda sync list,
+      // add it if it is not
+      VM_agendaEvents()->addMember(array('lm_key'=>'conf','lm_value'=>$e->getValue('e_code',1)));
+      // Provide click to the event
+      $event_urls[] = bJS()->modal_iframe("http://agenda.albanova.se/conferenceDisplay.py?confId=".$e->getValue('e_code',1),
+					  b_fmt::strcut($e->name(),60,'...'));
+    }
+    $this->r['event_name'] = join('<br/>',$event_urls);
     
     if (empty($this->r['event_name'])){
       if ($this->r['lm_status'] == 'RO'){
@@ -213,7 +257,7 @@ class bList_vm_projects extends bList_vm{
     $this->t->css['lm_value']['align'] = 'align_left';
   }
 
-   private function getEvents(){
+   private function get_events_selector(){
      locateAndInclude('bForm_vm_Event');
      $select = array();
      $q = myPear_db()->query("SELECT e_id FROM abs_events ORDER BY e_start DESC");

@@ -149,7 +149,7 @@ class myPear{
 	elseif(!in_array('noTranslate',$mode)) $text = bText::_($text);
 
 	if (is_null($title) || in_array('reset', $mode)){
-	  self::getPageHeader($title = trim(b_fmt::unEscape($text)));
+	  self::setPageHeader($title = trim(b_fmt::unEscape($text)));
 	}
       }
     }
@@ -179,7 +179,7 @@ class myPear{
   /*
    *
    */
-  static function getPageHeader($header,$strip_tags=True){
+  static function setPageHeader($header,$strip_tags=True){
     b_cache_file::CMS(__METHOD__,array($header));
     if (function_exists('drupal_set_title')) { 
       // Drupal does not let html tags to be in the header
@@ -700,9 +700,8 @@ class myPear{
       default:
       }
       
-      if (0)      if (!empty($heading)) $text = "$heading: $text";   	      
       if (b_cnf::get('noCompactMessages')) $dejaVu = array();
-      if (!@$dejaVu[b_crypt::hash($text.$id.(is_object($class)?@$class->ID:''))]++){
+      if (!@$dejaVu[b_crypt::hash($text.$id.(is_object($class)?@$class->ID:'x'))]++){
 	if ($id=='message_bottom')  $_SESSION['message_bottom'][] = $text; 
         elseif (function_exists('drupal_set_message') && !b_cnf::get('nodrupal')) drupal_set_message($text,$css_class);
         elseif (cnf_CLI) b_fmt::printt($text);

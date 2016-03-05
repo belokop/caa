@@ -912,9 +912,8 @@ class bList extends myPear_getValue{
     
     // Set the current member ID from the post if it is "mine"
     if ($reply){
-      if (!is_null($lm_id))                    $this->member_ID = $lm_id;
-      if (!isset($_POST['um_status']) && isset($_POST['um_status_expected'])) $_POST['um_status'] = '';
-      if (!isset($_POST['lm_status']) && isset($_POST['lm_status_expected'])) $_POST['lm_status'] = 'no';
+      if ($lm_id !== Null)   $this->member_ID = $lm_id;
+      if (@$_POST['um_status'] === 'off') $_POST['um_status'] == '';
     }
 
     if($this->debug || cnf_dev) $this->dbg(($reply ? 'YES ' : 'NO ').$this->TABLEID."=$l_id, member_ID=$member_ID",
@@ -1067,7 +1066,7 @@ class bList extends myPear_getValue{
     }
 
     // Optionally (re)set the page title
-    $this->getPageHeader();
+    $this->setPageHeader();
     
     print myPear::H2($this->getFormHeader());
 
@@ -1145,7 +1144,7 @@ class bList extends myPear_getValue{
     return count($tabs) - 1;
   }
 
-  protected function getPageHeader() {}
+  protected function setPageHeader() {}
 
   /*
    *
@@ -1172,7 +1171,7 @@ class bList extends myPear_getValue{
     if ($this->myPost_bList())      $_POST = array(); 
 
     // Optionally (re)set the page title
-    $this->getPageHeader();
+    $this->setPageHeader();
 
     if (empty($content)){
       $tabs = $this->getTabsForListing();
@@ -1559,9 +1558,6 @@ class bList extends myPear_getValue{
       //      b_debug::internalError("Empty \"lm_id\" argument");
     }
     
-    if (!isset($_REQUEST[$name]) && isset($_REQUEST[$name.'_expected'])){
-      $_REQUEST[$name] = $_POST[$name] = $_GET[$name] = $_REQUEST[$name.'_expected'];
-    }
     $reply = ($this->myPost_bList() && isset($_REQUEST[$name])
 	      ? $_REQUEST[$name]
 	      : @$this->formDB_member[$name]);

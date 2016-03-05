@@ -82,7 +82,7 @@ class bList_vm_socialEventRates extends bList_vm{
   /*
    *
    */
-  protected function getPageHeader() {
+  protected function setPageHeader() {
     myPear::H1($header=$this->getTabsHeader(),'reset');
   }
 

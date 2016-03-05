@@ -5,7 +5,7 @@
 locateAndInclude('bForm_vm');
 class bForm_vm_Hut extends bForm_vm {
 
-  var $debug = False;
+  var $debug = True;
   var $TABLE  = 'abs_huts';
   var $TABLEID= 'hut_id';
 
@@ -19,6 +19,9 @@ class bForm_vm_Hut extends bForm_vm {
 				 'hut_status'          => 'Default accommodation?',
 				 'hut_capacity'        => 'Capacity (N rooms)',
 				 );
+  public static $compalsary = array('hut_name',
+				    'hut_code',
+				    'hut_url');
   
   /*
    * Get all huts of the given code and (optionally) for a given time period
@@ -80,9 +83,8 @@ class bForm_vm_Hut extends bForm_vm {
       $this->defineVariable($d,$f);
     }
     
-    foreach(array_diff(self::$columns,array('hut_name','hut_code')) as $f=>$d){
-      $this->isMBE[$f] = True;
-    }
+    foreach(array_keys(self::$columns) as $c) $this->isMBE[$c] = True;
+    foreach(self::$compalsary as $c)          $this->isMBE[$c] = False;
 
     $this->isRO['hut_code'] = ($this->getValue('hut_code') == HUT_BI);
   }
@@ -93,6 +95,7 @@ class bForm_vm_Hut extends bForm_vm {
   function __construct($id, $mode='RO') {
     parent::__construct($id, $mode);
     $this->dbg('completed');
+    $this->getValue('hut_capacity');
   }
 
   /*
@@ -196,7 +199,6 @@ class bForm_vm_Hut extends bForm_vm {
    */
   public function getCapacity(){
     $reply = $this->getValue('hut_capacity');
-    if (empty($reply)) $reply = 999;
     return $reply;
   }
   
@@ -204,7 +206,9 @@ class bForm_vm_Hut extends bForm_vm {
    * We do not care here about missing description
    */
   public function getValue($name, $asIs=True, $d_MBE=True){
-    return parent::getValue($name, True, True);
+    $v = parent::getValue($name, True, True);
+    if (($name == 'hut_capacity') && empty($v)) $v = 999;
+    return $v;
   }
   
   function formOKspecific() {}

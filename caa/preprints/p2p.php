@@ -117,7 +117,9 @@ while ($r = myPear_db()->next_record($q)){
 	if($r['Id'] ==2251791) $r['username'] = 'harsha.raichur.astro@gmail.com';
 	if($r['Id'] ==2266022) $r['username'] = 'erik.widen@nordita.org';
 	if($r['Id'] ==2343032) $r['username'] = 'jennifer.schober@nordita.org';
-	if (empty($r['username'] ))print "????????????xxxxx $r[Id] ".join(':',$passwd[$r['Id']])."\n";
+	if($r['Id'] ==2252621) $r['username'] = 'yaron.kedem@nordita.org';
+	if($r['Id'] ==268166)  $r['username'] = 'marit.sandstad@astro.uio.no';
+	if (empty($r['username'] ))print "???????????? unmathed $r[Id] ".join(':',$passwd[$r['Id']])."\n";
       }
     }
   }
