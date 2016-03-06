@@ -381,10 +381,8 @@ class bHolder_vm_Visitors extends bHolder_vm{
       break;
       
     case 'lists':
-      $this->tabs_toShow = array((is_object(VM::$e) 
-				  ? tab_participants 
-				  : tab_visitors)          => 'print_collected_visitors',
-				 tab_accommodation_options => tab_accommodation_options);
+      $this->tabs_toShow = array((is_object(VM::$e) ? tab_participants : tab_visitors)  => 'print_collected_visitors',
+				 tab_accommodation_options                              => tab_accommodation_options);
       if (VM::outOfScope() || !split_by_huts || is_object($this->av)){
 	unset($this->tabs_toShow[tab_accommodation_options]);
       }
@@ -2268,6 +2266,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
 	switch($method){
 	case tab_accommodation_options:
 	  if (is_object(VM::$e) && !VM::$e->attenders(True)) return;
+	  if (VM::outOfScope())     return;
 	  // Initialise vm_accommodationOptions if not yet done
 	  if(is_object(VM::$e)){
 	    VM::$e->accommodationOptions()->update();

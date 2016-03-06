@@ -2,7 +2,8 @@
 locateAndInclude('bHolder_vm');
 class bHolder_vm_Events extends bHolder_vm{
 
-  var $sortBy_default = 'name';
+  var $noSort = True;
+  var $showLineCounter = False;
 
   public function __construct(){
     parent::__construct();
@@ -11,32 +12,38 @@ class bHolder_vm_Events extends bHolder_vm{
   function query(){
     return myPear_db()->query("SELECT *,e_start AS name  FROM abs_events WHERE ".
 				($this->onlyAgenda?'e_code>0':'1').
-				" ORDER BY $_GET[sBy] $_GET[sByDir]");
+				" ORDER BY $_GET[sBy] ".@$_GET['sByDir']);
   }
   
   function header(){
-    return array('name'          => 'title',
-		 'e_start_nosort'=> 'start',
-		 'e_end_nosort'  => 'end');
+    return array('year_nosort'   => ' ',
+		 'name'   => ' ',
+		 );
   }
 
   function format() {
+    static $year_was = '?';
+
     $e = myPear::getInstance('bForm_vm_Event',$this->rec['e_id']);
-    if ($e->formDB['e_code'] > 0){
-      $this->rec['e_start_nosort'] = date('d M - ', $this->rec['e_start']);
-      $this->rec['e_end_nosort']   = date('d M Y',$this->rec['e_end']);
+    if ($e->getValue('e_code')){
+      $year = date('Y',$this->rec['e_start']);
+      if ($year != $year_was) $this->t->prt(array('year_nosort'=>x('h3',$year)));      $year_was = $year;
+      $this->rec['e_start'] = x('code',date('d M - ', $this->rec['e_start']));
+      $this->rec['e_end']   = x('code',date('d M Y',$this->rec['e_end']));
     }
-    $this->rec['name']    = b_fmt::strcut($e->name(), 44, '...');
-    if ($e->isWritable())      $this->t->extraTD[] = b_btn::link('',
-								  $e->sameURL_but(),
-								  bIcons()->get('i-edit')); 
-    if ($this->rec['e_code']>0) $this->t->extraTD[] = b_btn::link('',"http://agenda.albanova.se/conferenceDisplay.py?confId=".$this->rec['e_code'],bIcons()->get('nordita')); 
-    $this->t->repetValuesCol1only = False;
+    $this->rec['name'] = $e->name($includeDate=True,$max_length=66);
+    if (False){
+      if ($e->isWritable())       $this->t->extraTD[] = b_btn::link('',
+								    $e->sameURL_but(),
+								    bIcons()->get('i-edit')); 
+      if ($this->rec['e_code']>0) $this->t->extraTD[] = b_btn::link('',"http://agenda.albanova.se/conferenceDisplay.py?confId=".$this->rec['e_code'],bIcons()->get('nordita')); 
+    }
     axel($this->rec,$e->name());
   }
 }
 
 function axel($rec,$n){
+  if (!myPear_db()->tableExists('registrants')) return;
   if ($rec['e_code'] <=0) return;
   $line = 
     "program $n / ".

@@ -48,7 +48,7 @@ if (0) $reply = $agenda->getCategory(270,
                                                     "before=2016-09-01",
                                                     "show_reg=all",
                                                     "show_contrib=all")));
-$reply = $agenda->getConference(4462,
+$reply = $agenda->getConference(4992,
                                 join('&',array(
                                                "show_reg=all",
                                                "show_contrib=all")));

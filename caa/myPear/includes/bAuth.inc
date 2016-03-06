@@ -206,7 +206,6 @@ class bAuth{
     if (cnf_demo || cnf_dev){
       myPear::MESSAGE_forced('',$msg="All the Emails are redirected to '".cnf_demo_email."'");
       myPear::DEBUG($msg,True);
-      var_dump($msg);
     }
   }
   

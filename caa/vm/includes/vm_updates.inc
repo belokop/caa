@@ -117,11 +117,18 @@ function vm_compat_update_ad_hocks(){
  * Where it comes from ???
  */
 function vm_compat_update_41(){
+  // Clean duplicated organizers
   $q = myPear_db()->qquery("SELECT COUNT(*),u_id,u_parent,u_class FROM zzz_units WHERE u_class='bUnit_vm_organizers' GROUP BY u_parent HAVING COUNT(*)>1",cnf_dev);
   while($r = myPear_db()->next_record($q)){
     myPear_db()->qquery("DELETE FROM zzz_units WHERE u_id=$r[u_id]",True);
     myPear_db()->qquery("DELETE FROM zzz_unit_members WHERE um_uid=$r[u_id]",True);
   }  
+  // Clean agenda&budget lists
+  $q = myPear_db()->qquery("SELECT lm_id FROM zzz_list_members LEFT JOIN zzz_lists ON l_id=lm_lid WHERE lm_key='' AND lm_value='' AND ".
+			   " (l_class = 'bList_vm_agendaEvents' OR l_class = 'ZZZ_bList_vm_budgetSource')",True);
+  while($r = myPear_db()->next_record($q)){
+    myPear_db()->qquery("DELETE FROM zzz_list_members WHERE lm_id=$r[lm_id]",True);
+  }
 }
 
 /*

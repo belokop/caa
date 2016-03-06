@@ -1357,7 +1357,8 @@ class bForm_vm_Visit extends bForm_vm {
     //
     // Easy button for endorsers
     //
-    if (empty($_SESSION[get_class($this).$this->ID]) &&
+    if (!$this->visitOutOfScope() &&
+	empty($_SESSION[get_class($this).$this->ID]) &&
 	$this->isPending() &&
 	(($v_group=$this->getValue('v_group',1)) && in_array(bAuth::$av->ID,VM_endorsers()->getEndorsers($v_group)) ||
 	 (is_object($this->e) && $this->e->isOrganizer()))

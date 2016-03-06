@@ -116,6 +116,7 @@ class APImenu_vm extends APImenu{
 			    tab__tasks               => -784,
 			    tab_vm_adm_projects      => -783,
 			    tab_vm_adm_unitOrganizers=> -780,
+			    tab_vm_adm_agendaList    => +728,
 			    tab_vm_adm_sync          => +730,
 			    tab__bText               => +710,
 
@@ -186,11 +187,13 @@ class APImenu_vm extends APImenu{
 			      * Offices are not any more distributed by the VM... 
 			      * Using Wild-West approach YB 2012-03-07
 			      */
-			     //tab_vm_off     => array(tab_vm_off_add, tab_vm_off_see, tab_vm_off_accommodate,tab_vm_off_door_labels, tab_vm_off_usage),
-			     //tab_vm_events  => array(tab_vm_events_see,     tab_vm_events_add),  // obsolete ?
+			     tab_vm_off     => array(tab_vm_off_add, tab_vm_off_see, tab_vm_off_accommodate,tab_vm_off_door_labels, tab_vm_off_usage),
+			     tab_vm_events  => array(tab_vm_events_see,     tab_vm_events_add),  // obsolete ?
 			     );
   
   function __construct(){
+    if (!cnf_dev) unset(self::$static_menu[tab_vm_off]);
+    if (!cnf_dev) unset(self::$static_menu[tab_vm_events]);
     parent::__construct();
   }
 
@@ -281,6 +284,10 @@ class APImenu_vm extends APImenu{
 	$reply = VM_manager_here;
 	break;
 	
+      case tab_vm_events:
+      case tab_vm_events_see:
+	$reply = cnf_dev;
+	break;
 
       case tab_vm_ap:
       case tab_vm_ap_add:
@@ -818,8 +825,8 @@ class APImenu_vm extends APImenu{
       $holder->listEntries();
       break;
       
-    case tab_vm_events_see:
     case tab_vm_events:
+    case tab_vm_events_see:
       locateAndInclude('bHolder_vm_Events');
       $holder = new bHolder_vm_Events();
       $holder->listEntries();

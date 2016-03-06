@@ -17,7 +17,7 @@ class bIcal_matrix_offices extends bIcal_matrix{
     $_GET['sBy'] = 'o_name';
   }
   
-  function show(){    
+  function show($arg=Null){    
     myPear::H1("Office space allocation");
     $joinOffices = " LEFT JOIN abs_offices ON o_id = v_oid  LEFT JOIN abs_expenses ON v_id = exp_vid LEFT JOIN zzz_list_members ON v_projectid = lm_id ";
 

@@ -27,7 +27,7 @@ class bList_vm_agendaEvents extends bList_vm{
     parent::__construct(myOrg_ID);
 
     $VM_show_old_events = b_cnf::get('VM_show_old_events');
-    $this->extra_buttons[] = b_btn::submit(($VM_show_old_events?'Hide':'Show')." old events",
+    $this->extra_buttons[] = b_btn::submit(($VM_show_old_events?'Hide':'Show')." old&out_of_scope events",
                                            b_url::same('?VM_show_old_events='.($VM_show_old_events?'0':'1')),
                                            $confirm=False);
   }
@@ -72,7 +72,6 @@ class bList_vm_agendaEvents extends bList_vm{
 	}
       }
       ksort($confs,SORT_NUMERIC);
-      //      b_debug::print_r($confs,'confs','nosort');
     }
     $reply = array($cats[$catID],$confs);
     return $reply;
@@ -112,8 +111,9 @@ class bList_vm_agendaEvents extends bList_vm{
 	    $toAdd[] = (array('lm_status' => (b_time::txt2unix($conf['start']) > time() ? 'on' : 'off'),
 			      'lm_key'    => 'conf',
 			      'lm_value'  => $confId,
-			      'a_name'    => $conf['title'],
-			      ));
+			      'a_name'    => bForm_vm_Event::_name(array('e_start'=>b_time::txt2unix($conf['start']),
+									 'e_code' =>$confId,
+									 'e_name' =>$conf['title']))));
 	    $conf['url'] = x('a href='.sprintf("%s/conferenceDisplay.py?confId=%s",agenda_url,$confId),"conf $confId");
 	    $conf['status'] = '?';
 	    $conf['act'] = 'ADD';
@@ -178,10 +178,12 @@ class bList_vm_agendaEvents extends bList_vm{
       }elseif(@$_POST['lm_key'] === 'conf'){
 	$confId = $_POST['lm_value'];
 	VM_agenda()->sync(array("conf=$confId&show_reg=all"));
-	// Mistyped event code?
-	if (is_object($ev = myPear::getInstance('bForm_vm_Event',"e_code=$confId",array('strict')))){
+	if (is_object($ev = myPear::getInstance('bForm_vm_Event',"e_code='$confId'",array('strict')))){
 	  $_POST['a_name'] = $ev->name();
 	  $this->new_item = array(x('"',$_POST['a_name']));
+	}elseif(cnf_dev){
+	  // Mistyped event code?
+	  $this->dbg("??? can't create bForm_vm_Event(e_code='$confId')",True);
 	}
       }else{
 	$reply = False;
@@ -192,7 +194,7 @@ class bList_vm_agendaEvents extends bList_vm{
   }
 
   private function is_ourEvent($rec){
-    $reply = !b_checkBox::isOff($rec['lm_status']);
+    $reply = !b_checkBox::isOff(@$rec['lm_status']);
     return $reply;
   }
 
@@ -251,9 +253,12 @@ class bList_vm_agendaEvents extends bList_vm{
     foreach($this->getMembers() as $id=>$r){
       if($r['lm_key']=='cat'){
 	$tab = self::$cat;
-      }elseif($e=myPear::getInstance('bForm_vm_Event',"e_code=".$r['lm_value'],'strict')){
+      }elseif($e=myPear::getInstance('bForm_vm_Event',"e_code='".$r['lm_value']."'",'strict')){
 	if ($this->record_rejected($r)) continue;
 	$tab = date('Y',$e->getValue('e_start'));
+      }elseif(cnf_dev){
+	$this->dbg("??? can't create bForm_vm_Event(e_code='$r[lm_value]')",True);
+	b_debug::print_r($r,"id=$id",'nosort');
       }
       @self::$tabs[$tab]++;
     }
@@ -297,7 +302,7 @@ class bList_vm_agendaEvents extends bList_vm{
       }
       $this->r['_event'] = bJS()->modal_iframe(VM_agenda()->getCategoryURL($this->r['lm_value']),
 					       x('strong',"Category \"".$this->r['a_name']."\""));
-    }elseif($e=myPear::getInstance('bForm_vm_Event',"e_code=".$this->r['lm_value'],'strict')){
+    }elseif($e=myPear::getInstance('bForm_vm_Event',"e_code='".$this->r['lm_value']."'",'strict')){
       $this->r['_event']    = bJS()->modal_iframe(VM_agenda()->getEventURL($e->getValue('e_code')),$e->name(True,80));
       $this->r['_lm_status']= ($this->is_ourEvent($this->r)
 			       ? bIcons()->get('i-ok')

@@ -406,6 +406,7 @@ $subject by $endorser.
     }
 
     // Sanity, don't be too verbose
+    if($this->visit->e->getValue('e_start') > time()) return;
     if($this->visit->getPolicy(VM_V_denialMailSent))  $this->visit->setPolicy(VM_V_infoMailSent,1);
     if($this->visit->getPolicy(VM_V_welcomeMailSent)) $this->visit->setPolicy(VM_V_infoMailSent,1);
     

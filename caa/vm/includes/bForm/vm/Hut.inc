@@ -5,7 +5,6 @@
 locateAndInclude('bForm_vm');
 class bForm_vm_Hut extends bForm_vm {
 
-  var $debug = True;
   var $TABLE  = 'abs_huts';
   var $TABLEID= 'hut_id';
 
