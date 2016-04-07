@@ -53,7 +53,6 @@ class bList_vm_accommodationOptions extends bList_vm{
    *
    */
   protected function message_createList(){
-    var_dump(__METHOD__,$this->name(True),$this->title);
     myPear::MESSAGE("Creating ".$this->name(True).' for '.$this->title);
   }
   

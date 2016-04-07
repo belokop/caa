@@ -1065,8 +1065,7 @@ class b_fmt{
       $n = 0;
       foreach(array_keys($array) as $key) if ($key != (string)$n++) $reply = True;
     }else{
-      var_dump($array);
-      b_debug::internalError("$array in not an array");
+      b_debug::internalError("$array in not an array",$array);
     }
     return $reply;
   }

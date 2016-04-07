@@ -94,7 +94,7 @@ class bList_vm_cotenants extends bList_vm{
   }
 
   protected function message_createList(){
-    var_dump(__METHOD__,$this->name(True),myOrg_name);
+    // var_dump(__METHOD__,$this->name(True),myOrg_name);
     myPear::MESSAGE('Creating new list "'.trim($this->name(True)).'" for '.myOrg_name);
   }
 

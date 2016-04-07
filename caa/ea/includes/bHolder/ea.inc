@@ -70,10 +70,6 @@ class bHolder_ea extends bHolder{
       if ($condition && ($this->rec[$condition[0]] != $condition[1])) return;
       if (empty($o_id))   return;
 
-      if (empty($this->rec['av_id'])){
-	var_dump($this->rec);
-	b_debug::internalError('??? empty \$this->rec[av_id]');      
-      }
       $av = myPear::getInstance_new(bForm_Avatar::$bForm_Avatar,$this->rec['av_id'],array('nocache','fatal'));
       $img = $av->getPhoto(True);
       if (empty($img)) $img = myPear_images."avatar.png";
@@ -105,7 +101,6 @@ class bHolder_ea extends bHolder{
 	  $w = (int)($i[0]/$scale);
 	  $h = (int)($i[1]/$scale);
 	  $img = sprintf('<img width="%d" height="%d" src="%s" alt="">',$w,$h,$img);
-	  //	  var_dump($img);
 
           if ($n_people == 1){
 	    print x('td',$img);

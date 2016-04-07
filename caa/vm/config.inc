@@ -685,7 +685,6 @@ class VM extends myPear{
       if ($e_ID != ($id=@self::$e->ID)){
 	self::$e = myPear::getInstance_new('bForm_vm_Event',$e_ID,'strict');
 	myPear::WARNING_T("Change VM::e_ID $id -> $e_ID ");
-	var_dump("".self::$e);
       }
     }
     
