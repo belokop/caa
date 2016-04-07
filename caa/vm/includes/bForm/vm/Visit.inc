@@ -23,19 +23,6 @@ class bForm_vm_Visit extends bForm_vm {
   public  $av_host = Null;
 
   /*
-   * Get the visit instance
-   */
-  public static function getVisit($av_id,$e_id){
-    $reply = Null;
-    $q = myPear_db()->query("SELECT v_id FROM abs_visits WHERE v_avid='$av_id' AND v_eid='$e_id'");
-    while ($r = myPear_db()->next_record($q)){
-      $reply = new bForm_vm_Visit($r['v_id']);
-    }    
-    return $reply;
-  }
-
-
-  /*
    * Get the avatar visits 
    */
   public static function getVisits($av_id,$v_types=array()){
@@ -82,9 +69,12 @@ class bForm_vm_Visit extends bForm_vm {
     // Ask the parent...
     parent::__construct($id, $mode);
 
-    // Hook the Avatar & Event which he is attending
-    $this->hookDependancies();
-    
+    // Force status update. This should be done as early as posible, so do it now...
+    if (empty($_GET['a_once']) && (($w=@$this->formDB['v_status']) !== ($n=$this->getValue('v_status')))){
+      $_GET['a_once'] = $this->getValue('v_status');
+      $this->dbg("Force status update $w --> $n",cnf_dev);
+    }
+
     // Follow the endorser will
     if (isset($_GET['a_once'])){
       $this->show_gv = cnf_dev;
@@ -92,6 +82,11 @@ class bForm_vm_Visit extends bForm_vm {
       $this->setStatus($_GET['a_once']);
       if ($_GET['a_once'] == STATUS_PENDING) $_SESSION[get_class($this).$this->ID] = '...';
     }
+
+    // Hook the Avatar & Event which he is attending
+    // $this->hookDependancies();
+    $this->hookAvatar();
+    $this->hookEvent();
   }
   
   /*
@@ -101,7 +96,7 @@ class bForm_vm_Visit extends bForm_vm {
     if (is_object($this->av))          $this->av->__clean_cache(); 
     if (is_object($this->exp))         $this->exp->__clean_cache(); 
     foreach($this->get_allLeases(True) as $l) $l->__clean_cache();
-    myPear::getInstance(get_class($this),$this->ID,'clean');
+    myPear::getInstance_new(get_class($this),$this->ID,'clean');
   }
 
   /*
@@ -170,6 +165,7 @@ class bForm_vm_Visit extends bForm_vm {
 	$policies[$p] = VM::$v_policies[$p];
       }
     }
+    // if (cnf_dev) myPear::DEBUG(__FUNCTION__.'() - '.b_fmt::joinX(',',$policies));
     return $policies;
   }
 
@@ -215,7 +211,6 @@ class bForm_vm_Visit extends bForm_vm {
    * no more changes is allowed.
    *
    * @param $policy - (int) policy code
-   * @param $onlyIfExpected (optional)
    * @return - (bool) True/Force if the policy is set/not_set
    *           Null if the $onlyIfExpected is set and the policy is not expected for the visit
    */
@@ -264,28 +259,33 @@ class bForm_vm_Visit extends bForm_vm {
     if (!in_array($policy,array_keys(VM::$v_policies)))      return;
 
     if (!$recursion_ok && $this->setPolicyRecursion++){
-      if (cnf_dev) b_debug::traceBack($this->setPolicyRecursion);
+      if (cnf_dev) b_debug::traceBack(__FUNCTION__."() - recursion".$this->setPolicyRecursion);
       return;
     }
+
+    // Sanity...
+    $_virt_policy = '_virt_policy_'.$policy;
+    unset($_POST[$_virt_policy]);
+    $this->getValue_reset($_virt_policy);
 
     // Sanity, fix eventual mistypes of the organizers
     if ($this->getPolicy(VM_V_denialMailSent)  && !$this->isDenied())   $this->setPolicy(VM_V_denialMailSent, 0,cnf_dev,False,True);
     if ($this->getPolicy(VM_V_welcomeMailSent) && !$this->isApproved()) $this->setPolicy(VM_V_welcomeMailSent,0,cnf_dev,False,True);
-    
+    if (($policy == VM_V_provideOffice) && empty($value)){
+      $this->getValue_reset_forced('v_oid');
+      $this->getValue_reset('_o_name');
+    }    
     // Now set the requested policy
-    if (!(VM_booker_here||VM_organizer_here) || 
-	(@VM::$v_policies[$policy]['t'] === auto_maintained) ||
-	($this->getValue('v_end') < time())) $verbose = False;
+    if (defined('VM_booker_here') && 
+	(!(VM_booker_here||VM_organizer_here) || 
+	 (@VM::$v_policies[$policy]['t'] === auto_maintained) ||
+	 ($this->getValue('v_end') < time()))) $verbose = False;
     
-    $isChanged = $this->setBitMask($policy,'v_policy',$value,$check_only=True);
-    if ($isChanged){
-      if (!$force && $this->exp_arePayed()){
-	if ($verbose || cnf_show_pv) myPear::WARNING(x('i',$this->av->name()."'s record is LOCKED, <em>".VM::$v_policies[$policy]['d']."</em> is not changed"));
-      }else{      
-	$this->setBitMask($policy,'v_policy',$value);
-	if ($verbose || cnf_show_pv){
-	  myPear::MESSAGE_add(VM::$v_policies[$policy]['d']." ".x('em',($value?'YES':'NO')." for ".$this->av->fmtname()));
-	}
+    
+    if ($isChanged = $this->setBitMask($policy,'v_policy',$value,$check_only=True)){
+      $this->setBitMask($policy,'v_policy',$value);
+      if ($verbose || cnf_show_pv){
+	myPear::MESSAGE_add(VM::$v_policies[$policy]['d']." ".x('em',($value?'YES':'NO')." for ".$this->av->fmtname()));
       }
     }
     $this->setPolicyRecursion = 0;
@@ -295,34 +295,41 @@ class bForm_vm_Visit extends bForm_vm {
    * Set the status
    */
   public function setStatus($v_status=Null){
-    $was=$this->getValue('v_status');
+    if (!is_numeric($this->ID)) return;
+    
+    $was = @$this->formDB['v_status'];
+    if ($was === $v_status){
+      $this->dbg("Status is not changed... $v_status",cnf_dev);
+      return;
+    }
+    
+    // Save the new status
+    $this->getValue_reset_forced('v_status',$v_status);
+    $this->dbg("v_status $was->$v_status",(bool)($this->debug || cnf_show_pv || cnf_dev));
+
     switch($v_status){
     case STATUS_NO:
       unset($_POST['lease_id']);
-      $this->deleteBooking(Null,$verbose=True);
-      // cancel all the scholarships
-      foreach (VM::$reimbursements as $p) $this->setPolicy($p,0,True);
+      $this->deleteLease(Null,$verbose=True);
       
     case STATUS_YES:
       // Send informational letter to the administrators
       foreach(VM_bookers()->membersOnDuty(VISIT_TYPE_COLLABORATION) as $s_name=>$s_email){
 	VM_mailer()->inform_secretary_about_visit($this,$s_email,$v_status,bAuth::$av->fmtName('fl'));
       }
+
+    case STATUS_PENDING:
+      // cancel/set policies of "when_approved" type
+      foreach(VM_visit_policies($this->getValue('v_type')) as $p){
+	if (@VM::$v_policies[$p]['t'] === when_approved) $this->setPolicy($p,($v_status==STATUS_YES?1:0),True);
+      }
+
+      // cancel all the scholarships 
+      if ($v_status !== STATUS_YES) foreach (array_keys(VM::$reimbursements) as $p) $this->setPolicy($p,0,True);
       break;
       
-    case STATUS_PENDING:
-      // cancel all the scholarships
-      foreach (VM::$reimbursements as $p) $this->setPolicy($p,0,True);
-      break;
-
-     default:
-       myPear::WARNING_T("Unexpected status '$v_status'",$this);
-       return;
-     }
-    if ($was != $v_status){
-      $this->updateDB(array('v_status' => $v_status));
-      $this->getValue_reset('v_status',$v_status);
-      $this->dbg("v_status $was->$v_status",(bool)($this->debug || cnf_show_pv || cnf_dev));
+    default:
+      myPear::WARNING_T("Unexpected status '$v_status'",$this);
     }
    }
 
@@ -342,16 +349,13 @@ class bForm_vm_Visit extends bForm_vm {
      $buffer['v_status'] = $this->getValue('v_status',True);
 
      $reply = self::_getStatus($buffer);
-     if ((int)$this->ID)    $this->setStatus($reply);
+     //??????     if ((int)$this->ID)    $this->setStatus($reply);
 
-     switch($reply){
-     case STATUS_YES:
-       // Set also flag 'the approval formalities are done' if the status is auto-set to 'accepted'
+     // Set also flag 'the approval formalities are done' if the status is auto-set to 'accepted'
+     if ($reply === STATUS_YES){
        if ((int)$this->ID && empty($v_status)) $this->setPolicy(VM_V_welcomeMailSent,True,False);
-       break;
-     case STATUS_PENDING:
-     case STATUS_NO:
      }
+
      $this->dbg($reply,(bool)(cnf_show_pv||$this->debug));    
      return $reply;
    }
@@ -444,7 +448,7 @@ class bForm_vm_Visit extends bForm_vm {
 
 
    /*
-    * Hook all the leases (bookings) for this visit
+    * Hook all the leases (leases) for this visit
     */
    private $_allLeases = array(); // list of 'lease' objects
    function get_allLeases($reset=False,$mode='classes'){
@@ -484,10 +488,14 @@ class bForm_vm_Visit extends bForm_vm {
      if (!bAuth::authenticated()) return False;
 
      $block_ID   = str_replace($this->ID,'',$block_ID);
-     $block_only = @$_GET['block_once'];
-     if (($block_only == VM_visit_expenses) && ($this->MODE == 'RO')) $block_only = $_GET['block_once'] = '';
-     if (strpos($block_only,VM_visit_lease) !== False) $block_only = VM_visit_lease;
      if (strpos($block_ID,  VM_visit_lease) !== False) $block_ID   = VM_visit_lease;
+
+     // Show on one block if requested
+     if ($block_only = @$_GET['block_once']){
+       if (($block_only == VM_visit_expenses) && ($this->MODE == 'RO')) $block_only = $_GET['block_once'] = '';
+       if (strpos($block_only,VM_visit_lease) !== False) $block_only = VM_visit_lease;
+       if ($block_only != $block_ID) return False;
+     }
 
      if (@$_GET['action_once'] === VM_visit_project) $this->isVITAL = array();
 
@@ -561,6 +569,10 @@ class bForm_vm_Visit extends bForm_vm {
        if ($reply && $this->visitOutOfScope()) $reply = 'RO';
        break;
 
+     case 'Office':
+       $reply = True;
+       break;
+
      default:
        $reply = parent::formBlock_isVisible($block_ID,$fields);
        if (!empty($block_ID)) myPear::WARNING_T("Unexpected block '$block_ID'");
@@ -570,9 +582,12 @@ class bForm_vm_Visit extends bForm_vm {
      return $reply;
    }
    
+   /*
+    *
+    */
    function hookEvent(){
      if (!($this->e instanceof bForm_vm_Event) && ($v_eid = $this->getValue('v_eid', True))) {
-       $this->e = myPear::getInstance('bForm_vm_Event',$v_eid,array('strict','fatal'));
+       $this->e = myPear::getInstance_new('bForm_vm_Event',$v_eid,'fatal');
      }
      $this->dbg((is_object($this->e)
 		 ? $this->e->__toString()
@@ -670,7 +685,7 @@ class bForm_vm_Visit extends bForm_vm {
 			       $e1=$leases[$n]->getValue('lease_end'),
 			       $s2=$leases[$n+1]->getValue('lease_start'),
 			       $e2=$leases[$n+1]->getValue('lease_end'))){
-	$this->adjust_dates = False;
+	  $this->adjust_dates = False;
 	  myPear::WARNING(sprintf("Clashing leases <br/>".
 				  "lease %d: %s<br/>" . 
 				  "lease %d: %s",
@@ -701,6 +716,7 @@ class bForm_vm_Visit extends bForm_vm {
 				'v_created'           => 'Request date',
 				'v_group'             => 'Research group',
 				'v_oid'               => 'Office number',
+				'_o_name'             => 'Office number',
 				'v_projectid'         => 'Project to pay from',
 				'v_start'             => 'Start of visit',
 				'v_end'               => 'End of visit',
@@ -829,7 +845,7 @@ class bForm_vm_Visit extends bForm_vm {
       if (empty($buffer['v_eid'])){
 	$reply = array();
       }else{
-	$e = myPear::getInstance('bForm_vm_Event',$buffer['v_eid'],array('fatal'));
+	$e = myPear::getInstance_new('bForm_vm_Event',$buffer['v_eid'],'fatal');
 	$reply = array_diff($reply,array(HUT_BI),array_values($e->accommodationOptions()->get_BI(True)));
       }
     }
@@ -938,7 +954,20 @@ class bForm_vm_Visit extends bForm_vm {
 		    array('av_email'=>$this->getValue('av_email',1,1))) as $arg)
 	if ($this->av = bForm_Avatar::hook($arg)) break;
       if(is_object($this->av)){
+	// Preset the office for staff members
 	bForm_Avatar::set_context($this->av,VM_MODULE);
+	$this->av->hook_employment();
+	if ($this->av->isE(True)){
+	  $office = $this->av->get_staffOffice();
+	  if (!empty($office)){
+	    $o = myPear::getInstance_new('bForm_vm_Office',array('o_name'=>$office),'nocache');
+	    if ($this->getValue('v_oid') != $o->ID){
+	      $this->getValue_reset_forced('v_oid',$o->ID);
+	      myPear::MESSAGE("Office ".x('em',$office).' - '.$this->av->fmtName('fl'));
+	    }
+	    $this->setPolicy(VM_V_provideOffice,1);
+	  }
+	}	
 	$this->av->isLocked($this->getValue('v_type',1)==VISIT_TYPE_PROGRAM);
       }
     }
@@ -1072,7 +1101,7 @@ class bForm_vm_Visit extends bForm_vm {
       $this->isRO['v_status'] = False;
       $dialog = array('v_status'=>array('selectMenu',$visit_status)); // ,'onchange="submit()"'));
     }
-
+    
     // Add endorses if the visit is not approved
     $this->get_endorses($dialog);
     
@@ -1112,7 +1141,9 @@ class bForm_vm_Visit extends bForm_vm {
    * Show accommodation ('lease' objects)
    */
   private function accommodationBlock(){
-    foreach($this->get_allLeases() as $l) $l->getForm();
+    if (!$this->visitOutOfScope()){
+      foreach($this->get_allLeases() as $l) $l->getForm();
+    }
   }
   
   /*
@@ -1141,9 +1172,19 @@ class bForm_vm_Visit extends bForm_vm {
     if ($this->getPolicy(VM_V_provideOffice)){
       if (($s = @$this->getValue('v_start',1)) && ($e = @$this->getValue('v_end',1))){
 	locateAndInclude('bForm_vm_Office');
-	if (!$this->getValue('v_oid',1)) $this->getValue_reset('v_oid',bForm_vm_Office::oo());
-	$dialog_host['v_oid'] = array('selectMenu',$this->availableOffices($s,$e));
-	$this->isVITAL_ifADMIN['v_oid'] = True;
+	$v_oid = $this->getValue('v_oid');
+	$this->isRO['_o_name'] = $this->av->isE(True) && !empty($v_oid);
+	if ($o = myPear::getInstance_new('bForm_vm_Office',$v_oid,array('strict','nocache'))){
+	  $this->formDB['_o_name'] = $o->name(False);
+	}elseif($this->MODE == 'RO'){
+	  $this->formDB['_o_name'] = b_fmt::redText('not allocated yet');
+	}
+	$this->formBlock('Office',
+			 'Office',
+			 array('_o_name' => array('textField')),
+			 array('d'=>'set office',
+			       'i'=>'i-desktop',
+			       'l'=>$this->sameURL_but(array('block'=>'project','mode'=>'RW'))));
       }
     }
   }
@@ -1197,7 +1238,7 @@ class bForm_vm_Visit extends bForm_vm {
     }
     if (($av_id = $this->getValue('v_host_avid',1)) && empty($valid_hosts[$av_id])){
       if ((int)$av_id){
-	$av = myPear::getInstance('bForm_Avatar',$av_id,array('nocache','strict'));
+	$av = myPear::getInstance_new('bForm_Avatar',$av_id,array('nocache','strict'));
 	if (is_object($av)) $valid_hosts[$av->ID] = $av->fmtName();
       }else{
 	$this->getValue_reset('v_host_avid',0);
@@ -1242,7 +1283,7 @@ class bForm_vm_Visit extends bForm_vm {
    * Small helper
    */
   function virt_updated_by(){
-    $av = myPear::getInstance('bForm_Avatar_vm',$this->getValue('v_admin_avid',1,1),array('strict'));
+    $av = myPear::getInstance_new('bForm_Avatar_vm',$this->getValue('v_admin_avid',1,1),'strict');
     if (!empty($av)){
       $this->formDB['_virt_updated_by'] = $av->fmtName('fl',0).', '.b_time::medium_date($this->getValue('v_timestamp'));
       return $this->formDB['_virt_updated_by'];
@@ -1308,16 +1349,16 @@ class bForm_vm_Visit extends bForm_vm {
       case VISIT_TYPE_OTHER:
       case VISIT_TYPE_POSSIBLE:
       case VISIT_TYPE_COLLABORATION:
-	$this->officeBlock();
 	$this->hostingBlock();
       case VISIT_TYPE_PROGRAM:
-	$this->expensesBlock();
+	$this->officeBlock();
+	if (empty($_GET['block_once'])) $this->expensesBlock();
 	$this->projectBlock();
       case VISIT_TYPE_RENT:
 	break;
 	
 	if ($date = $this->getValue('v_created',1)){
-	  if ($av = myPear::getInstance('bForm_Avatar_vm',$this->getValue('v_owner_avid',1))){
+	  if ($av = myPear::getInstance_new('bForm_Avatar_vm',$this->getValue('v_owner_avid',1),'fatal')){
 	    $this->formDB['_virt_owner'] = $av->fmtName('fl').' '.b_time::medium_date($date);
 	  }
 	}
@@ -1418,7 +1459,7 @@ class bForm_vm_Visit extends bForm_vm {
       }
     }
     if (($o_id=$this->formDB['v_oid']) && empty($list[$o_id])){
-      if ($o = myPear::getInstance('bForm_vm_Office',$o_id)) $list[$o_id] = $o->name();
+      if ($o = myPear::getInstance_new('bForm_vm_Office',$o_id,'strict')) $list[$o_id] = $o->name();
     }
     return $list;
   }
@@ -1498,7 +1539,7 @@ class bForm_vm_Visit extends bForm_vm {
   function delete(){
     $this->dbg($this->av->name(),$this->debug||cnf_dev);
     myPear::MESSAGE_add(b_fmt::redText("Delete visit ".$this->_periodToString()));    
-    $this->deleteBooking();
+    $this->deleteLease();
     myPear_db()->query("DELETE FROM $this->TABLE WHERE $this->TABLEID = '$this->ID'");
     unset($this->formDB);
     unset($this->ID);
@@ -1509,32 +1550,32 @@ class bForm_vm_Visit extends bForm_vm {
    * If no leases left, then create an empty one for the whole period of the visit
    */
   public $deletingBooking = False;
-  function deleteBooking($lease_id=Null,$verbose=True){
+  function deleteLease($lease_id=Null,$verbose=True){
     $this->deletingBooking = True;
     $this->dbg(' ');
     if (!empty($lease_id)){
       //
-      // Delete the specified booking
+      // Delete the specified lease
       //
-      if ($l = myPear::getInstance('bForm_vm_Lease',$lease_id,array('strict'))){
+      if ($l = myPear::getInstance_new('bForm_vm_Lease',$lease_id,'strict')){
 	$lease_start_day = b_time::_($l->getValue('lease_start'));
 	$lease_end_day   = b_time::_($l->getValue('lease_end'));
-	if ($verbose) myPear::MESSAGE_add('Delete booking '.$l->_periodToString());
+	if ($verbose) myPear::MESSAGE_add('Delete lease '.$l->_periodToString());
 	$l->delete();
 	
-	// Extend the neighboring booking period
+	// Extend the neighboring lease period
 	foreach($this->get_allLeases() as $l){
 	  $ls = b_time::_($l->getValue('lease_start',1));
 	  $le = b_time::_($l->getValue('lease_end',1));
 	  if(($ls == $lease_start_day) && ($le == $lease_end_day)) continue;
 	  if ($le == $lease_start_day) {
 	    if ($verbose) $l->updateDB(array('lease_end'  =>b_time::check_out($lease_end_day)));
-	    myPear::MESSAGE_add("Modify booking end ".$l->_periodToString());
+	    myPear::MESSAGE_add("Modify lease end ".$l->_periodToString());
 	    break; 
 	  }
 	  if ($ls == $lease_end_day)   {
 	    $l->updateDB(array('lease_start'=>b_time::check_in($lease_start_day)));
-	    if ($verbose) myPear::MESSAGE_add("Modify booking start ".$l->_periodToString());
+	    if ($verbose) myPear::MESSAGE_add("Modify lease start ".$l->_periodToString());
 	    break;
 	  }
 	}
@@ -1543,7 +1584,7 @@ class bForm_vm_Visit extends bForm_vm {
       }
     }else{
       //
-      // Delete all bookings
+      // Delete all leases
       //
       $leases = $this->get_allLeases();
       if (empty($leases)){
@@ -1553,7 +1594,7 @@ class bForm_vm_Visit extends bForm_vm {
 	  $l->debug = $this->debug;
 	  $msg = $l->_periodToString();
 	  $this->dbg($l->__toString().' '.$msg);
-	  if ($verbose && $msg) myPear::MESSAGE_add(b_fmt::redText("Delete booking $msg"));
+	  if ($verbose && $msg) myPear::MESSAGE_add(b_fmt::redText("Delete lease $msg"));
 	  $l->delete();
 	}
       }
@@ -1562,7 +1603,7 @@ class bForm_vm_Visit extends bForm_vm {
     $this->deletingBooking = False;
   }
 
-  function setResource($what,$id,$dates){
+  function setResource($what,$id,$dates=array(),$verbose=True){
     switch($what){
     case 'Office':  
       $this->updateDB(array('v_oid' => $id)); 
@@ -1582,7 +1623,7 @@ class bForm_vm_Visit extends bForm_vm {
   function setBooking($lease=array(),$verbose=True){
     if (empty($lease)) return;
     if (!is_array($lease)){ // hence $lease is the apartment ID
-      $a = myPear::getInstance('bForm_vm_Apartment',$lease);
+      $a = myPear::getInstance_new('bForm_vm_Apartment',$lease,'fatal');
       $lease = array('lease_aid'  =>$a->ID,
 		     'lease_start'=>$this->getValue('v_start'),
 		     'lease_end'  =>$this->getValue('v_end'));
@@ -1591,12 +1632,12 @@ class bForm_vm_Visit extends bForm_vm {
     
     // Sanity
     if (cnf_dev){
-      if (myPear::getInstanceFromID($lease['lease_aid'])!='bForm_vm_Apartment') b_debug::internalError("setBooking($lease) is not bForm_vm_Apartment",$this); // sanity
+      if (myPear::getClassFromID($lease['lease_aid'])!='bForm_vm_Apartment') b_debug::internalError("setBooking($lease) is not bForm_vm_Apartment",$this); // sanity
       if (!$lease['lease_start'] ||!$lease['lease_end'])                        b_debug::internalError("setBooking($lease) no start/end time") ;           
     }
     
-    // Create the booking (lease) if it does not exist      
-    if (!$this->bookingExists($lease)){
+    // Create the lease (lease) if it does not exist      
+    if (!$this->leaseExists($lease)){
       locateAndInclude('bForm_vm_Lease');
       $ll = array('lease_vid'  =>$this->ID,
 		  'lease_start'=>$lease['lease_start'],
@@ -1612,8 +1653,8 @@ class bForm_vm_Visit extends bForm_vm {
       }
       
       // Sanity
-      if (!$this->bookingExists($lease)){
-	myPear::MESSAGE_add(b_fmt::redText("Can't set booking '".b_fmt::joinX(', ',$lease)."' for ".$this->_periodToString()));
+      if (!$this->leaseExists($lease)){
+	myPear::MESSAGE_add(b_fmt::redText("Can't set lease '".b_fmt::joinX(', ',$lease)."' for ".$this->_periodToString()));
       }
     }
   }
@@ -1621,7 +1662,7 @@ class bForm_vm_Visit extends bForm_vm {
   /*
    * Helper
    */
-  private function bookingExists($lease=array()){
+  private function leaseExists($lease=array()){
     locateAndInclude('bForm_vm_Lease');
     if (!$lease) $lease = array();
     $lease['lease_vid'] = $this->ID;
@@ -1787,12 +1828,12 @@ class bForm_vm_Visit extends bForm_vm {
     switch ($what){
     case 'Apartment':
       foreach ($this->get_allLeases() as $l){
-	if ($ap = myPear::getInstance('bForm_vm_Apartment',$l->getValue('lease_aid',1))) return $ap->name();
+	if ($ap = myPear::getInstance_new('bForm_vm_Apartment',$l->getValue('lease_aid',1),'strict')) return $ap->name();
       }
       break;
       
     case 'Office': 
-      if ($o=myPear::getInstance('bForm_vm_Office',$this->formDB['v_oid'],'strict')) return $o->name();
+      if ($o=myPear::getInstance_new('bForm_vm_Office',$this->formDB['v_oid'],'strict')) return $o->name();
       break;
     }
   }  
@@ -1891,6 +1932,19 @@ class bForm_vm_Visit extends bForm_vm {
       $this->getValue_reset('v_admin_avid',bAuth::$av->ID); 
     }
 
+    // Update office number
+    if ($_o_name = $this->getValue('_o_name',1,1)){
+      $o = myPear::getInstance_new('bForm_vm_Office',array('o_name'=>$_o_name),array('strict','nocache'));
+      if (is_object($o)){
+	$this->getValue_reset('v_oid',$o->ID);
+      }else{
+	$this->getValue_reset_forced('v_oid');
+	$this->getValue_reset('_o_name');
+	myPear::ERROR(sprintf("Office <em>%s</em> is not known",$_o_name));
+      }
+    }
+    
+
     if ($this->errorless()){
 
       // Save the avatar for a the visit to be created
@@ -1977,7 +2031,7 @@ class bForm_vm_Visit extends bForm_vm {
 	break;      
       }
     }
-    $this->dbg($reply,$this->debug || cnf_dev);
+    $this->dbg($reply);
     return $reply;
   }
   

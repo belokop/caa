@@ -94,6 +94,7 @@ class bList_vm_cotenants extends bList_vm{
   }
 
   protected function message_createList(){
+    var_dump(__METHOD__,$this->name(True),myOrg_name);
     myPear::MESSAGE('Creating new list "'.trim($this->name(True)).'" for '.myOrg_name);
   }
 
@@ -123,20 +124,20 @@ class bList_vm_cotenants extends bList_vm{
    *  - lease_end
    *  - a_id
    */
-  function get_candidate($rec=array()){
+  function get_candidate(&$rec){
     $reply = array();
-    if (0) b_debug::print_r(bForm_vm_Lease::getTenants($rec['lease_start'],
-						       $rec['lease_end'],
-						       $rec['a_id']),
-			    'getTenants '.b_time::period($rec['lease_start'],$rec['lease_end']));
-    foreach(bForm_vm_Lease::getTenants($rec['lease_start'],
-				       $rec['lease_end'],
-				       $rec['a_id']) as $lease_id=>$candidate_name){
+    $tenants = bForm_vm_Lease::getTenants($rec['lease_start'],
+					  $rec['lease_end'],
+					  $rec['a_id']);
+    // if (cnf_dev) b_debug::print_r($tenants,$rec['av_lastname'].'\'s tenants '.b_time::period($rec['lease_start'],$rec['lease_end']));
+
+    foreach($tenants as $lease_id=>$candidate_name){
       if ($rec['lease_id'] == $lease_id) continue;
       if (!$this->get_cotenants($lease_id,False,array($rec['lease_start'],$rec['lease_end']))){
 	$reply[$lease_id] = $candidate_name;
       }
     }
+    //    $this->dbg($reply,True);
     return $reply;
   }
 
@@ -162,7 +163,7 @@ class bList_vm_cotenants extends bList_vm{
 	  // sanity
 	  if (empty($l['lease_start']) || empty($l['lease_end'])){
 	    myPear::WARNING_T("??? $l");
-	    b_debug::print_r($l);
+	    // b_debug::print_r($l);
 	    continue;
 	  }
 	  //static $ccc = 0;	  myPear::DEBUG("??$l_id?? ".b_time::period($l['lease_start'],$l['lease_end']).' '.$l['lease_name']);
@@ -178,7 +179,7 @@ class bList_vm_cotenants extends bList_vm{
 	if (!empty($leases)) $reply[$r['lm_id']] = $leases;
       }
     }
-    $this->dbg(join(', ',$leases), (bool)$this->debug && !empty($leases));
+    $this->dbg(join(', ',$leases), (bool)($this->debug || cnf_dev) && !empty($leases));
     return $reply;
   }
 
@@ -192,7 +193,7 @@ class bList_vm_cotenants extends bList_vm{
       b_debug::xxx('============================================');	b_debug::print_r($leases,'leases'); 
     }
     
-    $lm_id    = Null;
+    $lm_id    = 'new';
     $lm_key   = +CONST_eternity_t;
     $lm_value = -CONST_eternity_t;
     $this->names = $leases_current = array();
@@ -250,7 +251,7 @@ class bList_vm_cotenants extends bList_vm{
 					     'lm_value' => date('Y-m-d',$lm_value),
 					     'leases'   => join(',',$leases)),
 				       $lm_id); 
-      if (!empty($lm_id)) $this->message_addMember();
+      if (is_numeric($lm_id)) $this->message_addMember();
       if (cnf_dev)    $this->dump($member_ID);
     }
   }

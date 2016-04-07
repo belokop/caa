@@ -188,7 +188,7 @@ class bForm_vm_Hut extends bForm_vm {
    *
    */
   public static function _getCapacity($hut_id){
-    $hut = myPear::getInstance('bForm_vm_Hut',$hut_id);
+    $hut = myPear::getInstance_new('bForm_vm_Hut',$hut_id,'fatal');
     $reply = $hut->getCapacity();
     return $reply; 
   }

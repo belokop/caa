@@ -12,7 +12,7 @@ define('application_deadline',30 * 24 * 3600);
 
 class agenda_vm extends agenda{
   
-  public $lookBackFor = 30; // look back for 30 days, ignore the previous events
+  public $lookBackFor = 30; // by default look back for 30 days, ignore the previous events
   var $nUpdates = 0;
 
   private $e_start, $e_end, $r_start, $r_end;
@@ -57,6 +57,8 @@ class agenda_vm extends agenda{
    *
    */
   public function sync($conferences_to_sync=array()){
+    static $alreadySyncing = 0;
+    if ($alreadySyncing++) return;
 
     bTiming()->cpu(__FUNCTION__);
     myPear::H1("Synchronizing visitors database with Agenda");
@@ -80,9 +82,9 @@ class agenda_vm extends agenda{
 	  foreach ($this->parser($a) as $ev_id=>$program) {
 	    if ($p_id = @$program['id']){
 	      if (b_time::txt2unix($program['end']) + $this->lookBackFor * 3600*24 < b_time::noon()){ // ignore the past
-		if (!@$_GET['refresh'] && myPear::getInstance('bForm_vm_Event',"e_code='$p_id'")) continue;
+		if (empty($_GET['refresh_once']) && myPear::getInstance_new('bForm_vm_Event',array('e_code'=>$p_id),array('nocache','strict'))) continue;
 	      }elseif(b_time::txt2unix($program['end']) < b_time::noon(2009,11,1)){ // ignore the pre-ABS era...
-		if (!@$_GET['refresh'] && myPear::getInstance('bForm_vm_Event',"e_code='$p_id'")) continue;
+		if (empty($_GET['refresh_once']) && myPear::getInstance_new('bForm_vm_Event',array('e_code'=>$p_id),array('nocache','strict'))) continue;
 	      }
 	      $conferences_to_sync[] = join('&',array("conf=$p_id",
 						      "show_reg=all"));
@@ -112,9 +114,8 @@ class agenda_vm extends agenda{
 	$this->r_end   = b_time::txt2unix($program['regend']);
 	
 	/* update Events */
-	$this->e = myPear::getInstance('bForm_vm_Event',"e_code='$program[id]'");
-	if (empty($this->e)) $this->e = new bForm_vm_Event('empty');
-	$this->newE = !(int)$this->e->ID;
+	$this->e = myPear::getInstance_new('bForm_vm_Event',array('e_code'=>$program['id']));
+	$this->newE = !$this->e->getValue('e_orgid');
 	$this->e->defineVariables();
 	$this->e->updateDB(array('e_orgid'    => myOrg_ID,
 				 'e_code'     => $program['id'],
@@ -165,11 +166,17 @@ class agenda_vm extends agenda{
 	  $registrationDate = b_time::txt2unix($reg['registrationdate']);
 
 	  // Hook or create the avatar class 
-	  $this->av = bForm_Avatar::hook(array('av_email'    => $reg['email'],
-					       'av_institute'=> $reg['institution'],
-					       'av_lastname' => b_fmt::ucwords($reg['familyname'],True),
-					       'av_firstname'=> b_fmt::ucwords($reg['firstname'], False)));
-
+	  if ($avs = bForm_Avatar::hookByEmail($reg['email'])){
+	    $this->av = array_pop($avs);
+	    $this->av->updateDB(array('av_institute'=> $reg['institution'],
+				      'av_lastname' => b_fmt::ucwords($reg['familyname'],True),
+				      'av_firstname'=> b_fmt::ucwords($reg['firstname'], False)));
+	  }else{
+	    $this->av = bForm_Avatar::hook(array('av_email'    => $reg['email'],
+						 'av_institute'=> $reg['institution'],
+						 'av_lastname' => b_fmt::ucwords($reg['familyname'],True),
+						 'av_firstname'=> b_fmt::ucwords($reg['firstname'], False)));
+	  }
 	  // Hook the GSF (General Submit Form) - optional fields added by the event organizers
 	  // Filter out answer(s) "no" & "for myself"
 	  $this->gsf = array();
@@ -188,9 +195,9 @@ class agenda_vm extends agenda{
 
 	  // Eventually update the personal information
 	  $upd = array();
-	  foreach (array('av_phone'       => @$reg['phone'],
+	  foreach (array('av_residentship'=> b_cc::getCC(@$reg['country']),
+			 'av_phone'       => @$reg['phone'],
 			 'av_city'        => @$reg['city'],
-			 'av_residentship'=> @$reg['country'],
 			 'av_http'        => @$reg['homepage'],
 			 'av_salutation'  => @$reg['salutation'],
 			 //'av_address'   => @$reg['address'],
@@ -198,10 +205,18 @@ class agenda_vm extends agenda{
 	  $this->av->updateDB($upd);
 	  
 	  $_POST['v_avid'] = $this->av->ID; // interface with 'bForm_vm_Visit'
-	  $this->v = new bForm_vm_Visit("v_code='$v_code'");
-	  $this->v->defineVariables();
+	  $this->v = myPear::getInstance_new('bForm_vm_Visit',array('v_code'=>$v_code),'nocache');
 	  $this->v->isVITAL = array();
-
+	  $this->v->defineVariables();
+	  if (0){
+	    $this->v->debug = True;
+	    $this->v->updateDB(array('v_code'=>$v_code,
+				     'v_avid'=>$this->av->ID,
+				     'v_eid' =>$this->e->ID));
+	    $this->v->hookAvatar();
+	    $this->v->hookEvent();
+	  }
+	  
 	  $time1 = b_time::txt2unix($reg['arrivaldate'],  CONST_TIME_CI);
 	  $time2 = b_time::txt2unix($reg['departuredate'],CONST_TIME_CO);
 	  
@@ -212,7 +227,7 @@ class agenda_vm extends agenda{
 	  // Tidy up the arrival/departure time for the local participants,
 	  // for them the arrival/departure must be within the event period
 	  $VM_V_wish_OA = in_array(LODGING_OA,$accommodation_wish);
-	  if(0)	if ($VM_V_wish_OA){
+	  if(False)	if ($VM_V_wish_OA){
 	    $time1 = max($time1,$this->e_start);
 	    $time2 = min($time2,$this->e_end);
 	  }
@@ -236,11 +251,18 @@ class agenda_vm extends agenda{
 	  if (($v_type == VISIT_TYPE_PROGRAM) && ($reg['accommodation'] != dummy_OA)) $data['v_comment'] = $reg['accommodation'];
 
 	  $this->updateIfChanged($data,$v_code);
-	  $this->v->hookDependancies();
+	  $this->v->hookAvatar();
+	  $this->v->hookEvent();
 
 	  $this->dbg($this->v,'v_start','v_end');
 	  if (!b_time::inInterval($time1,$time2,$this->e_start,$this->e_end)){
-	    myPear::WARNING($program['title'].' '.b_time::period($this->e_start,$this->e_end).": application <i>$reg[familyname] ".b_time::period($time1,$time2)." is outside the event dates</i>");
+	    myPear::WARNING($program['title'].' '.b_time::period($this->e_start,$this->e_end).
+			    ": application <i>$reg[familyname] ".b_time::period($time1,$time2)." is outside the event dates</i>");
+	  }
+
+	  // Adjust the leases
+	  foreach(bForm_vm_Lease::adjust_all($this->v,0,True) as $message){
+	    $this->printInfo($message);
 	  }
 	  
 	  // Send a welcome mail to the NEWLY REGISTERED applicants
@@ -259,7 +281,7 @@ class agenda_vm extends agenda{
 	    if (empty($accommodation_wish)){
 	      if($accommodation_now === array(LODGING_OA)){
 		$this->printInfo('');
-		$this->v->deleteBooking(Null,$verbose);
+		$this->v->deleteLease(Null,$verbose);
 	      }
 	    }else{
 	      foreach($accommodation_wish as $wish){
@@ -267,7 +289,7 @@ class agenda_vm extends agenda{
 		case LODGING_OA:
 		  if (!in_array($wish,$accommodation_now)){
 		    $this->printInfo('');
-		    if (!empty($accommodation_now)) $this->v->deleteBooking(Null,$verbose);
+		    if (!empty($accommodation_now)) $this->v->deleteLease(Null,$verbose);
 		    $this->v->setBooking(VM::$OA->ID,$verbose);
 		  }
 		  break;
@@ -292,7 +314,7 @@ class agenda_vm extends agenda{
 	    case LODGING_OA:
 	      if (0) if (!in_array($wish,$accommodation_now)){
 		  $this->printInfo('');
-		  if (!empty($accommodation_now)) $this->v->deleteBooking(Null,$verbose);
+		  if (!empty($accommodation_now)) $this->v->deleteLease(Null,$verbose);
 		  $this->v->setBooking(VM::$OA->ID,$verbose);
 		}
 	      if (empty($accommodation_now)){
@@ -311,7 +333,7 @@ class agenda_vm extends agenda{
 	    }
 	  }
 	  
-	  // Keep the existing bookings, just adjust the arrival/departure dates
+	  // Keep the existing leases, just adjust the arrival/departure dates
 	  if (!empty($this->dataUpdates['v_start']) || 
 	      !empty($this->dataUpdates['v_end'])){	  
 	    $this->v->adjust_dates();
@@ -324,7 +346,7 @@ class agenda_vm extends agenda{
 	while ($r = myPear_db()->next_record($q)){
 	  if (!in_array($r['v_code'],$allRegistrants)) {
 	    $this->nUpdates++;
-	    $v = new bForm_vm_Visit($r['v_id']);
+	    $v = myPear::getInstance_new('bForm_vm_Visit',$r['v_id'],array('fatal','nocache'));
 	    $v->defineVariables();
 	    $v->hookAvatar();
 	    $this->av = $v->av;
@@ -359,6 +381,7 @@ class agenda_vm extends agenda{
     myPear_logs()->doNotLog = False;
     if ($this->nUpdates) myPear_logs()->add('sync');  
     bTiming()->cpu();
+    $alreadySyncing = 0;
   }
 
   function getDescr($k){

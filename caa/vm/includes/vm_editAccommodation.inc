@@ -11,7 +11,7 @@ $lease_id = (int)$_REQUEST['lease_id'];
 if (strpos(@$_GET['block_once'],VM_visit_lease)===0) $action=btn_edit_accommodation;
 else                                                 $action=@$_GET['action_once'];
 
-$v = myPear::getInstance('bForm_vm_Visit',(int)$_REQUEST['v_id'],array('strict'));
+$v = myPear::getInstance_new('bForm_vm_Visit',(int)$_REQUEST['v_id'],'strict');
 $v->adjust_dates();
 
 if (!(int)$v->ID){
@@ -33,7 +33,7 @@ if (!(int)$v->ID){
       break;
       
     case btn_deleteLease:	
-      $v->deleteBooking($lease_id);	
+      $v->deleteLease($lease_id);	
       $v->getForm();
       break;
 

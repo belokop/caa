@@ -12,7 +12,7 @@ class bHolder_Avatar extends bHolder {
   public function __construct(){ 
     parent::__construct();
     if ($av_id = @$_GET['av_id']){
-      $this->av = myPear::getInstance(bForm_Avatar::$bForm_Avatar,$av_id);
+      $this->av = myPear::getInstance(bForm_Avatar::$bForm_Avatar,$av_id,array('fatal','nocache'));
       $this->av->aceptAsIs_DoNotSave = True;
     }
   }

@@ -1,7 +1,7 @@
 <?php
 /*
  *
- * Class to keep the reimbursement rates (travel & subsistence) for the event
+ * Class to keep the reimbursement rates - travel, subsistence, etc.
  *
  * The "reimbursementRates" parent might be either Event or Organization.
  *
@@ -34,7 +34,7 @@ class bList_vm_reimbursementRates extends bList_vm{
 
     parent::__construct($parent);
     
-    // Workaround - old php can't have string concatination in "static"    
+    // Workaround - older php versions can't have string concatination in "static"    
     $this->list_quering['s_rate'] .= ' ('.trim(CONST_currency).')';
 
     // Initialise if needed
@@ -43,6 +43,9 @@ class bList_vm_reimbursementRates extends bList_vm{
     
     // Set flag "Recalculate the travel estimate if the rates are changed" 
     if ($this->myPost_bList()) $this->set_flagToBeUpdated();
+
+    // Sanity
+    if ($this->parent_ID != myOrg_ID) $this->list_showing['_s_plc'] = 'Yes / No';
   }
 
   /*
@@ -58,14 +61,16 @@ class bList_vm_reimbursementRates extends bList_vm{
       // Initially set default subsistence rate as zero
       // This might be changed later by the administrator
       foreach(VM_reimbursable_visits() as $v_type){
-	foreach(array(VM_V_payOther  =>VM_wordOtheExp,
-		      VM_V_payPerdiem=>VM_wordPerdiem,
-		      ) as $s_plc=>$lm_key){
-	  $this->addMember(array('lm_status'=>'ok',
-				 'lm_key'   => $lm_key,
-				 'lm_value' => $v_type,
-				 's_rate'   =>0,
-				 's_plc'    =>$s_plc));
+	foreach(VM::$reimbursements as $s_plc=>$d){
+	  if (@$d['t'] === auto_maintained){
+	    myPear::MESSAGE("Skip auto-maintained ".x('em',$d['d']));
+	  }else{
+	    $this->addMember(array('lm_status'=>'ok',
+				   'lm_key'   => $d['d'],
+				   'lm_value' => $v_type,
+				   's_rate'   =>0,
+				   's_plc'    =>$s_plc));
+	  }
 	}
       }
       
@@ -135,7 +140,7 @@ class bList_vm_reimbursementRates extends bList_vm{
 	$reimbursementRates = bList::getListInstance(myOrg_ID,'bList_vm_reimbursementRates');
 	$visit_types = VM_reimbursable_visits();
       }else{
-	$e = myPear::getInstance('bForm_vm_Event',$parent_ID);
+	$e = myPear::getInstance_new('bForm_vm_Event',$parent_ID,'fatal');
 	$reimbursementRates = $e->reimbursementRates();
 	$visit_types = array(VISIT_TYPE_PROGRAM);
       }
@@ -189,6 +194,7 @@ class bList_vm_reimbursementRates extends bList_vm{
    *
    */
   protected function message_createList(){
+    if ($this->name(True)  == 'list Null') b_debug::internalError('list Null');
     myPear::MESSAGE("Creating ".$this->name(True).' for '.$this->title);
   }
 
@@ -197,10 +203,14 @@ class bList_vm_reimbursementRates extends bList_vm{
    */
   protected function draw_buttons(){
     $reply = array();
-    if (!$this->getMembers()) $reply[] = b_btn::submit('initialize reimbursment rate for your conference',b_url::same("?init_list_once=yes&resetcache_once=1"));
-    if ($this->isWritable() && is_object($this->e))  $reply[] = b_btn::submit('back to the budget estimation',b_url::same("?tab_force=tab_vm_ogz_budget"));
-    if ($this->getMembers() && ($this->parent_ID!=myOrg_ID) && (VM_manager_here || $this->e->isOrganizer())){
-      $reply[] = b_btn::submit('wipe all rates',b_url::same("?&drop_list_once=".$this->ID));
+    if ($this->isWritable()){
+      if (!$this->getMembers()){
+	$reply[] = b_btn::submit('initialize reimbursment rates for '.
+				 ($this->parent_ID == myOrg_ID ? myOrg_name : 'your conference'),b_url::same("?init_list_once=yes&resetcache_once=1"));
+      }else{
+	$reply[] = b_btn::submit('wipe all rates',b_url::same("?&drop_list_once=".$this->ID));
+	if ($this->parent_ID!=myOrg_ID) $reply[] = b_btn::submit('back to the budget estimation',b_url::same("?tab_force=tab_vm_ogz_budget"));
+      }
     }
     return array_merge($reply,$this->extra_buttons);
   }
@@ -288,6 +298,14 @@ class bList_vm_reimbursementRates extends bList_vm{
   }
   
   /*
+   *
+   */
+  function isWritable(){
+    $reply = superUser_here || (VM_manager_here && ($this->parent_ID==myOrg_ID)) || $this->e->isOrganizer();
+    return $reply;
+  }
+
+  /*
    * Possible to add a new member?
    */
   function isAddable(){
@@ -373,14 +391,17 @@ class bList_vm_reimbursementRates extends bList_vm{
   protected function format(){
     static $lm_key_was = '?';
 
+    $forOrg = ($this->parent_ID == myOrg_ID);
+
     $this->t->showLineCounter = False;
     //    foreach(preg_grep('/^(l_|lm_option)/',array_keys($this->r)) as $l)unset($this->r[$l]);    b_debug::print_r($this->r);
 
     // Visit type / Trip distance
-    $s_cc = (empty($this->r['s_cc']) ? '' : x('(',$this->r['s_cc']));
-    $this->r['_lm_value']= (($d = @VM::$reimbursable_visits[$this->r['lm_value']]['d'])
-			    ? $d
-			    : trim($this->r['lm_value'] . " $s_cc"));
+    if ( $this->r['lm_value'] == VISIT_TYPE_PROGRAM && !$forOrg) $this->r['_lm_value'] = '';
+    else $this->r['_lm_value'] = (($d = @VM::$reimbursable_visits[$this->r['lm_value']]['d'])
+				  ? $d
+				  : trim($this->r['lm_value'] .' '.@$r['s_cc']));
+    
     // Rate
     $this->r['_s_rate'] = ((int)@$this->r['s_rate'] <= 0
 			   ? ''
@@ -395,7 +416,7 @@ class bList_vm_reimbursementRates extends bList_vm{
 			  ? ''
 			  : (bIcons()->get(((int)$this->r['s_rate']>0) || bForm::_checkBoxIsOn('s_rate',$this->r) 
 					   ? 'i-finger_up-small' 
-					   : 'i-finger_down-small').VM::$v_policies[$this->r['s_plc']]['d']));
+					   : 'i-finger_down-small').($forOrg?VM::$v_policies[$this->r['s_plc']]['d']:'')));
     //
     if ($this->r['lm_key'] != $lm_key_was) print '<tr><td></td></tr>';
     $lm_key_was = $this->r['lm_key'];

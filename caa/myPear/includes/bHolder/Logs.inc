@@ -216,7 +216,7 @@ class bHolder_Logs extends bHolder{
       
     case 'syslog':
       if (!empty($_GET['av_id'])){
-	$this->av = myPear::getInstance(bForm_Avatar::$bForm_Avatar, $_GET['av_id'], 'strict');
+	$this->av = myPear::getInstance_new(bForm_Avatar::$bForm_Avatar, $_GET['av_id'],array('nocache','strict'));
       }else{
 	locateAndInclude('b_checkBox');
 	
@@ -352,9 +352,9 @@ class bHolder_Logs extends bHolder{
     /*
     // carefull with the modules which are not initialised
     if (b_reg::$current_module == $this->rec['log_api'] && !empty($this->rec['log_form'])){
-      $form = myPear::getInstanceFromID(($id=$this->rec['log_form']),False,True);
+      $form = myPear::getClassFromID(($id=$this->rec['log_form']),False,True);
       if (stripos($form,'bForm') !== False){
-	$class = myPear::getInstance($form,$id,'fatal');
+	$class = myPear::getInstance_new($form,$id,'fatal');
 	$name = x('em',str_replace('bForm_','',$class->name('Lf')));
 	$this->rec['log_form'] = ($form == 'bForm_vm_Lease'
 				  ? $name
@@ -368,9 +368,9 @@ class bHolder_Logs extends bHolder{
 */
 
     b_reg::load_module($this->rec['log_api']);
-    $form = myPear::getInstanceFromID(($id=$this->rec['log_form']),False,True);
+    $form = myPear::getClassFromID(($id=$this->rec['log_form']),False,True);
     if (stripos($form,'bForm') !== False){
-      $class = myPear::getInstance($form,$id,'fatal');
+      $class = myPear::getInstance_new($form,$id,'fatal');
       $name = x('em',str_replace('bForm_','',$class->name('Lf')));
       $this->rec['log_form'] = ($form == 'bForm_vm_Lease'
 				? $name

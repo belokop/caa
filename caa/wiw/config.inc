@@ -1,5 +1,5 @@
 <?php
-$releaseDate = '2016-01-19';
+$releaseDate = '2016-04-07';
 define('WIW_MODULE'   , 'wiw');
 define('WIW_VERSION','5.11.rc');
 
@@ -27,7 +27,7 @@ b_reg::add_module(WIW_MODULE,
 			'd' =>'Who Is Where?',
 			'c' =>__FILE__,
 			'r' =>$releaseDate,
-			'i' =>'i-traveler',
+                        'i' =>'i-airplane',
 			'classes'=>array('bList_wiw_tripTypes' => array('p'=>'bList',
 									'd'=>'Trip Types'),
 					 'bForm_Avatar_wiw'    => array('p'=>'bForm_Avatar'),

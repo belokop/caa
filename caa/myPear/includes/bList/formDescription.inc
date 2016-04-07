@@ -51,7 +51,7 @@ class bList_formDescription extends bList{
   public static function show_all(){
     $q = myPear_db()->query("SELECT * FROM zzz_lists WHERE 0 ORDER BY l_parent");
     while($r = myPear_db()->next_record($q)){
-      if ($object = myPear::getInstanceFromID($r['l_parent'],'class')){
+      if ($object = myPear::getClassFromID($r['l_parent'],'class')){
 	print str_replace('bForm_','',get_class($object)) .' '. $object->name().'<br/>';
 	$l = new bList_formDescription($r['l_parent']);
 	$l->getForm();

@@ -115,7 +115,7 @@ function create_unitsSC(){
 	if ($av= myPear::getInstance('bForm_Avatar_jam',$r['scmember_avid'],array('nocache','strict'))){
 	  JAM_unit($rank,$pos->ID)->add_unitMember($av->ID);
 	}else{
-	  myPear::WARNING("Can't hook '$r[scmember_avid]'");
+	  myPear::WARNING("Can't hook scmember_avid '$r[scmember_avid]'");
 	}
       }
     }
@@ -147,7 +147,7 @@ function convert_comma_Lists_unit(){
 	  $login = str_replace('stefan', 'shofm',$login);
 	  $av = bForm_Avatar::hook(array('av_identity'=>$login),True);
 	  if (@$av->ID) JAM_unit($rank,$pos->ID)->add_unitMember($av);
-	  else myPear::WARNING("Can't hook '$login'");
+	  else myPear::WARNING("Can't hook login '$login'");
 	}
       }
     }
@@ -286,14 +286,14 @@ function fixLogs($dryRun=False){
       $record_id = '';
       $drop_this_record = False;
       if ($log_form > 0){
-	switch($log_form_name=myPear::getInstanceFromID($log_form,$noFormPrefix=True)){
+	switch($log_form_name=myPear::getClassFromID($log_form,$noFormPrefix=True)){
 	case 'jam_Applicant':
 	  $qz = $db->qquery("SELECT * FROM jam_applicants WHERE ap_id = $log_form",$dryRun);
 	  if ($db->num_rows($qz)){
 	    while($rz = $db->next_record($qz)){
 	      foreach(array('ap_posid','ap_avid') as $id) $_REQUEST[$id] = $_GET[$id] = $rz[$id];
 	    }
-	    $log_form_class = myPear::getInstanceFromID($log_form,'class');
+	    $log_form_class = myPear::getClassFromID($log_form,'class');
 	    if (($av = $log_form_class->av) instanceof bForm_Avatar){
 	      $log_type = 'application';
 	      $record_id = "av=$av->ID log_type=$log_type log_form=$log_form";
@@ -320,7 +320,7 @@ function fixLogs($dryRun=False){
 	  while($rz = $db->next_record($qz)){
 	    foreach(array('r_apid','r_avid') as $id) $_REQUEST[$id] = $_GET[$id] = $rz[$id];
 	  }
-	  $log_form_class = myPear::getInstanceFromID($log_form,'class');
+	  $log_form_class = myPear::getClassFromID($log_form,'class');
 	  $av = $log_form_class->av;
 	  $log_type = 'review';
 	  // However...
@@ -355,7 +355,7 @@ function fixLogs($dryRun=False){
 	    while($rz = $db->next_record($qz)){
 	      foreach(array('rec_apid','rec_avid') as $id) $_REQUEST[$id] = $_GET[$id] = $rz[$id];
 	    }
-	    $log_form_class = myPear::getInstanceFromID($log_form,'class');
+	    $log_form_class = myPear::getClassFromID($log_form,'class');
 	    //$log_form_class->ap = myPear::getInstance('bForm_jam_Applicant',$_GET['rec_apid'],array('nocache','strict'));
 	    $log_form_class->av = myPear::getInstance('bForm_Avatar',$_GET['rec_avid'],array('nocache','strict'));
 	    $av = $log_form_class->av;
@@ -364,7 +364,7 @@ function fixLogs($dryRun=False){
 	  break;
 	  
 	case 'Avatar':            // =================================================================
-	  $av = $log_form_class = myPear::getInstanceFromID($log_form,'class');
+	  $av = $log_form_class = myPear::getClassFromID($log_form,'class');
 	  $record_id = "av=$av->ID log_type=$log_type";
 	  if (!myPear::is_empty($log_comment = $r['log_text'])) 	  $record_id .= " log_comment=$log_comment";
 	  switch($log_type){
@@ -391,14 +391,14 @@ function fixLogs($dryRun=False){
 	    $user = preg_replace('/ \(.*/','',$r['log_text']);
 	    $log_form_class = $av = bForm_Avatar::hook($user);
 	  }
-	  if (empty($log_form_class)) b_debug::print_r($r,"unexpected myPear::getInstanceFromID($log_form) = $log_form_name");
+	  if (empty($log_form_class)) b_debug::print_r($r,"unexpected myPear::getClassFromID($log_form) = $log_form_name");
 	}
 	
-	if (empty($log_form_class)) $log_form_class = myPear::getInstanceFromID($log_form,'class');
+	if (empty($log_form_class)) $log_form_class = myPear::getClassFromID($log_form,'class');
       }
 
       if (empty($log_form_class)){
-	print "myPear::getInstanceFromID($log_form,'class') = $log_form_name<br>\n";
+	print "myPear::getClassFromID($log_form,'class') = $log_form_name<br>\n";
 	$match = search_for_ID($r['log_form']);
 	@$itog['x_total']['rejected-empty log_form']++;
 	@$itog[$log_type]['rejected-empty log_form']++;
@@ -520,6 +520,8 @@ function tidy_country($targetVal,$table,$col,$targetCol,$value=''){
 		       'innsbruck'                                                  => 'austria',
 		       '\bbaku\b'                                                   => 'azerbaijan',
 		       'dhaka|shahjalal|rajshahi'                                   => 'bangladesh',
+		       'natitingou'                                                 => 'benin',
+		       'syrian'                                                     => 'syria',
 		       '\bminsk\b|\bGomel|\bbelarus'                                => 'belarus',
 		       'bruxelles|louvain|mons|liege|Gent|Leuven|namur|ghent'       => 'belgium',
 		       'hasselt|uni.*\bde\b.*\bli.*ge\b|belgian|marche.en.famen'    => 'belgium',
@@ -547,7 +549,7 @@ function tidy_country($targetVal,$table,$col,$targetCol,$value=''){
 		       '\bcuba\b|university of oriente'                             => 'cuba',
 		       'prague|praha|Czech|pavol jozef safarik|charles|Masaryk'     => 'czech republic',
 		       'esk.*republika|\bbrno\b'                                    => 'czech republic',
-		       'helsingoer|copenhagen|aarhus|niels boh|danish'              => 'denmark',
+		       'helsingoer|copenhagen|aarhus|niels boh|danish|\bdane\b'      => 'denmark',
 		       'giza|Azhar|alexandria|ain shams|pharos university'          => 'egypt',
 		       'agricultur.*engineering.*research.*institute|cairo'         => 'egypt',
 		       'tartu'                                                      => 'estonia',
@@ -607,7 +609,7 @@ function tidy_country($targetVal,$table,$col,$targetCol,$value=''){
 		       'technion|tel.aviv|haifa|I.rael|Jerusalem|Hebrew'            => 'israel',
 		       'Ben.*Gurion|Weizmann|Isreali|bar ilan|\bil\.'               => 'israel',
 		       '\bictp\b|florence|genov?a|Velletri|Faenza|Brindisi|Pavia'   => 'italy',
-		       'Bari|Naples|Parma|napoli|camerino|padua|catania'            => 'italy',
+		       'Bari|Naples|Parma|napoli|camerino|padua|catania|\bitalan\b' => 'italy',
 		       '\brome\b|\broma\b|campobasso|milano|venezia|\bpisa\b|milan' => 'italy',
 		       'italia|abdus salam|lecce|\binaf\b|salerno|aquila'           => 'italy',
 		       'international centre for theoretical physics|palermo'       => 'italy',
@@ -619,7 +621,7 @@ function tidy_country($targetVal,$table,$col,$targetCol,$value=''){
 		       'Hokkaido|Kyushu|niigata|tsukuba|tohoku|\bkobe\b|\briken\b'  => 'japan',
 		       '\bkinki\b|\bkindai\b|\bkeio\b|sokendai|rikkyo'              => 'japan',
 		       'chiba\b|graduate university for advanced studies'           => 'japan',
-		       'High.*Energy.*Accelerator.*Research'                        => 'japan', // KEK
+		       'High.*Energy.*Accelerator.*Research|kanazawa'               => 'japan', // KEK
 		       'yarmouk'                                                    => 'jordan',
 		       'riga|latvija'                                               => 'latvia',
 		       'middle east|hariri canad|leban'                             => 'lebanon',
@@ -628,20 +630,20 @@ function tidy_country($targetVal,$table,$col,$targetCol,$value=''){
 		       'antananarivo|malagasy'                                      => 'madagascar',
 		       'petronas|malaysia|usm.*university'                          => 'malaysia',
 		       'macedonia'                                                  => 'macedonia',
-		       'morocc'                                                     => 'morocc',
+		       'm.rocc|morrocc'                                             => 'morocc',
 		       'universidad nacional|mexic|ifm-umsnh|michoacana'            => 'mexic',
 		       'metropolitan.*autonomous.*university'                       => 'mexic',
 		       'tribhu.an|nepal?ese'                                        => 'nepal',
 		       'amsterdam|nikhef|netherlands|esa.estec|unesco-ihe|utrech'   => 'netherlands',
 		       'leiden|utecht|utrecht|lorentz institute|groningen'          => 'netherlands',
 		       'dutch|alkmaar|vlissingen|delft|nijmegen|Netherlan|antwerp'  => 'netherlands',
-		       'centrum wiskunde|eindhoven'                                 => 'netherlands',
+		       'centrum wiskunde|eindhoven|nederlandse'                     => 'netherlands',
 		       'massey|auckland'                                            => 'new zealand',
 		       'akintola|\bilorin\b|unwana'                                 => 'nigeria',
-		       'norw|oslo|university of bergen|ntnu'                        => 'norway',
+		       'norw|oslo|university of bergen|ntnu|stavanger'              => 'norway',
 		       'palestinian'                                                => 'palestine',
 		       'islamabad|national university of sciences and technology'   => 'pakistan',
-		       'pakist?an|quaid-i-azam'                                     => 'pakistan',
+		       'pakist?an|quaid-i-azam|pakisatn'                            => 'pakistan',
 		       'wroclaw|jagiellon|warsaw|Jagellonian|jagellon|silesia'      => 'poland',
 		       'nicolaus copernicus|poznan|mickiewicz|polish'               => 'poland',
 		       'portug|Lisbon|porto|coimbra|camgsd|beira.*interior'         => 'portugal',
@@ -744,8 +746,8 @@ function tidy_country($targetVal,$table,$col,$targetCol,$value=''){
   if (strstr($targetVal,'buquqwlfagns')) return;
   if (strstr($targetVal,'url=http://'))  return;
 
-  $country = strip_tags(trim(mb_strToLower(str_replace('(','',str_replace(')','',str_replace("\n",' ',str_replace("\r",' ',$targetVal)))))));
-
+  $country = strip_tags(trim(mb_strToLower(str_replace(array('(',')'),'',str_replace(array("\n","\r"),' ',$targetVal)))));
+  
   if (!b_cc::getCC($country)){
     foreach ($translation as $f=>$t){
       if (preg_match(';\b'.$t.'\b;', $country) || preg_match(";$f;i", $country)){

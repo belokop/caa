@@ -24,7 +24,7 @@ class bList_vm extends bList{
       if (!is_object($this->e) || ($this->e->ID != $parent_ID)) $this->e = $parent_ID_p;
     }elseif(!myPear::is_equal($parent_ID_p,myOrg_ID) && is_numeric($parent_ID_p)){
       $parent_ID = $parent_ID_p;
-      if (!is_object($this->e) || ($this->e->ID != $parent_ID)) $this->e = myPear::getInstance('bForm_vm_Event',$parent_ID);
+      if (!is_object($this->e) || ($this->e->ID != $parent_ID)) $this->e = myPear::getInstance_new('bForm_vm_Event',$parent_ID,array('strict','fatal'));
     }elseif($parent_ID_p == myOrg_ID){
       $parent_ID = myOrg_ID;
       $this->e = Null;

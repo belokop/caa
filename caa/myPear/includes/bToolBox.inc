@@ -60,7 +60,7 @@ class bToolBox{
   
   
   /*
-   *
+   * MO - Search for duplicated Avatar objects
    */
   protected function execute_MO(){
     static $referrer = array();
@@ -69,7 +69,7 @@ class bToolBox{
   }
 
   /*
-   *
+   * NN - Clean-up people first/last names
    */
   public function execute_NN(){
     $db = myPear_db();

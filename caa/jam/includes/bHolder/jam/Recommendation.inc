@@ -39,7 +39,7 @@ class bHolder_jam_Recommendation extends bHolder_jam{
     if ($this->av) $header['pos_name'] = 'Position';
     else           $header['ref_name'] = 'Referee';
     $header['rec_askdate']= 'Rec.letter<br/>requested';
-    $header['ts_nosort']  = 'Rec.letter<br/>received';
+    $header['ts_nosort']  = 'Referee<br/>replied';
     return $header;  
   }
   

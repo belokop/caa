@@ -835,23 +835,23 @@ class bForm_jam_Applicant extends bForm_jam {
 			$recClass->av->getInst());
 	  $this->formDB[$field0 = $field] = join('-BR-',$info);
 	  break;
-	  
-	  $this->formDB[$field]=
-	  $nRows++;
-	  break;
 	case 1: // Got the letter?
 	  if ($date = $recClass->isReceived()){
-	    $this->formDB[$field] = (self::$inputToPDF ? '' : x('strong',"Letter arrived ".b_time::medium_date($date)));
+	    $this->formDB[$field] = (self::$inputToPDF ? '' : x('strong',"Referee replied ".b_time::medium_date($date)));
 	    if (!myPear::is_empty($this->formDB[$field])) $nRows++;
 	  }else{ 
-	    $this->formDB[$field] = b_fmt::redText(x('strong',bText::_('Letter not yet arrived...')),'blueText');
+	    $this->formDB[$field] = b_fmt::redText(x('strong',bText::_('No reply yet...')),'blueText');
 	    $nRows++;
 	  }
 	  break;
 	case 2: // Comment
 	  if ($recClass->isReadable()){
-	    if ($comment=$recClass->getValue('rec_comment',1,1))	    $this->formDB[$field] = $comment;
-	    if (!myPear::is_empty(@$this->formDB[$field])) $nRows++;
+	    $this->formDB[$field] = $recClass->getValue('rec_comment',1,1);
+	    if (myPear::is_empty(@$this->formDB[$field])){
+	      unset($dialog[$field]);
+	    }else{
+	      $nRows++;
+	    }
 	  }
 	}
       }
@@ -869,8 +869,8 @@ class bForm_jam_Applicant extends bForm_jam {
 							    'li'=>"?function=jam_mailRemindRecommendation&id=$recClass->ID",
 							    'd' =>'Nicely remind about the recommendation letter',
 							    'f' =>'RO');
-
-      $this->formBlock('',$this->n($n+1)." Letter Of Recommendation",
+      
+      $this->formBlock('',$this->n($n+1).' referee', // " Letter Of Recommendation",
 		       $dialog,
 		       $rButton);
     }
@@ -899,7 +899,7 @@ class bForm_jam_Applicant extends bForm_jam {
 	  $this->defineVariable(array("_virt_referee${ne}" => 'Referee'),True);
 	  $dialog = array("_virt_referee${ne}");
 	}
-	$this->formBlock('',$this->n($ne).' Letter Of Recommendation',
+	$this->formBlock('',$this->n($ne).' referee', // ' Letter Of Recommendation',
 			 $dialog);
       }
       
@@ -1037,12 +1037,15 @@ class bForm_jam_Applicant extends bForm_jam {
 	// Create the cover page from the applicant database record.
 	// Set the PDF header to the Position applied
 	$this->get_RFname();
-	$subHeader = $this->pos->name();
-	if ($this->rf) $subHeader .= '<br/>'.$this->rf->name();
+	$subHeader = array();
+	if ($dnr = $this->pos->getValue('pos_refnumber')) $subHeader[] = "DNR: $dnr";
+	$subHeader[] = $this->pos->name();
+	if ($this->rf) $subHeader[] = $this->rf->name();
 
 	b_pdf::html2pdf($coverPage_file = tempnam(sys_get_temp_dir(),"delete.me-$this->ID").'.pdf',
 			$formDB,
-			x('strong',$subHeader));
+			x('strong',join('<br/>',$subHeader)));
+
 	array_unshift($dossier, $coverPage_file);
 	$this->dbg(count($dossier).' input files merged to '.$dossier_file);
 	self::$inputToPDF = False;  // close "writing to PDF" mode

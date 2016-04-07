@@ -68,7 +68,7 @@ class bForm_vm_Expenses extends bForm_vm{
   }
 
   function __clean_cache(){
-    myPear::getInstance(get_class($this),$this->ID,'clean');
+    myPear::getInstance_new(get_class($this),$this->ID,'clean');
   }
   
   /*
@@ -96,6 +96,9 @@ class bForm_vm_Expenses extends bForm_vm{
 	case 'ZZZ_exp_other':
 	  $est = 0;
 	  break;
+	case 'exp_living':
+	  $value_est = $value_def;
+	  $this->getValue_reset($item_est,$value_est);
 	default:
 	  // Cancel the estimate if the policy does not allow payment
 	  $est = $value_est;
@@ -169,7 +172,8 @@ class bForm_vm_Expenses extends bForm_vm{
    * MBE is always "True" here
    */
   public function getValue($name, $asIs=True, $d_MBE=True){
-    return parent::getValue($name,True,True);
+    $value = parent::getValue($name,True,True);
+    return $value;
   }
 
   /*
@@ -182,7 +186,7 @@ class bForm_vm_Expenses extends bForm_vm{
       $this->visit = $this->parentForm;
     }
     if (!($this->visit instanceof bForm_vm_Visit)){
-      if (!($this->visit = $this->parentForm)) $this->visit = myPear::getInstance('bForm_vm_Visit',$this->getValue('exp_vid'));
+      if (!($this->visit = $this->parentForm)) $this->visit = myPear::getInstance_new('bForm_vm_Visit',$this->getValue('exp_vid'),'strict');
       if (! $this->visit) b_debug::internalError("no parent visit hooked for the bForm_vm_Expenses",$this);
       if (!(int)$this->ID){    
 	$q = myPear_db()->query("SELECT * FROM $this->TABLE WHERE exp_vid = ".$this->visit->ID);
@@ -291,10 +295,10 @@ class bForm_vm_Expenses extends bForm_vm{
       $expenses = 0;
       foreach($this->visit->get_allLeases() as $l){
 	if (!empty($seeOnly) && ($l->hut_code() != $seeOnly) && ($l->ID != $seeOnly)) continue;
-	list($price,$booking_exists) = $l->accommodationCost();
+	list($price,$lease_exists) = $l->accommodationCost();
 	$formula[] = bForm_vm_Apartment::$receiptFormula;
 	$expenses += $price;
-	if (!$booking_exists) $this->colorCode['living'] = VM_color_budgetEstimate;
+	if (!$lease_exists) $this->colorCode['living'] = VM_color_budgetEstimate;
       }
       // if (!$this->getValue('exp_living'))  $_POST['exp_living'] = $expenses;
       $formulaTidy = str_replace(') (',' + ',join(' ',$formula));
@@ -477,7 +481,9 @@ class bForm_vm_Expenses extends bForm_vm{
           break;
 	  
 	case 'exp_living':
-	  if (empty($v)) $this->formDB[$i] = $v = $this->defaultPay($i);
+	  //	  if (empty($v))
+	  $this->dbg("v=$v v_est=$v_est",cnf_dev);
+ $this->formDB[$i] = $v = $this->defaultPay($i);
 	  $v_est = $v;
           break;
 	  
@@ -518,6 +524,7 @@ class bForm_vm_Expenses extends bForm_vm{
     $this->textHidden('exp_vid',$this->visit->ID);
 
     // Show the dialog
+    b_debug::print_r($dialog,$this->getValue('exp_living'));
     $this->formBlock(VM_visit_expenses, 
 		     ($this->visit->getValue('v_type',1) == VISIT_TYPE_RENT ? 'Invoice ' : 'Expenses reimbursement'),
 		     $dialog,

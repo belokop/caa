@@ -305,7 +305,7 @@ class bUnit extends bList{
   protected function format(){}
   
   protected function all_members_tidy_name(){
-    //    if ($object=myPear::getInstanceFromID($this->parent_ID,'class'))$p = $object->name();
+    //    if ($object=myPear::getClassFromID($this->parent_ID,'class'))$p = $object->name();
     //    else                                                            $p = '';
     $p = '';
     return "$p ".$this->unitMemberTitle().'s';
@@ -1035,7 +1035,7 @@ class bUnit extends bList{
       $u = new bUnit($r['u_parent'],$r['u_rank']);
       print "<ol>";
       foreach ($u->get_unitMemberIDs() as $av_id){
-	$av = myPear::getInstance('bForm_Avatar',$av_id,'nocache');
+	$av = myPear::getInstance_new('bForm_Avatar',$av_id,'nocache');
 	if (is_object($av)){
 	  $av->defineVariables();
 	  print "<li>".$av->name()."</li>";

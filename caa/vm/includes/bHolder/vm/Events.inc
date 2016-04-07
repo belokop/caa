@@ -1,6 +1,6 @@
 <?php
-locateAndInclude('bHolder_vm');
-class bHolder_vm_Events extends bHolder_vm{
+locateAndInclude('bHolder_ea');
+class bHolder_vm_Events extends bHolder_ea{
 
   var $noSort = True;
   var $showLineCounter = False;
@@ -10,9 +10,11 @@ class bHolder_vm_Events extends bHolder_vm{
   }
   
   function query(){
+    $sBy = 'e_start';
+    $sByDir = 'DESC';
     return myPear_db()->query("SELECT *,e_start AS name  FROM abs_events WHERE ".
-				($this->onlyAgenda?'e_code>0':'1').
-				" ORDER BY $_GET[sBy] ".@$_GET['sByDir']);
+			      ($this->onlyAgenda?'e_code>0':'1').
+			      " ORDER BY $sBy $sByDir");
   }
   
   function header(){
@@ -24,7 +26,7 @@ class bHolder_vm_Events extends bHolder_vm{
   function format() {
     static $year_was = '?';
 
-    $e = myPear::getInstance('bForm_vm_Event',$this->rec['e_id']);
+    $e = myPear::getInstance_new('bForm_vm_Event',$this->rec['e_id'],array('nocache','fatal'));
     if ($e->getValue('e_code')){
       $year = date('Y',$this->rec['e_start']);
       if ($year != $year_was) $this->t->prt(array('year_nosort'=>x('h3',$year)));      $year_was = $year;
@@ -38,7 +40,7 @@ class bHolder_vm_Events extends bHolder_vm{
 								    bIcons()->get('i-edit')); 
       if ($this->rec['e_code']>0) $this->t->extraTD[] = b_btn::link('',"http://agenda.albanova.se/conferenceDisplay.py?confId=".$this->rec['e_code'],bIcons()->get('nordita')); 
     }
-    axel($this->rec,$e->name());
+    //    axel($this->rec,$e->name());
   }
 }
 

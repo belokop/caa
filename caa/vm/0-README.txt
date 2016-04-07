@@ -602,7 +602,7 @@ M       vm/includes/vm_functions.inc
 2011-09-21 version 3.3-m1 (production milestone release)
   * add class bList_vm_reimbursementRates
   * add list of photos for the event attenders
-  * agenda_vm: fix bookings when OA toggles 
+  * agenda_vm: fix leases when OA toggles 
 
 2011-09-12 version 3.2-m1 (milestone release)
   * Optimize the budget pages for event organizers, let them accommodation rights

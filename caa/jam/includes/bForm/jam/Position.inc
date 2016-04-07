@@ -256,10 +256,12 @@ class bForm_jam_Position extends bForm_jam {
  }
 
   function name() {
-    if ($n = $this->getValue('pos_name',True))  return $n;
-    else                                        return 'New position';
+    $reply = (($n = $this->getValue('pos_name'))
+	      ? $n
+	      : 'New position');
+    return $reply;
   }
-
+  
   /*
    * Read the Position record, join the Organization
    */
@@ -279,9 +281,9 @@ class bForm_jam_Position extends bForm_jam {
    */
   public function managedByJAM(){
     if (!$this->getValue('pos_type',1,1))   $this->getValue_reset('pos_type','yes');
-    return self::_managedByJAM(array('pos_type'=>$this->getValue('pos_type',1,1)));
+    return self::_managedByJAM(array('pos_type'=>$this->getValue('pos_type')));
   }
-
+  
   public static function _managedByJAM($formDB=array()){
     $reply = !in_array(@$formDB['pos_type'],array('off','no'));
     return $reply;
@@ -377,10 +379,11 @@ class bForm_jam_Position extends bForm_jam {
       foreach (preg_split('/,/',$this->getValue('pos_logo',True)) as $org){
 	$list[] = myOrg_favicon;
       }
-      return join('',$list);
+      $reply = join('',$list);
     }else{
-      return $this->getValue('pos_logo',True);
+      $reply = $this->getValue('pos_logo',True);
     }
+    return $reply;
   }
   
   /*
@@ -408,10 +411,10 @@ class bForm_jam_Position extends bForm_jam {
     /*
      * General information block
      */
-    $logo = $this->getLogo();
+    $this->getLogo();
     $this->formBlock('','General info',
 		     array('pos_type'     =>array('checkBox'),
-			   'pos_orgid'      =>array('selectMenu',$this->allOrgs()),
+			   'pos_orgid'    =>array('selectMenu',$this->allOrgs()),
 			   'pos_name'     =>array('textField'),
 			   'pos_nickname' =>array('textField'),
 			   'pos_refnumber'=>array('textField'),

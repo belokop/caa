@@ -19,14 +19,22 @@ foreach(array('tab_ea'              => 'People at '.myOrg_name,
 	      'tab_ea_admin_org_mngr'=> 'Organization managers',
 	      'tab_ea_admin_org_structure'=> 'Employee types&groups',
 	      'tab_ea_admin_orgs'         => 'All Organizations',
-              ) as $name=>$descr) APItabs::define_tab($name,$descr);
+
+	      'tab_ea_off'               => 'Offices',
+	      'tab_ea_off_assign'        => 'Allocate offices',
+	      'tab_ea_off_wipe'          => 'Wipe allocations',
+	      'tab_ea_off_door_labels'   => 'Print door labels',
+	      'tab_ea_off_desk_labels'   => 'Print desk labels',
+	      'tab_ea_off_list'          => 'Who sits where List',
+	      'tab_ea_off_omatrix'       => 'Who sits where Matrix',
+               ) as $name=>$descr) APItabs::define_tab($name,$descr);
 
 class APImenu_ea extends APImenu{
   var $q    = EA_MODULE;
   var $title= 'Employees&Alumni';
   var $static_menu   = array(
 			     tab_ea_home  => array(), // (tab_ea_home_contacts),
-			     tab_ea_e     => array(tab_ea_e_groups,tab_ea_e_cv),
+			     tab_ea_e     => array(tab_ea_e_groups,tab_ea_e_cv,tab_ea_off_door_labels,tab_ea_off_list),
 			     tab_ea_a     => array(tab_ea_a_years),
 			     tab_ea_admin => array(tab__mergeAV,tab_ea_admin_dup,tab_ea_admin_rb,
 						   // tab_ea_admin_org_mngr,
@@ -53,7 +61,10 @@ class APImenu_ea extends APImenu{
 			     tab_ea_admin_org => 44,
 			     tab_ea_admin_org_structure => 45,
 			     tab_ea_admin_orgs=> 46,
+			     tab_ea_off_door_labels=>77,
+			     tab_ea_off_list   => 88,
 			     tab__syslog      => 99,
+
 			     );
 
   function __construct(){
@@ -116,6 +127,11 @@ class APImenu_ea extends APImenu{
       case tab__mergeAV:
       case tab__syslog:
 	myPear_access(EA_MODULE);
+	$reply = EA_manager_here;
+	break;
+
+      case tab_ea_off_list:
+      case tab_ea_off_door_labels:
 	$reply = EA_manager_here;
 	break;
 
@@ -260,6 +276,15 @@ class APImenu_ea extends APImenu{
       myOrg()->eaCV()->show();
       break;
       
+    case tab_ea_off_list:
+      if (!isset($doing)) $doing = 'summary';
+    case tab_ea_off_door_labels:
+      if (!isset($doing)) $doing = 'doorLabels';
+      locateAndInclude('bHolder_ea_Offices');
+      $h = new bHolder_ea_Offices($doing);
+      $h->listEntries();
+	break;
+
     case tab_ea_e_groups:
       locateAndInclude('bList_orgGroups');
       bList_orgGroups::b_tab_groupMembers(myOrg_ID);

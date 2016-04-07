@@ -29,7 +29,7 @@ class bList_vm_budgetSource extends bList_vm{
     // First hook the event
     if (empty($e_id)) $e_id = VM::$e->ID;
     if ($e_id instanceof bForm_vm_Event) $this->e = $e_id;
-    else      $this->e = myPear::getInstance('bForm_vm_Event',$e_id,'strict');
+    else      $this->e = myPear::getInstance_new('bForm_vm_Event',$e_id,'strict');
     */
     parent::__construct($e_id);
     
@@ -101,6 +101,7 @@ class bList_vm_budgetSource extends bList_vm{
 	// (Re)create the default budget source 
 	// if it is not yet done OR it was removed by the upper checkup
 	if (!$this->get_budgetSource($default_only=True,$verbose=False)){
+	  b_debug::traceBack();
 	  myPear::MESSAGE('Creating budget source record for "'.$this->e->name().'"');
 	  $this->addMember(array('lm_key'   => $budget_message,
 				 'lm_value' => $defaultEventBudget,

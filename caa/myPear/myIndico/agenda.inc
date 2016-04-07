@@ -91,7 +91,7 @@ Supported arguments:
    $lastKey= 'No key';
    $url = $this->agenda_url.$this->tools_url.$args;
    foreach (preg_split("/\n/",$this->curl($url)) as $line) {
-     if (strstr($line,'=')){
+     if (strstr($line,'=') !== False){
        list($key,$value) = explode('=',$line,2); $key = mb_strToLower($key);
        if ($value && $key) {
 	 $key = preg_replace('/_date$/'  ,'',$key);

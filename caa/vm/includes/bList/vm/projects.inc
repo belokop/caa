@@ -221,7 +221,7 @@ class bList_vm_projects extends bList_vm{
 
     if (empty($events)){
       foreach(explode(',',$r['lm_status']) as $id){
-	if (is_object($e = myPear::getInstance('bForm_vm_Event',$id,'strict'))){
+	if (is_object($e = myPear::getInstance_new('bForm_vm_Event',$id,'strict'))){
 	  $events[] = $e; 
 	}
       }

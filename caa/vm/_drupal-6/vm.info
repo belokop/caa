@@ -1,5 +1,5 @@
 name = Visits Manager 
-description = Administration portal to manage various aspects of visits: apartments & offices booking, budget monitoring, setting social events, etc.
+description = Administration portal to manage various aspects of visits: apartments & offices lease, budget monitoring, setting social events, etc.
 package = myPear
 core = 6.x
 dependencies[] = myPear

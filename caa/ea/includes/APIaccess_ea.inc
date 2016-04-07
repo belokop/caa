@@ -43,6 +43,6 @@ class APIaccess_ea extends APIaccess{
   }
 
   function mayUpdate($av_id=Null){
-    return EA_admin_here;
+    return EA_administrator_here;
   }
 }

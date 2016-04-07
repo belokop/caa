@@ -21,12 +21,12 @@ class SSN{
   
   /*
    * We know about the Swedish SSN only.
-   * 
    */
   public static function known(){
-    $reply = array('SE' => array('/^'.self::$yymmdd  .'[-+]'.self::$n.'$/', 
-				 '/^'.self::$yyyymmdd. '-'  .self::$n.'$/',  
+    $reply = array('SE' => array('/^'.self::$yymmdd         .self::$n.'$/', 
+				 '/^'.self::$yymmdd  .'[-+]'.self::$n.'$/', 
 				 '/^'.self::$yyyymmdd       .self::$n.'$/',  
+				 '/^'.self::$yyyymmdd. '-'  .self::$n.'$/',  
 				 ));
     return $reply;
   }
@@ -256,7 +256,7 @@ class bForm_Avatar extends bForm {
     return $reply;
   }
     
-    /*
+  /*
    *
    */
   public static function findDuplicates_reject($record){ 
@@ -731,13 +731,19 @@ class bForm_Avatar extends bForm {
     
     // Update all the other objects in the database
     $a = array_merge(array('zzz_lists'       =>array('l_parent'), 
-			   'zzz_units'       =>array('u_parent'),
-			   'zzz_list_members'=>array('lm_key','lm_value')),
+			   'zzz_units'       =>array('u_parent')),
 		     self::avid_tables($tablesToConsider));
     foreach($a as $table=>$keys){
-      foreach($keys as $key) myPear_db()->query("UPDATE $table SET $key = '$avKeep_ID' WHERE $key = '$avDrop_ID'",$verbose); 
+      foreach($keys as $key) myPear_db()->qquery("UPDATE $table SET $key = '$avKeep_ID' WHERE $key = '$avDrop_ID'",$verbose); 
     }
-    
+
+    // Update CV lists
+    locateAndInclude('bList_eaCV');
+    locateAndInclude('bForm_Organization');
+    foreach (bForm_Organization::getAll() as $org){
+      $eaCV = new bList_eaCV($org);
+      myPear_db()->qquery("UPDATE zzz_list_members SET lm_key = '$avKeep_ID' WHERE lm_key = '$avDrop_ID' AND lm_lid = ".$eaCV->ID,$verbose); 
+    }
 
 
     // Eventually change the maildb reference 
@@ -1098,7 +1104,6 @@ class bForm_Avatar extends bForm {
     if ($reply[count($reply)-1] == '&#44;') array_pop($reply);
     if ($reply[count($reply)-1] == ',')     array_pop($reply);
     $name = str_replace('- ','-',str_replace(' ,',',',str_replace('> ','>',join(' ',$reply))));
-  //if ($escape) $name = no_wrap(str_replace('.','&#46;',str_replace(' &#44;','&#44;',str_replace('> ','>',$name))));
     if ($escape) $name = no_wrap(b_fmt::escape($name,'<'));
     return $name;
   }
@@ -1794,7 +1799,7 @@ class bForm_Avatar extends bForm {
 			   $returnURL,
 			   $photoFile,
 			   $scale);
-    if(is_file($url))	$this->getValue_reset_forced($name,basename($url));
+    if(is_file($url)) $this->getValue_reset_forced('av_photo',basename($url));
     return $url;
   }
 

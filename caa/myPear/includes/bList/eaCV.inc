@@ -51,7 +51,7 @@ class bList_eaCV extends bList{
 										     'cvf'   =>''));
       
       $this->existing_CV = array($this->av->ID => $this->av->fmtname());
-    }elseif (EA_admin_here){
+    }elseif (EA_administrator_here){
       // List of existing CV's
       $list = array(0);
       foreach($this->getMembers() as $lm_id=>$r) $list[] = "av_id  = $r[lm_key]";

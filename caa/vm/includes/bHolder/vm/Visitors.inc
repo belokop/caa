@@ -20,17 +20,16 @@ foreach(array('tab_accommodation_options'=> 'Accommodation options',
 define('ICON_mail_sent_y',  bIcons()->get(array('d'=>'The mail was sent',  
 						'i'=>'i-ok', 
 						'c'=> 'opacity_off')));
-locateAndInclude('bHolder_vm');
-class bHolder_vm_Visitors extends bHolder_vm{
+locateAndInclude('bHolder_ea');
+class bHolder_vm_Visitors extends bHolder_ea{
   
-  var $debug = True;
   var $autoOpenHeader = False;
   
   var $photosPerRow =   5;   // number of photos per printing row
-  var $photos_Nrows =  99;   // number of rows
+  var $photos_Nrows =  33;   // number of rows
   var $badgesPerRow =   2;   // number of badges per printing row
   var $badges_Nrows = 555;   // number of rows
-  var $doorLabelsPerRow = 2; // number of door labels per printing row
+  var $doorLabelsPerRow = 1; // number of door labels per printing row
   var $doorLabels_Nrows = 3; // number of rows
   
   var $labels      = array();
@@ -200,7 +199,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
     parent::__construct();
 
     // Catch the list of visits for a given person
-    if (isset($_GET['av_id'])) $this->av = myPear::getInstance('bForm_Avatar_vm',$_GET['av_id'],array('nocache','strict'));
+    if (isset($_GET['av_id'])) $this->av = myPear::getInstance_new('bForm_Avatar_vm',$_GET['av_id'],array('nocache','strict'));
 
     // Define some useful shortcuts
     define('split_by_huts',(!is_object($this->av) &&
@@ -280,8 +279,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
 	  myPear_logs()->add('endorse',VM::$e->ID);
 	  foreach($this->organizers as $av_id){
 	    // Send the e-mails to organizers if not yet done
-	    //	    $v = bForm_vm_Visit::getVisit($av_id,VM::$e->ID);
-	    $v = myPear::getInstance("bForm_vm_Visit","v_avid='$av_id' AND v_eid=".x("'",VM::$e->ID),array('nocache','strict'));
+	    $v = myPear::getInstance_new("bForm_vm_Visit",array('v_avid'=>$av_id,'v_eid'=>VM::$e->ID),array('nocache','strict'));
 	    if (empty($v)){
 	      $av = new bForm_Avatar_vm($av_id);
 	      myPear::WARNING(sprintf("Organizer <em>%s</em> is not registered for <em>%s</em>",$av->fmtName('Lf'),VM::$e->name()));
@@ -336,7 +334,6 @@ class bHolder_vm_Visitors extends bHolder_vm{
       if (is_object(VM::$e)){
 	VM::$e->budgetSource()->get_budgetSource($default_only=False,$verbose=True);
 	$this->event_is_bankrupt = (VM::$e->budgetSource()->total <= 0);
-	//	$this->event_is_bankrupt = False;
       }
 
       // Build tabs used for budget
@@ -401,6 +398,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
     case 'photos':
     case 'badges':
     case 'doorLabels':
+    case 'deskLabels':
       break;
       
     case 'budget_byProjects':
@@ -416,17 +414,17 @@ class bHolder_vm_Visitors extends bHolder_vm{
     case 'lists':
       if ($v_id = @$_GET['refuse_once']){
 	
-	$this->v = myPear::getInstance('bForm_vm_Visit',$v_id);
+	$this->v = myPear::getInstance_new('bForm_vm_Visit',$v_id,array('fatal','nocache'));
 	$this->v->setStatus(STATUS_NO);
 
       }elseif ($v_id = @$_GET['approve_once']){
 
-	$this->v = myPear::getInstance('bForm_vm_Visit',$v_id);
+	$this->v = myPear::getInstance_new('bForm_vm_Visit',$v_id,array('fatal','nocache'));
 	$this->v->setStatus(STATUS_YES);
 
       }elseif ($policy = @$_GET['toggle_once']){
 
-	$this->v = myPear::getInstance('bForm_vm_Visit',$_GET['v_id'],'strict');
+	$this->v = myPear::getInstance_new('bForm_vm_Visit',$_GET['v_id'],array('strict','nocache'));
 	if ($this->v) $this->v->setPolicy($policy,!$this->v->getPolicy($policy));
 
       }elseif(@$_GET['invoice_once']){
@@ -435,9 +433,9 @@ class bHolder_vm_Visitors extends bHolder_vm{
 
       }elseif($p = preg_grep('/_c_id:\d+$/',array_keys($_POST))){
 
-	// The co-tenant is selected, create a list entry
+	// The co-tenant is selected, create an entry in bList_vm_cotenants
 	VM_cotenants()->set_cotenants(array($_POST[$p[0]],
-					      $_POST['lease_id']));
+					    $_POST['lease_id']));
 
       }elseif($p = preg_grep('/_a_id:\d+$/',array_keys($_POST))){
 
@@ -471,6 +469,62 @@ class bHolder_vm_Visitors extends bHolder_vm{
     $this->dbg($this->av.' doing '.$this->doing);
   }
   
+  private $nLabelsPrinted = 0;
+  private function deskLabels(){
+    static $dejaVu = 0;
+    if (empty($this->rec['o_id']) || ($this->rec['v_status'] != STATUS_YES)){
+      $this->rec = array();
+      return;
+    }
+
+    if (!$dejaVu++ && function_exists('drupal_add_css')) drupal_add_css('./'.drupal_get_path('module',EA_MODULE).'/css/doorlabel.css');
+
+    $av = myPear::getInstance_new('bForm_Avatar_vm',$this->rec['av_id'],array('nocache','fatal'));
+    if ($av->get_staffOffice()){
+      $this->rec = array();
+      return;
+    }
+    $o  = myPear::getInstance_new('bForm_vm_Office',$this->rec['o_id'],'fatal');
+    if (!($img = $av->getPhoto('','',2))) $img = ''; 
+    
+    if ($this->nLabelsPrinted == 0) print(x('style','@media print{ footer {page-break-after:always;}').
+					  x('footer',' '));
+    
+    
+    $info = array(x('strong',$av->fmtName('fl',False)));
+    if ($i = $av->getValue('av_institute'))  $info[] = x('em',$i);
+    if(($i = $av->getValue('av_residentship')) && !$av->isE(True)) $info[] = x('em',b_cc::getName($i));
+    
+    $h = (empty($img) ? '5mm' : '3mm');
+    $h = '2mm';
+    print x("div id='maildb_doorlabel' class='label labelclass1' style='height:$h!important'",
+	    x('div',"<img src='".drupal_get_path('module',EA_MODULE)."/css/doorlabel-logo.png' alt=''>").
+	    x('table',
+	      x('tbody',
+		x('tr',
+		  x('td',$img).
+		  x('td',join('<br>',$info))))).
+	    x('p style="position:relative;z-index:99999"',$o->name(False)))
+      .str_repeat("<p>&nbsp;</p>\n",3)
+      ;
+    $this->nLabelsPrinted++;
+    if ($this->nLabelsPrinted%7 == 0){
+      $this->footer_workaround();
+      print x('footer',x('p',' '));
+    }
+    $this->rec = array();
+  }
+  
+  private function footer_workaround(){
+    // Workaround...
+    // The last label on the printed page is getting too big, so repeate it...
+    print x("div id='maildb_doorlabel' class='label labelclass1' style='height:1pm!important'",
+	    x('div',"<img src='".drupal_get_path('module',EA_MODULE)."/css/doorlabel-logo.png' alt=''>").
+	    x('table',x('tbody',x('tr',x('td','')))).
+	    x('p style="position:relative;z-index:99999"',' '));
+      //	str_repeat("<p>&nbsp;</p>\n",1).
+  }
+
   private function current_tab_in_array($tabs_to_skip=array()){
     if (is_object($this->b_tabs)){
       $reply = in_array($this->b_tabs->active_tab_name(),$tabs_to_skip);
@@ -545,7 +599,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
 	  }else{
 	    // Guarantee the correct value of status&policy in the snapshot record
 	    if (empty($this->rec['v_status'])){
-	      $this->v = myPear::getInstance('bForm_vm_Visit',$this->rec['v_id'],array('strict'));
+	      $this->v = myPear::getInstance_new('bForm_vm_Visit',$this->rec['v_id'],'fatal');
 	      $this->rec['v_status'] = $this->v->getStatus();
 	      $this->rec['v_policy'] = $this->v->getValue('v_policy',True);
 	    }
@@ -607,6 +661,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
       case 'photos':
       case 'badges':
       case 'doorLabels': 
+      case 'deskLabels':
       case 'budget_byProjects':
       case 'myguests':
 	parent::listEntries();
@@ -689,7 +744,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
       $this->total['name']     = $total_socialEvents;
       @$this->total['total_e'] += $total_socialEvents;
       @$this->total['total_r'] += $total_socialEvents;
-      b_debug::print_r($this->total,'total');
+      // b_debug::print_r($this->total,'total');
     }
 
     foreach($this->total as $k=>$v){
@@ -760,7 +815,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
 
     $this->set_colorCodesTH($header,$t->th_attr);
 
-    b_debug::print_r($this->header_cache,'header',False);
+    // b_debug::print_r($this->header_cache,'header',False);
 
     $t->preHeaders = $this->build_budget_preHeaders($header,$word_socialEvents);
     $t->noSort = True;
@@ -868,7 +923,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
       // strange... TBU
     }else{
       if ($this->highlight = @$this->highlights[$c][$d]['h']){
-	b_debug::print_r($this->highlights[$c][$d],"$c $d");
+	// b_debug::print_r($this->highlights[$c][$d],"$c $d");
 	@$this->collected_highlights[$this->highlights[$c][$d]['z']][$this->highlight]++;
 	if (@$this->highlights[$c][$d]['s'] === 'fatal') @$this->fatal_fnc[$this->highlights[$c][$d]['d']]++;
       }
@@ -938,7 +993,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
    *
    */
   private function boss_button(){
-    if (VM::e_ID()<=0 || is_object($this->av)) return;
+    if (!$this->isWritable() || VM::e_ID()<=0 || is_object($this->av)) return;
 
     $this->dbg();
     $to_show = array();
@@ -956,7 +1011,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
       if ($mightBeEndorced){
 	// Build the FNC message if something goes wrong
 	$fnc_message = '';
-	if (!empty($this->fatal_fnc) && (time()+VM_booking_zapas*24*3600 > $e_start) &&
+	if (!empty($this->fatal_fnc) && (time()+VM_lease_zapas*24*3600 > $e_start) &&
 	    (VM_organizer_here || VM_manager_here || VM::hasRightTo('endorse_event'))){
 	  $fatal_p = "style='font-weight:bold;color:red;'";
 	  foreach($this->fatal_fnc as $msg=>$n) $li[] = x("li $fatal_p","$n $msg");
@@ -968,7 +1023,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
 			       " and we need time to reserve accommodation for the visitors.").
 			     x("p $fatal_p","However, the budget can't be approved since some formalities are NOT yet completed:".x('ul',join("\n",$li))).
 			     x("p $fatal_p","Please resolve the issue asap.")));
-	  if (time() + VM_booking_zapas*24*3600 < $e_start) $fnc_message = '';
+	  if (time() + VM_lease_zapas*24*3600 < $e_start) $fnc_message = '';
 	}
 	$this->boss_button_endorse($fnc_message);
       }
@@ -980,7 +1035,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
       //
       // Big-Button "Send E-mails to all attenders"
       //
-      b_debug::print_r($this->mails_which_are_not_yet_sent);
+      // b_debug::print_r($this->mails_which_are_not_yet_sent);
       if ((!empty($this->mails_which_are_not_yet_sent[VM_V_welcomeMailSent])  ||
 	   !empty($this->mails_which_are_not_yet_sent[VM_V_denialMailSent]))
 	  && (VM::$e->getValue('e_start',1) > time()) 
@@ -1020,14 +1075,15 @@ class bHolder_vm_Visitors extends bHolder_vm{
    *
    */
   private function boss_button_endorse($fnc_message=''){
+
     static $dejaVu = 0;
     if ($dejaVu++) return;
-    
+
     // Show button "Release lock"
     if (VM::$e->isEventEndorsed()){ 
       if (!empty($fnc_message)) myPear::WARNING($fnc_message);
-      if (VM::hasRightTo('endorse_event')) $to_show[] = b_btn::big_button('Unlock the budget & allow changes',array('e_endorse_once'=>0,
-														    'resetcache_once'=>1),'red');
+      if (VM::hasRightTo('endorse_event')||VM_unlocker_here) $to_show[] = b_btn::big_button('Unlock the budget & allow changes',array('e_endorse_once'=>0,
+																      'resetcache_once'=>1),'red');
       // Show button "Endorse the event and lock changes" 
       // for the events where the applications deadline is over
     }elseif(empty($this->fatal_fnc) && VM::hasRightTo('endorse_event')){
@@ -1040,6 +1096,11 @@ class bHolder_vm_Visitors extends bHolder_vm{
       // Warning message for the organizers
     }elseif (!empty($fnc_message)){
       myPear::WARNING($fnc_message);
+    }
+    if (!empty($to_show)){
+      $t = new b_table("style='width:100%'");
+      $t->tr($to_show);
+      $t->close();
     }
   }
   
@@ -1121,6 +1182,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
       
       switch ($this->doing){
       case 'doorLabels':   
+      case 'deskLabels':
 	return VM_query($where, "LEFT JOIN abs_offices ON o_id = v_oid");
 	
       case 'lists':
@@ -1182,7 +1244,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
       $this->rec['e_v_policy'] = VM_visit_policies($this->rec['v_type']);
     }else{
       if (empty($this->rec['e_v_policy'])){
-	$e = myPear::getInstance('bForm_vm_Event',$this->rec['v_eid']);
+	$e = myPear::getInstance_new('bForm_vm_Event',$this->rec['v_eid'],'fatal');
 	$this->rec['e_v_policy'] = $e->get_e_v_policy();
       }else{
 	$this->rec['e_v_policy'] = b_fmt::safe_decode($this->rec['e_v_policy']);
@@ -1255,7 +1317,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
       $this->rec['a_comment'] = preg_replace('/ - .*/','',$this->rec['a_comment']);
       $this->t->extraTD[] = $this->rec['a_comment'];
 
-      // Split the list by huts
+      // Split the list by huts for better readability
       $hut_name = $this->split_by_huts($this->rec);
 
       if ($cotenants = VM_cotenants()->get_cotenants($this->rec['lease_id'])){
@@ -1284,7 +1346,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
        * --------------------------------------------------------------------------------- Collect photos
        */
       static $dejaVu = array();
-      $av = myPear::getInstance('bForm_Avatar_vm',$this->rec['av_id'],array('nocache','strict'));
+      $av = myPear::getInstance_new('bForm_Avatar_vm',$this->rec['av_id'],array('nocache','fatal'));
       if (!@$dejaVu[$av->ID]++){
 	if (!($img = $av->getPhoto())) $img = "<img src='".myPear_images."avatar.png'>"; 
 	$this->labels[] = array($img,
@@ -1309,17 +1371,15 @@ class bHolder_vm_Visitors extends bHolder_vm{
       $this->rec = array();
       break;
      
+    case 'deskLabels':
+      $this->deskLabels();
+      break;
+
     case 'doorLabels':
       /*
        * --------------------------------------------------------------------------------- Door labels
        */
-      if ($o=$this->rec['v_oid']) {
-	if (empty($this->labels[$o])){
-	  $oc = myPear::getInstance('bForm_vm_Office',$o);
-	  $this->labels[$o][] = x('h1',$oc->name(False));
-	}
-	$this->labels[$o][] = $this->rec['name'];
-      }
+      $this->doorLabels('collect',$this->rec['o_id'],array('o_status','visitors'));
       $this->rec = array();
       break;
       
@@ -1473,7 +1533,9 @@ class bHolder_vm_Visitors extends bHolder_vm{
       $this->rec['_o_name'] = @$this->rec['o_name'];
       $this->rec['space1']  = ' ';
       if (time() < $this->rec['e_end']){
-	$this->rec['cotenant']= x('em',bForm_vm_Lease::select_cotenant('_c_id:',$this->rec,(VM::hasRightTo('book_ah')?'auto':'RO')));
+	$this->rec['cotenant']= x('em',bForm_vm_Lease::select_cotenant('_c_id:',
+								       $this->rec,
+								       (VM::hasRightTo('book_ah')?'auto':'RO')));
       }      
 
       if ($this->av) $this->rec['name'] = $this->rec['_e_name'];
@@ -1576,7 +1638,6 @@ class bHolder_vm_Visitors extends bHolder_vm{
       }
     }
     $this->dbg(join(', ',array_keys($rec)).', already_sent='.var_export($already_sent,True));
-    // b_debug::var_dump($rec);
     if (!empty($rec)) $this->rec = array_merge($rec,$this->rec);
   }      
 
@@ -1838,6 +1899,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
 
     // Skip the unduly cases
     if ($not_my_case = (VM::outOfScope()
+			|| !$this->isWritable() 
 			|| ($this->rec['v_type'] == VISIT_OUT_OF_SCOPE) 
 			|| !in_array($this->doing,array('lists','budget',)) 
 			)){
@@ -1964,6 +2026,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
   private function btn_payments(){
     $reply = array('','');
     if ($not_my_case = VM::outOfScope()
+	|| !$this->isWritable() 
 	|| ($this->rec['v_type'] === VISIT_OUT_OF_SCOPE) 
 	|| ($this->rec['v_status']!= STATUS_YES)         
 	|| !in_array($this->doing,array('lists','budget',)) 
@@ -2026,7 +2089,9 @@ class bHolder_vm_Visitors extends bHolder_vm{
   private function btn_admin(){
 
     // no admin buttons for some lists
-    if (VM::outOfScope() || in_array($this->doing,array('show_mails_exchange',)))   return array();
+    if (VM::outOfScope() 
+	|| !$this->isWritable() 
+	|| in_array($this->doing,array('show_mails_exchange',)))   return array();
     
     bTiming()->cpu(__FUNCTION__);
     locateAndInclude('bForm_vm_Expenses');    
@@ -2164,6 +2229,15 @@ class bHolder_vm_Visitors extends bHolder_vm{
       //
       // Print the collected list of Photos / Badges / Labels
       //
+
+    case 'deskLabels': 
+      $this->footer_workaround();
+      break;
+      
+    case 'doorLabels': 
+      $this->doorLabels('print');
+      break;
+      
     case 'photos':
       if (!isset($N)){
 	$N=($nv=$this->photos_Nrows)  * ($nh=$this->photosPerRow);
@@ -2176,20 +2250,15 @@ class bHolder_vm_Visitors extends bHolder_vm{
 	$css_class = 'badges';
       }
       
-    case 'doorLabels': 
-      if (!isset($N)){
-	$N=($nv=$this->doorLabels_Nrows)*($nh=$this->doorLabelsPerRow);
-	$css_class = 'doorlabels';
-      }
-      
       $countLabels = 0;
-      for ($i=count($this->labels); $i < $N; $i++) $this->labels[$i] = array();
+      for ($i=count(array_keys($this->labels)); $i < $N; $i++) $this->labels[$i] = array();
+      
       $t = new b_table("class='$css_class'");
       $t->highlightRows = False;
       for ($v=1; $v <= $nv; $v++){
-	  $t->tro();
-	  for ($h=1; $h <= $nh; $h++)  $t->td(join('<br/>',$this->labels[$countLabels++]));
-	  $t->trc();
+	$t->tro();
+	for ($h=1; $h <= $nh; $h++)  $t->td(join('<br/>',$this->labels[$countLabels++]));
+	$t->trc();
       }
       $t->close();
       $this->labels = array();
@@ -2564,7 +2633,8 @@ class bHolder_vm_Visitors extends bHolder_vm{
 			'v__stay'  => 'stay',
 			'v__host'  => 'host',
 			);
-	if (is_object(VM::$e))	unset($header['v__host']);
+	if (!$this->isWritable()) unset($header['_a_name']);
+	if (is_object(VM::$e))	  unset($header['v__host']);
 	if (is_object($this->av)) $header['name'] = 'event';
       }
       $this->header_cache = $header;

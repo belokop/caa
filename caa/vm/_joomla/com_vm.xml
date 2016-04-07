@@ -14,7 +14,7 @@
   <!-- The description is optional and defaults to the name -->
   <description>
     <![CDATA[<p>Visits Manager API.
-	     <br />The system includes offices&amp;apartments  booking, budget handling, etc.
+	     <br />The system includes offices&amp;apartments  lease, budget handling, etc.
 	     </p>]]>
   </description> 
   

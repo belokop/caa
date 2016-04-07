@@ -322,10 +322,12 @@ class b_reg{
   public static function sql_ids($class,$module=myPear_MODULE){
     $reply = array();
     if (myPear_db()->isReady()){
-      if (cnf_dev && empty(self::$_SQLidentities[$module][$class]['t']))
+      if (empty(self::$_SQLidentities[$module][$class]['t'])){
 	b_debug::traceBack('self::$_SQLidentities[$module][$class][t] empty for '.__FUNCTION__."$class,$module");
-      $reply = array('t'=>self::$_SQLidentities[$module][$class]['t'],
-		     'i'=>self::$_SQLidentities[$module][$class]['i']);
+      }else{
+	$reply = array('t'=>self::$_SQLidentities[$module][$class]['t'],
+		       'i'=>self::$_SQLidentities[$module][$class]['i']);
+      }
     }
     return $reply;
   }

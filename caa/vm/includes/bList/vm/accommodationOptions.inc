@@ -15,7 +15,6 @@ locateAndInclude('bList_vm');
  */
 class bList_vm_accommodationOptions extends bList_vm{
   
-  var $debug = False;
   var $list_quering = array('lm_key'  =>'Name',  // hut_id
                             'nrooms'  =>'Number of rooms allocated',
 			    );
@@ -54,6 +53,7 @@ class bList_vm_accommodationOptions extends bList_vm{
    *
    */
   protected function message_createList(){
+    var_dump(__METHOD__,$this->name(True),$this->title);
     myPear::MESSAGE("Creating ".$this->name(True).' for '.$this->title);
   }
   
@@ -218,7 +218,7 @@ class bList_vm_accommodationOptions extends bList_vm{
     if (empty($hut_id)){
       $reply = '';
     }else{
-      if (empty($this->hut[$hut_id])) $this->hut[$hut_id] = myPear::getInstance('bForm_vm_Hut',$hut_id);
+      if (empty($this->hut[$hut_id])) $this->hut[$hut_id] = myPear::getInstance_new('bForm_vm_Hut',$hut_id,'fatal');
       switch($what){
       case 'name':    $reply = $this->hut[$hut_id]->name();               break;
       case 'hut_code':$reply = $this->hut[$hut_id]->getValue('hut_code'); break;
@@ -266,7 +266,7 @@ class bList_vm_accommodationOptions extends bList_vm{
       if(($n = count($this->get_occupiedRooms($r['lm_key'],$lease_start,$lease_end,$v_host_avid))) == 0) continue;
       if($hut_code != $this->getHutInfo($r['lm_key'],'hut_code'))   continue;
       
-      $hut = myPear::getInstance('bForm_vm_hut',$r['lm_key']);
+      $hut = myPear::getInstance_new('bForm_vm_Hut',$r['lm_key'],'fatal');
       if ($hut_code != $hut->getValue('hut_code')) continue;
       
       if (empty($t)){

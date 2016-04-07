@@ -140,7 +140,6 @@ class bUnit_jam extends bUnit{
 			 'i'=>JAM::status($status,'i'),
 			 ));
       $reply = bIcons()->getButton($button,$status);
-      //      var_dump($reply);
       return $reply;
     }else{
       return parent::showStatus();

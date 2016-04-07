@@ -63,7 +63,7 @@ class bForm_vm_Apartment extends bForm_vm {
       $this->formDB = $r; 
       if ((int)$this->getValue('a_start',1,1) < VMaps_day1) $this->formDB['a_start'] = rent0;
       if ((int)$this->getValue('a_end'  ,1,1) < VMaps_day1) $this->formDB['a_end']   = rent9;
-      if (!empty($r['a_hutid'])) $this->hut = myPear::getInstance('bForm_vm_Hut',$r['a_hutid']);
+      if (!empty($r['a_hutid'])) $this->hut = myPear::getInstance_new('bForm_vm_Hut',$r['a_hutid'],'strict');
     }
   }
 
@@ -94,7 +94,7 @@ class bForm_vm_Apartment extends bForm_vm {
       self::$receiptFormula  = '('.LODGING_OA_TXT.')';
       return self::_dailyRent($formDB);
     }else{
-      //if ($ap = myPear::getInstance('bForm_vm_Apartment',$a_id)) $extraApFee = $ap->fee();
+      //if ($ap = myPear::getInstance_new('bForm_vm_Apartment',$a_id,'strict')) $extraApFee = $ap->fee();
       $p =  self::_dailyRent($formDB); 
       self::$receiptFormula = (($ip=(int)$p)?"($ip":'(???')."*$nDays".($extraApFee?"+$extraApFee)":')');
       return (int)($p * $nDays + $extraApFee);

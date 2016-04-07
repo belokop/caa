@@ -1,6 +1,6 @@
 <?php
-locateAndInclude('bHolder_vm');
-class bHolder_vm_Apartments extends bHolder_vm{
+locateAndInclude('bHolder_ea');
+class bHolder_vm_Apartments extends bHolder_ea{
 
   var $cleanCost = 0;
   var $rent      = 0;
@@ -116,7 +116,7 @@ class bHolder_vm_Apartments extends bHolder_vm{
    */  
   function format() {
 
-    $this->a = myPear::getInstance('bForm_vm_Apartment', @$this->rec['a_id']);
+    $this->a = myPear::getInstance_new('bForm_vm_Apartment', @$this->rec['a_id'],'strict');
 
     if (empty($this->rec['n_nosort'])) 	  $this->rec['n_nosort'] = 0;
     if (isset($this->rec['a_start'])) if ($this->rec['a_start'] <= rent0) unset($this->rec['a_start']); 
@@ -182,7 +182,7 @@ class bHolder_vm_Apartments extends bHolder_vm{
       $this->t->counter = 0;
       while($r = myPear_db()->next_record($q)) {
 	$this->t->extraTD = array();
-	$this->a = myPear::getInstance('bForm_vm_Apartment',$r['a_id']);
+	$this->a = myPear::getInstance_new('bForm_vm_Apartment',$r['a_id'],'fatal');
 	$this->format_record_axi($r);
 	$this->t->prt($r);
       }

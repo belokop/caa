@@ -197,10 +197,12 @@ class bList_vm_socialEvents extends bList_vm{
     if (@$_GET['add_continue_once'] === 'yes'){
       $reply = True;
     }elseif ($reply = parent::getFormAdd_OK()){
-      if (!($date = $this->getMemberValue($lm_id,'lm_value'))) $reply = False;
-      if (b_time::txt2unix($date) < $this->e->getValue('e_start') ||
-	  b_time::txt2unix($date) > $this->e->getValue('e_end')){
-	if ($date) myPear::ERROR("Can't setup social event for ".date('Y-m-d',$date).
+      $date = $this->getMemberValue($lm_id,'lm_value');
+      if (empty($date)){
+	$reply = False;
+      }elseif ($date < date('Y-m-d',$this->e->getValue('e_start')) ||
+	       $date > date('Y-m-d',$this->e->getValue('e_end'))){
+	myPear::ERROR("Can't setup social event for $date".
 				 ", which is is outside the conference period ".b_time::period($this->e->getValue('e_start'),$this->e->getValue('e_end')));
 	$reply = False;
       }

@@ -1,5 +1,6 @@
 <?php
 locateAndInclude('APImenu');
+locateAndInclude('b_tabs');
 
 foreach(array('tab_jam_administer'      =>  'Administer JAM',
 	      'tab_jam_applicants'      =>  'Applicants',
@@ -23,7 +24,6 @@ foreach(array('tab_jam_administer'      =>  'Administer JAM',
 class APImenu_jam extends APImenu{
   var $q          = JAM_MODULE;
   var $static_menu=array(//tab_jam_administer   
-			 //tab_jam_toolbox      => array(),
 			 tab_jam_toolbox      => array(tab__mergeAV, tab_rfields, tab_reqdocs, tab_jam_positions, 
 						       tab_jam_whoIsWho, tab__mergeAV, tab_jam_managers, tab__syslog, tab_jam_rate_referees),
 			 tab_jam_home         => array(),

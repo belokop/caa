@@ -47,6 +47,13 @@ function ea_updates(){
 function ea_update15(){
   if (!cnf_CLI){
 
+    foreach(array('023:010',
+		  '023:012',
+		  '133:027') as $o_name) myPear_db()->qquery("DELETE FROM abs_offices WHERE o_name='$o_name'",cnf_dev);
+    myPear_db()->qquery("DELETE FROM abs_offices WHERE o_capacity > 999",cnf_dev);
+    myPear_db()->qquery("UPDATE abs_offices SET o_capacity=1 WHERE o_capacity = 0 OR o_capacity IS NULL",cnf_dev);
+    myPear_db()->qquery("ALTER TABLE `abs_offices` CHANGE `o_capacity` `o_capacity` INT(11) NOT NULL DEFAULT '1'",cnf_dev);
+    
     // "newcomer" looks better
     myPear_db()->qquery("UPDATE zzz_logs SET log_type='newcomer' WHERE log_type='ea' OR log_type='add_member'",True);
 

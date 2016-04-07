@@ -11,7 +11,7 @@ class APIaccess{
     //    APIaccess::$cache = new b_cache_S(get_class($this));
     $this->who_is_here(array('EA_manager_here' => array('rank'=> 'RANK__ea_manager',
                                                         'def' => 'superUser_here'),
-                             'EA_admin_here'   => array('rank'=> 'RANK__ea_admin',
+                             'EA_administrator_here'   => array('rank'=> 'RANK__ea_admin',
                                                         'def' => 'EA_manager_here'),
 			     'EA_member_here'  => array('IF'  => myOrg()->eaMembers()->isMember()),
 			     ));

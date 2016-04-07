@@ -25,7 +25,7 @@ function VM_mailer_render($what,$args=array(),$preview=False){
   
   $v = $av = $e = Null;
   foreach ($args as $key=>$id){
-    $o = myPear::getInstanceFromID($id,'class');
+    $o = myPear::getClassFromID($id,'class');
     if ($o instanceof bForm_vm_Visit) { $v = $o; $av = $v->av; $e = $v->e; }
     if ($o instanceof bForm_vm_Event) { $e = $o; }
     if ($o instanceof bForm_Avatar)   {$av = $o; }
@@ -173,7 +173,7 @@ class bMailer_vm extends bMailer{
       $v  = $av_id;
       $av = $v->av;
     }else{
-      $av = myPear::getInstance('bForm_Avatar_vm',$av_id,array('strict'));
+      $av = myPear::getInstance_new('bForm_Avatar_vm',$av_id,array('strict','fatal'));
     }
 
     // Continue parsing, the argument might be the visit ID...
@@ -184,7 +184,7 @@ class bMailer_vm extends bMailer{
     }
 
     // Parse "event" argument
-    if (!($e instanceof bForm_vm_Event)) $e = myPear::getInstance('bForm_vm_Event',$e);
+    if (!($e instanceof bForm_vm_Event)) $e = myPear::getInstance_new('bForm_vm_Event',$e,array('strict','fatal'));
     
     // Guess the visit if not given explicitly
     if (empty($v)){
@@ -313,7 +313,7 @@ Remember to save this mail or book-mark the web page to facilitate later access 
     // Might be called from the queue...
     $rec = b_fmt::safe_decode($rec);
 
-    $av = myPear::getInstance('bForm_Avatar',$av_id);
+    $av = myPear::getInstance_new('bForm_Avatar',$av_id,array('strict','fatal'));
     if (VM_administrator_here || cnf_dev) myPear::MESSAGE("Reminding ".$av->name()." to approve visit of ".bForm_Avatar::_fmtName('Lf',$rec));
     
     if ($ok = $this->send(array($av,
@@ -399,13 +399,14 @@ $subject by $endorser.
     //    if (!send_automatically_infoMail_to_registrants)    $this->dontSendThisMail = 'NOT send_automatically_infoMail_to_registrants';
     // Get visit class    
     if ($v_id instanceof bForm_vm_Visit) $this->visit = $v_id;
-    else                                 $this->visit = myPear::getInstance('bForm_vm_Visit',$v_id);
+    else                                 $this->visit = myPear::getInstance_new('bForm_vm_Visit',$v_id,array('strict','fatal'));
     if (!($this->visit  instanceof bForm_vm_Visit)){
       myPear::WARNING_T("??? Wrong argument function m_registrant_info(v_id=$v_id)");
       return;
     }
 
     // Sanity, don't be too verbose
+    if(empty($this->visit->e)) b_debug::internalError('empty $this->visit->e in '.$this->v);
     if($this->visit->e->getValue('e_start') > time()) return;
     if($this->visit->getPolicy(VM_V_denialMailSent))  $this->visit->setPolicy(VM_V_infoMailSent,1);
     if($this->visit->getPolicy(VM_V_welcomeMailSent)) $this->visit->setPolicy(VM_V_infoMailSent,1);
@@ -476,7 +477,7 @@ Organizing committee for \"<event/>\".
    */
   public function m_registrant_deny($v_id=0,$no_preview=False){
     
-    $this->visit = myPear::getInstance('bForm_vm_Visit',$v_id);
+    $this->visit = myPear::getInstance_new('bForm_vm_Visit',$v_id,array('strict','fatal'));
 
     $VM_V_denialMailSent = $this->visit->getPolicy(VM_V_denialMailSent);
     if ($no_preview === 'status'){
@@ -530,7 +531,7 @@ Organizing committee for \"<event/>\"."));
 
     $this->dbg();
 
-    $this->visit = myPear::getInstance('bForm_vm_Visit',$v_id,array('strict','fatal'));
+    $this->visit = myPear::getInstance_new('bForm_vm_Visit',$v_id,array('strict','fatal'));
     if ($hut_id === 'status'){
       $this->m_registrant_info($this->visit,'status');
       return $this->visit->getPolicy(VM_V_welcomeMailSent);
@@ -557,10 +558,10 @@ Organizing committee for \"<event/>\"."));
      */
     $blabla = array();
     if (include_accommodation_in_finalWelcomeEmail && !empty($hut_id) && $this->visit->hut_codes($without_BI=True)){
-      $hut = myPear::getInstance('bForm_vm_Hut',$hut_id,array('strict','fatal'));
+      $hut = myPear::getInstance_new('bForm_vm_Hut',$hut_id,array('strict','fatal'));
       if (!($hut instanceof bForm_vm_Hut)){
-	// Sanity... there might be(?) a problem in "myPear::getInstance"...
-	myPear::WARNING_T("Can't get myPear::getInstance('bForm_vm_Hut',$hut_id)");
+	// Sanity... 
+	myPear::WARNING_T("Can't get myPear::getInstance_new('bForm_vm_Hut',$hut_id)");
 	$hut = new bForm_vm_Hut($hut_id);
       }
       if (($hut instanceof bForm_vm_Hut) && ($hut->ID == $hut_id)){

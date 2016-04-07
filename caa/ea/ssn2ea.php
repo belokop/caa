@@ -3,7 +3,7 @@ if (function_exists("date_default_timezone_set") and
     function_exists("date_default_timezone_get"))  @date_default_timezone_set(@date_default_timezone_get());
 
 define('cnf_dev',True);
-define('EA_admin_here',True);
+define('EA_administrator_here',True);
 
 $_GET['org'] = 'nordita';
 

@@ -130,13 +130,20 @@ function jam_update09(){
   if (!cnf_CLI){
     $q = myPear_db()->qquery("SELECT av_ssn,av_birthdate FROM zzz_avatars WHERE av_ssn NOT REGEXP '[0-9][0-9][0-9][0-9][0-9][0-9]-.[0-9][0-9][0-9]' GROUP BY av_ssn",1);
     while($r=myPear_db()->next_record($q)){
-      if (preg_match('/^[0-9][0-9][0-9][0-9][0-9][0-9]$/',($n=trim($r['av_ssn'])))){
-	$new = "'$n-P123'";
+      $av_birthdate = $r['av_birthdate'];
+      if (preg_match('/^(19|20)([0-9][0-9][0-9][0-9][0-9][0-9])([0-9][0-9][0-9][0-9])$/',($n=trim($r['av_ssn'])),$m)){
+	$ssn = x("'",$m[1].$m[2].'-'.$m[3]);
+      }elseif (preg_match('/^([0-9][0-9])-([0-9][0-9])-(19[0-9][0-9])$/',($n=trim($r['av_ssn'])),$m)){
+	$ssn = x("'",$m[3].'-'.$m[2].'-'.$m[1].'-P123');
+      }elseif (preg_match('/^[0-9][0-9][0-9][0-9][0-9][0-9]$/',($n=trim($r['av_ssn'])))){
+	$ssn = "'$n-P123'";
       }else{
-	$new = 'NULL';
+	$ssn = 'NULL';
+	if ((int)$r['av_ssn'] > 1900 && (int)$r['av_ssn'] < 2000) $r['av_birthdate'] = $r['av_ssn'];
       }
-      myPear::DEBUG("$new <=== ".$r['av_ssn'].' - '.$r['av_birthdate']);
-      myPear_db()->qquery("UPDATE zzz_avatars SET  av_ssn=$new WHERE av_ssn = '$r[av_ssn]'",1);
+      if (!(int)$av_birthdate) $av_birthdate = 'NULL';
+      myPear::DEBUG(sprintf("ssn: '%s' <== '%s', av_birthdate: '%s'",$ssn,$r['av_ssn'],$r['av_birthdate']));
+      myPear_db()->qquery("UPDATE zzz_avatars SET  av_ssn=$ssn,av_birthdate=$av_birthdate WHERE av_ssn = '$r[av_ssn]'",1);
     }
   }
 }

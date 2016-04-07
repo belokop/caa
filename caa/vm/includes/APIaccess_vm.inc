@@ -23,7 +23,7 @@ class APIaccess_vm extends APIaccess{
 							     'def' => 'VM_booker_here'),
 			     'VM_visitor_here'      => array('rank'=> 'RANK_vm_visitor'),
 			     'VM_registrant_here'   => array('rank'=> 'RANK_vm_registrant'),
-			     'VM_authenticated_here'=> array('rank'=> 'RANK__authenticated'),
+			     'VM_stranger_here'=> array('rank'=> 'RANK__authenticated'),
 			     'VM_organizer_here'    => array('IF'  => ((VM::e_ID() && VM::$e->isOrganizer()) || VM::isOrganizer())),
 			     'VM_endorser_here'     => array('IF'  => ($authenticated && method_exists(bAuth::$av,'isEndorser') && bAuth::$av->isEndorser())),
 			     'VM_employee_here'     => array('IF'  => ($authenticated && method_exists(bAuth::$av,'isE')        && bAuth::$av->isE())),
@@ -35,7 +35,7 @@ class APIaccess_vm extends APIaccess{
 			     'VM_reimberser_here'         =>array('IF'=> ($authenticated && VM_bookers()->isHandlingDuty(DUTY_reimbursement))),
 			     'VM_unlocker_here'           =>array('IF'=> ($authenticated &&(VM_bookers()->isHandlingDuty(DUTY_unlock_events)||VM_manager_here))),
 			     'VM_external_registrant_here'=>array('IF'=>VM_registrant_here && !VM_lt_visitor_here && !VM_employee_here),
-			     'VM_administrator_here'      =>array('IF'=>VM_observer_here || VM_endorser_here || VM_organizer_here),
+			     'VM_administrator_here'      =>array('IF'=>VM_observer_here || VM_endorser_here || VM_organizer_here || superUser_here),
 			     ));
 
     $this->who_is_here(array('VM_member_here'             =>array('IF'=>EA_member_here || VM_external_registrant_here || VM_administrator_here || VM_organizer_here),
@@ -81,7 +81,7 @@ class APIaccess_vm extends APIaccess{
     $reply = False;
     if (is_object(bAuth::$av)){
       if (empty($av_id)) $av = bAuth::$av;
-      else               $av = myPear::getInstance('bForm_Avatar_vm',$av_id);
+      else               $av = myPear::getInstance_new('bForm_Avatar_vm',$av_id,'fatal');
       $reply = superUser_here || $av->isObserver();
     }
     return $reply;

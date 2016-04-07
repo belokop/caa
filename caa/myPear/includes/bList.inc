@@ -257,10 +257,10 @@ class bList extends myPear_getValue{
     $this->TABLEID   = $this->keys['id'];
     $this->parent_ID = $parent_ID;
     
-    // "Rank" is zero for bLists    
-    $this->rank      = (int)$rank;
-    if(($this instanceof bUnit) && !$this->rank){
-      b_debug::internalError("Wrong invocation, rank=0");
+    // "Rank" is zero for bLists, check that it is as expected    
+    $this->rank = (int)$rank;
+    if(($this instanceof bUnit) && ($this->rank <= 0)){
+      b_debug::internalError("Wrong invocation, rank='$rank'");
     }
     
     // Read the class record to $this->formDB
@@ -370,6 +370,7 @@ class bList extends myPear_getValue{
    */
   private $bList_isJustCreated = False;
   private function readDefRecord(){
+    $just_created = False;
     if (myPear_db()->isReady()){    
       // find the record in the db
       if(empty($this->ID)){
@@ -405,9 +406,8 @@ class bList extends myPear_getValue{
 	$w[] = $this->keys['memberT'] . "='$l_member_title'";
 	
 	myPear_db()->query("INSERT INTO ".$this->TABLE." SET " . join(',',$w));
+	$just_created = True;
 	
-	// Announce the list creation  and reread the record 
-	$this->message_createList();
       }
       
       //
@@ -419,6 +419,9 @@ class bList extends myPear_getValue{
       // Just to be sure...
       if (empty($formDB[$this->keys['name']]) || 
 	  empty($formDB[$this->keys['memberT']])) b_reg_bList::set__l_name__l_member_title($this,$this->keys);
+      
+      // Announce the list creation  
+      if ($just_created) $this->message_createList();
     }
   }
 
@@ -531,9 +534,7 @@ class bList extends myPear_getValue{
     $was_record = array();
 
     // Create the member record if it does not exist yet
-    if($member_ID === 'new'){ // || (@$updates['_post_ID']==='new')){
-      $member_ID = $this->createMember();
-    }
+    if($member_ID === 'new') $member_ID = $this->createMember();
     
     // The member_ID is an array, search using it as keys
     if (is_array($member_ID)){
@@ -566,7 +567,7 @@ class bList extends myPear_getValue{
 	if (empty($args))  continue;
 	if (count($candidates=array_keys($this->getMembers($args))) != 1) continue;
 	$member_ID = $candidates[0];
-	$this->dbg("member_ID=$member_ID is located from the updates");
+	$this->dbg("member_ID=$member_ID is located from the updates ".b_fmt::joinX(', ',$args));
 	$was_record = $this->getMember($member_ID);
 	break;
       }
@@ -975,14 +976,9 @@ class bList extends myPear_getValue{
     // sanity
     if(is_array($buffer)){
       foreach($buffer as $k=>$v){
-	if(!is_array($v)) continue;
-	if (empty($v)){ 
-	  unset($buffer[$k]); // ??? workarond
-	}else{
-	  // b_debug::internalError('unexpected $buffer, member is an array '.var_export($buffer,True));
-	  b_debug::traceBack("unexpected \$buffer, member '$k' is an array, see below");
-	  b_debug::var_dump($buffer);
+	if(is_array($v)){
 	  $buffer[$k] = join(',',$v);
+	  if (empty($v)) unset($buffer[$k]); // ??? workarond
 	}
       }
     }
@@ -997,7 +993,6 @@ class bList extends myPear_getValue{
     }
 
     return $this->repack_packables($buffer,$updates);
-
   }
 
   /*
@@ -1358,7 +1353,7 @@ class bList extends myPear_getValue{
 
   function isAdmin(){
     myPear_access(EA_MODULE);
-    return EA_admin_here;
+    return EA_administrator_here;
   }
 
   /*
@@ -1509,6 +1504,8 @@ class bList extends myPear_getValue{
    *
    */
   protected function message_createList(){
+    if (cnf_dev && $this->name(True)=='unit Null') b_debug::internalError('unit Null');
+    if (cnf_dev && $this->name(True)=='list Null') b_debug::internalError('list Null');
     myPear::MESSAGE("Creating ".$this->name(True));
   }
 
@@ -1533,7 +1530,8 @@ class bList extends myPear_getValue{
     }else{
       $name[] = $this->getValue($this->keys['name']);
     }
-    return b_fmt::strcut(join(' ',$name),$max_length,'...');
+    $reply = b_fmt::strcut(join(' ',$name),$max_length,'...');
+    return $reply;
   }
   
   /*

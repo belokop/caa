@@ -28,10 +28,10 @@ if (!function_exists('bForm_massage_POST')){
 			    'prp_local'      => 'f-preprint.pdf',
 			    );
       
-      myPear::getInstanceFromID($id);
-      if (myPear::getInstanceFromID($id,'bForm_jam_Position')){
+      myPear::getClassFromID($id);
+      if (myPear::getClassFromID($id,'bForm_jam_Position')){
 	$_FILES_pre_massaged = $_FILES;
-	$q = myPear_db()->qquery("SELECT * FROM ".myPear::$_getInstanceFromID['t']." WHERE ".myPear::$_getInstanceFromID['i']." = $id",cnf_dev);
+	$q = myPear_db()->qquery("SELECT * FROM ".myPear::$_getClassFromID['t']." WHERE ".myPear::$_getClassFromID['i']." = $id",cnf_dev);
 	while($r = myPear_db()->next_record($q)) $formDB = $r;
 	foreach($_FILES as $name=>$data){
 	  if (!empty($files[$name]) && ($data['error'] == 4)){

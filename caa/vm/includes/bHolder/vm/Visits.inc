@@ -1,6 +1,6 @@
 <?php
-locateAndInclude('bHolder_vm');
-class bHolder_vm_Visits extends bHolder_vm{
+locateAndInclude('bHolder_ea');
+class bHolder_vm_Visits extends bHolder_ea{
 
   var $clashes = array();
   var $clashe  = False;
@@ -29,7 +29,7 @@ class bHolder_vm_Visits extends bHolder_vm{
 
   function rejectRecord(){
     if (b_cnf::getValue('showClashingVisits')){
-      $visit = myPear::getInstance('bForm_vm_Visit',$this->rec['v_id']);
+      $visit = myPear::getInstance_new('bForm_vm_Visit',$this->rec['v_id'],array('strict','fatal'));
       if (!($this->clashe = $visit->getClashingVisits($this->rec['v_start'],
 						       $this->rec['v_end'],False))) return True;
     }
@@ -50,7 +50,7 @@ class bHolder_vm_Visits extends bHolder_vm{
   function format() {
     $this->rec['name'] = bForm_Avatar::_fmtName('Lf',$this->rec);
     if ($c=$this->clashe) {
-      $visit = myPear::getInstance('bForm_vm_Visit',$this->rec['v_id']);
+      $visit = myPear::getInstance_new('bForm_vm_Visit',$this->rec['v_id'],array('strict','fatal'));
       $this->clashes[$visit->ID] = $c;
       $exp = $visit->getExp();
       if ($visit->exp_arePayed() && (int)$exp->ID) $exp->unlock(); // reopen the clashing object

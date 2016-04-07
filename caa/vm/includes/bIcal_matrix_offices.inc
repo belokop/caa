@@ -1,4 +1,7 @@
 <?php
+/*
+ * Show office allocation for participants of the CURRENT EVENT
+ */
 locateAndInclude('b_checkBox');
 locateAndInclude('bIcal_matrix');
 class bIcal_matrix_offices extends bIcal_matrix{
@@ -7,12 +10,19 @@ class bIcal_matrix_offices extends bIcal_matrix{
   var $seeAgenda     = True;
   var $imposedEntries = array();
   var $o_id           = array();
+  var $e = Null;
 
+  /*
+   * Show either 1 office OR all the offices for the event VM::$e
+   */
   function __construct(){
     parent::__construct();
-    if ($id=(int)b_cnf::getValue('lease_id')) { // optionally show only 1 office
-      $v = myPear::getInstance('bForm_vm_Visit',$id);
+    if ($id=(int)b_cnf::getValue('lease_id') && ($class = myPear::getClassFromID($id)) && ($class === 'bForm_vm_Visit')){
+      // optionally show only 1 office
+      $v = myPear::getInstance_new($class,$id,'fatal');
       $this->o_id = array($v->getValue('v_oid',1)); 
+    }else{
+      $this->e = VM::$e;
     }
     $_GET['sBy'] = 'o_name';
   }
@@ -27,19 +37,22 @@ class bIcal_matrix_offices extends bIcal_matrix{
     $this->day9 = min($this->day9,$this->day1 + $this->nDaysToShow*24*3600);
 
     if ($this->seeAgenda){  
-      $q = myPear_db()->query("SELECT *,e_start AS name  FROM abs_events WHERE e_code > 0 ORDER BY e_start ASC");
-      while ($r = myPear_db()->next_record($q))
-	if (b_time::inInterval($r['e_start'],$r['e_end'],$this->day1,$this->day9))
-	  $mPrograms[0][] = array('day1' => b_time::_($r['e_start'],08),
-				  'day9' => b_time::_($r['e_end']  ,20),
-				  'text' => $r['e_name'],
-				  'tips' => x('strong',myOrg_name.' program').'<br/>'.nbsp($r['e_name']),
-				  'clas' => $this->getRandomColor(abs_colorLegend($r)),
-				  'name' => '  NORDITA EVENTS',
-				  'styl' => 'strong',
-				  'url'  => 'em');
+      $q = myPear_db()->qquery("SELECT e_start,e_end,e_name FROM abs_events WHERE ".join(' AND ',array('e_code > 0',
+												       ))." ORDER BY e_start ASC",$this->debug);
+      while ($r = myPear_db()->next_record($q)){
+	if (!b_time::inInterval($r['e_start'],$r['e_end'],$this->day1,$this->day9)) continue;
+	$mPrograms[0][] = array('day1' => b_time::_($r['e_start'],08),
+				'day9' => b_time::_($r['e_end']  ,20),
+				'text' => $r['e_name'],
+				'tips' => x('strong',myOrg_name.' program').'<br/>'.nbsp($r['e_name']),
+				'clas' => $this->getRandomColor(abs_colorLegend($r)),
+				'name' => '  NORDITA EVENTS',
+				'styl' => 'strong',
+				'url'  => 'em');
+      }
     }
     
+    // Show "imposed" offices
     foreach ($this->o_id as $o) if ($o) $onlyThoseOffices[] = "o_id=$o";
     if (!empty($this->imposedEntries) || !empty($onlyThoseOffices) || is_object($this->tClass)){
       $this->noNavig = True;
@@ -47,17 +60,34 @@ class bIcal_matrix_offices extends bIcal_matrix{
     }
     if ($this->noNavig) $this->hideCheckBox = True; 
     
-    $where = array("v_end  >= $this->day1",
-		   "v_start<= $this->day9",
-		   "v_type != '".VISIT_TYPE_RENT."'");
+    // check do we have "clochards people"
+    // and if so, show the selection checkbox 
+    $where = array("v_end  >= ".$this->day1,
+		   "v_start<= ".$this->day9,
+		   "v_type != '".VISIT_TYPE_RENT."'",
+		   "v_status= '".STATUS_YES."'");
+    if ($this->e) $where[] = "v_eid = ".$this->e->ID;       
+
     if ($this->hideCheckBox){
       b_checkBox::set('seeClochards','off');
     }else{
-      // check do we have "officeless people"
-      // and if so, show the selection checkbox 
-      $q = VM_query(array_merge($where,array('(v_oid = 0 OR v_oid IS NULL)')),$joinOffices);
-      if ($n = myPear_db()->num_rows($q)) $count["officeless"] = $n;
-      else   b_checkBox::set('seeClochards','off');
+      $whereC = array('(v_oid = 0 OR v_oid IS NULL)');
+      $q = VM_query(array_merge($where,$whereC),$joinOffices);
+      $count["clochards"] = 0;
+      while($r = myPear_db()->next_record($q)){
+	if (!bForm_vm_Visit::_getPolicy(VM_V_provideOffice,$r)){
+	  $v = myPear::getInstance_new('bForm_vm_Visit',$r['v_id'],array('nocache','fatal'));
+	  if (!$v->getPolicy(VM_V_provideOffice)){
+	    myPear::WARNING("Office NOT to be provided for  ".$v->av->fmtName('fl'));
+	    continue;
+	  }
+	}else{
+	  $count["clochards"]++;
+	  $this->fillEntry($r);
+	  myPear::DEBUG($count["clochards"]." - clochard ".bForm_Avatar::_fmtName('fl',$r));
+	}
+      }
+      if (empty($count["clochards"])) b_checkBox::set('seeClochards','off');
     }
     
     /*
@@ -66,7 +96,7 @@ class bIcal_matrix_offices extends bIcal_matrix{
     $_GET['sBy']    = 'o_name';
     $_GET['sByDir'] = 'ASC';
     if (!b_checkBox::isOn('seeClochards')) $where[] = 'v_oid > 0';
-    if (!empty($onlyThoseOffices))        $where[] = x('(',join (' OR ',$onlyThoseOffices));
+    if (!empty($onlyThoseOffices))         $where[] = x('(',join (' OR ',$onlyThoseOffices));
     $q = VM_query($where,$joinOffices);
     $haveTenants = myPear_db()->num_rows($q);
     while($r = myPear_db()->next_record($q)) $this->fillEntry($r);
@@ -91,8 +121,8 @@ class bIcal_matrix_offices extends bIcal_matrix{
     if ($haveTenants && !$this->hideCheckBox)
       if (empty($onlyThoseOffices) && !is_object($this->tClass)){
 	$boxes = array();
-	if ($count["officeless"] > 0){
-	  $boxes['seeClochards'] = "See ".$count["officeless"]." visitors WITHOUT office";
+	if ($count["clochards"] > 0){
+	  $boxes['seeClochards'] = "See ".$count["clochards"]." visitors WITHOUT office";
 	  $this->footer[] = b_checkBox::create($boxes,'<br/>');
 	}
       }
@@ -109,14 +139,14 @@ class bIcal_matrix_offices extends bIcal_matrix{
     $url = b_url::same("?".b_crypt_no."=1&mode=RO&form=vm_Visit&id=$r[v_id]");
 
     if ($o_name=$r['o_name']) $o_name = $o_name.($r['o_capacity']>0 && $r['o_capacity']<99 ? "   [$r[o_capacity]]" : '');
-    else                      $o_name = 'Officeless';
+    else                      $o_name = 'No Office';
     $entry=array('day1' => $r['v_start'],
 		 'day9' => $r['v_end'],
 		 'text' => "<a href='$url'>$r[name]</a>",
 		 'clas' => $this->getRandomColor(abs_colorLegend($r)),
 		 'name' => nbsp($o_name),
-		 'tips' => nbsp(preg_replace('/<br .><br .>/','<br/>',
-					     join('<br/>',array(x('strong',$r['name']),
+		 'tips' => nbsp(str_replace('<br /><br />','<br/>',
+					    join('<br/>',array(x('strong',$r['name']),
 							       $r['e_code']<0 ? $r['e_name'] : '',
 							       x('i',$r['av_institute']),
 							       x('i',b_time::strftime('%e-%h',$r['v_start']).' <-> '.b_time::strftime('%e-%h',$r['v_end'])))))));

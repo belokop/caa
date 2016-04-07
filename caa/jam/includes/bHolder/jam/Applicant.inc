@@ -10,6 +10,7 @@ locateAndInclude('bForm_jam_Applicant');
 locateAndInclude('bForm_jam_RF');
 class bHolder_jam_Applicant extends bHolder_jam {
   
+  var $debug = True;
   private $av_id = Null;
   private $ap_ids = array();
 
@@ -86,7 +87,7 @@ class bHolder_jam_Applicant extends bHolder_jam {
 		       "ap_avid > 0",
 		       "ap_status != ".JAM::status(JAM_ap_revoked));
 	$q = myPear_db()->query("SELECT ap_id,rec_id,rec_submitdate FROM jam_applicants ".
-				  " LEFT JOIN jam_recommendations ON ap_id=rec_apid WHERE ".join(' AND ',$where)." ORDER BY rec_apid");
+				" LEFT JOIN jam_recommendations ON ap_id=rec_apid WHERE ".join(' AND ',$where)." ORDER BY rec_apid");
 	
 	while ($r=myPear_db()->next_record($q)){
 	  if ($id=@$r['rec_id']){
@@ -208,7 +209,7 @@ class bHolder_jam_Applicant extends bHolder_jam {
       " LEFT JOIN jam_recommendations ON  ap_id=rec_apid ".
       " WHERE ".join(' AND ',$where).
       " ORDER BY $orderBy";
-    
+
     return myPear_db()->qquery($cmd,cnf_dev);
   }
   
@@ -230,7 +231,7 @@ class bHolder_jam_Applicant extends bHolder_jam {
     $header = array();
     if ($this->av_id){
       $JAM_posID = 0;
-      $header['_ap_submitdate'] = ' ';
+      $header['_pos_deadline'] = ' ';
       $header['_pos_name'] = 'Position';
     }elseif($JAM_posID){
       $header['_ap_rating']   = 'Rating';	      
@@ -318,11 +319,12 @@ class bHolder_jam_Applicant extends bHolder_jam {
     }
 
     // Save the records by rating
-    if ($ignore_rating = (!empty($this->ap_ids))){
-      $this->applicants_array_rating[$this->rec['ap_posid']][] = $ap_id;
+    if ($ignore_rating = (!empty($this->ap_ids) || !empty($this->av_id))){
+      $this->applicants_array_rating[$this->rec['pos_deadline']][] = $ap_id;
     }else{
       $this->applicants_array_rating[$this->rec['ap_rating']][] = $ap_id;
     }
+    $this->dbg("ignore_rating = ".var_export($ignore_rating,True));
     $this->rec = array();
   }
 
@@ -377,7 +379,7 @@ class bHolder_jam_Applicant extends bHolder_jam {
 	  $rec['_av_phd_year'] = x('tt',b_time::_date('%b %Y',$rec['av_phd_year'])) .'&nbsp;&nbsp; '.b_fmt::escape(b_fmt::strcut($rec['av_phd_institute'],30));
 	  $rec['_av_phd_institute'] = '';
 	}
-	$rec['_ap_submitdate'] = date('M Y',b_time::txt2unix($rec['ap_submitdate']));
+	$rec['_pos_deadline'] = date('M Y',b_time::txt2unix($rec['pos_deadline']));
 
 	if (is_numeric($rec['av_ms_year']) && ($rec['av_ms_year'] !== CONST_year_not_considered)){
 	  $rec['_av_ms_year'] = date('Y',$rec['av_ms_year']);

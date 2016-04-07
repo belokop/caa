@@ -354,8 +354,12 @@ class myPear_getValue{
 	if (!($this instanceof bList)) $this->formDB_modified[$name] = $value;
       }
     }else{
-      unset($this->formDB_modified[$name]);
       unset($this->getValue_cache[$name]);
+      if ($this->myPost()){
+	unset($_REQUEST[$name],$_POST[$name]);
+	if (!($this instanceof bList)) unset($this->formDB_modified[$name]);
+      }
+      $this->formDB[$name] = Null;
     }
     $this->dbg($value,$this->show_gv);
   }
@@ -365,8 +369,11 @@ class myPear_getValue{
    */
   public function getValue_reset_forced($name,$value=Null){
     $this->getValue_reset($name,$value);
-    if ((int)$this->ID && !$this->myPost() && method_exists($this,'updateDB')){
-      $this->updateDB($this->formDB_modified);
+    if ((int)$this->ID && method_exists($this,'updateDB')){
+      $isVITAL = $this->isVITAL;
+      $this->isVITAL = array();
+      $this->updateDB(array($name=>$value));
+      $this->isVITAL = $isVITAL;
     }
   }
 

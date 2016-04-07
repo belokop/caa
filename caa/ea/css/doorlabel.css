@@ -1,0 +1,111 @@
+#maildb_doorlabel * {
+    font-family: "Trebuchet MS", "Calibri", "Verdana", "Geneva", "Arial", "Helvetica", sans-serif
+}
+#maildb_doorlabel.labelclass1 {
+    padding-top: 2mm
+}
+#maildb_doorlabel.labelclass2,
+#maildb_doorlabel.labelclass3,
+#maildb_doorlabel.labelclass4 {
+    padding-top: 2mm
+}
+/*
+#maildb_doorlabel.labelclass1 table img {
+    width: 30mm !important;
+    height: 40mm !important
+}
+#maildb_doorlabel.labelclass2 table img,
+#maildb_doorlabel.labelclass3 table img {
+    width: 27mm !important;
+    height: 36mm !important
+}
+#maildb_doorlabel.labelclass4 table img {
+    width: 22.5mm !important;
+    height: 30mm !important
+}
+*/
+#maildb_doorlabel.labelclass1 strong {
+    font-size: x-large !important
+}
+#maildb_doorlabel.labelclass1 em {
+    font-size: large !important
+}
+#maildb_doorlabel.labelclass2 strong {
+    font-size: large !important
+}
+#maildb_doorlabel.labelclass2 em {
+    font-size: medium !important
+}
+#maildb_doorlabel.labelclass4 td {
+    line-height: 1em !important
+}
+#maildb_doorlabel.labelclass3 strong,
+#maildb_doorlabel.labelclass4 strong {
+    font-size: medium !important;
+    line-height: 120% !important
+}
+#maildb_doorlabel.labelclass3 em,
+#maildb_doorlabel.labelclass4 em {
+    display: inline-block;
+    font-size: 0.84em !important;
+    line-height: 1em !important;
+    padding-top: 0.5em !important
+}
+#maildb_doorlabel.label {
+    position: relative;
+    width: 120mm !important;
+    height: 58mm !important
+}
+#maildb_doorlabel.label div {
+    position: absolute;
+    z-index: 1 !important;
+    top: 0 !important;
+    left: 0;
+    width: 120mm !important;
+    height: 58mm !important;
+    border-width: 1px;
+    border-style: solid;
+    border-color: black;
+    overflow: hidden
+}
+#maildb_doorlabel table {
+    position: relative;
+    z-index: 100 !important;
+    border-width: 0;
+    margin-left: auto;
+    margin-right: auto
+}
+#maildb_doorlabel>form>table {
+    margin-left: 0;
+    margin-right: 0
+}
+#maildb_doorlabel.label p * {
+    font-size: medium !important
+}
+#maildb_doorlabel.label td>em {
+    line-height: 1em !important
+}
+#maildb_doorlabel.labelclass1 td+td {
+    vertical-align: middle;
+    padding-left: 1em
+}
+#maildb_doorlabel.labelclass2 td+td {
+    vertical-align: top;
+    padding-left: 4em
+}
+#maildb_doorlabel.labelclass3 td+td {
+    vertical-align: top;
+    padding-left: 2em
+}
+#maildb_doorlabel.labelclass4 td+td {
+    vertical-align: top
+}
+#maildb_doorlabel.labelclass3 td {
+    padding-left: 1em !important;
+    width: 33% !important
+}
+#maildb_doorlabel.labelclass4 td {
+    padding-left: 1em !important;
+    width: 25% !important
+}
+/*# sourceMappingURL=doorlabel.css.map */

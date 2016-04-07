@@ -1,38 +1,55 @@
 <?php
-locateAndInclude('bHolder_vm');
-class bHolder_vm_Offices extends bHolder_vm{
+locateAndInclude('bHolder_ea_Offices');
+class bHolder_vm_Offices extends bHolder_ea_Offices{
 
-  public function __construct(){
-    parent::__construct();
-  }
-  
-  function query(){
-    return self::queryOffices();
-  }
-  
-  function header(){
-    $header = array('o_name'    => 'name',
-		    'o_status'  => 'status',
-		    'o_capacity'=> 'capacity<br/>(desks)',
-		    'o_phone'   => 'phone',
-		    );
-    foreach ($header as $k=>$v) 
-      if ($k!='o_name' && $k!='o_address') 
-	$this->th_attr[$k] = "style='text-align:right;'";
-    return $header; 
+  function __construct(){
+    parent::__construct('summary',VM::$e->name(False));
   }
 
+  function query($where=1){
+    return myPear_db()->qquery("SELECT * FROM abs_offices ORDER BY o_name ASC");
+  }
+
+  function init() {}
+
+  private $_o_name_was = '?';
   function format() {
-    if ($o = myPear::getInstance('bForm_vm_Office',$this->rec['o_id'])){
-      if ($o->isWritable())  $this->t->extraTD[] = bIcons()->getButton(array('l'=>b_url::same("?form=vm_Office&id=$o->ID"),
-										     'd'=>'modify',
-										     'i'=>'i-edit'));
-    }
-  }
+    $q = myPear_db()->qquery("SELECT v_id,av_id,av_lastname,av_firstname FROM abs_offices ".
+			     " LEFT JOIN abs_visits ON o_id = v_oid ".
+			     " LEFT JOIN zzz_avatars ON av_id = v_avid ". 
+			     " WHERE ".join(' AND ',array("v_eid = ".VM::$e->ID,
+							  "v_status = '".STATUS_YES."'",
+							  "o_name  = '".$this->rec['o_name']."'")).
+			     " ORDER BY av_lastname",cnf_dev);
 
-  public static function queryOffices(){
-    if (!myPear_db()->columnExists($_GET['sBy'],'abs_offices')) $_GET['sBy'] = 'o_name';
-    $q = myPear_db()->query("SELECT * FROM abs_offices ORDER BY $_GET[sBy] $_GET[sByDir]"); 
-    return $q;
+    while($r = myPear_db()->next_record($q)) $tenants[] = array($r['v_id'],bForm_Avatar::_fmtName('Lf',$r));
+    if (empty($tenants)) $tenants = array('');
+
+    foreach($tenants as $k=>$tenant){
+      if (!empty($tenant))$this->rec['_tenants'] = x(sprintf('a href="%s"',
+							     b_url::same(sprintf('?mode_once=RO&id=%s&form=vm_Visit',$tenant[0]))),$tenant[1]);
+      if ($k == 0) list($o,$o_name) = $this->format_summary();
+      
+      // Remove the repeted columns
+      if ($o_name == $this->_o_name_was) foreach($this->header() as $k=>$v) if ($k != '_tenants') unset($this->rec[$k]);
+      $this->_o_name_was = $o_name;
+      $this->t->prt($this->rec);
+    }
+    $this->rec = array();
+  }
+  
+
+  /*
+   *
+   */
+  function listEntries_summary(){
+      bIcons()->reset();
+
+      $edit_buttons = array();
+      if ($this->isWritable()){
+        $edit_buttons[] = b_btn::submit('add new office',
+                                        b_url::same('?id=new&form=vm_Office&clean_once=act_code,act_id'));
+      }
+      $this->t->tr(b_btn::UL_buttons($edit_buttons),'colspan=6');
   }
 }

@@ -14,7 +14,7 @@ function VM_query($where=array(1),$join_rooms='',$debug=False){
 			     .'LEFT JOIN abs_apartments ON a_id = lease_aid '
 			     .'LEFT JOIN abs_huts ON a_hutid = hut_id '
 			     .'LEFT JOIN abs_expenses ON v_id = exp_vid '
-			     // .'LEFT JOIN abs_offices ON v_oid = o_id'
+			     // .'LEFT JOIN abs_offices  ON v_oid = o_id'
 			     ;
   $query = "SELECT *,av_lastname AS name FROM abs_visits "
     ." LEFT JOIN abs_events  ON v_eid = e_id "
@@ -37,9 +37,11 @@ function VM_query($where=array(1),$join_rooms='',$debug=False){
       $_GET['sBy'] = 'av_lastname';
     }
   }
-  $q = myPear_db()->qquery($query
+  $q = myPear_db()->qquery($qquery = $query
 			   ." WHERE ".preg_replace("/=\s?is null/i",' IS NULL',join(' AND ',$where))
-			   ." ORDER BY $_GET[sBy] ".@$_GET['sByDir'],$debug||cnf_dev);
+			   ." ORDER BY $_GET[sBy] ".@$_GET['sByDir'],
+			   $debug||cnf_dev);
+  //  if (!myPear_db()->num_rows($q))   var_dump($qquery);
   $GLOBALS['VM_query_num_rows'] = myPear_db()->num_rows($q);
   return $q; 
 }
@@ -86,7 +88,7 @@ function vm_cancel_visit($v_id=Null){
   if (empty($v_id)){
     myPear::WARNING('Ignoring request to cancel the visit');
   }else{
-    $v = myPear::getInstance('bForm_vm_Visit',$v_id);
+    $v = myPear::getInstance_new('bForm_vm_Visit',$v_id,'fatal');
     $v->delete();
   }
 }

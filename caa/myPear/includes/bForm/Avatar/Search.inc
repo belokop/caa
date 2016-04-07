@@ -17,7 +17,7 @@ locateAndInclude(bForm_Avatar::$bForm_Avatar);
  */
 class bForm_Avatar_Search extends bForm {
 
-  var $debug = cnf_dev;
+  var $debug = False;
   var $aceptAsIs_DoNotSave = True;
   var $modalRW_enabled = True;
 
@@ -38,7 +38,7 @@ class bForm_Avatar_Search extends bForm {
   private $show_log_widgets = False;
 
   private $searchNumRows = 0;
-  private $search_for_merge = False;
+  public  $search_for_merge = False;
 
   private $args_kept = array('_button','_lookFor','_after_search',
 			     '_join','_where');
@@ -219,8 +219,7 @@ class bForm_Avatar_Search extends bForm {
 
     if ($this->got_search_request){
       $reply = array();
-      if ($this->search_for_merge){
-	// Search to get duplicated avatar records to be merged
+      if ($this->search_for_merge){ // Search to get duplicated avatar records to be merged
 	if($this->searchNumRows > 1){
 	  myPear::INFO("Please check the records which You believe belong to the same person");
 	  $reply[] = b_btn::submit('merge the selected records');
@@ -310,13 +309,13 @@ class bForm_Avatar_Search extends bForm {
     $this->dbg(sprintf("search_for_merge='%b' global_search='%b' show_log_widgets='%b'",$this->search_for_merge,$this->global_search,$this->show_log_widgets),cnf_dev||$this->debug);
 
     if ($this->holder === Null){
-      $holder_ext = ($this->search_for_merge || $this->global_search  || !bAuth::authenticated()
+      $holder_ext = ((!superUser_here && $this->search_for_merge) || $this->global_search  || !bAuth::authenticated()
 		     ? array('')
 		     : array('_'.b_reg::$current_module, ''));
       foreach($holder_ext as $ext){
-	if(locateAndInclude($holder="bHolder_Avatar$ext")){
+	if(locateAndInclude($holder='bHolder_Avatar'.$ext)){
 	  $this->holder = new $holder;
-	  $this->dbg('holder='.$this->holder);
+	  $this->dbg('module='.b_reg::$current_module.', holder='.$this->holder,cnf_dev);
 	  $this->holder->debug = $this->debug;
 	  $this->holder->show_icons = bAuth::authenticated();
 	  $this->holder->report_emptySelection = False;

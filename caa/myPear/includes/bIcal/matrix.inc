@@ -268,7 +268,7 @@ class bIcal_matrix extends bIcal {
       // show the stay period as a colored line
       $staingDays = (int)(b_time::diff($entries[$k][DAY9], $entries[$k][DAY1])/$this->step);
       if ($staingDays > 0){
-	$text_saved = $entries[$k]['text'];
+	$text_saved = @$entries[$k]['text'];
 	$entries[$k]['text'] = b_fmt::strcut($text_saved,(int)(1.5*$staingDays),'...',$staingDays>3);
 	$this->t->td(bJS()->tip(x(@$entries[$k]['styl'],$entries[$k]['text']), @$entries[$k]['tips']),
 		     "class='".@$entries[$k]['clas']."' colspan='$staingDays'");

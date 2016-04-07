@@ -13,7 +13,7 @@ class bForm extends myPear_getValue{
   public static function loadWidget($href){
     $_GETsv = $_GET;
     $_GET = b_crypt::parse_query_string($href);
-    $f = myPear::getInstance(str_replace('bForm_bForm_','bForm_','bForm_'.$_GET['form']),$_GET['id'],array('strict','fatal'));
+    $f = myPear::getInstance_new(str_replace('bForm_bForm_','bForm_','bForm_'.$_GET['form']),$_GET['id'],array('nocache','fatal'));
     $widget = $f->getWidget();
     $_GET = $_GETsv;
     return $widget;
@@ -99,11 +99,16 @@ class bForm extends myPear_getValue{
      * Set the unique class identifier $this->ID
      */
     if ((strpos($id,'=') !== False) || (stripos($id,'REGEXP')!==False)){
-      $q = myPear_db()->query($query="SELECT ".$this->TABLEID." FROM $this->TABLE WHERE $id");
+      $q = myPear_db()->query("SELECT ".$this->TABLEID." FROM $this->TABLE WHERE $id");
       if (($n=myPear_db()->num_rows($q)) != 1) myPear::WARNING_T("Found $n records",$this);
       
       while ($r=myPear_db()->next_record($q)) $this->ID = $r[$this->TABLEID];
-      if (empty($this->ID))  $this->ID = 'new';
+      if (empty($this->ID)){
+	$this->ID = 'new';
+	if (stripos($id,'REGEXP')===False){
+	  // create on the fly???
+	}
+      }
     }else{
       $this->ID = $id;
     }
@@ -148,9 +153,6 @@ class bForm extends myPear_getValue{
     if (empty($this->ID) || !in_array($this->MODE,array('RW','RO'))) {
       b_debug::internalError(__METHOD__."(ID=$id,mode=$this->MODE) called with empty '$this->TABLEID'");
     }
-
-    // Define variables
-    //    $this->defineVariables();
 			  
     // Read the form data from the database
     if ((int)$this->ID)      $this->readDefRecord();
@@ -783,8 +785,8 @@ class bForm extends myPear_getValue{
 
 	if(!$stay_RW){
 	  $_GET['mode'] = $this->MODE = 'RO';
-	  $this->dbg('set MODE = RO');
-
+	  $this->dbg('set MODE = RO',cnf_dev);
+	  
 	  //
 	  // Optionally go to the "Search results" to complete the dialog
 	  // (the search proposes to "create" a new avatar if it can't be found in the database)
@@ -806,7 +808,7 @@ class bForm extends myPear_getValue{
     }else{
       $this->vitalFieldMissing();
     }
-    $this->dbg('finish');
+    $this->dbg('finish',cnf_dev);
   }
   
   /*
@@ -1141,7 +1143,8 @@ class bForm extends myPear_getValue{
     static $ignoreFields = array('button_x','button_y','MAX_FILE_SIZE');
     
     if ($this->updateDB_rec++){
-      $this->dbg($m="recursion ".$this->updateDB_rec,cnf_dev);
+      static $caseN = 0;
+      $this->dbg($m=sprintf("Recursion depth %s, case %s",$this->updateDB_rec,(++$caseN)),cnf_dev);
       if (cnf_dev) b_debug::traceBack($m);
       return $this->ID;
     }

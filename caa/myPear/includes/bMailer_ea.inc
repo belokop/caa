@@ -20,7 +20,7 @@ class bMailer_ea extends bMailer{
     static $alumni_email = 'alumni@nordita.org';
 
     if ($av_id instanceof bForm_Avatar_ea) $av = $av_id;
-    else  $av = myPear::getInstance('bForm_Avatar_ea',$av_id,array('strict','fatal'));
+    else  $av = myPear::getInstance_new('bForm_Avatar_ea',$av_id,'fatal');
 
     switch($av->role()){
     case EA_role_alumnus:

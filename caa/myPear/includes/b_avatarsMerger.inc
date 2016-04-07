@@ -54,7 +54,7 @@ class b_avatarsMerger{
     $header = array('key'=>'');
     $table  = array();
     foreach ($listofavatars as $av_id){
-      if ($av = myPear::getInstance('bForm_Avatar',$av_id,'strict')){
+      if ($av = myPear::getInstance('bForm_Avatar',$av_id,array('nocache','strict'))){
 	$av->defineVariables();
 	$header[$av_id] = $av_id;
 	print myPear::H1($av->fmtName(),array('reset','noTranslate'));
@@ -110,7 +110,7 @@ class b_avatarsMerger{
     $listofavatars = explode(',',b_cnf::getValue('listofavatars'));
 
     // Show the header - the last/first name of the avatar
-    $av = myPear::getInstance('bForm_Avatar',$toKeep);
+    $av = myPear::getInstance('bForm_Avatar',$toKeep,array('fatal','nocache'));
     $av->defineVariables();
     print myPear::H1($av->fmtName(),array('reset','noTranslate'));
     

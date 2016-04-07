@@ -16,6 +16,9 @@ class bForm_vm_Event extends bForm_vm {
   
   function __construct($id, $mode='RO') {
     parent::__construct($id, $mode);
+
+    // Follow changes in the policy definition
+    if ($this->getValue('e_end') < time()) $this->set_e_v_policy(VM::$description[VISIT_TYPE_PROGRAM]['p']);
   }
   
   public function get_e_v_policy(){
@@ -23,7 +26,7 @@ class bForm_vm_Event extends bForm_vm {
     if (!$this->getValue('e_v_policy')) $this->set_e_v_policy(VM::$description[VISIT_TYPE_PROGRAM]['p']);
     // the policy is a serialized array
     $reply = b_fmt::safe_decode($this->getValue('e_v_policy'));
-    $this->dbg($reply,True);
+    $this->dbg($reply);
     return $reply;
   }
 
@@ -149,20 +152,23 @@ class bForm_vm_Event extends bForm_vm {
    }
 
   /*
-   * Get list of attenders for the given date
+   * Get list of attenders for the given date, ignoring the time
    */
+  private $attendersToday = array();
   function attendersToday($date=Null){
     if (empty($date)) $date = b_time::noon();
-    $date = b_time::_($date);
-    $q = myPear_db()->query("SELECT v_avid FROM abs_visits LEFT JOIN abs_events ON e_id = v_eid WHERE ".
-			      join(' AND ',array("e_id = $this->ID",
-						 "v_start <= $date",
-						 "v_end   >= $date",
-						 "v_status = '".STATUS_YES."'",
-						 )));
-    $reply = array();
-    while ($r = myPear_db()->next_record($q)) $reply[] = $r['v_avid'];
-    return $reply;
+    $date = date('Ymd',$date);
+    if (empty($this->attendersToday[$date])){
+      $q = "SELECT v_avid FROM abs_visits LEFT JOIN abs_events ON e_id = v_eid WHERE ".
+	join(' AND ',array("e_id = $this->ID",
+			   "DATE_FORMAT(FROM_UNIXTIME(v_start),'%Y%m%d') <= '$date'",
+			   "DATE_FORMAT(FROM_UNIXTIME(v_end)  ,'%Y%m%d') >= '$date'",
+			   "v_status = '".STATUS_YES."'"));
+      $q = myPear_db()->qquery($q,cnf_dev);
+      $this->attendersToday[$date] = array();
+      while ($r = myPear_db()->next_record($q)) $this->attendersToday[$date][] = $r['v_avid'];
+    }
+    return $this->attendersToday[$date];
   }
 
   /*

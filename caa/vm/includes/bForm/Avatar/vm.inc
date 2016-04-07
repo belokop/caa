@@ -120,6 +120,7 @@ class bForm_Avatar_vm extends bForm_Avatar_ea{
   }
   
   protected function askSex(){
+    return False;
     return $this->needFullInformation(); 
   }
 
@@ -194,7 +195,7 @@ class bForm_Avatar_vm extends bForm_Avatar_ea{
   function isVisitor($av_id=Null,$visit_policies=array()){
     if (empty($av_id)){
       $visits = $this->getVisits(Null,$visit_policies);
-    }elseif ($av = myPear::getInstance(get_class($this),$av_id,'strict')){
+    }elseif ($av = myPear::getInstance_new(get_class($this),$av_id,'strict')){
       $visits = $av->getVisits(Null,$visit_policies);
     }
     if (!empty($visits)) $this->dbg(!empty($visits),(bool)($this->debug || cnf_show_a));

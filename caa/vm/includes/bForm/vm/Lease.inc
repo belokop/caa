@@ -19,7 +19,7 @@ class bForm_vm_Lease extends bForm_vm{
   /*
    * Sanity, check and adjust the leases start/end
    */
-  private static function adjust_all($visit,$pivot_leaseID=0){
+  static function adjust_all($visit,$pivot_leaseID=0,$returnMessage=False){
     if (empty($visit))  return;
     
     $leases = array();
@@ -31,42 +31,50 @@ class bForm_vm_Lease extends bForm_vm{
 	if ($pivot_leaseID != $lease->ID) continue;
 	
 	if (($lease_start = $lease->getValue('lease_start')) && ($n > 0)){
-	  $leases[$n-1]->setDate(array('lease_end'=>$lease_start));
+	  $leases[$n-1]->setDate(array('lease_end'=>$lease_start),!$returnMessage);
 	}
 	
 	if (($lease_end = $lease->getValue('lease_end')) && ($n < count($leases)-1)){
-	  $leases[$n+1]->setDate(array('lease_start'=>$lease_end));
+	  $leases[$n+1]->setDate(array('lease_start'=>$lease_end),!$returnMessage);
 	}
       }
     }
     
     // Now this should be (??) just a sanity check 
+    $toReportChanges = False;
     foreach($leases as $n=>$lease){
       $changes = $changesP = $changesN = 0;
 
       // First lease, the start must be the start of the visit
       if ($n == 0){
-	$changes += $lease->setDate(array('lease_start'=>$visit->getValue('v_start',1)));
+	$changes += $lease->setDate(array('lease_start'=>$visit->getValue('v_start',1)),!$returnMessage);
       }
       
       // Last lease, the end must be the end of the visit
       if ($n == count($leases)-1){
-	$changes += $lease->setDate(array('lease_end'=>$visit->getValue('v_end',1)));
+	$changes += $lease->setDate(array('lease_end'=>$visit->getValue('v_end',1)),!$returnMessage);
       }
 
       // "next" lease, synchronize its end_date with the start_date of the next one
       if (($n < count($leases)-1) && ($lease_end = $lease->getValue('lease_end'))){
 	$lease_end = max($lease_end , $lease->getValue('lease_start') + 24*3600);
-	$changes  += $leases[$n]  ->setDate(array('lease_end'  =>$lease_end));
-	$changesN += $leases[$n+1]->setDate(array('lease_start'=>$lease_end));
+	$changes  += $leases[$n]  ->setDate(array('lease_end'  =>$lease_end),!$returnMessage);
+	$changesN += $leases[$n+1]->setDate(array('lease_start'=>$lease_end),!$returnMessage);
       }
 
-      if (cnf_dev){
+      if ($changes > 0 || $changesN > 0) $toReportChanges = True; 
+      if (cnf_dev && !$returnMessage){
 	if ($changes)  myPear::DEBUG($leases[$n]->  _periodToString("lease-".($n  )));
 	if ($changesN) myPear::DEBUG($leases[$n+1]->_periodToString("lease-".($n+1)));
 	myPear::MESSAGE($lease->_periodToString("lease-$n ($lease->ID)"));
       }
     }
+
+    $reply = array();
+    if ($toReportChanges){
+      foreach($leases as $lease) $reply[] = $lease->_periodToString();
+    }
+    if ($returnMessage) return $reply;
   }
 
   /*
@@ -106,7 +114,7 @@ class bForm_vm_Lease extends bForm_vm{
     while($r = myPear_db()->next_record($q)){
       $leases[$r['lease_id']] = self::_hut_code($r);
       // Sanity. Huge performance overhead...
-      //      if (cnf_dev && (($l=@myPear::getInstanceFromID($r['lease_id']),True,True)){
+      //      if (cnf_dev && (($l=@myPear::getClassFromID($r['lease_id']),True,True)){
       //     	myPear::WARNING_T("Bogus lease $l($r[lease_id]), not 'bForm_vm_Lease'");
       //      }
     }
@@ -213,12 +221,13 @@ class bForm_vm_Lease extends bForm_vm{
       $this->hookApartment($lease_aid,$verbose=True);
       
       // assign cotenant(s) to the lease
-      if(($a = myPear::getInstance('bForm_vm_Apartment',$lease_aid)) && $a->isShared()){
+      if(($a = myPear::getInstance_new('bForm_vm_Apartment',$lease_aid,'strict')) && $a->isShared()){
 	$cotenants = array();
 	foreach(preg_grep('/cotenant\d+$/',array_keys($_POST)) as $k){
 	  if (empty($cotenants))	  $cotenants = array($this->ID);
 	  $cotenants[] = $_POST[$k];
 	  unset($_POST[$k]);
+	  unset($_REQUEST[$k]);
 	}
 	VM_cotenants()->set_cotenants($cotenants);
       }
@@ -309,10 +318,10 @@ class bForm_vm_Lease extends bForm_vm{
     if (!($this->parentForm instanceof bForm_vm_Visit)){
       $this->parentForm = ($visit instanceof bForm_vm_Visit
 			   ? $visit
-			   : myPear::getInstance('bForm_vm_Visit',$this->getValue('lease_vid',1),'strict'));
+			   : myPear::getInstance_new('bForm_vm_Visit',$this->getValue('lease_vid',1),'strict'));
       /*
       if (!$this->embedded && is_object($visit)) $this->isEmbedded($visit);
-      if (!$this->embedded)   $this->isEmbedded(myPear::getInstance('bForm_vm_Visit',$this->getValue('lease_vid',1)),'strict');
+      if (!$this->embedded)   $this->isEmbedded(myPear::getInstance_new('bForm_vm_Visit',$this->getValue('lease_vid',1)),'strict');
       if (!$this->embedded)   b_debug::internalError("visit is not set",$this);
       */      
       // Create a default lease if not yet done
@@ -384,6 +393,12 @@ class bForm_vm_Lease extends bForm_vm{
    *
    */
   function getForm(){
+
+    // Process "delete lease" which comes from the "visit dialog"
+    if ($this->myPost_bForm() && @$_POST['lease_aid'] === LODGING_RM){
+      $this->hookApartment(LODGING_RM);
+      return;
+    }
 
     $this->dbg('------------start');
     // check the start/end of the lease 
@@ -562,7 +577,6 @@ class bForm_vm_Lease extends bForm_vm{
   }
 
   function hookApartment($lease_aid,$verbose=True){
-    $this->hookVisit();
     if (cnf_dev) $verbose = True;
 
     if ($lease_aid === LODGING_RM){
@@ -575,9 +589,10 @@ class bForm_vm_Lease extends bForm_vm{
       $this->hookVisit();
     }elseif ($lease_aid && (($old_aid=@$this->formDB['lease_aid']) != $lease_aid)){
       // sanity
-      if (!myPear::getInstance('bForm_vm_Apartment',$lease_aid) instanceof bForm_vm_Apartment) {
+      if (!(myPear::getInstance_new('bForm_vm_Apartment',$lease_aid,'strict') instanceof bForm_vm_Apartment)) {
 	b_debug::internalError("$lease_aid is not bForm_vm_Apartment",$this);
       }
+      $this->hookVisit();
 
       // clean the cotenants list (if any) since the apartment is changed  
       $this->clean_cotenants();
@@ -615,7 +630,7 @@ class bForm_vm_Lease extends bForm_vm{
 
   function split($date=Null){
     $this->hookVisit(); 
-    myPear::MESSAGE($this->_periodToString('Split booking'));
+    myPear::MESSAGE($this->_periodToString('Split lease'));
     if (!$date) $date = (int)((($e=$this->getValue('lease_end'))+($s=$this->getValue('lease_start')))/2);
     $this->setDate(array('lease_end'  => $date),True);
 
@@ -745,9 +760,9 @@ class bForm_vm_Lease extends bForm_vm{
     if (is_object($this->parentForm)){ 
       $lease_aid = (int)$this->getValue('lease_aid',True);
       $this->parentForm->hookAvatar();
-      if ($ap = myPear::getInstance('bForm_vm_Apartment',$lease_aid,array('strict','nocache'))){ 
+      if ($ap = myPear::getInstance_new('bForm_vm_Apartment',$lease_aid,array('strict','nocache'))){ 
 	if ($lease_aid_old){
-	  $ap_old = myPear::getInstance('bForm_vm_Apartment',$lease_aid_old);
+	  $ap_old = myPear::getInstance_new('bForm_vm_Apartment',$lease_aid_old,array('strict','nocache'));
 	  $from = '"'.$ap_old->name().'" -> ';
 	}else{
 	  $from = '';
@@ -770,66 +785,61 @@ class bForm_vm_Lease extends bForm_vm{
    * 
    */
   public static function select_cotenant($name,$rec,$mode='auto'){
+    locateAndInclude('bForm_vm_Apartment');
 
-    $reply = '';
-    if (!bForm_vm_Apartment::_isShared($rec)) return $reply;
+    if (!bForm_vm_Apartment::_isShared($rec) || 
+	($rec['lease_end'] < time()+24*3600)) return '';
     
-    if (($in_time=($rec['lease_end'] > time()+24*3600)) || cnf_dev){
-      locateAndInclude('bForm_vm_Apartment');
-      $cotenants = VM_cotenants()->get_cotenants($rec['lease_id']);
-
-      $RW = False;
-      if ($mode == 'auto' && empty($cotenants)) $RW = True;
-      if (is_bool($mode))                       $RW = $mode;
-      switch($RW){
-	
-      case False:
-	$names = array();
-	foreach($cotenants as $lm_id=>$leases){
-	  foreach($leases as $lease_id){
-	    $r = self::_leaseInfo($lease_id);
-	    $names[] = $r['lease_name'];
-	  }
+    $cotenants = VM_cotenants()->get_cotenants($rec['lease_id']);
+    
+    $RW = False;
+    if ($mode === 'auto' && empty($cotenants)) $RW = True;
+    elseif (is_bool($mode))                    $RW = $mode;
+    
+    if ($RW){ //======================================================================================
+      // the name must be unique
+      $counter = $rec['lease_id'];
+      $name_for_select = $name . $counter;
+      
+      // Look for the candidates for co-tenants
+      $candidates = VM_cotenants()->get_candidate($rec);
+      
+      // Add the current cotenant to the candidates list 
+      foreach($cotenants as $lm_id=>$leases){
+	foreach($leases as $lease_id){
+	  $r = self::_leaseInfo($lease_id);
+	  $candidates[$lease_id] = $r['lease_name'];
+	  VM::$formDummy->formDB[$name_for_select] = $lease_id;
 	}
-	if (empty($names)) $names = array(b_fmt::redText('to be selected'));
-	$reply = join(',',$names);
-	break;
-	
-      case True:
-	// the name must be unique
-	$counter = $rec['lease_id'];
-	$name_for_select = $name . $counter;
-	
-	// Look for the candidates for co-tenants
-	$candidates = VM_cotenants()->get_candidate($rec);
-	
-	// Add the current cotenant to the candidates list 
-	foreach($cotenants as $lm_id=>$leases){
-	  foreach($leases as $lease_id){
-	    $r = self::_leaseInfo($lease_id);
-	    $candidates[$lease_id] = $r['lease_name'];
-	    VM::$formDummy->formDB[$name_for_select] = $lease_id;
-	  }
-	}
-	
-	// Remove the ansökande
-	unset($candidates[$rec['lease_id']]);
-	if (0) b_debug::print_r((empty($candidates) ? array('empty...') : $candidates),
-				"candidates for ".bForm_Avatar::_fmtName('Lf',$rec).' '.b_time::period($rec['lease_start'],$rec['lease_end']));
-	if (empty($rec['v_id'])) b_debug::var_dump($rec,"empty(rec[v_id]");	
-	$reply = (empty($candidates)
-		  ? ''
-		  : x("span class='only_online'",
-		      x("form action='".b_url::same()."'method='post' enctype='multipart/form-data' name='TENANT$counter'",
-			VM::$formDummy->selectMenu_exec($name_for_select,
-							$candidates,
-							"onchange='submit()'",$onlyRW=True).
-			"<input type='hidden' name='lease_id' value='".$rec['lease_id']."'/>".
-			"<input type='hidden' name='v_id'     value='".$rec['v_id']."'/>".
-			"<input type='hidden' name='a_id'     value='".$rec['a_id']."'/>".
-			"<noscript><input type='submit' value='go'/></noscript>"),
-		      'POST'));
       }
+      
+      // Remove the ansökande
+      unset($candidates[$rec['lease_id']]);
+      $debug = (empty($candidates) ? $x=array('empty...') : $candidates);
+      b_debug::print_r($debug,"candidates for ".bForm_Avatar::_fmtName('Lf',$rec).' '.b_time::period($rec['lease_start'],$rec['lease_end']));
+      if (empty($rec['v_id'])) b_debug::var_dump($rec,"empty(rec[v_id]");	
+      $reply = (empty($candidates)
+		? ''
+		: x("span class='only_online'",
+		    x("form action='".b_url::same()."' method='post' enctype='multipart/form-data' name='TENANT$counter'",
+		      VM::$formDummy->selectMenu_exec($name_for_select,
+						      $candidates,
+						      "onchange='submit()'",$onlyRW=True).
+		      "<input type='hidden' name='lease_id' value='".$rec['lease_id']."'/>".
+		      "<input type='hidden' name='v_id'     value='".$rec['v_id']."'/>".
+		      "<input type='hidden' name='a_id'     value='".$rec['a_id']."'/>".
+		      "<noscript><input type='submit' value='go'/></noscript>"),
+		    'POST'));
+    }else{    //======================================================================================	
+      $names = array();
+      foreach($cotenants as $lm_id=>$leases){
+	foreach($leases as $lease_id){
+	  $r = self::_leaseInfo($lease_id);
+	  $names[] = $r['lease_name'];
+	}
+      }
+      if (empty($names)) $names = array(b_fmt::redText('to be selected'));
+      $reply = join(',',$names);
     }
     return $reply;
   }

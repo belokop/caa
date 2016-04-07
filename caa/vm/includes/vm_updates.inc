@@ -91,6 +91,7 @@ function vm_updates(){
     }
 
     vm_compat_update_41();
+    vm_compat_update_42();
 
     myPear_logs()->doNotLog = False;
     myPear_db()->noAutoCommit('end');
@@ -102,6 +103,7 @@ function vm_updates(){
  * Temporary(?) measure... Until i will find time to fix the Templates class
  * 2012-05-20 - 
  * 2012-06-06 --
+ * 2016-04-01 ---
  */
 vm_compat_update_ad_hocks();
 
@@ -114,9 +116,60 @@ function vm_compat_update_ad_hocks(){
 }
 
 /*
- * Where it comes from ???
+ * Offices for the visitors are allocated again...
  */
+function vm_compat_update_42(){
+  $off_visitors = array(
+			'122:004' => array('o_capacity'=>5, 'o_status'=>'visitors'), 
+			'122:017' => array('o_capacity'=>2, 'o_status'=>'visitors'), 
+			'122:027' => array('o_capacity'=>4, 'o_status'=>'visitors'), 
+			'122:028' => array('o_capacity'=>4, 'o_status'=>'visitors'), 
+			'122:029' => array('o_capacity'=>5, 'o_status'=>'visitors'), 
+			'122:030' => array('o_capacity'=>2, 'o_status'=>'visitors'), 
+			);
+  
+  // Re-erect offices allocation...
+  myPear_db()->qquery("DELETE FROM abs_offices WHERE o_capacity > 999",cnf_dev);
+  myPear_db()->qquery("UPDATE abs_offices SET o_capacity=1 WHERE o_capacity = 0 OR o_capacity IS NULL",cnf_dev);
+  myPear_db()->qquery("ALTER TABLE `abs_offices` CHANGE `o_capacity` `o_capacity` INT(11) NOT NULL DEFAULT '1'",cnf_dev);
+
+  // Offices for visitors as of 1-Apr-2016
+  myPear_db()->qquery("UPDATE abs_offices SET o_status = 'staff'",cnf_dev);
+  foreach($off_visitors as $o_name=>$data){
+    $o = myPear::getInstance_new('bForm_vm_Office',array('o_name'=>$o_name),'nocache');
+    $o->isVITAL = array();
+    $o->updateDB($data);
+  }
+
+  // Update the already accepted visitors
+  $q = myPear_db()->qquery("SELECT v_id,v_eid FROM abs_visits WHERE v_status='".STATUS_YES."' AND v_eid > 0 AND v_start > ".b_time::txt2unix('2016-03-29'),cnf_dev);
+  while($r = myPear_db()->next_record($q)){
+    $e = myPear::getInstance_new('bForm_vm_Event',$r['v_eid'],'fatal');
+    if (VM::outOfScope($e)) continue;
+    
+    $v = myPear::getInstance_new('bForm_vm_Visit',$r['v_id'],array('nocache','fatal'));
+    $v->setPolicy(VM_V_provideOffice,1);
+  }
+}
+
 function vm_compat_update_41(){
+  // Shortcut for Nordita, update list of events
+  VM_agendaEvents()->addMember(array('lm_key'=>'cat','lm_value'=>'280'));
+  VM_agendaEvents()->addMember(array('lm_key'=>'cat','lm_value'=>'283'));
+  VM_agendaEvents()->syncEventsInCategories(True);
+
+  // Update policy, add new object VM_V_payLunches
+  $q = myPear_db()->qquery("SELECT e_id,e_v_policy FROM abs_events WHERE e_code > 0",cnf_dev);
+  while($r = myPear_db()->next_record($q)){
+    $e = new bForm_vm_Event($r['e_id']);
+    if (!VM::outOfScope($e)){
+      $was = $e_v_policy = $e->get_e_v_policy();
+      // Add new policies
+      $e->set_e_v_policy(VM::$description[VISIT_TYPE_PROGRAM]['p']);
+      if ($was != $e_v_policy)	myPear::DEBUG($e->name()." - adding policies ".join(', ',array_diff($e_v_policy,$was)));
+    }
+  }
+
   // Clean duplicated organizers
   $q = myPear_db()->qquery("SELECT COUNT(*),u_id,u_parent,u_class FROM zzz_units WHERE u_class='bUnit_vm_organizers' GROUP BY u_parent HAVING COUNT(*)>1",cnf_dev);
   while($r = myPear_db()->next_record($q)){
@@ -658,7 +711,7 @@ function vm_compat_update_23(){
   $q = myPear_db()->qquery("SELECT * FROM `abs_visits` WHERE v_type = '_COLL' AND v_group = ''");
   while($r = myPear_db()->next_record($q)){
     $ok = 0;
-    $v = myPear::getInstance('bForm_vm_Visit',$r['v_id']); 
+    $v = myPear::getInstance_new('bForm_vm_Visit',$r['v_id']); 
     myPear::DEBUG("Missing v_group: $r[v_id] - ".$v->name().' <em>'.$v->host().'</em>');
     if ($v->av_host){
       if (!empty($fix2[$v->av_host->ID])){

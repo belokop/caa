@@ -4,27 +4,22 @@ locateAndInclude('bToolBox');
 class jamToolBox extends bToolBox{
   
   function __construct(){
-    $descr_DA = (x('p',
-		   'It happens that applicants submit duplicated applications'));
-    $descr_DR = (x('p',
-		   'It happens that the applicants mistype the referee e-mails, '.
-		   'and later "correct" them by requesting another letter from the same person with the proper E-mail.').
-		 x('p',
-		   'When the JAM administrator merges the duplicated AV-records into one, the applicant gets the "proper" referee twice.'));
-    $descr_CS = (x('p',
-		   'As stated...').
-		 x('p',
-		   'Sometimes things get corrupt due to wrong input, bugs, etc...'));
     
     $this->tools['JAM']=array(
+			      'FV'=>array('t'=>'Locate applicants for the current position in other JAM campaigns',
+					  'd'=>(x('p','As stated...'))
+					  ),
 			      'CS'=>array('t'=>'Check the JAM database for corrupted data',
-					  'd'=>$descr_CS,
+					  'd'=>(x('p','As stated...').
+						x('p','Sometimes things get corrupt due to wrong input, bugs, etc...'))
 					  ),
 			      'DA'=>array('t'=>'Search for duplicated applications',
-					  'd'=>$descr_DA,
+					  'd'=>(x('p','It happens that applicants submit duplicated applications'))
 					  ),
 			      'DR'=>array('t'=>'Fix the duplicated referees in recommendation letters '.(JAM_posID() ? ' for '.x('em',JAM_pos()->name()) : ''),
-					  'd'=>$descr_DR,
+					  'd'=>(x('p','It happens that the applicants mistype the referee e-mails, '.
+						  'and later "correct" them by requesting another letter from the same person with the proper E-mail.').
+						x('p','When the JAM administrator merges the duplicated AV-records into one, the applicant gets the "proper" referee twice.'))
 					  ),
 			      'RD'=>array('t'=>'(Re)create dossiers for '.x('em',(JAM_posID() ? JAM_pos()->name() : 'the current position')),
 					  'd'=>'<p>Refresh dossiers.</p><p>Note, this might take rather long time...</p>',
@@ -86,9 +81,23 @@ class jamToolBox extends bToolBox{
     }
   }
   
+  /*
+   * Locate "our" applicants in all the JAM positions
+   */
+  protected function execute_FV(){
+    $q = myPear_db()->qquery("SELECT av_lastname,av_firstname FROM zzz_avatars ".
+			     " LEFT JOIN jam_applicants ON ap_avid = av_id ".
+			     " LEFT JOIN jam_positions ON ap_posid = pos_id ".
+			     " WHERE pos_id = ".JAM_posID(),True);
+    $applicants = array();
+    while($r = myPear_db()->next_record($q)) $applicants[] = sprintf("(av_lastname = %s AND av_firstname = %s)",myPear_db()->quote($r['av_lastname']),myPear_db()->quote($r['av_firstname']));
+    
+    //    bForm_Avatar::findDuplicates(" WHERE av_lastname REGEXP ".myPear_db()->quote(join('|',$applicants)));
+    bForm_Avatar::findDuplicates(" WHERE ".join(' OR ',$applicants));
+  }
   
   /*
-   * Catch duplicated applicatiomns
+   * Catch duplicated applications
    */
   protected function execute_DA(){
     

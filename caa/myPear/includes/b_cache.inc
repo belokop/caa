@@ -127,7 +127,7 @@ class b_cache {
 	  $debug_a = array();
 	  foreach($cache_array[b_cache] as $hash_id=>$v){
 	    if (is_array($v))                             $f_value = 'array('.count($v).' elements)';
-	    elseif($f_value=myPear::getInstanceFromID($v))$f_value.= "($v)"; 
+	    elseif($f_value=myPear::getClassFromID($v))$f_value.= "($v)"; 
 	    else          	                          $f_value = b_fmt::strcut(b_fmt::_($v),66,'...');
 	    $debug_a[] = $f_value;
 	  }

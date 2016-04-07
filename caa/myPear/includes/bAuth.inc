@@ -195,18 +195,25 @@ class bAuth{
   public static function set_cnf_demo_email($forced=''){
     if (defined('cnf_demo_email')) return;
 
-    if ($deep_bug=True){
-      define('cnf_demo_email',cnf_dev_email);
-    }else{
-      if (empty($forced)) define('cnf_demo_email',(cnf_demo && is_object(bAuth::$av_authenticated)
-						   ? bAuth::$av_authenticated->getEmail()
-						   : cnf_dev_email));
-      else                define('cnf_demo_email',$forced);
-    }
+    $cnf_demo_email = (empty($forced)
+		       ? (is_object(bAuth::$av_authenticated)
+			  ? bAuth::$av_authenticated->getEmail()
+			  : cnf_dev_email)
+		       : $forced);
+    
     if (cnf_demo || cnf_dev){
-      myPear::MESSAGE_forced('',$msg="All the Emails are redirected to '".cnf_demo_email."'");
+      myPear::MESSAGE_forced('',$msg="All the Emails are redirected to '$cnf_demo_email'");
       myPear::DEBUG($msg,True);
     }
+    
+    if ($deep_bug=True) $cnf_demo_email = cnf_dev_email; // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    
+    define('cnf_demo_email',$cnf_demo_email);
+    if (cnf_demo || cnf_dev){
+      myPear::MESSAGE_forced('',$msg="All the Emails are redirected to '$cnf_demo_email'");
+      myPear::DEBUG($msg,True);
+    }
+
   }
   
   /*

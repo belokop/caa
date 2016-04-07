@@ -1919,12 +1919,12 @@ class b_time{
     if (b_time::strftime("%m%d",$date) == '1226') return True;
 
     $year = b_time::strftime('%Y',$date);
-    if ((b_time::is_valid($date) <= 0) ||
-	($year > 2037)){
+    if ((b_time::is_valid($date) <= 0) || ($year > 2037)){
       //      b_debug::traceBack();
-      b_debug::xxx("Y=$year? ".date('Y-m-d',$date));
+      b_debug::xxx("Y=$year? ".date('Y-m-d',$date),array(cnf_dev));
+      return False;
     }
-    if (function_exists('easter_date') && $date>0){
+    if (function_exists('easter_date') && $date>0 && ($year <= 2037)){
       $edate = easter_date($year);
     }else{
       $edate = self::easter_date($year);
@@ -2184,11 +2184,6 @@ class b_time{
   public static function noon($y=0,$m=0,$d=0,$date=0) {
     if (func_num_args() == 1) $date = $y;
     if (empty($date) || $date === 'now') $date = time();
-    /*
-    if (empty($y)) $y = b_time::strftime('%Y',$date);
-    if (empty($m)) $m = b_time::strftime('%m',$date);
-    if (empty($d)) $d = b_time::strftime('%d',$date);
-    */
     if (empty($y)) $y = date('Y',$date);
     if (empty($m)) $m = date('n',$date);
     if (empty($d)) $d = date('j',$date);
@@ -2535,10 +2530,9 @@ class b_cc{
   static function getCC($country_name){
     self::init();
     foreach (self::$cc2country as $cc=>$name){
-      if (strToLower($country_name)==strToLower($name)) $reply = $cc;
-      if (strToLower($country_name)==strToLower($cc))   $reply = $cc;
+      if (strToLower($country_name)===strToLower($name)) $reply = $cc;
+      if (strToLower($country_name)===strToLower($cc))   $reply = $cc;
     }
-    //if (empty($reply))  $reply = $country_name;
     if (empty($reply))  $reply = '';
     if (cnf_show_c) b_debug::xxx("$reply ");
     return $reply;
@@ -3161,10 +3155,11 @@ class counter {
     if ($this->count && !cnf_CLI && (b_cnf::get('counter')||b_cnf::get('count')||b_cnf::get('timing'))){
       $timer = b_time::microtime();
       print "<div class='align_left'><blockquote><b>counters (timer=".(int)(1000*($timer - $this->timer))." Msecs)</b><blockquote>";
-      $header['class'] = 'class';
-      $header['id']    = 'id';
-      $header['c']     = 'N';
-      $t = new b_table_zebra($header);
+      $t = new b_table_zebra(array('class'=>'class',
+				   'id'   =>'id',
+				   'c'    =>'N'));
+      $t->class['class'] = 'b_nowrap';
+      $t->class['id']    = 'b_nowrap';
       $t->repetValuesCol1only = 'class';
       $t->skipDuplicatedLines = False;
       $t->showLineCounter     = False;

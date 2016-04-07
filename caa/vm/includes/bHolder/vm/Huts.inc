@@ -1,6 +1,6 @@
 <?php
-locateAndInclude("bHolder_vm");
-class bHolder_vm_Huts extends bHolder_vm{
+locateAndInclude("bHolder_ea");
+class bHolder_vm_Huts extends bHolder_ea{
 
   var $debug = False;
   var $repetValuesCol1only = True;
@@ -73,7 +73,7 @@ class bHolder_vm_Huts extends bHolder_vm{
 
     if (in_array($this->rec['hut_status'],b_checkBox::$ON)) $this->rec['hut_status'] = bIcons()->get('ok');
 
-    $hut = myPear::getInstance('bForm_vm_Hut',$this->rec['hut_id']);
+    $hut = myPear::getInstance_new('bForm_vm_Hut',$this->rec['hut_id'],'fatal');
     if ($W=$hut->isWritable())$this->t->extraTD[]=bIcons()->getButton(array('l'=>b_url::same("?form=vm_Hut&id=".$hut->ID),
 										    'd'=>'modify',
 										    'i'=>'i-edit'));

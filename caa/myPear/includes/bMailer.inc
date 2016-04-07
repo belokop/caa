@@ -426,7 +426,7 @@ if (locateAndInclude(array('Mail',
 
       $this->dbg();      
       if ($av_id instanceof bForm_Avatar) $av = $av_id;
-      else                                $av = myPear::getInstance(bForm_Avatar::$bForm_Avatar,$av_id);
+      else                                $av = myPear::getInstance_new(bForm_Avatar::$bForm_Avatar,$av_id,array('strict','nocache'));
       $this->no_preview = True;
       $this->send(array($av),
 		  $av->getEmail(),

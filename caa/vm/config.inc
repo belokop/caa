@@ -2,7 +2,7 @@
 /**
  * Visitors Manager (VM) configuration file
  */
-$releaseDate = '2016-03-06';
+$releaseDate = '2016-04-07';
 define('VM_MODULE'   , 'vm');
 define('VM_VERSION','5.78');
 
@@ -11,6 +11,7 @@ define('VM_VERSION','5.78');
 //
 define('modal_sendmail_dialog',cnf_dev||cnf_demo); // Doesn't want to work...
 define('send_automatically_infoMail_to_registrants',cnf_dev||cnf_demo);
+define('include_payLunch_dinner',cnf_dev||cnf_demo);
 // Office space distribution
 define('distribute_offices',cnf_dev);
 // Final welcome mail settings
@@ -38,9 +39,10 @@ define('cancel_LODGING_REQ_ONLY',True);
 define('reimbursement_email','reimbursement@nordita.org');
 
 /*
- * VM root directory
+ * VM root directories
  */
-define('vm_root', dirname(__FILE__).'/');
+define('vm_root', dirname(__FILE__).DIRECTORY_SEPARATOR);
+define('VM_css',  vm_root.'css');
 
 /*
  * Roles played in VM
@@ -70,15 +72,20 @@ define('VM_V_payAccommodation',64);  // Flag 'cover living expenses'
 define('VM_V_provideOffice',128);    // Flag 'assign office for the visit'
 define('VM_V_infoMailSent',256);     // Flag 'informal informational mail sent'
 define('VM_V_enMailSent',512);       // Flag '"Event is endorsed" mail to organizer sent'
+define('VM_V_payLunches',1024);      // Flag 'pay lunch'
 define('VM_V_payOther',2048);        // Flag 'pay other expenses, (whatever "other expenses" mean)' 
 define('VM_V_rdlMailSent',4096);     // Flag 'registration-deadline mail to organizer sent'
+define('VM_V_payConfDiner',8192);    // Flag 'pay conference dinner'
 
 /*
- * Some policies are "human defined", like "to pay OR not to pay",
- * the other are "auto-controlled" like "was the button pushed".
- * This flag has to be set in the VM::$v_policies array - item 't', i.e. "type"
+ * Policies are either 
+ * - "human defined", like "to pay OR not to pay"
+ * - "auto-controlled" like "was an action executed or not"
+ * - "auto-controlled, might be changed by human2, like "to allocate office or not" for a visitor
+ * Those flag are set in the VM::$v_policies array - item 't' (stends for "type")
  */
-define('auto_maintained',     'auto'); 
+define('auto_maintained', 'auto'); 
+define('when_approved',   'w_a'); 
 
 /*
  * Define per-diem in the default currency
@@ -93,7 +100,7 @@ define('VM_color_budgetCredit'   , 'greenText');
 /*
  * Define reasonable period which is needed to book hotels
  */
-define('VM_booking_zapas', 30); // in days
+define('VM_lease_zapas', 30); // in days
 
 /*
  * Reminding period for the visits approval.
@@ -169,18 +176,18 @@ define('LODGING_REQ_ONLY_TXT', '_a request only');
 //?? how to parse this?
 //   "I will ask Nordita to book on my behalf, but pay myself"
 $GLOBALS['LODGING_FINDER'] = array(LODGING_REQ_ONLY =>('preselected|indicated by.*organi.ers|my behalf'),
-				   LODGING_OA       =>('do not need|will arrange|my way|on my own|pay myself'
+				   LODGING_OA       =>('do not need|will arrange|my way|on my own'
+						       .'|I will book a room'
 						 //.'|myself|accommodation arranged|other|made accommodation request upon'
 						 ),
 				   // 'shared_lodging' =>('shared accommodation'),
-				   'default_lodging'=>join('|',array('I apply for an apartment paid for by Nordita'
+				   'default_lodging'=>join('|',array('I apply for an apartment paid.*by|arrange.*for me|organizers.*arrange my accommodation'
 								     )),
 				   );
 if (cancel_LODGING_REQ_ONLY) unset($GLOBALS['LODGING_FINDER'][LODGING_REQ_ONLY]);
 
 //
 //
-define('VM_TEXT_oo',  'Own Office');
 
 define('OFFICE_AUTO_ALLOCATABLE', 'visitors'); // offices with this status are auto-allocated by the bCover
 define('AP_AUTO_ALLOCATABLE','auto allocate'); // apartments with this status are auto-allocated by the bCover
@@ -224,11 +231,9 @@ define('DUTY_unlock_events','UNLOCK');
 define('DUTY_reimbursement','PAY');
 define('DUTY_programs',VISIT_TYPE_PROGRAM);
 define('DUTY_guests',  VISIT_TYPE_COLLABORATION);
-define('DUTY_update_rooms','ROOMS'); 
+define('DUTY_update_rooms','ROOMS');
 
 define('VM_wordOtheExp','other expenses');
-
-define('VM_maybe',(cnf_dev ? 'maybe' : 'no'));
 
 /*
  * Describe the VM module
@@ -238,7 +243,7 @@ b_reg::add_module(VM_MODULE,
 			'tm'=>'Visitors',          // module name for the "top" horizontal menu
 			'r' =>$releaseDate,        // module release date
 			'd' =>'Visitors Manager',  // module name for the "navigation" menu
-			'i' =>'i-airplane',        // module favicon 
+                        'i' =>'i-traveler',        // module favicon 
 			'c' =>__FILE__,            // absolute path to the configuration file 
 			'l' =>array('book',        // log-file items to be shown by default
 				    'expenses','sync','visit','endorse'),
@@ -260,7 +265,8 @@ b_reg::add_module(VM_MODULE,
 					 'bForm_vm_Expenses'         =>array('t'=>'abs_expenses', 
 									     'i'=>'exp_id'),
 					 'bForm_vm_Office'           =>array('t'=>'abs_offices', 
-									     'i'=>'o_id'),
+					 				     'i'=>'o_id'),
+					 //'bForm_vm_Office'           =>array('p'=>'bForm_ea_Office'), 
 					 'bForm_vm_Event'            =>array('t'=>'abs_events',
 									     'i'=>'e_id'),
 					 'bForm_vm_Visit'            =>array('t'=>'abs_visits', 
@@ -385,56 +391,64 @@ class VM extends myPear{
 			       VISIT_TYPE_OTHER         =>array('Other visits'));
   
   /*
-   * Reimbursements, defaults for "to pay or not to pay" 
+   * Reimbursements for various type of visits, set defaults for "to pay or not to pay" 
    */
   static $reimbursable_visits = array(VISIT_TYPE_PROGRAM       =>array('d'            =>'Program/Conference attenders',
 								       VM_V_payPerdiem=>'no',
-								       VM_V_payOther  => VM_maybe),
+								       VM_V_payOther  =>'no',
+								       VM_V_payConfDiner=>'maybe',
+								       VM_V_payLunches=>'maybe'),
 				      VISIT_TYPE_COLLABORATION =>array('d'            =>'Invited researchers',
-								       VM_V_payPerdiem=> VM_maybe,
-								       VM_V_payOther  => VM_maybe),
+								       VM_V_payPerdiem=>'maybe',
+								       VM_V_payOther  =>'maybe',
+								       VM_V_payLunches=>'maybe'),
 				      VISIT_TYPE_OTHER         =>array('d'            =>'Other visits',
-								       VM_V_payPerdiem=> VM_maybe,
-								       VM_V_payOther  => VM_maybe),
+								       VM_V_payPerdiem=>'no',
+								       VM_V_payOther  =>'no'),
 				      'checkbox'               =>array(VM_V_payOther));
-  
-  static $reimbursements = array(VM_V_payTrip,
-				 VM_V_payOther,
-				 VM_V_payPerdiem,
-				 VM_V_payAccommodation,
-				 );
   
   /*
    * Visit policy bits 
    */
-  static $v_policies   = array(VM_V_payPerdiem       => array('d'=> VM_wordPerdiem_pay,
-							      'i'=> VM_wordPerdiem),
-			       VM_V_payTrip          => array('d'=>'To pay the trip?',
-							      'i'=>'trip'),
-			       VM_V_payOther         => array('d'=>'To cover other expenses?'),
-			       
-			       VM_V_payAccommodation => array('d'=>'To pay accommodation?',
-							      'i'=>'i-hotel',
-							      't'=> auto_maintained),
-			       VM_V_provideOffice    => array('d'=>'To allocate office?',
-							      'i'=>'trip'),
-			       VM_V_infoMailSent     => array('d'=>'Was a general info mail sent?',
-							      't'=> auto_maintained),
-			       VM_V_denialMailSent   => array('d'=>'Was the denial letter sent?',
-							      't'=> auto_maintained),
-			       VM_V_welcomeMailSent  => array('d'=>'Was the approval letter sent?',
-							      't'=> auto_maintained),
-			       VM_V_invoiceSent      => array('d'=>'Was the invoice sent?',
-							      'i'=>'i-invoice',
-							      't'=> auto_maintained),
-			       VM_V_scrtrInfoSent   => array('d'=>'Was the guest invitation communicated?',
-							     't'=> auto_maintained),
-			       VM_V_rdlMailSent     => array('d'=>'Was the appl. deadline communicated?',
-							     't'=> auto_maintained),
-			       VM_V_enMailSent      => array('d'=>'Was the endorsement communicated?',
-							     't'=> auto_maintained),
-			       );
+  static $v_policies     = array();
+
+  static $offers         = array(VM_V_provideOffice    => array('d'=>'To allocate office?',
+								't'=>when_approved,
+								'i'=>'trip'));
   
+  static $reimbursements = array(VM_V_payPerdiem       => array('d'=> VM_wordPerdiem_pay,
+								'i'=> VM_wordPerdiem),
+				 VM_V_payTrip          => array('d'=>'To pay the trip?',
+								'i'=>'trip'),
+				 VM_V_payLunches       => array('d'=>'To pay the lunches?',
+								'i'=>'i-burger'),
+				 VM_V_payConfDiner     => array('d'=>'To pay the conference dinner?',
+								'i'=>'i-drink'),
+				 VM_V_payOther         => array('d'=>'To cover other expenses?'
+								),
+				 VM_V_payAccommodation => array('d'=>'To pay accommodation?',
+								'i'=>'i-hotel',
+								't'=> auto_maintained));
+  
+  static $communications = array(VM_V_infoMailSent     => array('d'=>'Was a general info mail sent?',
+								't'=> auto_maintained),
+				 VM_V_denialMailSent   => array('d'=>'Was the denial letter sent?',
+								't'=> auto_maintained),
+				 VM_V_welcomeMailSent  => array('d'=>'Was the approval letter sent?',
+								't'=> auto_maintained),
+				 VM_V_scrtrInfoSent    => array('d'=>'Was the guest invitation communicated?',
+								't'=> auto_maintained),
+				 VM_V_rdlMailSent      => array('d'=>'Was the appl. deadline communicated?',
+								't'=> auto_maintained),
+				 VM_V_enMailSent       => array('d'=>'Was the endorsement communicated?',
+								't'=> auto_maintained),
+				 VM_V_invoiceSent      => array('d'=>'Was the invoice sent?',
+								'i'=>'i-invoice',
+								't'=> auto_maintained));
+				 
+  /*
+   * Event policies
+   */  
   static $e_policies   = array(VM_E_archived       => array('d'=>'Is the event archived?',
 							    'i'=>'i-wallet'),
 			       VM_E_endorsed       => array('d'=>'Is the event endorsed & changes are locked?',
@@ -452,12 +466,14 @@ class VM extends myPear{
   static public $description=array(VISIT_TYPE_COLLABORATION=>array('d'=>'Scientific collaboration',
 								   'i'=>'a_lecture',
 								   'f'=>'debit', 
-								   'p'=>array(VM_V_payTrip,VM_V_payAccommodation,// VM_V_payPerdiem, 
+								   'p'=>array(VM_V_payTrip,VM_V_payAccommodation,VM_V_payLunches,VM_V_provideOffice,
+									      // VM_V_payPerdiem, 
 									      VM_V_scrtrInfoSent)),
 				   VISIT_TYPE_PROGRAM      =>array('d'=>'Program attender',
 								   'i'=>'a_conf',
 								   'f'=>'debit',
-								   'p'=>array(VM_V_payTrip,VM_V_payAccommodation, 
+								   'p'=>array(VM_V_payTrip,VM_V_payAccommodation,VM_V_provideOffice, 
+									      // VM_V_payLunches,VM_V_payConfDiner,
 									      VM_V_denialMailSent,VM_V_welcomeMailSent,VM_V_infoMailSent,
 									      VM_V_rdlMailSent,VM_V_enMailSent)),
 				   VISIT_TYPE_POSSIBLE     =>array('d'=>'Virtual visit, used to estimate budget',
@@ -478,8 +494,8 @@ class VM extends myPear{
 								   'p'=>array()),
 
 				   // Accommodation options
-				   LODGING_OA              =>array('d'=>'Own accommodation, no fin. support'),
-				   LODGING_BR              =>array('d'=>'Break in the visit, no fin. support'),
+				   LODGING_OA              =>array('d'=>'Own accommodation, no fin. support', 'p'=>array()),
+				   LODGING_BR              =>array('d'=>'Break in the visit, no fin. support','p'=>array()),
 				   );
 
   static public $visit_status = array(STATUS_PENDING => 'pending',
@@ -506,10 +522,11 @@ class VM extends myPear{
   static public $REQ_ONLY  = 'REQ_ONLY'; // "request only" apartment
   static public $OA        = 'OA';       // "own accommodation" apartment
 
-  static public $auto_maintained = array(); // Filled from the previous array
+  static public $auto_maintained = array(); // Helper, filled from the previous array
+  static public $when_approved   = array(); // Helper, filled from the previous array
   
   static public function _MENU(){
-    start_VM();
+    if (b_reg::$current_module == VM_MODULE) start_VM();
     return self::_fromCache('APImenu_vm'); 
   } 
 
@@ -517,6 +534,19 @@ class VM extends myPear{
     static $dejaVu = 0;
     if (!$dejaVu++){
       
+      if (!include_payLunch_dinner){
+	foreach(array(VM_V_payConfDiner,VM_V_payLunches) as $item){ 
+	  foreach (self::$reimbursable_visits as $type=>$x) unset(self::$reimbursable_visits[$type][$item]);
+	  foreach (self::$description as $type=>$x) self::$description[$type]['p'] = array_diff(self::$description[$type]['p'],array($item));
+	  unset(self::$reimbursements[$item]);
+	}
+      }
+
+      // Visit policies is a combination of all offers we provide
+      self::$v_policies = (self::$reimbursements + 
+			   self::$communications + 
+			   self::$offers);
+
       // Needed only for the menu build, since it is built without a context
       bForm_Avatar::set_context(bAuth::$av,VM_MODULE);
       
@@ -526,6 +556,7 @@ class VM extends myPear{
       // Fill auto_maintained array      
       foreach(self::$v_policies as $policy=>$data){
 	if (@$data['t'] === auto_maintained) self::$auto_maintained[] = $policy;
+	if (@$data['t'] === when_approved)   self::$when_approved[]   = $policy;
       }
 
       // Complete the description
@@ -648,16 +679,21 @@ class VM extends myPear{
   static function e_ID($e_ID=Null){
     start_VM();
     if ($e_ID===Null) $e_ID = (int)b_cnf::get('vm_eventSelector');
-    else                           b_cnf::set('vm_eventSelector',$e_ID);
 
     if ((int)$e_ID > 0){
-      if (!is_object(self::$e))	self::$e = myPear::getInstance('bForm_vm_Event',$e_ID);
-      if ($e_ID != ($id=self::$e->ID)){
-	self::$e = myPear::getInstance('bForm_vm_Event',$e_ID);
-	myPear::WARNING_T("Change VM::e_ID $id -> $e_ID ".self::$e->name());
+      if (!is_object(self::$e))	self::$e = myPear::getInstance_new('bForm_vm_Event',$e_ID,'strict');
+      if ($e_ID != ($id=@self::$e->ID)){
+	self::$e = myPear::getInstance_new('bForm_vm_Event',$e_ID,'strict');
+	myPear::WARNING_T("Change VM::e_ID $id -> $e_ID ");
+	var_dump("".self::$e);
       }
+    }
+    
+    if (is_object(self::$e)){
+      $e_ID = self::$e->ID;
+      b_cnf::set('vm_eventSelector',$e_ID);
     }else{
-      self::$e = Null;
+      $e_ID = self::$e = Null;
       b_cnf::set('vm_eventSelector',0);
     }
     $name = (is_object(self::$e) ? ' = '.self::$e->name() : '-no-event-');
@@ -676,6 +712,7 @@ class VM extends myPear{
     if ($e === Null) $e = self::$e;
     $reply = (is_object($e) && bList_vm_agendaEvents::eventOutOfScope($e->getValue('e_code')));
     bTiming()->cpu();
+    if (is_object($e)) b_debug::xxx($e->name().'? '.x('strong',var_export($reply,True)),array(2,cnf_dev));
     return $reply;
   }
 
@@ -700,7 +737,7 @@ class VM extends myPear{
       if (bForm_vm_Expenses::_exp_arePayed($argv)) $reply = False;
     }
 
-    if (VM_manager_here)       return True;
+    if (!defined('VM_manager_here') || VM_manager_here) return True;
     if (superUser_here)        return True;
     if (!is_object(bAuth::$av))return False;
     
@@ -742,7 +779,7 @@ class VM extends myPear{
 	
     case 'endorse_event':
       if (self::isArchived()) $reply = False;
-      else                    $reply = bAuth::$av->isEndorser(VISIT_TYPE_PROGRAM);
+      else                    $reply = VM_manager_here || bAuth::$av->isEndorser(VISIT_TYPE_PROGRAM);
       break;
       
     case 'approve_guest_invitation':
@@ -792,6 +829,7 @@ function start_VM(){
   if (!VM::$isReady && !$dejaVu++){
     b_debug::xxx(starting);
     bTiming()->cpu(__FUNCTION__);
+
     VM::start();
     VM::_MENU()->start();
 
@@ -865,7 +903,7 @@ function VM_mailer(){
 
 /*
  * Get/Set the visit policies
- * The visits associated with an event keep the policies in the Event class,
+ * The visits of VISIT_TYPE_PROGRAM keep the policies in the Event class,
  * the other visit types keep the policies in the database as variables
  */
 function VM_visit_policies($visit_type,$new_value=Null,$e=Null){
@@ -892,7 +930,7 @@ function VM_visit_policies($visit_type,$new_value=Null,$e=Null){
     $reply = b_vars::get($var_id,VM_MODULE);
   }
 
-  // Check for the decommissioned policies
+  // Check for the de-commissioned policies
   if ($bogus=array_diff($reply,array_keys(VM::$v_policies))){
     $reply = array_diff($reply,$bogus);
     b_debug::xxx("DROP BOGUS policy ".join(', ',$bogus));
@@ -900,7 +938,7 @@ function VM_visit_policies($visit_type,$new_value=Null,$e=Null){
 
   if (cnf_dev){
     foreach($reply as $p) $reply_P[$p] = VM::$v_policies[$p]['d'];
-    b_debug::xxx($reply_P,cnf_dev);
+    //    b_debug::xxx($reply_P,array(True,'blueText',2));
   }
   return $reply;
 }

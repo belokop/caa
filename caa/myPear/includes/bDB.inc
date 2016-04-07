@@ -95,15 +95,23 @@ class bDB extends mysqli{
     $this->dbg('',cnf_dev,'greenText');
     switch($mode){
     case 'start':
-      if ($this->in_transaction++) b_debug::internalError("Recursive transactions");
-      bTiming()->cpu(__function__);
-      $reply = $this->query('START TRANSACTION');
+      if ($this->in_transaction++ == 0){
+	bTiming()->cpu(__function__);
+	$reply = $this->query('START TRANSACTION');
+      }else{
+	$this->dbg(sprintf("Recursive transaction, depth %s, skip 'START TRANSACTION'",$this->in_transaction),cnf_dev);
+	// b_debug::internalError("Recursive transactions");
+      }
       break;
-
+      
     case 'end':
-      $reply = $this->query('COMMIT');
+      if ($this->in_transaction == 1){
+	$reply = $this->query('COMMIT');
+	bTiming()->cpu();
+      }else{
+	$this->dbg(sprintf("Recursive transaction, depth %s, skip 'COMMIT'",$this->in_transaction),cnf_dev);
+      }
       $this->in_transaction--;
-      bTiming()->cpu();
       break;
 
     default:
@@ -120,7 +128,6 @@ class bDB extends mysqli{
    */
   private $last_query = '';
   function query($query,$stop_if_fails=True){
-
     $looking_for_performance = False;
 
     if (!$this->isReady)   return Null;
@@ -501,14 +508,11 @@ class bDB extends mysqli{
   protected function cache($id,$action='get'){
     if ($id === 'reset') $action = 'reset';
     switch($action){
-    case 'reset':
-      // reset the cache
+    case 'reset':      // reset the cache
       $_SESSION[get_class($this)] = array();
-    case 'get':
-      // asking for the cache info
+    case 'get':        // asking for the cache info
       break;
-    default:
-      // A new value provided, store it
+    default:           // A new value provided, store it
       $_SESSION[get_class($this)][$id] = $action;
     }
     return @$_SESSION[get_class($this)][$id];
@@ -522,7 +526,7 @@ class bDB extends mysqli{
     if ($this->result === False){
       $this->dbg(x('strong',' ??? query failed '.$this->error),cnf_dev,'redText',3);
       return;
-   }
+    }
 
     // Drop the locks info
     //    if (!$this->debug && (stripos($query,'zzz_semaphore') !== False)) return;

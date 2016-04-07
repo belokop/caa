@@ -320,13 +320,12 @@ class bForm_Avatar_ea extends bForm_Avatar{
   }
 
   protected function askSalutation()  { 
-    if (1) $reply = !$this->isEA(); 
-    else   $reply = True;
+    $reply = !$this->isEA(); 
     return $reply;
   }
 
   protected function ask_av_SSN()  { 
-    $isE = $this->isE() || $this->getValue('av_ssn',True);
+    $isE = $this->isE(True) || $this->getValue('av_ssn',True);
     $reply = $isE || parent::ask_av_SSN();
     $this->defineTypes(array('isMBE' =>array('av_ssn' => !$isE && !($reply && $this->MODE=='RW'))));
     $this->dbg($reply);
@@ -338,11 +337,11 @@ class bForm_Avatar_ea extends bForm_Avatar{
   }
 
   protected function askInstitute()   { 
-    return !$this->isEA(); 
+    return !$this->isE(True); 
   }
 
   protected function askHomeAddress() { 
-    $reply = $this->isE(); 
+    $reply = $this->isE(True); 
     $this->dbg($reply);
     return $reply;
   }
@@ -691,6 +690,26 @@ class bForm_Avatar_ea extends bForm_Avatar{
   }
 
   /*
+   * Get the user office name
+   */
+  function get_staffOffice(){
+    $office = Null;
+    if ($ea = $this->hook_employment()){
+      $records = $ea->get_currentEmploementRecords(array('e_org'=>myOrg_ID),999,$this->getValue('av_ddate',True));
+      
+      foreach($records as $k=>$r){ 
+	// Check the AlbaNova campus room numbering convension
+	if (preg_match("/\b(\w*:\w*)\b/",@$r['e_off'],$m)){
+	  $office = $m[1];
+	  break;
+	}
+      }
+    }
+    $this->dbg($this->fmtName('fl')." - office = '$office'");
+    return $office;
+  }
+
+  /*
    * if $this->isE() ask all the employment details (office, group, phone, etc.)
    * if $this->isA() ask what is/was the recent employment
    */
@@ -799,7 +818,7 @@ class bForm_Avatar_ea extends bForm_Avatar{
    */
   function isManager(){
     myPear_access(EA_MODULE);
-    $reply = EA_admin_here;
+    $reply = EA_administrator_here;
     return $reply;
   }
 }

@@ -45,6 +45,8 @@ class myPear{
 						  'zzz_logs'             =>array('t'=>'zzz_logs'),
 						  ),
 			     EA_MODULE   => array('bForm_Avatar_ea'      =>array('p'=>'bForm_Avatar'),
+						  'bForm_ea_Office'      =>array('t'=>'abs_offices',
+										 'i'=>'o_id'),
 						  'bList_eaCV'           =>array('p'=>'bList',
 										 'd'=>'CVs'),
 						  'bList_eaContacts'     =>array('p'=>'bList',
@@ -91,7 +93,7 @@ class myPear{
   }
   
   /*
-   * Has av_id an organizaton duty?
+   * Has av_id an organization duty?
    */
   public static function org_duty($av_id,$ranks,$parent_ID=myOrg_ID){
 
@@ -265,6 +267,133 @@ class myPear{
    *
    * @param $class
    *   Class name to instantiate 
+   * @param $args
+   *   Class arguments
+   * @param $mode
+   *   Additional optional array of attributes. Recognized attributes:
+   *     'RO' or 'RW'- access mode for the class instantiation  
+   *     'strict'    - do not create an instance if the ID is unknown to the database 
+   *                   (otherwise a 'new' class is instantiated)
+   *     'fatal'     - like 'strict', but an internal error is generated if the instance is unknown
+   *     'nocache'   - do not save the object in the cache
+   *     'array'     - the output is expected as an array of classes, i.e. the instance might be not unique
+   *     'clean'     - remove instance from the cache and return NULL
+   *     'delete'    - remove instance from the cache AND from the database
+   *     ''(default) 
+   * @return
+   *   Reference to the class object
+   */
+  public static function getInstance_new($class,$args,$mode=array()){
+
+    // Escape the bogus invocation    
+    if (!myPear_db()->isReady()) return Null;
+
+    if (!is_array($mode))  $mode = array($mode);
+    if (is_numeric($args)) $args = (int)$args;
+    // Sanity...
+    if (empty($args)){
+      if (in_array('fatal', $mode)) b_debug::internalError("??? Can't find $class($args)");
+      return Null;
+    }
+
+    if(!in_array('nocache',$mode)) bCount()->add(__FUNCTION__,$class);
+
+    // Keep the instances in a local cache
+    static $reply = array();
+    if (empty($class)){
+      $class = self::getClassFromID($args,False,True);
+      b_debug::xxx("getClassFromID($args) - $class",'I');
+      bCount()->add(__FUNCTION__,'getClassFromID');
+    }
+    $hash = b_crypt::hash($class.serialize($args));
+    
+    // Save memory, remove instance from the cache 
+    if (in_array('clean',$mode)){ 
+      if (!empty($reply[$hash])) bCount()->add(__FUNCTION__,"$class <span class='greenText'>removed</span>");
+      unset($reply[$hash]);
+      if ($class === 'all') $reply = array();
+      return Null;
+    }elseif(in_array('delete',$mode)){
+      unset($reply[$hash]);
+    }
+    
+    // Get the instance if it is not cached yet
+    if (empty($reply[$hash])){
+      locateAndInclude($class);
+      list($table,$id) = array_values(b_reg::sql_ids($class,b_reg::$current_module));
+      //      var_dump($table,$id,$class,b_reg::$current_module);
+
+      // Parse class arguments, it might be class_ID, av_email or query
+      if (is_numeric($args))            $args = array($id=>$args);
+      elseif ($m=b_fmt::RFC_2822($args))$args = array('av_email'=>x("'",array_shift($m)));
+
+      // Build "WHERE" clause
+      if (empty($table) || empty($id)){
+	// The module is not yet initialised
+	$num_rows = 0;
+      }else{
+	if (is_array($args)){
+	  foreach($args as $k=>$v) $where[] = myPear_db()->quote($v,True,$k);
+	}else{
+	  $where = array($args);
+	}
+
+	$q = myPear_db()->qquery($qquery="SELECT $id FROM $table WHERE ".join(' AND ',$where),$verbose=(cnf_dev && !is_array($args)));
+	$num_rows = myPear_db()->num_rows($q);
+      }
+
+      // Analasise the query result
+      switch($num_rows){
+      case 0:
+	if ( in_array('fatal', $mode)) b_debug::internalError("??? Can't find $class($where)");
+	if ( in_array('delete',$mode)) return;
+	if (!in_array('strict',$mode)){
+	  $instance = new $class('empty');
+	  b_debug::xxx('creating '.$instance,'I');
+	  $isVITAL = $instance->isVITAL;
+	  $instance->isVITAL = array();
+	  $instance->updateDB($args);
+	  $instance->isVITAL = $isVITAL;
+	  if (in_array('nocache',$mode)){
+	    b_debug::xxx($instance,'I');
+	    return $instance;
+	  }
+	  $reply[$hash] = $instance;
+	}
+	break;
+
+      case 1:
+	if (in_array('delete',$mode)){
+	  myPear_db()->qquery("DELETE FROM $table WHERE ".($id=join(' AND ',$where)),cnf_dev);
+	  myPear::MESSAGE("Removing class $class($id)");
+	}else{
+	  while ($r = myPear_db()->next_record($q)){
+	    $instance = new $class($r[$id]); 
+	    if (in_array('nocache',$mode)){
+	      b_debug::xxx($instance,'I');
+	      return $instance;
+	    }
+	    $reply[$hash] = $instance;
+	  }
+	}
+	break;
+
+      default:
+	b_debug::internalError("$num_rows answers for $qquery");
+      }
+    }else{
+      bCount()->add(__FUNCTION__,"$class <span class='greenText'>inCache</span>");
+    }
+    b_debug::xxx(@$reply[$hash],'I');
+    return @$reply[$hash];
+  }
+
+  /**
+   * Get the object for class(id) from the cache.
+   * Instantiate a new one if the cache is empty (see '$mode' below).
+   *
+   * @param $class
+   *   Class name to instantiate 
    * @param $id
    *   Class ID
    * @param $mode
@@ -315,7 +444,7 @@ class myPear{
       // Sanity, check that the class name is what is is expected to be
       if (!empty($class_name) && (stripos($class_name,$class)===False) && (stripos($class,$class_name)===False)){
 	if (cnf_dev){
-	  $msg = __METHOD__."($class,$id) getInstanceFromID($id) == '$class_name'";
+	  $msg = __METHOD__."($class,$id) getClassFromID($id) == '$class_name'";
 	  if (in_array('fatal',$mode)) b_debug::internalError($msg);
 	  else                         b_debug::traceBack($msg);
 	}
@@ -399,21 +528,22 @@ class myPear{
   
 
   /*
-   * Get the bForm instance name from the record_ID.
+   * Get the bForm class name from the record_ID.
    * All the records in the database(s) of bForm/myPear classes have unique ID (see 'bMasterClass' class),
    * so it is feasible.
    */ 
-  public static $_getInstanceFromID = array();
-  public static function getInstanceFromID($id,$noFormPrefix=False,$current_module_only=False) {
+  public static $_getClassFromID = array();
+  public static function getClassFromID($id,$noFormPrefix=False,$current_module_only=False) {
+    $reply = Null;
     if ($id instanceof bForm){
       if    ($noFormPrefix==='class') $reply = $id;
-      elseif($noFormPrefix)           $reply = str_replace('form','',str_replace('bForm_','',get_class($id)));
+      elseif($noFormPrefix)           $reply = str_replace(array('form','bForm_'),'',get_class($id));
       else                            $reply = get_class($id);
-    }elseif($reply = (int)$id){
+    }elseif(is_numeric($id)){
       if ($reply = self::isIdentified($id,$current_module_only)){
-	self::$_getInstanceFromID = myPear::$sql_identities[$reply];
-	if    ($noFormPrefix==='class') $reply = self::getInstance($reply,$id);
-	elseif($noFormPrefix)           $reply = str_replace('form','',str_replace('bForm_','',$reply));
+	self::$_getClassFromID = myPear::$sql_identities[$reply];
+	if    ($noFormPrefix==='class') $reply = self::getInstance_new($reply,$id);
+	elseif($noFormPrefix)           $reply = str_replace(array('form','bForm_'),'',$reply);
       }
     }
     return $reply;
@@ -449,7 +579,7 @@ class myPear{
     }elseif ($class=$_GET['form']){
       
       if (strpos($class,'bForm') === False) $class = "bForm_$class";
-      $f = myPear::getInstance($class,$_GET['id'],array('strict','fatal'));
+      $f = myPear::getInstance_new($class,$_GET['id'],'fatal');
       $w = $f->getWidget();
       if (cnf_dev) b_debug::xxx("expect class '$class', got ".$f->__toString());
     }elseif ($f=$_GET['file_once']){
@@ -521,15 +651,17 @@ class myPear{
 	}
 	
 	// Read the record ID and (if presents) the class name which uses this record
-	$where = array(((int)$id ? $_identities['i']."='$id'" : $id));
 	$selects = array();
 	foreach(array_merge($specific_classes,array($_identities['i'])) as $field){
 	  if (myPear_db()->columnExists($field,$_identities['t'])) $selects[] = $field;
 	}
 	if (empty($selects))  continue;
 
-	$q = myPear_db()->query("SELECT ".join(',',$selects)." FROM ".$_identities['t']." WHERE ". join(' AND ',$where),
-				$stopIfFails=False);
+	$query = "SELECT ".implode(',',$selects)." FROM ".$_identities['t']." WHERE ".(is_numeric($id) 
+										       ? $_identities['i']."='$id'" 
+										       : $id);
+	// myPear::DEBUG($query);
+	$q = myPear_db()->query($query,$stopIfFails=cnf_dev);
 	if (empty($q))  continue;
 	
 	unset($identified_class); 
@@ -559,7 +691,6 @@ class myPear{
       bTiming()->cpu();
     }
 
-
     if (empty($cache[$id])){
       self::$isIdentified_ID = array();
       $reply = Null;
@@ -568,17 +699,15 @@ class myPear{
       self::$isIdentified_ID = $cache[$id]['ID'];
       
       // The caller asks for the class_name, optionally filtered by the current myPear module 
-      switch($current_module_only){
-      case True:
+      if($current_module_only){
 	// During the authentication the proper Avatar class might not yet being loaded,
 	// hence give back the generic one instead.
 	$reply = @$cache[$id][b_cms::_(0)];
+	if (empty($reply) && @$cache[$id]['myPear']) $reply = $cache[$id]['myPear'];
 	if (empty($reply) && (stripos(@$cache[$id]['generic'],'Avatar') !== False)){
 	  $reply = 'bForm_Avatar';
 	}
-	break;
-	
-      case False:
+      }else{
 	$reply = @$cache[$id]['generic'];
       }
     }
@@ -664,10 +793,10 @@ class myPear{
   /*
    * Display the unified message.
    */
-  static public function MESSAGE($text,$class=Null,$id='status',$heading='',$only_once=True){
-    static $dejaVu = array();      
+  private static $MESSAGE_dejaVu = array();
+  static public function MESSAGE($text,$class=Null,$id='status',$heading='',$only_once=False){
 
-    // By default we dont't show any messages in no-user context, unless it is explicitely requested 
+    // By default we don't show any messages in no-user context, unless it is explicitly requested 
     $drop = (!self::$show_this_message_in_NOUSER_context &&
 	     !cnf_dev && (!class_exists('bAuth',0) ||
 			  (class_exists('bAuth',0) && !bAuth::$isReady) || 
@@ -699,9 +828,9 @@ class myPear{
 	break;
       default:
       }
-      
-      if (b_cnf::get('noCompactMessages')) $dejaVu = array();
-      if (!@$dejaVu[b_crypt::hash($text.$id.(is_object($class)?@$class->ID:'x'))]++){
+      if (b_cnf::get('noCompactMessages')) self::$MESSAGE_dejaVu = array();
+      $msg_id = b_crypt::hash($text . $id . (is_object($class)?@$class->ID:'x'));
+      if ((int)($cnt = @self::$MESSAGE_dejaVu[$msg_id]++) == 0){
 	if ($id=='message_bottom')  $_SESSION['message_bottom'][] = $text; 
         elseif (function_exists('drupal_set_message') && !b_cnf::get('nodrupal')) drupal_set_message($text,$css_class);
         elseif (cnf_CLI) b_fmt::printt($text);

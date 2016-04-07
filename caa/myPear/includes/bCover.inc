@@ -7,12 +7,12 @@
  */ 
 class bCover{
 
-  var $id    = NULL;
+  var $id    = 'id';//NULL;
   var $start = 'start';
   var $end   = 'end';
-  var $debug = 0; 
-  var $timeMn= 0;
-  var $timeMx= 0;
+  var $debug = False; 
+  var $timeMn= Null;
+  var $timeMx= Null;
   var $set        = array();
   var $constraints= array();
   var $solution   = array();
@@ -21,28 +21,35 @@ class bCover{
     $this->dbg('-----------------------------------');
     if (!empty($set)) $this->_init($set,$id,$start,$end);
   }
+
+  function __toString(){
+    return get_class($this);
+  }
   
   function _init($set=array(),$id=NULL,$start=NULL,$end=NULL){
     if ($id)    $this->id    = $id;
     if ($start) $this->start = $start;
     if ($end)   $this->end   = $end;
-    $this->constraints = $this->solution = $this->set = array();
-    $this->timeMn = $this->timeMx = $setCounter = 0;
+
+    $setCounter = 0;
     foreach ($set as $k=>$r){
       $this->set[$k] = $r;
       if (!isset($this->set[$k][$this->id])) $this->set[$k][$this->id] = ++$setCounter;
       $this->setMinMaxTime($this->set[$k]);
       
-      if ($this->start!='day1' && empty($this->set[$k]['day1'])) $this->set[$k]['day1'] = @$this->set[$k][$start];// interface with the bIcal_matrix class
-      if ($this->end  !='day9' && empty($this->set[$k]['day9'])) $this->set[$k]['day9'] = @$this->set[$k][$end];
+      // interface with the bIcal_matrix class
+      if ($this->start!='day1' && empty($this->set[$k]['day1'])) $this->set[$k]['day1'] = $this->set[$k][$this->start];
+      if ($this->end  !='day9' && empty($this->set[$k]['day9'])) $this->set[$k]['day9'] = $this->set[$k][$this->end];
+      //      if (!$k) b_debug::var_dump($this->set[$k],"k=$k");
     }
-    $this->dbg("length of the set = ".count($this->set));
+    if ($this->debug) myPear::DEBUG(sprintf("%s() length of the set = %s, %s",
+					    __METHOD__,count($this->set),b_time::period($this->timeMn,$this->timeMx)));
   }
   
   public $current_solution = array();
   function solve(){
     bTiming()->cpu(__FUNCTION__);
-    $this->dbg(count($this->constraints).' lines of constraints');
+    $this->dbg(count(array_keys($this->constraints)).' lines of constraints');
     foreach ($this->constraints as $n=>$c) $coun["constraint $n"] = count($c);
 
     if (empty($this->set)){
@@ -65,21 +72,26 @@ class bCover{
     return $this->solution;
   }
 
+  /*
+   *
+   */
   protected function quality(){
     static $n = 0;
-    $quality = $n_unused = 0;
-    foreach($this->current_solution as $id=>$list){
+    $quality = 0;
+    $n_unused = $n_used = 0;
+    foreach($this->current_solution as $id=>$visits){
+      $n_u = 0;
       $quality++;
-      foreach(array_values($list) as $item){
-	if (count($list) > 1) 	$n_unused += ($item['day9'] - $item['day1']);
-	if (!isset($day1)) $day1 = $item['day1'];
-	if (!isset($day9)) $day9 = $item['day9'];
-	$day1 = min($day1,$item['day1']);
-	$day9 = max($day9,$item['day9']);
+      foreach($visits as $k=>$visit){
+	if (empty($visit['day1'])) $this->current_solution[$id][$k]['day1'] = $visit['day1'] = $visit[$this->start];
+	if (empty($visit['day9'])) $this->current_solution[$id][$k]['day9'] = $visit['day9'] = $visit[$this->end];
+ 	if (count($visits) > 1) $n_u += ($visit[$this->end] - $visit[$this->start]);
+	static $hghjhjhj=0; if (!$hghjhjhj++) b_debug::print_r($visit,"this->current_solution-$id-$k");
       }
+      $n_unused += (int)(($this->timeMx - $this->timeMn - $n_u) / 24 / 3600);
+      $n_used   += $n_u;
     }
-    $n_unused = (int)(($day9 - $day1 - $n_unused) / 24 / 3600);
-    $this->dbg((++$n)." - quality=$quality  n_unused=$n_unused ");
+    $this->dbg((++$n)." - quality=$quality  n_unused=$n_unused n_used=".(int)($n_used/24/3600));
     return array(-$quality,$n_unused);
   }
 
@@ -122,7 +134,12 @@ class bCover{
       $reply[$Nvacant][] = $cand;
     }
 
-    foreach ($reply as $n=>$a) if (count($reply[$n]) != count(@$this->constraints[$n])) $this->dump($a,'solution '.$n);
+    foreach ($reply as $n=>$a){
+      if (($n1=count($reply[$n])) != ($n2=count(@$this->constraints[$n]))){
+	//	$this->dump($a,'solution '.$n);
+	// myPear::DEBUG(sprintf('n=%s ??? count(reply)=%s != count(constraints)=%s',$n,$n1,$n2));
+      }
+    }
     return $reply;
   }
   
@@ -130,7 +147,7 @@ class bCover{
     return $ar1[$this->id]==$ar2[$this->id];
   }
 
-  function clashing($ar1, $ar2) {
+  protected function clashing($ar1, $ar2) {
     return b_time::inInterval($ar1[$this->start],$ar1[$this->end],
 			      $ar2[$this->start],$ar2[$this->end]);
   }
@@ -156,17 +173,20 @@ class bCover{
   }
   
   function setMinMaxTime($r){
+    if ($this->timeMn === Null) $this->timeMn = +999999999999;
+    if ($this->timeMx === Null) $this->timeMx = -999999999999;
     if (is_array($r)) {
       $d1 = $r[$this->start];
       $d9 = $r[$this->end];
-    }else $d1 = $d9 = $r;
-    if (!$this->timeMn) $this->timeMn = $d1;
-    if (!$this->timeMx) $this->timeMx = $d9;
+    }else{
+      $d1 = $d9 = $r;
+    }
     $this->timeMn = min($this->timeMn, $d1, $d9);
     $this->timeMx = max($this->timeMx, $d1, $d9);
+    //    if ($this->debug) myPear::DEBUG(__METHOD__.'() '.b_time::period($this->timeMn,$this->timeMx));
   }
 
-  function dbg($text=' '){
-    b_debug::xxx($text,array((bool)$this->debug,3,'orangeText'));
+  function dbg($text=' ',$forced=False){
+    b_debug::xxx($text,array((bool)$this->debug||$forced,3,'orangeText'));
   }
 }
