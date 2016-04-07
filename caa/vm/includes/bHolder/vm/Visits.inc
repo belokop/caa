@@ -1,6 +1,6 @@
 <?php
-locateAndInclude('bHolder_ea');
-class bHolder_vm_Visits extends bHolder_ea{
+locateAndInclude('bHolder_vm');
+class bHolder_vm_Visits extends bHolder_vm{
 
   var $clashes = array();
   var $clashe  = False;

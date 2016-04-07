@@ -181,7 +181,7 @@ $GLOBALS['LODGING_FINDER'] = array(LODGING_REQ_ONLY =>('preselected|indicated by
 						 //.'|myself|accommodation arranged|other|made accommodation request upon'
 						 ),
 				   // 'shared_lodging' =>('shared accommodation'),
-				   'default_lodging'=>join('|',array('I apply for an apartment paid.*by|arrange.*for me|organizers.*arrange my accommodation'
+				   'default_lodging'=>join('|',array('(apartment|accommodation) paid.*by |arrange.*for me|organizers.*arrange my accommodation|'
 								     )),
 				   );
 if (cancel_LODGING_REQ_ONLY) unset($GLOBALS['LODGING_FINDER'][LODGING_REQ_ONLY]);

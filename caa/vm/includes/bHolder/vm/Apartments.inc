@@ -1,6 +1,6 @@
 <?php
-locateAndInclude('bHolder_ea');
-class bHolder_vm_Apartments extends bHolder_ea{
+locateAndInclude('bHolder_vm');
+class bHolder_vm_Apartments extends bHolder_vm{
 
   var $cleanCost = 0;
   var $rent      = 0;

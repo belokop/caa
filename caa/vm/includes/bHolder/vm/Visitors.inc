@@ -4,7 +4,9 @@
  * - to endorse an event WITHOUT sending emails to the organizers add "&showen=1&" to the URL 
  */
 locateAndInclude(array('bForm_vm_Lease',
-		       'bForm_vm_Visit'));
+		       'bForm_vm_Visit',
+		       'bHolder_vm'));
+
 // Define tab names
 foreach(array('tab_accommodation_options'=> 'Accommodation options',
               'tab_available_budget'     => 'Available budget',
@@ -20,8 +22,7 @@ foreach(array('tab_accommodation_options'=> 'Accommodation options',
 define('ICON_mail_sent_y',  bIcons()->get(array('d'=>'The mail was sent',  
 						'i'=>'i-ok', 
 						'c'=> 'opacity_off')));
-locateAndInclude('bHolder_ea');
-class bHolder_vm_Visitors extends bHolder_ea{
+class bHolder_vm_Visitors extends bHolder_vm{
   
   var $autoOpenHeader = False;
   

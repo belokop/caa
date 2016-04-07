@@ -962,10 +962,10 @@ class bForm_vm_Visit extends bForm_vm {
 	  if (!empty($office)){
 	    $o = myPear::getInstance_new('bForm_vm_Office',array('o_name'=>$office),'nocache');
 	    if ($this->getValue('v_oid') != $o->ID){
+	      $this->setPolicy(VM_V_provideOffice,1);
 	      $this->getValue_reset_forced('v_oid',$o->ID);
 	      myPear::MESSAGE("Office ".x('em',$office).' - '.$this->av->fmtName('fl'));
 	    }
-	    $this->setPolicy(VM_V_provideOffice,1);
 	  }
 	}	
 	$this->av->isLocked($this->getValue('v_type',1)==VISIT_TYPE_PROGRAM);

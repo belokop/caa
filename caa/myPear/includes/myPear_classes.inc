@@ -4012,7 +4012,7 @@ class b_cnf{
       }
     }
     if (empty($reply)) $reply = False;
-    if ($verbose || $class->debug) b_debug::xxx(($reply ? 'YES - ' : 'NO - ').$msg,array(3,$class,True,'redText'));
+    if (cnf_show_w || $verbose || $class->debug) b_debug::xxx(($reply ? 'YES - ' : 'NO - ').$msg,array(3,$class,True,'redText'));
     return $reply;
   }
 
@@ -4133,7 +4133,7 @@ class b_cnf{
     
     if ($value !== Null){
       $value =  b_crypt::encode_utf8($value);
-      b_debug::xxx(substr($value,0,50)." - $r",array('C',cnf_show_w||($debug>=10)));
+      b_debug::xxx(substr($value,0,50)." - $r",array('C',($debug>=10)));
     }
     return $value;
   }

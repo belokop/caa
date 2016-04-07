@@ -1,6 +1,6 @@
 <?php
-locateAndInclude("bHolder_ea");
-class bHolder_vm_Huts extends bHolder_ea{
+locateAndInclude("bHolder_vm");
+class bHolder_vm_Huts extends bHolder_vm{
 
   var $debug = False;
   var $repetValuesCol1only = True;
