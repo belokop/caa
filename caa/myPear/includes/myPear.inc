@@ -776,8 +776,8 @@ class myPear{
   }
 
   static public function DEBUG ($text='',$class=Null){ 
-    if ($class === False) return;
     $forced = ($class === 'force') || ($class === 'forced');
+    if (($class === False) || (!cnf_dev && !$forced))  return;
     if (!is_object($class)) $class = Null;
     if ($forced) self::MESSAGE_forced($text?$text:b_debug::__(2), $class, 'debug'); 
     else         self::MESSAGE       ($text?$text:b_debug::__(2), $class, 'debug'); 
@@ -830,7 +830,7 @@ class myPear{
       }
       if (b_cnf::get('noCompactMessages')) self::$MESSAGE_dejaVu = array();
       $msg_id = b_crypt::hash($text . $id . (is_object($class)?@$class->ID:'x'));
-      if ((int)($cnt = @self::$MESSAGE_dejaVu[$msg_id]++) == 0){
+      if (!@self::$MESSAGE_dejaVu[$msg_id]++){
 	if ($id=='message_bottom')  $_SESSION['message_bottom'][] = $text; 
         elseif (function_exists('drupal_set_message') && !b_cnf::get('nodrupal')) drupal_set_message($text,$css_class);
         elseif (cnf_CLI) b_fmt::printt($text);
