@@ -748,7 +748,8 @@ class myPear{
   
   static public function TBD($text='.',$class=Null)  { self::MESSAGE($text, $class, 'TBD'); }
   
-  static public function ERROR    ($text,$class=Null){ self::MESSAGE($text, $class, 'error', 'ERROR'); }
+  static public function ERROR    ($text,$class=Null){ if (stripos($text,'missing value for')!==False) b_debug::traceBack();
+self::MESSAGE($text, $class, 'error', 'ERROR'); }
 
   static public function WARNING  ($text,$class=Null){ self::MESSAGE($text, $class, 'warning','WARNING'); }
 
