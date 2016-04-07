@@ -284,7 +284,8 @@ class APImenu_vm extends APImenu_ea{
       case tab_vm_events:
       case tab_vm_events_add:
       case tab_vm_events_see:
-	$reply = cnf_dev && VM_manager_here;
+	$reply = VM_manager_here;
+	if (!cnf_dev) $reply = False;
 	break;
 
       case tab_vm_ap:
@@ -390,7 +391,6 @@ class APImenu_vm extends APImenu_ea{
       case tab_ea_off_assign:
       case tab_ea_off_wipe:
 	$reply = VM_administrator_here && !VM::outOfScope() && (VM::e_ID()>0);
-	if (!cnf_dev) $reply = False;
 	break;
 
       case tab_vm_vis_export:
@@ -428,7 +428,6 @@ class APImenu_vm extends APImenu_ea{
 
       case tab_vm_ogz_se_setup:
 	$reply = (!VM::outOfScope() && VM_manager_here);
-	$reply = cnf_dev;
 	break;
 	
       case tab_vm_guests_budget:
