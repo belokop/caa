@@ -136,7 +136,7 @@ function vm_compat_update_42(){
   // Offices for visitors as of 1-Apr-2016
   myPear_db()->qquery("UPDATE abs_offices SET o_status = 'staff'",cnf_dev);
   foreach($off_visitors as $o_name=>$data){
-    $o = myPear::getInstance_new('bForm_vm_Office',array('o_name'=>$o_name),'nocache');
+    $o = myPear::getInstance_new('bForm_vm_Office',array('o_name'=>$o_name),'nocache',array('abs_offices','o_id'));
     $o->isVITAL = array();
     $o->updateDB($data);
   }
@@ -144,10 +144,10 @@ function vm_compat_update_42(){
   // Update the already accepted visitors
   $q = myPear_db()->qquery("SELECT v_id,v_eid FROM abs_visits WHERE v_status='".STATUS_YES."' AND v_eid > 0 AND v_start > ".b_time::txt2unix('2016-03-29'),cnf_dev);
   while($r = myPear_db()->next_record($q)){
-    $e = myPear::getInstance_new('bForm_vm_Event',$r['v_eid'],'fatal');
+    $e = myPear::getInstance_new('bForm_vm_Event',$r['v_eid'],'fatal',array('abs_events','e_id'));
     if (VM::outOfScope($e)) continue;
     
-    $v = myPear::getInstance_new('bForm_vm_Visit',$r['v_id'],array('nocache','fatal'));
+    $v = myPear::getInstance_new('bForm_vm_Visit',$r['v_id'],array('nocache','fatal'),array('abs_visits','v_id'));
     $v->setPolicy(VM_V_provideOffice,1);
   }
 }

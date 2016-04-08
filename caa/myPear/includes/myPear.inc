@@ -280,10 +280,11 @@ class myPear{
    *     'clean'     - remove instance from the cache and return NULL
    *     'delete'    - remove instance from the cache AND from the database
    *     ''(default) 
+   * @param $helper  - optional array($table,$id), needed when module is not yet ready...
    * @return
    *   Reference to the class object
    */
-  public static function getInstance_new($class,$args,$mode=array()){
+  public static function getInstance_new($class,$args,$mode=array(),$helper=array()){
 
     // Escape the bogus invocation    
     if (!myPear_db()->isReady()) return Null;
@@ -320,32 +321,35 @@ class myPear{
     // Get the instance if it is not cached yet
     if (empty($reply[$hash])){
       locateAndInclude($class);
-      list($table,$id) = array_values(b_reg::sql_ids($class,b_reg::$current_module));
+      list($table,$id) = (empty($helper)
+			  ? array_values(b_reg::sql_ids($class,b_reg::$current_module))
+			  : $helper);
       //      var_dump($table,$id,$class,b_reg::$current_module);
 
       // Parse class arguments, it might be class_ID, av_email or query
       if (is_numeric($args))            $args = array($id=>$args);
       elseif ($m=b_fmt::RFC_2822($args))$args = array('av_email'=>x("'",array_shift($m)));
+      if (is_array($args)){
+	foreach($args as $k=>$v) $where[] = myPear_db()->quote($v,True,$k);
+      }else{
+	$where = array($args);
+      }
 
-      // Build "WHERE" clause
+      // Query the database
+      $where_str = join(' AND ',$where);
       if (empty($table) || empty($id)){
 	// The module is not yet initialised
 	$num_rows = 0;
+	$qquery = sprintf("can't locate table for %s::%s",b_reg::$current_module,$class);
       }else{
-	if (is_array($args)){
-	  foreach($args as $k=>$v) $where[] = myPear_db()->quote($v,True,$k);
-	}else{
-	  $where = array($args);
-	}
-
-	$q = myPear_db()->qquery($qquery="SELECT $id FROM $table WHERE ".join(' AND ',$where),$verbose=(cnf_dev && !is_array($args)));
+	$q = myPear_db()->qquery($qquery="SELECT $id FROM $table WHERE $where_str",$verbose=(cnf_dev && !is_array($args)));
 	$num_rows = myPear_db()->num_rows($q);
       }
 
       // Analasise the query result
       switch($num_rows){
       case 0:
-	if ( in_array('fatal', $mode)) b_debug::internalError("??? Can't find $class($where)");
+	if ( in_array('fatal', $mode)) b_debug::internalError("??? Can't find $class($where_str) q=$qquery");
 	if ( in_array('delete',$mode)) return;
 	if (!in_array('strict',$mode)){
 	  $instance = new $class('empty');

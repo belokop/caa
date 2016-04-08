@@ -299,7 +299,7 @@ class bForm_vm_Visit extends bForm_vm {
     
     $was = @$this->formDB['v_status'];
     if ($was === $v_status){
-      $this->dbg("Status is not changed... $v_status",cnf_dev);
+      $this->dbg("Status is not changed... $v_status",cnf_show_pv || $this->debug);
       return;
     }
     

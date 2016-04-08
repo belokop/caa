@@ -107,7 +107,6 @@ function myPear_update31(){
   // Update sql definitions
   myPear_update_DBdefaults(array('zzz_variables'    =>array('text'        =>array('var_value')),
 				 'zzz_lists'        =>array('varchar(200)'=>array('l_name')),
-				 'zzz_list_members' =>array('varchar(128)'=>array('lm_status')),
 				 'zzz_unit_members' =>array('text'        =>array('um_option')),
 				 'zzz_avatars'      =>array('int(11)'     =>array('av_ddate'),
 							    'text'        =>array('av_http',),
@@ -125,7 +124,7 @@ function myPear_update31(){
 							    'varchar(32)' =>array('org_country','org_name_short','org_theme'))),
 			   'NULL');
   myPear_update_DBdefaults(array('zzz_units'        =>array('varchar(128)'=>array('u_name','u_class','u_member_title')),
-				 'zzz_list_members' =>array('varchar(128)'=>array('lm_key','lm_value')),
+				 'zzz_list_members' =>array('varchar(128)'=>array('lm_key','lm_value','lm_status')),
 				 'zzz_logs'         =>array('varchar(128)'=>array('log_ip','log_type','log_api','log_comment','log_org'))));
   
 }
@@ -235,7 +234,7 @@ function myPear_update_DBdefaults($args,$null='NOT NULL'){
   foreach($args as $table=>$fff){
     if (!myPear_db()->tableExists($table)) continue;
     foreach($fff as $type_to_be=>$ff){
-      if ($set_to_null=(strToLower($null) == 'null')){
+      if ($set_to_null=(strToLower($null) === 'null')){
 	$null_to_be = 'YES';
 	$default_to_be = 'NULL';
 	$default = '';
@@ -248,7 +247,7 @@ function myPear_update_DBdefaults($args,$null='NOT NULL'){
 	if (!myPear_db()->columnExists($f,$table)) continue;
 	if (stripos($type_to_be,'int') !== False) myPear_db()->qquery("UPDATE `$table` SET $f=0 WHERE $f=''",True);
 	myPear_db()->qquery("ALTER TABLE `$table` CHANGE `$f` `$f` $type_to_be $null $default",True);
-	if (stripos($type_to_be,'int') !== False) myPear_db()->qquery("UPDATE `$table` SET $f=$default_to_be WHERE ($f='' OR $f IS NULL OR $f='0')",True);
+	if (stripos($type_to_be,'int') !== False) myPear_db()->qquery("UPDATE `$table` SET $f=$default_to_be WHERE ($f='' OR $f IS NULL OR $f='0' OR $f=0)",True);
       }
     }
   }

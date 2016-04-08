@@ -115,7 +115,7 @@ function myPear_setConstants(){
   if (isset($_GET['ii'])) $_GET['i'] = $_GET['ii'];
   $debug_options = array('show' =>array('a','b','c','cd','d','dd','dupl','h','gv','l','m','i','ii','r','e','pe','pv','v','acl',
 					's','t','w','z','hook','cache','ic','db','dp','st','er',
-					'sm','ms','en','exec','mrg','pdf','sem','auth','reg'),
+					'sm','ms','en','exec','mrg','pdf','sem','auth','reg','out'),
 			 'debug'=>array('auth','form','db'));
   foreach($debug_options as $prefix=>$opts){
     foreach($opts as $opt){

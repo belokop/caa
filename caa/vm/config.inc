@@ -711,7 +711,7 @@ class VM extends myPear{
     if ($e === Null) $e = self::$e;
     $reply = (is_object($e) && bList_vm_agendaEvents::eventOutOfScope($e->getValue('e_code')));
     bTiming()->cpu();
-    if (is_object($e)) b_debug::xxx($e->name().'? '.x('strong',var_export($reply,True)),array(2,cnf_dev));
+    if (is_object($e)) b_debug::xxx($e->name().'? '.x('strong',var_export($reply,True)),array(2,cnf_show_out));
     return $reply;
   }
 
