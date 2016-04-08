@@ -142,9 +142,9 @@ class agenda_vm extends agenda{
 	  $name = bForm_Avatar::_fmtName('sfl',$chair);
 	  if (myPear::is_empty($email = @$chair['av_email'])){
 	    $email=$chair['av_email'] = bForm_Avatar::generate_email($chair['av_firstname'],$chair['av_lastname']);
-	    myPear::WARNING("E-mail missing for $name, impose $email");
+	    myPear::WARNING(spintf("%s<br>E-mail missing for organizer %s, impose %s",
+				   $program['title'],$name,$email));
 	  }
-
 	  if (empty($email)) myPear::WARNING("??? empty email for '$name'");
 	  else VM_organizers($this->e->ID)->add_unitMember($av=bForm_Avatar::hook($chair),$verbose='if_new');
 	  $allOrganizers[] = $av->ID;

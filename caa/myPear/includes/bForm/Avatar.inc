@@ -279,7 +279,7 @@ class bForm_Avatar extends bForm {
   /*
    * generate an unique within myPear e-mail
    */
-  static function generate_email($av_firstname,$av_lastname,$must_be_unique=True,
+  static function generate_email($av_firstname,$av_lastname,$must_be_unique=False,
 				 $zzz_avatars = 'zzz_avatars',
 				 $domain='somewhere.earth', $user='unknown'){
     $name = array();
