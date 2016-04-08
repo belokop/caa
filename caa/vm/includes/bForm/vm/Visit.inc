@@ -77,7 +77,6 @@ class bForm_vm_Visit extends bForm_vm {
 
     // Follow the endorser will
     if (isset($_GET['a_once'])){
-      $this->show_gv = cnf_dev;
       $this->dbg("Accepted? ".$_GET['a_once'],cnf_dev);
       $this->setStatus($_GET['a_once']);
       if ($_GET['a_once'] == STATUS_PENDING) $_SESSION[get_class($this).$this->ID] = '...';

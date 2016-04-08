@@ -788,8 +788,10 @@ class APImenu_vm extends APImenu_ea{
       break;
       
     case tab_vm_adm_sync:
-      locateAndInclude('agenda_vm');
-      locateAndInclude('bUnit_vm_organizers');
+      locateAndInclude('agenda_vm',
+		       'bUnit_vm_organizers',
+		       'b_cache_file');
+      b_cache_file::emptyCache();
       
       // Extract list of relevant events for the organizers
       $events = array();

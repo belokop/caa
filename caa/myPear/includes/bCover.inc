@@ -86,7 +86,7 @@ class bCover{
 	if (empty($visit['day1'])) $this->current_solution[$id][$k]['day1'] = $visit['day1'] = $visit[$this->start];
 	if (empty($visit['day9'])) $this->current_solution[$id][$k]['day9'] = $visit['day9'] = $visit[$this->end];
  	if (count($visits) > 1) $n_u += ($visit[$this->end] - $visit[$this->start]);
-	static $hghjhjhj=0; if (!$hghjhjhj++) b_debug::print_r($visit,"this->current_solution-$id-$k");
+	// static $hghjhjhj=0; if (!$hghjhjhj++) b_debug::print_r($visit,"this->current_solution-$id-$k");
       }
       $n_unused += (int)(($this->timeMx - $this->timeMn - $n_u) / 24 / 3600);
       $n_used   += $n_u;

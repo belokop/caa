@@ -107,7 +107,6 @@ class bList_eaEmpRecords extends bList{
     }
     
     // Replace the virtual employment type by the real one
-      $this->show_gv = True; 
     switch(@$_POST['e_type']){
     case '20_mp_org':
     case '22_op_org':
@@ -489,6 +488,7 @@ class bList_eaEmpRecords extends bList{
    * Add button "go to the personal data"
    */
   protected function draw_buttons(){
+    static $dejaVu = 0;
     if ($reply = parent::draw_buttons()){
       if ($this->MODE == 'RO'){
 	// Print a button to update the parent Avatar record
@@ -500,9 +500,9 @@ class bList_eaEmpRecords extends bList{
 	
 	// Let the record to be public                                                                                                                                                                       
 	if (!myOrg()->eaMembers()->isMemberAccess_public($this->av->ID,True)){
-	  if ($this->av->isE() || $this->av->isV()){
+	  if ($this->av->isE(True)){
 	    myOrg()->eaMembers()->setMemberAccess($this->av->ID,EA_acl_public);
-	  }else{
+	  }elseif (!$dejaVu++){
 	    $msg = 'Make this information public';
 	    myPear::INFO("The information on this page is password protected, i.e. only the authorized persons might see it. ".
 			 "<br/>".

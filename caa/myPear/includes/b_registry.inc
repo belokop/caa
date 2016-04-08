@@ -276,7 +276,8 @@ class b_reg{
 						  'i'=>$identities['i']);
 	$identities['m'] = $m;
 	foreach($identities as $k=>$v){
-	  myPear::$sql_identities[$class][$k] = $v;
+	  // Copy identities to "hello world" module in order to be able rebuild menus from 'hw'
+	  myPear::$sql_identities[$class]['hw'] = myPear::$sql_identities[$class][$k] = $v;
 	}
       }
     }

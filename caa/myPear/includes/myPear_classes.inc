@@ -381,11 +381,11 @@ class b_fmt{
       $dejaVu = 0,
       $stay_lower = array('at','in','by','the','for', 'and', 'of','och',// Connecting words
 			  //			  'van','van de','van der'
-			  'v.','van','von','de','del','der','den','la','los','\\\'t', // Dutch, French, German nobility
+			  'v.','van','von','di','de','del','der','den','la','los','\\\'t', // Dutch, French, German nobility
 			  'degli'),   // Common names
       
       // specific words like PhD
-      $specific   = array('PhD', 'I', 'II', 'III','CERN','MIT','IHEP','CNRS','EPFL','MIPT',),
+      $specific   = array('PhD', 'I', 'II', 'III','CERN','MIT','IHEP','CNRS','EPFL','MIPT','HR','CERN','NBI'),
       // d'Artagnan
       $sustr      = array("/\\bD'/i"=>"d'", "/\\bDe'/i"=>"de'");
     

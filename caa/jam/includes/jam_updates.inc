@@ -1,9 +1,5 @@
 <?php
 
-//
-// Don't forget to merge 3 referee-avatars for the applicant "PALMKVIST Jakob" (and remove fellows2012@xxx from the mail)
-//
-
 myPear_startup_queue('jam_update13');
 myPear_startup_queue('jam_updates');
 
