@@ -99,8 +99,8 @@ class agenda_vm extends agenda{
     //    $conferences_to_sync = array($c);
 
     /* now process the recent events only */
-    myPear_db()->noAutoCommit('start');
     foreach ($conferences_to_sync as $args){
+      myPear_db()->noAutoCommit('start');
       foreach ($this->parser($args) as $ev_id=>$program) {
 	$program['title'] = strip_tags($program['title']);
 	$allRegistrants = array();
@@ -367,8 +367,8 @@ class agenda_vm extends agenda{
 	  }
 	}
       }
+      myPear_db()->noAutoCommit('end');
     }
-    myPear_db()->noAutoCommit('end');
     myPear::MESSAGE_close();
     
     if (!$this->nUpdates && !empty($events)) print x('h2','The accommodation database is up to date').
