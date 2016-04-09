@@ -8,6 +8,10 @@ define('myPear_DATE',    $releaseDate);
 define('cnf_dev_email','yb@nordita.org');
 define('cnf_test_email','test@nordita.org');
 
+// Getting strange problems with deadlocks...
+// Let's for a while not use "autocommit", i.e. cancel transactions. 
+define('DB_autocommit',False);
+
 ///
 // Avoid problems with the locales,
 // Define monetary & language constants

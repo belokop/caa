@@ -1649,6 +1649,11 @@ class b_debug{
       print x('h1',__METHOD__);
       print x('pre',__method__."($txt)");
       if ($class !== Null) self::var_dump($class,'Second argument');
+
+      print "\n<h2>---Database transactions</h2>\n";
+      printf("%s = %s\n",x('strong','in_autocommit'), var_export(myPear_db()->in_autocommit, True));
+      printf("%s = %s\n",x('strong','in_transaction'),var_export(myPear_db()->in_transaction,True));
+
       if (is_object(bAuth::$av)){
 	print "\n<h2>---__AUTHENTICATION</h2>\n";
 	print bAuth::$av->__toString()."\n";
@@ -1668,10 +1673,6 @@ class b_debug{
 	print "\n<h2>---_POST</h2>\n";
 	self::print_r($_POST); 
       }
-
-      print "\n<h2>---Database transactions</h2>\n";
-      printf("%s = %s\n",x('strong','in_autocommit'), var_export(myPear_db()->in_autocommit, True));
-      printf("%s = %s\n",x('strong','in_transaction'),var_export(myPear_db()->in_transaction,True));
 
       print "\n<h2>---traceBack</h2>\n";
       echo '<pre>'; debug_print_backtrace(); echo '</pre>'; 

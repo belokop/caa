@@ -73,6 +73,12 @@ class bDB extends mysqli{
    */
   public $in_autocommit = False;
   function noAutoCommit($mode='end'){
+
+    if (!DB_autocommit){
+      if(cnf_dev) myPear::WARNING('"SET AUTOCOMMIT" is ignored...');
+      return;
+    }
+
     $this->dbg('',cnf_dev,'greenText');
     switch($mode){
     case 'start':
