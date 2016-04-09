@@ -293,24 +293,25 @@ class myPear{
     if (is_numeric($args)) $args = (int)$args;
     // Sanity...
     if (empty($args)){
-      if (in_array('fatal', $mode)) b_debug::internalError("??? Can't find $class($args)");
+      if (in_array('fatal', $mode)) b_debug::internalError("??? Empty args, can't find $class($args)");
       return Null;
     }
 
     if(!in_array('nocache',$mode)) bCount()->add(__FUNCTION__,$class);
 
-    // Keep the instances in a local cache
-    static $reply = array();
+    // Optionally get the class name from class_ID
     if (empty($class)){
       $class = self::getClassFromID($args,False,True);
       b_debug::xxx("getClassFromID($args) - $class",'I');
       bCount()->add(__FUNCTION__,'getClassFromID');
     }
+
+    // Keep the instances in a local cache
+    static $reply = array();
     $hash = b_crypt::hash($class.serialize($args));
     
     // Save memory, remove instance from the cache 
     if (in_array('clean',$mode)){ 
-      if (!empty($reply[$hash])) bCount()->add(__FUNCTION__,"$class <span class='greenText'>removed</span>");
       unset($reply[$hash]);
       if ($class === 'all') $reply = array();
       return Null;
@@ -337,10 +338,9 @@ class myPear{
 
       // Query the database
       $where_str = join(' AND ',$where);
-      if (empty($table) || empty($id)){
-	// The module is not yet initialised
-	$num_rows = 0;
+      if (empty($table) || empty($id)){	// The module is not yet initialised
 	$qquery = sprintf("can't locate table for %s::%s",b_reg::$current_module,$class);
+	$num_rows = 0;
       }else{
 	$q = myPear_db()->qquery($qquery="SELECT $id FROM $table WHERE $where_str",$verbose=(cnf_dev && !is_array($args)));
 	$num_rows = myPear_db()->num_rows($q);

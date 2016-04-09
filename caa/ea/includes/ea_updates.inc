@@ -42,17 +42,45 @@ function ea_updates(){
   }
 }
 
-
-// Minor fix
+/*
+ * Re-erect offices allocation...
+ */
 function ea_update15(){
   if (!cnf_CLI){
 
-    foreach(array('023:010',
-		  '023:012',
-		  '133:027') as $o_name) myPear_db()->qquery("DELETE FROM abs_offices WHERE o_name='$o_name'",cnf_dev);
+    // Offices for visitors as of 1-Apr-2016
+    $off_visitors = array(
+			  '122:004' => array('o_capacity'=>5, 'o_status'=>'visitors'), 
+			  '122:017' => array('o_capacity'=>2, 'o_status'=>'visitors'), 
+			  '122:027' => array('o_capacity'=>4, 'o_status'=>'visitors'), 
+			  '122:028' => array('o_capacity'=>4, 'o_status'=>'visitors'), 
+			  '122:029' => array('o_capacity'=>5, 'o_status'=>'visitors'), 
+			  '122:030' => array('o_capacity'=>2, 'o_status'=>'visitors'), 
+			  );
+    $off_bogus = array('023:010',
+		       '023:012',
+		       '133:027');
+  
+
+    // myPear_db()->qquery("RENAME TABLE abs_offices TO ea_offices",cnf_dev);
+    myPear_db()->qquery("ALTER TABLE `abs_offices` CHANGE `o_capacity` `o_capacity` INT(11) NOT NULL DEFAULT '1'",cnf_dev);
+    myPear_db()->qquery("ALTER TABLE `abs_offices` DROP INDEX o_name, ADD UNIQUE o_name (o_name)",cnf_dev);
+    
     myPear_db()->qquery("DELETE FROM abs_offices WHERE o_capacity > 999",cnf_dev);
     myPear_db()->qquery("UPDATE abs_offices SET o_capacity=1 WHERE o_capacity = 0 OR o_capacity IS NULL",cnf_dev);
     myPear_db()->qquery("ALTER TABLE `abs_offices` CHANGE `o_capacity` `o_capacity` INT(11) NOT NULL DEFAULT '1'",cnf_dev);
+
+    myPear_db()->qquery("UPDATE abs_offices SET o_status = 'staff'",cnf_dev);
+    foreach($off_visitors as $o_name=>$data){
+      $o = myPear::getInstance_new('bForm_vm_Office',array('o_name'=>$o_name),'nocache',array('abs_offices','o_id'));
+      $o->isVITAL = array();
+      $o->updateDB($data);
+    }
+
+    foreach($off_bogus as $o_name) myPear_db()->qquery("DELETE FROM abs_offices WHERE o_name='$o_name'",cnf_dev);
+
+    myPear_db()->qquery("DELETE FROM abs_offices WHERE o_capacity > 999",cnf_dev);
+    myPear_db()->qquery("UPDATE abs_offices SET o_capacity=1 WHERE o_capacity = 0 OR o_capacity IS NULL",cnf_dev);
     
     // "newcomer" looks better
     myPear_db()->qquery("UPDATE zzz_logs SET log_type='newcomer' WHERE log_type='ea' OR log_type='add_member'",True);

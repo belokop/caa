@@ -950,10 +950,9 @@ class bForm_vm_Visit extends bForm_vm {
 				  'av_email'=>'av_email',
 				  ),'only_if_not_defined');
       foreach(array(array('av_id'   =>$this->getValue('v_avid',  1,1)),
-		    array('av_email'=>$this->getValue('av_email',1,1))) as $arg)
-	if ($this->av = bForm_Avatar::hook($arg)) break;
+		    array('av_email'=>$this->getValue('av_email',1,1))) as $arg) if ($this->av = bForm_Avatar::hook($arg)) break;
       if(is_object($this->av)){
-	// Preset the office for staff members
+	// Set the office (for the visit period) for staff members
 	bForm_Avatar::set_context($this->av,VM_MODULE);
 	$this->av->hook_employment();
 	if ($this->av->isE(True)){

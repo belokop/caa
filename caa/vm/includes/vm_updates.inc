@@ -119,30 +119,9 @@ function vm_compat_update_ad_hocks(){
  * Offices for the visitors are allocated again...
  */
 function vm_compat_update_42(){
-  $off_visitors = array(
-			'122:004' => array('o_capacity'=>5, 'o_status'=>'visitors'), 
-			'122:017' => array('o_capacity'=>2, 'o_status'=>'visitors'), 
-			'122:027' => array('o_capacity'=>4, 'o_status'=>'visitors'), 
-			'122:028' => array('o_capacity'=>4, 'o_status'=>'visitors'), 
-			'122:029' => array('o_capacity'=>5, 'o_status'=>'visitors'), 
-			'122:030' => array('o_capacity'=>2, 'o_status'=>'visitors'), 
-			);
-  
-  // Re-erect offices allocation...
-  myPear_db()->qquery("DELETE FROM abs_offices WHERE o_capacity > 999",cnf_dev);
-  myPear_db()->qquery("UPDATE abs_offices SET o_capacity=1 WHERE o_capacity = 0 OR o_capacity IS NULL",cnf_dev);
-  myPear_db()->qquery("ALTER TABLE `abs_offices` CHANGE `o_capacity` `o_capacity` INT(11) NOT NULL DEFAULT '1'",cnf_dev);
-
-  // Offices for visitors as of 1-Apr-2016
-  myPear_db()->qquery("UPDATE abs_offices SET o_status = 'staff'",cnf_dev);
-  foreach($off_visitors as $o_name=>$data){
-    $o = myPear::getInstance_new('bForm_vm_Office',array('o_name'=>$o_name),'nocache',array('abs_offices','o_id'));
-    $o->isVITAL = array();
-    $o->updateDB($data);
-  }
 
   // Update the already accepted visitors
-  $q = myPear_db()->qquery("SELECT v_id,v_eid FROM abs_visits WHERE v_status='".STATUS_YES."' AND v_eid > 0 AND v_start > ".b_time::txt2unix('2016-03-29'),cnf_dev);
+  $q = myPear_db()->qquery("SELECT v_id,v_eid FROM abs_visits WHERE v_status='".STATUS_YES."' AND v_eid > 0 AND v_start > ".b_time::txt2unix('2016-03-20'),cnf_dev);
   while($r = myPear_db()->next_record($q)){
     $e = myPear::getInstance_new('bForm_vm_Event',$r['v_eid'],'fatal',array('abs_events','e_id'));
     if (VM::outOfScope($e)) continue;
