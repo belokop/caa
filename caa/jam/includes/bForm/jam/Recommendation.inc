@@ -307,7 +307,7 @@ class bForm_jam_Recommendation extends bForm_jam {
    */
   function readDefRecord(){
 
-    if (is_numeric($this->ID) && (int)$this->ID>0) {
+    if (myPear::is_int($this->ID)) {
       $w[] = $this->TABLEID.'='.$this->ID;
     }elseif (is_object($this->av) && is_object($this->ap)){
       $w[] = "av_id = ".$this->av->ID;

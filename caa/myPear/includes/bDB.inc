@@ -71,7 +71,7 @@ class bDB extends mysqli{
   /*
    * Important for InnoDB
    */
-  protected $in_autocommit = False;
+  public $in_autocommit = False;
   function noAutoCommit($mode='end'){
     $this->dbg('',cnf_dev,'greenText');
     switch($mode){
@@ -90,7 +90,7 @@ class bDB extends mysqli{
   /*
    * Naive transaction handler
    */
-  protected $in_transaction = 0;
+  public $in_transaction = 0;
   function transaction($mode='start',$msg=''){
     $this->dbg('',cnf_dev,'greenText');
     switch($mode){

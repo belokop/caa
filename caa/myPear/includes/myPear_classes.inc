@@ -1658,14 +1658,21 @@ class b_debug{
       foreach(array('REQUEST_URI','REMOTE_ADDR','HTTP_REFERER','HTTP_USER_AGENT','PATH_TRANSLATED') as $k){
 	if (!empty($_SERVER[$k])) printf("<code>%s = %s</code><br>\n",$k,$_SERVER[$k]); 
       }
+
       if (!empty($_GET)){
 	print "\n<h2>---_GET</h2>\n";
 	self::print_r($_GET);
       }
+
       if (!empty($_POST)){
 	print "\n<h2>---_POST</h2>\n";
 	self::print_r($_POST); 
       }
+
+      print "\n<h2>---Database transactions</h2>\n";
+      printf("%s = %s\n",x('strong','in_autocommit'), var_export(myPear_db()->in_autocommit, True));
+      printf("%s = %s\n",x('strong','in_transaction'),var_export(myPear_db()->in_transaction,True));
+
       print "\n<h2>---traceBack</h2>\n";
       echo '<pre>'; debug_print_backtrace(); echo '</pre>'; 
       if (!empty($_SESSION['messages'])){
@@ -1986,7 +1993,7 @@ class b_time{
    * Make sure that $start < $end
    */ 
   public static function adjust_start_end(&$start,&$end){
-    if (is_numeric($start) && is_numeric($end) && ($start > $end)){
+    if (myPear::is_int($start) && myPear::is_int($end) && ($start > $end)){
       $t = $start; 
       $start = $end; 
       $end = $t; 
@@ -2000,8 +2007,9 @@ class b_time{
   public static function date($format,$date=Null){
     if (empty($date)) $date = date();
     $date = b_time::txt2unix($date);
-    if (is_numeric($date)) $reply = date($format,$date);
-    else                   $reply = $date;
+    $reply = (myPear::is_int($date)
+	      ? date($format,$date)
+	      : $date);
     return $reply;
   }
 

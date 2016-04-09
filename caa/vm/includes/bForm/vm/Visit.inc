@@ -294,7 +294,7 @@ class bForm_vm_Visit extends bForm_vm {
    * Set the status
    */
   public function setStatus($v_status=Null){
-    if (!is_numeric($this->ID)) return;
+    if (!myPear::is_int($this->ID)) return;
     
     $was = @$this->formDB['v_status'];
     if ($was === $v_status){

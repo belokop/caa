@@ -2158,7 +2158,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
     $this->total = array();
     foreach ($this->rec_visit as $v_id=>$rec){
       foreach($this->money as $item){
-	if (!($v = (is_numeric(@$rec[$item]) && (int)$rec[$item]
+	if (!($v = (myPear::is_int(@$rec[$item]) 
 		    ? $rec[$item]
 		    : 0))) continue;
 	if ((strpos($item,'_r') == (strlen($item)-2)) && ($item != 'total_r')) $this->something_was_paid = True;

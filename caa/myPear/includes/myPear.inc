@@ -115,12 +115,21 @@ class myPear{
   }
 
   /*
-   * String '0' is not empty value for this function
+   * (string)'0' & (int)0 are not empty value for this function
    */
   public static function is_empty($value){
     $reply = empty($value) && ($value !== 0) && ($value !== '0');
     return $reply;
   }
+
+  /*
+   * 0 is not int for this function
+   */
+  public static function is_int($value){
+    $reply = !empty($value) && (is_int($value) || is_numeric($value));
+    return $reply;
+  }
+
 
   /*
    * Compare two values (start '===')
@@ -288,15 +297,15 @@ class myPear{
 
     // Escape the bogus invocation    
     if (!myPear_db()->isReady()) return Null;
-
-    if (!is_array($mode))  $mode = array($mode);
-    if (is_numeric($args)) $args = (int)$args;
     // Sanity...
     if (empty($args)){
       if (in_array('fatal', $mode)) b_debug::internalError("??? Empty args, can't find $class($args)");
       return Null;
     }
 
+
+    if (!is_array($mode))      $mode = array($mode);
+    if (myPear::is_int($args)) $args = (int)$args;
     if(!in_array('nocache',$mode)) bCount()->add(__FUNCTION__,$class);
 
     // Optionally get the class name from class_ID
@@ -543,7 +552,7 @@ class myPear{
       if    ($noFormPrefix==='class') $reply = $id;
       elseif($noFormPrefix)           $reply = str_replace(array('form','bForm_'),'',get_class($id));
       else                            $reply = get_class($id);
-    }elseif(is_numeric($id)){
+    }elseif(myPear::is_int($id)){
       if ($reply = self::isIdentified($id,$current_module_only)){
 	self::$_getClassFromID = myPear::$sql_identities[$reply];
 	if    ($noFormPrefix==='class') $reply = self::getInstance_new($reply,$id);
@@ -636,7 +645,7 @@ class myPear{
     }
 
     // Normal call
-    bCount()->add(__FUNCTION__,($id_count = (is_numeric($id) ? 'this->ID' : preg_replace('/( OR ).*/','',$id))));
+    bCount()->add(__FUNCTION__,($id_count = (myPear::is_int($id) ? 'this->ID' : preg_replace('/( OR ).*/','',$id))));
     if (isset($cache[$id])){
       bCount()->add(__FUNCTION__,"$id_count <span class='greenText'>inCache</span>");
     }else{
@@ -661,7 +670,7 @@ class myPear{
 	}
 	if (empty($selects))  continue;
 
-	$query = "SELECT ".implode(',',$selects)." FROM ".$_identities['t']." WHERE ".(is_numeric($id) 
+	$query = "SELECT ".implode(',',$selects)." FROM ".$_identities['t']." WHERE ".(myPear::is_int($id) 
 										       ? $_identities['i']."='$id'" 
 										       : $id);
 	// myPear::DEBUG($query);

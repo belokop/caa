@@ -571,7 +571,7 @@ Organizing committee for \"<event/>\"."));
 	if (!empty($a_name)){
 	  if (strpos($a_name,';')===False) $a_name .= ';the cost will be billed to '.myOrg_name;
 	  list($n,$condition) = explode(';',str_replace(array('[',']'),'',$a_name),2);
-	  if (is_numeric($n)) $n .= ' inhabitant'.($n>1?'s':'');
+	  if (myPear::is_int($n)) $n .= ' inhabitant'.($n>1?'s':'');
 	  $billedTo = array($n,$condition.'.');
 	}else{
 	  $billedTo = array();
