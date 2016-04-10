@@ -42,6 +42,7 @@ class bHolder_ea_Offices extends bHolder_ea{
       $av = myPear::getInstance_new(bForm_Avatar::$bForm_Avatar,$av_id,'fatal');
       $o_name = $av->get_staffOffice();
       if (empty($o_name))	$o_name = ' No office';
+      else       myPear::getInstance_new('bForm_'.b_reg::$current_module.'_Office',array('o_name'=>$o_name));
       $this->offices[$o_name][] = $av;
     }
     ksort($this->offices);
@@ -64,7 +65,7 @@ class bHolder_ea_Offices extends bHolder_ea{
     case 'summary':
       $header = array('hus'       => ' ',
 		      'o_name'    => ' ',
-		      'o_status'  => ' ', // 'assignment',
+		      '_o_status' => ' ', // 'assignment',
 		      'o_capacity'=> 'capacity',
 		      // 'o_phone'   => 'phone',
 		      //'_n_sits'   => 'usage',
@@ -88,6 +89,10 @@ class bHolder_ea_Offices extends bHolder_ea{
     $this->t->class['o_status'] = 'align_right';
     $this->t->showLineCounter = False;
     
+    $this->rec['_o_status'] = ($this->rec['o_status'] == OFFICE_AUTO_ALLOCATABLE
+			       ? x('em',x('strong',OFFICE_AUTO_ALLOCATABLE))
+			       : $this->rec['o_status']);
+
     $o = myPear::getInstance_new('bForm_'.b_reg::$current_module.'_Office',$this->rec['o_id'],'fatal');
     $name = explode(':',$o_name = $o->getValue('o_name'),2);
     $building = substr($name[0],0,strlen($name[0])-1);
@@ -115,11 +120,10 @@ class bHolder_ea_Offices extends bHolder_ea{
       foreach($this->offices[$o_name] as $av){
 	$this->rec['_tenants'] = (empty($av)
 				  ? ' '
-				  : $av->fmtName('lf'));
-	$this->t->prt($this->rec);
+				  : x(sprintf('a href="%s"',b_url::same('?mode_once=RO&id='.$av->ID.'&form=Avatar_ea')),$av->fmtName('fl')));
+  	$this->t->prt($this->rec);
 	$this->rec = array();
       }
-      
       break;
       
     case 'doorLabels':

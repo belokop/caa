@@ -348,7 +348,7 @@ class bUnit_ea_members extends bUnit_ea {
     // get the affiliations used by the organization
     $affiliations = myOrg()->getAffiliation();
 
-    // walk thru all the posible affiliations ans select those used by the organization
+    // walk thru all the posible affiliations and select those used by the organization
     foreach(myPear_set_roles('affiliation') as $role=>$descr){
       // Skip the "root tab" (those which have the 'page' argument),
       // they are processed by the parent method

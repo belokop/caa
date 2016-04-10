@@ -131,6 +131,9 @@ class APImenu_ea extends APImenu{
 	break;
 
       case tab_ea_off_list:
+	$reply = True;
+	break;
+
       case tab_ea_off_door_labels:
 	$reply = EA_manager_here;
 	break;
