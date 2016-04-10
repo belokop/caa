@@ -351,7 +351,7 @@ class myPear{
 	$qquery = sprintf("can't locate table for %s::%s",b_reg::$current_module,$class);
 	$num_rows = 0;
       }else{
-	$q = myPear_db()->qquery($qquery="SELECT $id FROM $table WHERE $where_str",$verbose=(cnf_dev && !is_array($args)));
+	$q = myPear_db()->qquery($qquery="SELECT $id FROM $table WHERE $where_str",$verbose=(cnf_dev || cnf_show_i));
 	$num_rows = myPear_db()->num_rows($q);
       }
 
