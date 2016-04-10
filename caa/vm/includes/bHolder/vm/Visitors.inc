@@ -415,18 +415,19 @@ class bHolder_vm_Visitors extends bHolder_vm{
     case 'lists':
       if ($v_id = @$_GET['refuse_once']){
 	
-	$this->v = myPear::getInstance_new('bForm_vm_Visit',$v_id,array('fatal','nocache'));
+	$this->v = new bForm_vm_Visit($v_id);
 	$this->v->setStatus(STATUS_NO);
 
       }elseif ($v_id = @$_GET['approve_once']){
 
-	$this->v = myPear::getInstance_new('bForm_vm_Visit',$v_id,array('fatal','nocache'));
+	$this->v = new bForm_vm_Visit($v_id);
 	$this->v->setStatus(STATUS_YES);
 
       }elseif ($policy = @$_GET['toggle_once']){
 
-	$this->v = myPear::getInstance_new('bForm_vm_Visit',$_GET['v_id'],array('strict','nocache'));
-	if ($this->v) $this->v->setPolicy($policy,!$this->v->getPolicy($policy));
+	$this->v = new bForm_vm_Visit($_GET['v_id']);
+	$policy_now = $this->v->getPolicy($policy);
+	$this->v->setPolicy($policy,!$policy_now);
 
       }elseif(@$_GET['invoice_once']){
 
@@ -2054,22 +2055,42 @@ class bHolder_vm_Visitors extends bHolder_vm{
 					    'l'=>b_url::same("?invoice_once=yes&v_id=".$this->rec['v_id'])));
 	  break; 
 	    
+	case VM_V_provideOffice:
+	  if (myOrg()->eaMembers()->isMember($this->rec['av_id'])){
+	    $av = myPear::getInstance_new('bForm_Avatar_vm',$this->rec['av_id'],array('fatal','nocache'));
+	    if ($av->isE(True)){
+	      $icon = '';
+	      break;
+	    }
+	  }
+	  $already_payed = '';
+	  $hasRightTo = 'assign_offices';
+	  $payed = 'provided';
+
 	case VM_V_payPerdiem:
-	  if ($already_payed === Null) $already_payed = (bool)(is_object($this->exp) && $this->exp->scholarshipP(False,False));
+	  if ($already_payed === Null){
+	    $already_payed = (bool)(is_object($this->exp) && $this->exp->scholarshipP(False,False));
+	    $hasRightTo = 'setup_reimbursement';
+	    $payed = 'payed';
+	  }
 	case VM_V_payTrip:
-	  if ($already_payed === Null) $already_payed = (bool)(is_object($this->exp) && $this->exp->scholarshipT(False,False));
+	  if ($already_payed === Null){
+	    $already_payed = (bool)(is_object($this->exp) && $this->exp->scholarshipT(False,False));
+	    $hasRightTo = 'setup_reimbursement';
+	    $payed = 'payed';
+	  }
 
 	  // Show either a click-able button or just an icon
 	  $img  = @$descr['i'] . ($yes_no ? '_on' : '_off');
-	  $icon = (!$already_payed && VM::hasRightTo('setup_reimbursement',$this->rec)
+	  $icon = (!$already_payed && VM::hasRightTo('$hasRightTo',$this->rec)
 		   ? bIcons()->getButton(array('class'=>'page_load_progress',
 						       'i'=>$img,
 						       'c'=>($yes_no ? 'only_online' : 'only_online opacity_on'),
-						       'd'=>$descr['i'].($yes_no ? '' : ' not').' to be payed, click to change',
+						       'd'=>$descr['i'].($yes_no ? '' : ' not')." to be $payed, click to change",
 						       'l'=>b_url::same("?resetcache_once=1&toggle_once=$p&v_id=".$this->rec['v_id'])))
 		   : bIcons()->get      (array('i'=>$img,
 						       'c'=>($yes_no ? 'only_online' : 'only_online opacity_on'),
-						       'd'=>$descr['i'].($yes_no ? '' :' not').' payed')));
+						       'd'=>$descr['i'].($yes_no ? '' :' not')." $payed")));
 	  break;
 	default:
 	}

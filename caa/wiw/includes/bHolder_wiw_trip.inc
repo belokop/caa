@@ -1,7 +1,7 @@
 <?php
-locateAndInclude('bHolder');
+locateAndInclude('bHolder_ea');
 
-class bHolder_wiw_trip extends bHolder{
+class bHolder_wiw_trip extends bHolder_ea{
 
   public $av_id = Null;
   public $sortBy_default = 't_departure';

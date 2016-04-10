@@ -1182,7 +1182,7 @@ class bForm_vm_Visit extends bForm_vm {
 			 array('_o_name' => array('textField')),
 			 array('d'=>'set office',
 			       'i'=>'i-desktop',
-			       'l'=>$this->sameURL_but(array('block'=>'project','mode'=>'RW'))));
+			       'l'=>$this->sameURL_but(array('block'=>'Office','mode'=>'RW'))));
       }
     }
   }

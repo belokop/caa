@@ -2,7 +2,7 @@
 /**
  * Visitors Manager (VM) configuration file
  */
-$releaseDate = '2016-04-09';
+$releaseDate = '2016-04-10';
 define('VM_MODULE'   , 'vm');
 define('VM_VERSION','5.78');
 
@@ -419,7 +419,7 @@ class VM extends myPear{
 
   static $offers         = array(VM_V_provideOffice    => array('d'=>'To allocate office?',
 								't'=>when_approved,
-								'i'=>'trip'));
+								'i'=>'office'));
   
   static $reimbursements = array(VM_V_payPerdiem       => array('d'=> VM_wordPerdiem_pay,
 								'i'=> VM_wordPerdiem),
@@ -767,6 +767,7 @@ class VM extends myPear{
       $reply = (VM_booker_here || (is_object($visit=$argv) && $visit->isWritable()));
       break;
       
+    case 'assign_offices':
     case 'select_budget':  
       $reply = VM_administrator_here;
       break;

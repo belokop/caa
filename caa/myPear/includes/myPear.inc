@@ -297,14 +297,14 @@ class myPear{
 
     // Escape the bogus invocation    
     if (!myPear_db()->isReady()) return Null;
+
     // Sanity...
+    if (!is_array($mode))      $mode = array($mode);
     if (empty($args)){
       if (in_array('fatal', $mode)) b_debug::internalError("??? Empty args, can't find $class($args)");
       return Null;
     }
 
-
-    if (!is_array($mode))      $mode = array($mode);
     if (myPear::is_int($args)) $args = (int)$args;
     if(!in_array('nocache',$mode)) bCount()->add(__FUNCTION__,$class);
 

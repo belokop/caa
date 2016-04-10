@@ -39,11 +39,13 @@ class bHolder_ea_Offices extends bHolder_ea{
   protected function init(){
     $ea = new bUnit_ea_members();
     foreach($ea->getMembers_byStatus() as $av_id=>$rec){
-      $av = myPear::getInstance_new(bForm_Avatar::$bForm_Avatar,$av_id,'fatal');
+      $av = myPear::getInstance_new('bForm_Avatar_'.b_reg::$current_module,$av_id,'fatal');
       $o_name = $av->get_staffOffice();
-      if (empty($o_name))	$o_name = ' No office';
-      else       myPear::getInstance_new('bForm_'.b_reg::$current_module.'_Office',array('o_name'=>$o_name));
-      $this->offices[$o_name][] = $av;
+      if (!empty($o_name) || (@$rec['role2'] !== EA_role_boardMember)){
+	if (empty($o_name))	$o_name = ' No office';
+	else       myPear::getInstance_new('bForm_'.b_reg::$current_module.'_Office',array('o_name'=>$o_name));
+	$this->offices[$o_name][] = $av;
+      }
     }
     ksort($this->offices);
   }
@@ -71,7 +73,8 @@ class bHolder_ea_Offices extends bHolder_ea{
 		      //'_n_sits'   => 'usage',
 		      '_tenants'  => ' ',
 		      );
-      if (b_reg::$current_module == EA_MODULE) unset($header['_n_sits']);
+      if (!EA_member_here) unset($header['_o_status'],$header['o_capacity']);
+
       foreach ($header as $k=>$v) $this->th_attr[$k] = "style='text-align:right;'";
       foreach ($header as $k=>$v) $this->td_attr[$k] = "style='text-align:right;'";
       break;
@@ -90,8 +93,8 @@ class bHolder_ea_Offices extends bHolder_ea{
     $this->t->showLineCounter = False;
     
     $this->rec['_o_status'] = ($this->rec['o_status'] == OFFICE_AUTO_ALLOCATABLE
-			       ? x('em',x('strong',OFFICE_AUTO_ALLOCATABLE))
-			       : $this->rec['o_status']);
+			       ? x('em style="font-size:smaller"',x('strong','Office for '.OFFICE_AUTO_ALLOCATABLE))
+			       : x('em style="font-size:smaller"','Office for '.$this->rec['o_status']));
 
     $o = myPear::getInstance_new('bForm_'.b_reg::$current_module.'_Office',$this->rec['o_id'],'fatal');
     $name = explode(':',$o_name = $o->getValue('o_name'),2);
@@ -112,18 +115,20 @@ class bHolder_ea_Offices extends bHolder_ea{
   function format() {
     switch($this->doing){
     case 'summary':
+      if ($this->isWritable() || !empty($this->offices[$this->rec['o_name']])){
 
-      list($o,$o_name) = $this->format_summary();
-      
-      if(empty($this->offices[$o_name])) $this->office[$o_name] = array();
-      if(empty($this->offices[$o_name])) $this->offices[$o_name] = array();
-      foreach($this->offices[$o_name] as $av){
-	$this->rec['_tenants'] = (empty($av)
-				  ? ' '
-				  : x(sprintf('a href="%s"',b_url::same('?mode_once=RO&id='.$av->ID.'&form=Avatar_ea')),$av->fmtName('fl')));
-  	$this->t->prt($this->rec);
-	$this->rec = array();
+	list($o,$o_name) = $this->format_summary();
+	
+	if(empty($this->offices[$o_name])) $this->offices[$o_name] = array(0);
+	foreach($this->offices[$o_name] as $av){
+	  $this->rec['_tenants'] = (empty($av)
+				    ? ' '
+				    : x(sprintf('a href="%s"',b_url::same('?mode_once=RO&id='.$av->ID.'&form=Avatar_ea')),$av->fmtName('fl')));
+	  $this->t->prt($this->rec);
+	  $this->rec = array();
+	}
       }
+      $this->rec = array();
       break;
       
     case 'doorLabels':
@@ -153,12 +158,13 @@ class bHolder_ea_Offices extends bHolder_ea{
     switch($this->doing){
     case 'summary':
       $o_name = ' No office';
-      if (empty($this->offices[$o_name])) $this->offices[$o_name] = array(0);
-      $this->t->tr(' ');	$this->t->tr(' ');
+      if (!EA_member_here) unset($this->offices[$o_name]);
+      if (empty($this->offices[$o_name])) $this->offices[$o_name] = array();
+      $this->t->tr(array('&nbsp'));	
       foreach($this->offices[$o_name] as $av){
 	$user = (empty($av)
 		 ? ' '
-		 : $av->fmtName('lf'));
+		 : x(sprintf('a href="%s"',b_url::same('?mode_once=RO&id='.$av->ID.'&form=Avatar_ea')),$av->fmtName('fl')));
 	$this->t->prt(array('hus'    =>x('h4',$o_name),
 			    '_tenants'=> $user));
 	$o_name = '';

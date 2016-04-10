@@ -368,13 +368,13 @@ class myPear_getValue{
    * Same, but with the enforced DB update
    */
   public function getValue_reset_forced($name,$value=Null){
-    $this->getValue_reset($name,$value);
     if ((int)$this->ID && method_exists($this,'updateDB')){
       $isVITAL = $this->isVITAL;
       $this->isVITAL = array();
       $this->updateDB(array($name=>$value));
       $this->isVITAL = $isVITAL;
     }
+    $this->getValue_reset($name,$value);
   }
 
   

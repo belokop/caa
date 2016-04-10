@@ -26,6 +26,12 @@ class bHolder_vm_Offices extends bHolder_ea_Offices{
     if (empty($tenants)) $tenants = array('');
 
     foreach($tenants as $k=>$tenant){
+
+      if (!empty($tenant)){
+      $v = new bForm_vm_Visit($tenant[0]);
+      $v->show_gv = True;
+      $this->dbg($v->av->fmtName().' '.var_export($v->getValue('v_oid'),True),True);
+      }
       if (!empty($tenant))$this->rec['_tenants'] = x(sprintf('a href="%s"',
 							     b_url::same(sprintf('?mode_once=RO&id=%s&form=vm_Visit',$tenant[0]))),$tenant[1]);
       if ($k == 0) list($o,$o_name) = $this->format_summary();

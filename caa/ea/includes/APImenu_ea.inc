@@ -61,8 +61,8 @@ class APImenu_ea extends APImenu{
 			     tab_ea_admin_org => 44,
 			     tab_ea_admin_org_structure => 45,
 			     tab_ea_admin_orgs=> 46,
-			     tab_ea_off_door_labels=>77,
 			     tab_ea_off_list   => 88,
+			     tab_ea_off_door_labels=>90,
 			     tab__syslog      => 99,
 
 			     );

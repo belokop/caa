@@ -1,11 +1,10 @@
 <?php
-$releaseDate = '2016-04-07';
+$releaseDate = '2016-04-10';
 define('WIW_MODULE'   , 'wiw');
 define('WIW_VERSION','5.11.rc');
 
 define('wiw_acl_public',   'public');
 define('wiw_acl_protected','protected');
-define('wiw_acl_private',   'private');
 
 define('RANK_wiw_admin', 11);
 define('RANK_wiw_manager', 12);

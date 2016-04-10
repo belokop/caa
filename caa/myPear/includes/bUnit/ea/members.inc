@@ -282,8 +282,8 @@ class bUnit_ea_members extends bUnit_ea {
    */
   protected function isUnitMemberDeletable(){
     locateAndInclude('bList_eaEmpRecords');
-    return b_cnf::check_conditions(array(False=>array('isEA'=>bList_eaEmpRecords::isEA($this->rec['um_avid'],$this->myOrg_ID)),
-					 'default' => parent::isUnitMemberDeletable()),
+    return b_cnf::check_conditions(array(False    =>array('isEA'=>bList_eaEmpRecords::isEA($this->rec['um_avid'],$this->myOrg_ID)),
+					 'default'=> parent::isUnitMemberDeletable()),
 				   $this); 
   }
 

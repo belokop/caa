@@ -71,9 +71,11 @@ class APImenu_wiw extends APImenu{
     case tab_wiw:
     case tab__empty:
     case WIW_MODULE:
-      locateAndInclude('bIcal_matrix_wiw');
-      $m = new bIcal_matrix_wiw();
-      $m->show();
+      if (myOrg()->isOnMyNetwork($_SERVER['REMOTE_ADDR']) || bAuth()->loginPrompt()){
+	locateAndInclude('bIcal_matrix_wiw');
+	$m = new bIcal_matrix_wiw();
+	$m->show();
+      }
       break;
       
     case 'tab_wiw_edit':
