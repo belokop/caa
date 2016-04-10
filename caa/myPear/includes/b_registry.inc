@@ -275,10 +275,7 @@ class b_reg{
 	self::$_SQLidentities[$m][$class] = array('t'=>$identities['t'],
 						  'i'=>$identities['i']);
 	$identities['m'] = $m;
-	foreach($identities as $k=>$v){
-	  // Copy identities to "hello world" module in order to be able rebuild menus from 'hw'
-	  myPear::$sql_identities[$class]['hw'] = myPear::$sql_identities[$class][$k] = $v;
-	}
+	foreach($identities as $k=>$v) myPear::$sql_identities[$class][$k] = $v;
       }
     }
   }
@@ -323,11 +320,20 @@ class b_reg{
   public static function sql_ids($class,$module=myPear_MODULE){
     $reply = array();
     if (myPear_db()->isReady()){
-      if (empty(self::$_SQLidentities[$module][$class]['t'])){
-	b_debug::traceBack('self::$_SQLidentities[$module][$class][t] empty for '.__FUNCTION__."$class,$module");
+      if (True){
+	// sql identities DO NOT DEPEND ON THE MODULE !!!
+	// Get the first one which is not emty...
+	foreach(self::$_SQLidentities as $m=>$ids){
+	  if (!myPear::is_empty($t=$ids[$class]['t']) &&
+	      !myPear::is_empty($i=$ids[$class]['i'])) return array('t'=>$t,'i'=>$i);
+	}
       }else{
-	$reply = array('t'=>self::$_SQLidentities[$module][$class]['t'],
-		       'i'=>self::$_SQLidentities[$module][$class]['i']);
+	if (empty(self::$_SQLidentities[$module][$class]['t'])){
+	  b_debug::traceBack("self::\$_SQLidentities[$module][$class][t] empty for ".__FUNCTION__."$class,$module");
+	}else{
+	  $reply = array('t'=>self::$_SQLidentities[$module][$class]['t'],
+			 'i'=>self::$_SQLidentities[$module][$class]['i']);
+	}
       }
     }
     return $reply;
