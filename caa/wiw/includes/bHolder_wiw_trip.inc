@@ -1,8 +1,9 @@
 <?php
-locateAndInclude('bHolder_ea');
+locateAndInclude('bHolder');
 
-class bHolder_wiw_trip extends bHolder_ea{
+class bHolder_wiw_trip extends bHolder{
 
+  var $debug = cnf_dev;
   public $av_id = Null;
   public $sortBy_default = 't_departure';
 
@@ -10,6 +11,7 @@ class bHolder_wiw_trip extends bHolder_ea{
    *
    */
   function __construct(){
+    $this->dbg('');
     parent::__construct();
     //    $this->where = array("l_parent = '".myOrg_ID."'");
     if ($av_id = $_GET['av_id']){
@@ -23,6 +25,7 @@ class bHolder_wiw_trip extends bHolder_ea{
    *
    */
   function header() {
+    $this->dbg('');
     $header = array('icon_nosort_afirst' => ' ',
 		    'av_lastname'=> 'Who',
 		    't_departure'=> "When",
@@ -47,12 +50,12 @@ class bHolder_wiw_trip extends bHolder_ea{
     $_GET['sBy'] = 't_departure';
     $_GET['sByDir'] = 'DESC';
     if (empty($this->where)) $this->where = array(0);
-    $q = myPear_db()->query("SELECT av_photo,av_email,av_lastname,av_firstname,av_lastname,t_orgid,t_id,t_departure,t_arrival,t_destination,lm_key ".
-			      " FROM wiw_trips ".
-			      " LEFT JOIN zzz_avatars       ON  t_avid = av_id ".
-			      " LEFT JOIN zzz_list_members  ON  t_type = lm_id ".
-			      " WHERE ".join(' AND ',$this->where).
-			      " ORDER BY $_GET[sBy] $_GET[sByDir]");
+    $q = myPear_db()->qquery("SELECT av_photo,av_email,av_lastname,av_firstname,av_lastname,t_orgid,t_id,t_departure,t_arrival,t_destination,lm_key ".
+			     " FROM wiw_trips ".
+			     " LEFT JOIN zzz_avatars       ON  t_avid = av_id ".
+			     " LEFT JOIN zzz_list_members  ON  t_type = lm_id ".
+			     " WHERE ".join(' AND ',$this->where).
+			     " ORDER BY $_GET[sBy] $_GET[sByDir]",$this->debug);
     return $q;
   }
   
@@ -76,7 +79,7 @@ class bHolder_wiw_trip extends bHolder_ea{
     // Select the first option out of multiple ones
     $options = explode(',',$this->rec['lm_key']);
     $this->rec['lm_key'] = array_shift($options);
-
+    
     if (empty($this->recs[$year])) $this->recs[$year] = array();
     $this->recs[$year][] = $this->rec; 
     $this->rec_counter++;
@@ -107,7 +110,7 @@ class bHolder_wiw_trip extends bHolder_ea{
 	}else{
 	  // Save width, replace "2011-2012" by "2011-12"
 	  if (0) $tabs[$yy[$n-1].'-'.preg_replace('/^'.substr($yy[$n-1],0,2).'/','',$yy[0])] = join('|',$yy);
-	  else   $tabs[$yy[$n-1].'-'.$yy[0]] = join('|',$yy);
+	  else   $tabs[$yy[$n-1].'-'.preg_replace('/^20/','',$yy[0])] = join('|',$yy);
 	}
       }
     }

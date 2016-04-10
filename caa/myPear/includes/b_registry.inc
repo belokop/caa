@@ -324,8 +324,8 @@ class b_reg{
 	// sql identities DO NOT DEPEND ON THE MODULE !!!
 	// Get the first one which is not emty...
 	foreach(self::$_SQLidentities as $m=>$ids){
-	  if (!myPear::is_empty($t=$ids[$class]['t']) &&
-	      !myPear::is_empty($i=$ids[$class]['i'])) return array('t'=>$t,'i'=>$i);
+	  if (!myPear::is_empty($t=@$ids[$class]['t']) &&
+	      !myPear::is_empty($i=@$ids[$class]['i'])) return array('t'=>$t,'i'=>$i);
 	}
       }else{
 	if (empty(self::$_SQLidentities[$module][$class]['t'])){
