@@ -1,5 +1,5 @@
 <?php
-$releaseDate = '2016-04-10';
+$releaseDate = '2016-04-11';
 define('WIW_MODULE'   , 'wiw');
 define('WIW_VERSION','5.11.rc');
 
@@ -37,6 +37,11 @@ b_reg::add_module(WIW_MODULE,
 								'i' => 'i-user1'))));
 
 
+myOrg()->setMyNetworks(array('130.242',      // KTH
+			     '130.237',      // SU
+			     '77.238',       // eduroam
+			     ));
+			     
 /*
  * WIW dispatching class
  */

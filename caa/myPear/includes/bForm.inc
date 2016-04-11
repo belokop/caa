@@ -1517,10 +1517,21 @@ class bForm extends myPear_getValue{
   }
   
   /*
+   * Color-picker based on html5
+   */
+  function colorPickerField($name,$extraTD=array()){
+    $color_v = $this->getValue($name,True);
+    $this->getFormRow($name, 
+		      x("div id='html5DIV'",
+			"<input name=$name id='html5colorpicker' type='color' style='width:85%;' value='$color_v' onchange='clickColor(0, -1, -1, 5)'>"),
+		      $extraTD);
+  }
+  
+  /*
    * Color-picker based on Farbtastic from Steven Wittens.
    */
   private $farbtastic_open = 0;
-  function colorPickerField($name,$extraTD=array()){
+  function colorPickerField_old($name,$extraTD=array()){
     if (!$this->farbtastic_open++)      bJS()->farbtastic();
     $color_v = $this->getValue($name,True);
     $color_n = $name . '_color';

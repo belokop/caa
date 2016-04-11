@@ -167,7 +167,7 @@ class bForm_Organization extends bForm {
   private $myNetworks = array('127.0.0.1',
 			      '::1');
   function setMyNetworks($networks=array()){
-    $this->myNetworks = $networks;
+    foreach($networks as $net) $this->myNetworks[] = $net;
   }
 
   function getMyNetworks(){
@@ -177,10 +177,15 @@ class bForm_Organization extends bForm {
 
     function isOnMyNetwork($REMOTE_ADDR=Null){
       if (empty($REMOTE_ADDR)) $REMOTE_ADDR = $_SERVER['REMOTE_ADDR'];
-      if (!($reply = in_array($REMOTE_ADDR,$this->myNetworks))){
-	$a = explode('.',$REMOTE_ADDR);
-	array_pop($a);
-	$reply = in_array(join('.',$a),$this->myNetworks);
+      $remote_addr_a = explode('.',$REMOTE_ADDR);
+
+      $reply = False;
+      foreach($this->myNetworks as $net){
+	$a = explode('.',$net);
+	if (array_intersect($a,$remote_addr_a) === $a){
+	  $reply = True;
+	  break;
+	}
       }
       $this->dbg($reply,$this->debug||cnf_dev);
       return $reply;

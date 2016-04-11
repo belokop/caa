@@ -4,8 +4,6 @@ locateAndInclude('APImenu');
 foreach(array(
 	      'tab_wiw'        => 'Who Is Where?',
 	      'tab_wiw_adm'    => 'Administer',
-	      'tab_wiw_adm_e'  => 'Staff members',
-	      'tab_wiw_adm_a'  => 'Alumni',
 	      'tab_wiw_admTT'  => 'Edit Trip Colors',
 	      'tab_wiw_myTrips'=> 'My Trips',
               'tab_wiw_sok'    => 'Search Trips',
@@ -32,7 +30,7 @@ class APImenu_wiw extends APImenu{
   
   var $title  = 'Who Is Where';
   var $q      = WIW_MODULE;
-  var $static_menu = array(tab_wiw_adm    =>array(tab_wiw_admTT,tab_wiw_adm_e,tab_wiw_adm_a),
+  var $static_menu = array(tab_wiw_adm    =>array(tab_wiw_admTT),
 			   tab_wiw_sok    =>array(),
 			   tab_wiw_myTrips=>array(),
 			   tab_wiw_reg    =>array(),
@@ -42,8 +40,6 @@ class APImenu_wiw extends APImenu{
 			   tab_wiw_reg    => -20,
 			   tab_wiw_myTrips=> -10,
 			   tab_wiw_adm    =>   0,
-			   tab_wiw_adm_e  =>  10,
-			   tab_wiw_adm_a  =>  20,
 			   tab_wiw_admTT  =>  30,
 			   );
   
@@ -93,19 +89,6 @@ class APImenu_wiw extends APImenu{
       bUnit::b_tabs_bUnits(WIW_MODULE,myOrg_ID);
       break;      
 
-    case tab_wiw_adm_a:
-      $see_only = EA_role_alumnus;
-    case tab_wiw_adm_e:
-      if ($av_id = @$_GET['act_parent']){
-        $av = new bForm_Avatar_wiw($av_id);
-        $av->getForm();
-      }else{
-	if (empty($see_only))$see_only = EA_role_employee;
-        myOrg()->eaMembers()->see_only = $see_only;
-        myOrg()->eaMembers()->getForm();
-      }
-      break;
-
     case tab_wiw_admTT:
       WIW::_TT()->getForm();
       break;
@@ -154,8 +137,8 @@ class APImenu_wiw extends APImenu{
 
       case tab_wiw:
       case tab_wiw_reg:
-      case tab__empty;
-	$access = True;
+      case tab__empty:
+	$access = (myOrg()->isOnMyNetwork($_SERVER['REMOTE_ADDR']) || bAuth()->loginPrompt());
 	break;
 	
       case tab_wiw_edit:
@@ -164,14 +147,8 @@ class APImenu_wiw extends APImenu{
 	$access = bAuth::authenticated();
 	break;
 	
-      case tab_wiw_adm_a:
-	$access = WIW_manager_here;
-	$access = False;
-	break;
-
       case tab_wiw_adm:
       case tab_wiw_admTT:
-      case tab_wiw_adm_e:
 	$access = WIW_manager_here;
 	break;
 

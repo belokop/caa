@@ -1,3 +1,4 @@
+
 <?php
 /*
  * Variables
@@ -2983,6 +2984,7 @@ class b_timing{
       }else{
 
 	$id = join('/',array_merge($this->call_stack));
+	if (empty($this->times0[$id])) $this->times0[$id] = array();
 	array_pop($this->call_stack);
 
 	$cpu = b_time::microtime(True) - array_pop($this->times0[$id]);

@@ -6,7 +6,6 @@
 define('bList_use_membersCache',True);
 if (cnf_show_acl) myPear::DEBUG('bList_use_membersCache (new invention): '.(bList_use_membersCache ? 'YES' : 'NO'));
 
-define('bForm_lists', 'bForm_lists');
 locateAndInclude('myPear_getValue');
 
 class bList extends myPear_getValue{
@@ -1194,8 +1193,10 @@ class bList extends myPear_getValue{
 	      $this->t->extraTD[] = $this->button_deleteListMember();
 	    }
 	    $this->format();
-	    if (!empty($this->r))  $this->t->prt($this->r); 
-	    $this->t->extraTD = array();
+	    if ($this->t instanceof b_table){
+	      if (!empty($this->r)) $this->t->prt($this->r); 
+	      $this->t->extraTD = array();
+	    }
 	  }
 	}
 	// $this->t might be not defined, protect
@@ -1399,13 +1400,13 @@ class bList extends myPear_getValue{
   }
   
   // called from bForm_lists
-  function uploadInit_path($module_path=array(),$module=Null){
-  }
+  function uploadInit_path($module_path=array(),$module=Null){}
   
   protected $f = Null;
   protected function bForm($variables,$inversed=False){
-    if ($this->f instanceof bForm_lists) return;
-    locateAndInclude(bForm_lists);
+    static $dejaVu = 0;
+    if ($dejaVu++) return;
+    locateAndInclude('bForm_lists');
     if (empty($this->f)) $this->f = new bForm_lists($this,$variables,$inversed);
     $this->f->debug       = $this->debug;
     $this->f->tips        = $this->tips;
