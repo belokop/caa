@@ -298,6 +298,10 @@ class APImenu_vm extends APImenu_ea{
 	$reply = VM_booker_here;
 	break;
 	
+      case tab__tasks:
+	$reply = superUser_here;
+	break;
+
       case tab_vm_adm:
 	$reply = VM_observer_here;
 	break;
@@ -390,7 +394,7 @@ class APImenu_vm extends APImenu_ea{
       case tab_ea_off_desk_labels:
       case tab_ea_off_assign:
       case tab_ea_off_wipe:
-	$reply = VM_administrator_here && !VM::outOfScope() && (VM::e_ID()>0);
+	$reply = distribute_offices && VM_administrator_here && !VM::outOfScope() && (VM::e_ID()>0);
 	break;
 
       case tab_vm_vis_export:
