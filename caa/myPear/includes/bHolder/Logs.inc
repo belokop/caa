@@ -47,9 +47,9 @@ class bHolder_Logs extends bHolder{
   public function syslog($text){
     static $dejaVu = array(); 
     if (!cnf_CLI && !@$dejaVu[$text]++){
-      $GLOBALS['syslogID'] = b_reg::$current_module;
-      openlog('webapp['.@$GLOBALS['syslogID'].']', LOG_PERROR, LOG_USER); 
-      syslog (LOG_ALERT, preg_replace("/  |\n|".'\\\n/i'," ", b_fmt::unEscape(strip_tags($text))));
+      $user = (is_object(bAuth::$av) ? bAuth::$av->getEmail() : 'anonym');
+      openlog(sprintf('webapp[%s,%s]',b_reg::$current_module,$user), LOG_PERROR, LOG_USER); 
+      syslog (LOG_ALERT, str_replace(array("  ","\n",'\\\n','\\\N')," ", b_fmt::unEscape(strip_tags($text))));
       closelog();
     }
   }
