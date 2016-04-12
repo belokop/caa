@@ -178,8 +178,8 @@ class myPear_taskManager{
 	  b_vars::set($task['var_name'],$task);
 	}
 
-	// Sleep for 30 seconds to make the SMTP server happy
-	sleep(30);
+	// Sleep for 13 seconds to make the SMTP server happy
+	sleep(13);
 	// Don't go too far...
 	if (False){
 	  if (empty($n_tasks_executed)) $n_tasks_executed = 0;

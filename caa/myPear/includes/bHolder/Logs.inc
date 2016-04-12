@@ -337,6 +337,7 @@ class bHolder_Logs extends bHolder{
   private function format_syslog(){
     
     if (is_object($this->t)) $this->t->skipDuplicatedLines = True;
+    foreach(array_keys($this->header()) as $k) if (empty($this->rec[$k])) $this->rec[$k] = '';
     
     $this->rec['log_ip'] = $this->ip2name($this->rec['log_ip']);
     
