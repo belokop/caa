@@ -14,7 +14,7 @@ class bUnit_ea_contacts extends bUnit{
     parent::__construct($parent_ID,RANK__ea_contactPerson);
 
     if (($av_ddate=$this->getValue('av_ddate')) && ($av_ddate>time())){
-      foreach($this->get_unitMemberIDs() as $av_id){
+      foreach($this->getUnitMemberIDs() as $av_id){
 	// ?	$this->remove_unitMember($av_id,$toConfirm=False);
       }
     }
@@ -46,7 +46,7 @@ class bUnit_ea_contacts extends bUnit{
    * Edit dialog
    */
   protected function edit_unitMember($av_id){
-    $rec = $this->get_unitMember($av_id);
+    $rec = $this->getUnitMember($av_id);
     $cp = bForm_Avatar::_fmtName('fl',$rec,False);
     myPear::setPageHeader("Contact person $cp");
     

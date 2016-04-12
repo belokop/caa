@@ -12,9 +12,9 @@ class bUnit_prp_writers extends bUnit_prp{
    */
   private function bUnit_init(){
     if (($this->rank == RANK_prp_writer) && !@$_SESSION[get_class($this)]++){
-      $members = $this->get_unitMemberIDs();
+      $members = $this->getUnitMemberIDs();
       // Accept all the employers to to club
-      foreach(myOrg($this->parent_ID)->eaMembers()->get_unitMemberIDs('e') as $av_id){
+      foreach(myOrg($this->parent_ID)->eaMembers()->getUnitMemberIDs('e') as $av_id){
 	if (!in_array($av_id,$members)) $this->add_unitMember($av_id);
       }
       

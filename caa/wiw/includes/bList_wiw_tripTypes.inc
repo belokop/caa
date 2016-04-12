@@ -58,7 +58,7 @@ class bList_wiw_tripTypes extends bList{
   protected function format(){
     locateAndInclude('bForm_wiw_trip');
     $this->r['_lm_key']  = $this->r['lm_key'];
-    $this->r['_lm_value']= strToLower($this->r['lm_value']);
+    $this->r['_lm_value']= x('code',strToLower($this->r['lm_value']));
     $this->r['_virt_n'] = count(bForm_wiw_trip::getTrips($this->r['lm_id'])).' times';
     foreach(array_keys($this->list_showing) as $k) $this->t->css[$k]['style'] = "background:".$this->r['lm_value'];
   }

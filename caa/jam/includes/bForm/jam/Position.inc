@@ -588,7 +588,7 @@ class bForm_jam_Position extends bForm_jam {
       // Set names for the selection Committee units
       foreach(JAM::$SC_ranks as $rank){
 	if (mb_strToLower($this->SC_rank2name($rank)) == CONST_noname){
-	  if (JAM_unit($rank,$this->ID)->get_unitMemberIDs()){
+	  if (JAM_unit($rank,$this->ID)->getUnitMemberIDs()){
 	    myPear::ERROR("Can't remove section <em>'".b_reg_bUnit::$_bUnits[JAM_MODULE][$rank]['d']."s'</em>");
 	    $this->errorsInTheForm[self::$ranks[$rank]] = 'not empty';
 	  }

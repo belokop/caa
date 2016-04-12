@@ -41,11 +41,9 @@ class bHolder_ea_Offices extends bHolder_ea{
     foreach($ea->getMembers_byStatus() as $av_id=>$rec){
       $av = myPear::getInstance_new('bForm_Avatar_'.b_reg::$current_module,$av_id,'fatal');
       $o_name = $av->get_staffOffice();
-      if (!empty($o_name) || (@$rec['role2'] !== EA_role_boardMember)){
-	if (empty($o_name))	$o_name = ' No office';
-	else       myPear::getInstance_new('bForm_'.b_reg::$current_module.'_Office',array('o_name'=>$o_name));
-	$this->offices[$o_name][] = $av;
-      }
+      if (empty($o_name))	$o_name = ' No office';
+      else       myPear::getInstance_new('bForm_'.b_reg::$current_module.'_Office',array('o_name'=>$o_name));
+      $this->offices[$o_name][] = $av;
     }
     ksort($this->offices);
   }

@@ -1070,9 +1070,13 @@ class bForm_Avatar extends bForm {
   }
 
   public function fmtName($format='Lf',$escape=True){
-    $formDB = array('av_id' => $this->ID);
-    foreach(array('av_salutation','av_firstname','av_lastname','av_von') as $f) $formDB[$f] = $this->getValue($f,1,1);
-    return self::_fmtName($format,$formDB,$escape);
+    return self::_fmtName($format,
+			  array('av_id'        => $this->ID,
+				'av_salutation'=> $this->getValue('av_salutation',1,1),
+				'av_firstname' => $this->getValue('av_firstname',1,1),
+				'av_lastname'  => $this->getValue('av_lastname',1,1),
+				'av_von'       => $this->getValue('av_von',1,1)),
+			  $escape);
   }
 
   public static function _fmtName($format='Lf',$rec=array(),$escape=True){
@@ -1104,6 +1108,7 @@ class bForm_Avatar extends bForm {
     if ($reply[count($reply)-1] == '&#44;') array_pop($reply);
     if ($reply[count($reply)-1] == ',')     array_pop($reply);
     $name = str_replace('- ','-',str_replace(' ,',',',str_replace('> ','>',join(' ',$reply))));
+    if (cnf_CLI) $escape = False;
     if ($escape) $name = no_wrap(b_fmt::escape($name,'<'));
     return $name;
   }

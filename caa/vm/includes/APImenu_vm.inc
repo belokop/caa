@@ -725,7 +725,7 @@ class APImenu_vm extends APImenu_ea{
 	$units = bUnit_vm_organizers::get_all_events(@$_GET['avid_once']);
 	b_fmt::accordion('open',bUnit_vm_organizers::$e_index);
 	foreach($units as $e_id){
-	  VM_organizers($e_id)->get_unitMemberIDs();
+	  VM_organizers($e_id)->getUnitMemberIDs();
 	  $u = VM_organizers($e_id);
 	  b_fmt::accordion($u->e->name());
 	  $u->getForm();

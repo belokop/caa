@@ -268,8 +268,9 @@ class bList extends myPear_getValue{
     // Perform the records editing
     $this->edit_bList();
     
-    if (b_cnf::get('sanity'))    $this->sanity();
-
+    // Optionally check for duplicated information
+    if (($s=strToLower(b_cnf::get('sanity'))) && (($s = 'all') || (stripos(get_class($this),$s) !== False)))    $this->sanity();
+    
     //
     // Set the 'sort by' value for the output array
     $sBy = explode(',',$this->orderBy);
@@ -923,27 +924,26 @@ class bList extends myPear_getValue{
 
   function dump() {}
 
+  protected function sanity_action($where) {}
+
   protected function sanity(){
     foreach($this->getMembers() as $r_id=>$r){
-      $w = array("$this->TABLEID_member != $r_id"); 
+      $w = array($this->TABLEID_member." != $r_id"); 
       foreach($r as $k=>$v){
-	if ($k == $this->serialized)                              continue;
+	if ($k == $this->serialized)                            continue;
 	if (!myPear_db()->columnExists($k,$this->TABLE_member)) continue;
-	if ($k == $this->TABLEID_member)                          continue;
-	if (stripos($k,'time')  !== False)                        continue;
-	if (stripos($k,'local') !== False)                        continue;
+	if ($k == $this->TABLEID_member)                        continue;
+	if (stripos($k,'time')  !== False)                      continue;
+	if (stripos($k,'local') !== False)                      continue;
 	$w[] = myPear_db()->quote($v,1,$k);
       }
       
-      $q = myPear_db()->query("SELECT * FROM ".$this->TABLE_member." WHERE ".join(' AND ',$w));
+      $q = myPear_db()->qquery("SELECT * FROM ".$this->TABLE_member." WHERE ".join(' AND ',$w),True);
+      if (!($num_rows = myPear_db()->num_rows($q))) continue;
       
-      if (get_class($this)=='bList_eaEmpRecords')
-	if (($n=myPear_db()->num_rows($q)) > 0){
-	  $q = myPear_db()->query("DELETE  FROM ".$this->TABLE_member." WHERE ".join(' AND ',$w));
-	  myPear::ERROR("$n duplications ".join(',',$w));
-	  myPear::ERROR(myPear_db()->num_rows($q).' deleted');
-	  $this->sanity();
-	}
+
+      myPear::ERROR("$num_rows duplications ".join(',',$w));
+      $this->sanity_action($w);
     }
   }
   

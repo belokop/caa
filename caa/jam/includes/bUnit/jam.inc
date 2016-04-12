@@ -68,7 +68,7 @@ class bUnit_jam extends bUnit{
    */
   function getForm(){
     if ($av_id = myPear::_GET_and_unset('toggle')){
-      $status = self::_getStatus($this->get_unitMember($av_id));
+      $status = self::_getStatus($this->getUnitMember($av_id));
       $toggle = ($status==JAM::status(JAM_review_private) 
 		 ?        JAM::status(JAM_review_public) 
 		 :        JAM::status(JAM_review_private));

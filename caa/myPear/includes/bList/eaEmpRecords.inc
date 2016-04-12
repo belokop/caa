@@ -239,8 +239,17 @@ class bList_eaEmpRecords extends bList{
     myPear::DEBUG(x("table class='align_left b_table' ",x('tr',join('',$l))));
   }
   
-
   /*
+   *
+   */
+  protected function sanity_action($w){
+    $q = myPear_db()->qquery("DELETE  FROM ".$this->TABLE_member." WHERE ".join(' AND ',$w),True);
+    myPear::ERROR(myPear_db()->num_rows($q).' deleted');
+    // restart sanity check after deleting the record(s)
+    $this->sanity();
+  }
+  
+/*
    * This bList is writable by the EA module administrators
    */
   function isWritable(){

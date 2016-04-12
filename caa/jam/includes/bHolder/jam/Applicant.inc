@@ -262,7 +262,7 @@ class bHolder_jam_Applicant extends bHolder_jam {
       $all_reviewers_readable = True;
       if ($JAM_posID){
 	foreach(array(RANK_jam_SC1,RANK_jam_SC2) as $rank){
-	  foreach (JAM_unit($rank,$JAM_posID)->get_unitMemberIDs(JAM::status(JAM_review_private)) as $av_id){
+	  foreach (JAM_unit($rank,$JAM_posID)->getUnitMemberIDs(JAM::status(JAM_review_private)) as $av_id){
 	    if ($av_id == bAuth::$av->ID) continue;
 	    $n_reviews = 0;
 	    foreach($this->applicants_array_rating as $rating=>$applicants){
@@ -272,7 +272,7 @@ class bHolder_jam_Applicant extends bHolder_jam {
 	    }
 	    if ($n_reviews > 0){
 	      if (!JAM_access()->may_seePrivateReviews($av_id))    $all_reviewers_readable = False;
-	      $rec = JAM_unit($rank,$JAM_posID)->get_unitMember($av_id);
+	      $rec = JAM_unit($rank,$JAM_posID)->getUnitMember($av_id);
 	      $name = bForm_Avatar::_fmtName('sfl',$rec); 
 	      myPear::WARNING("The $n_reviews reviews of <em>$name</em> are private and not readable yet");
 	    }

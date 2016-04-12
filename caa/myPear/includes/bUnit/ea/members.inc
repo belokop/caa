@@ -39,7 +39,7 @@ class bUnit_ea_members extends bUnit_ea {
 
     myPear_db()->transaction('start');
     myPear::MESSAGE_open("Rebulding ".$this->name());
-    foreach($this->get_unitMemberIDs() as $av_id){
+    foreach($this->getUnitMemberIDs() as $av_id){
       if (empty($av_id)){
 	if (cnf_dev) b_debug::traceBack("empty unit member???");
 	$this->deleteMember(array('um_avid'=> '$av_id'),cnf_dev||cnf_demo);
@@ -48,8 +48,10 @@ class bUnit_ea_members extends bUnit_ea {
       ob_start();
       $av = new bForm_Avatar_ea($av_id);
       myPear::MESSAGE_add($av->fmtName('Lf'),True);
-      $av->want_legacy_maildb = $av->isE() && (myOrg($this->myOrg_ID)->getCode() == 'nordita');
-      $av->getForm();
+      $av->want_legacy_maildb = $av->isE(True) && (myOrg($this->myOrg_ID)->getCode() == 'nordita');
+      $av->adjust_status();
+      $av->update_AVpos_AVinst('av_institute');
+      $av->update_AVpos_AVinst('av_position');
       $x = ob_get_contents();
       ob_end_clean();
       // We do not need an output, just kill it
@@ -252,7 +254,7 @@ class bUnit_ea_members extends bUnit_ea {
     if ($check_DB_only) $reply = False;
     else                $reply = parent::isMemberAccess_public($av_id);
     if (!$reply || $check_DB_only){
-      $r = $this->get_unitMember($av_id);
+      $r = $this->getUnitMember($av_id);
       $reply = (@$r['acl'] === EA_acl_public);
     }
     return $reply;
@@ -393,11 +395,11 @@ class bUnit_ea_members extends bUnit_ea {
       " (lm_key    <= '$day_1' AND lm_status  = 'present'))";
     
     $q = myPear_db()->query("SELECT * FROM zzz_avatars ".
-			      " LEFT JOIN zzz_unit_members ON av_id = um_avid ".
-			      " LEFT JOIN zzz_lists        ON av_id = l_parent ". // employment history
-			      " LEFT JOIN zzz_list_members ON l_id  = lm_lid ".
-			      " WHERE " . join(' AND ',$where) . myPear_db()->orderBy(),
-			      $this->debug);
+			    " LEFT JOIN zzz_unit_members ON av_id = um_avid ".
+			    " LEFT JOIN zzz_lists        ON av_id = l_parent ". // employment history
+			    " LEFT JOIN zzz_list_members ON l_id  = lm_lid ".
+			    " WHERE " . join(' AND ',$where) . myPear_db()->orderBy(),
+			    $this->debug);
     $reply = array();
     while ($r=myPear_db()->next_record($q)){
       if ($o = $r['lm_option']) bList::_unserialize($r,'lm_option',array_keys(unserialize($o)));

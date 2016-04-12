@@ -2,7 +2,7 @@
 /*
  * bForm_Avatar_ea - Employee's & Alumni Avatar class.       YB 2011-05-01
  *
- * At any given moment the EA-avatar might be either 'E' (EA_role_employee) or 'A' (EA_role_alumnus).
+ * At any given moment the EA-avatar might be either 'e' (EA_role_employee) or 'a' (EA_role_alumnus).
  * The state is defined by analyzing the avatar "employment record" (see class bList_eaEmpRecords) for the organization.
  *
  * During the carrier the EA-avatar might be a member of various organizations, 
@@ -175,7 +175,7 @@ class bForm_Avatar_ea extends bForm_Avatar{
   /*
    * Update the 'av_position' & 'av_institute' field in the avatar record from the current EA record(s)
    */
-  private function update_AVpos_AVinst($what){
+  function update_AVpos_AVinst($what){
     if ($this->isEA() && !empty(self::$av2er[$what])){
       $this->hook_employment();
       $this->isMBE['av_birthdate']    = !$this->isE();
@@ -206,7 +206,7 @@ class bForm_Avatar_ea extends bForm_Avatar{
       }
       $ea_value = join(',',$ea_value_a);
       if (!empty($ea_value) && (mb_strToLower($ea_value) != mb_strToLower($this->getValue($what,1)))){
-	$this->updateDB(array($what=>$ea_value));
+	$this->getValue_reset_forced($what,$ea_value);
 	myPear::MESSAGE_add($this->name()." - set current ".self::$av2er[$what]['d']." '$ea_value'");
       }
     }
@@ -233,13 +233,14 @@ class bForm_Avatar_ea extends bForm_Avatar{
   }
 
   /*
-   * At any given moment the EA-avatar might be either 'E' (EA_role_employee) or 'A' (EA_role_alumnus).
-   * The state is defined by analyzing the avatar "employment record" (see class bList_eaEmpRecords) for the organization.
+   * At any given moment the EA-avatar might be either 'e' (EA_role_employee) or 'a' (EA_role_alumnus).
+   * The state is defined by analyzing his "employment record" (see class bList_eaEmpRecords) 
    */
   function role(){
     if    ($this->isE())  $reply = EA_role_employee;
     elseif($this->isV())  $reply = EA_role_lt_visitor;
     elseif($this->isEA()) $reply = EA_role_alumnus;
+    else                  $reply = Null;
     return $reply;
   }
 
@@ -285,7 +286,7 @@ class bForm_Avatar_ea extends bForm_Avatar{
    */  
   private function is($av_id=Null,$role=Null,$exact_match=True){
     $reply = False;
-    if ((int)$this->ID){
+    if (myPear::is_int($this->ID)){
       if(empty($av_id))  $av_id  = $this->ID;
       $reply = self::_is($av_id,$role,$exact_match);
     }
@@ -295,9 +296,9 @@ class bForm_Avatar_ea extends bForm_Avatar{
   /*
    * Get the EA member status
    */
-  public static function _is($av_id,$role=Null,$exact_match=True){
+  public static function _is($av_id,$role,$exact_match){
     if(empty($role)){
-      $reply =  myOrg()->eaMembers()->isMember($av_id);
+      $reply = myOrg()->eaMembers()->isMember($av_id);
     }else{
       $status= myOrg()->eaMembers()->getUnitMemberStatus($av_id);
       $reply = ($exact_match
@@ -353,37 +354,38 @@ class bForm_Avatar_ea extends bForm_Avatar{
    * Note, by this moment the "explicit fields" of the Avatar record is already updated, 
    * hence we should update only the EA-related fields 
    */ 
-  private function update_EA(){
-
+  private function update_EA($lm_id=Null){
+    
+    if ($lm_id_POST = (empty($_POST['lm_id'])
+		       ? @$_POST['_virt_emp_record']
+		       : $_POST['lm_id'])) $lm_id = $lm_id_POST;
+    if (empty($lm_id)) return;
+    
     $this->hook_employment();
-    // editing/creating the bList_eaEmpRecords record from the bForm buffer
-    $lm_id = @$_POST['lm_id'];
-    if ( empty($lm_id)) $lm_id = @$_POST['_virt_emp_record'];
-    if (!empty($lm_id)){
-      $updates = array();
-      if ((int)$lm_id) $updates['lm_id'] = $lm_id;
-      foreach(self::$av2er as $av=>$er){
-	$new_v = Null;
-	if (isset($_POST[$av]))	     $new_v = $this->getValue($av,True,True);
-	if (isset($_POST[$er['k']])) $new_v = $this->getValue($er['k'],True,True); 
+    
+    $updates = array();
+    if ((int)$lm_id) $updates['lm_id'] = $lm_id;
+    foreach(self::$av2er as $av=>$er){
+      $new_v = Null;
+      if (isset($_POST[$av]))	   $new_v = $this->getValue($av,True,True);
+      if (isset($_POST[$er['k']])) $new_v = $this->getValue($er['k'],True,True); 
+      if (($new_v===Null) || ($er['k'] != CONST_noname)) continue;
+      
+      switch($key=$er['k']){
+      case 'lm_key':
+      case 'lm_status':
+	$new_v = b_time::short_date($new_v);
+	break;
 	
-	if (!is_null($new_v) && $er['k'] != CONST_noname){
-	  switch($key=$er['k']){
-	  case 'lm_key':
-	  case 'lm_status':
-	    $new_v = b_time::short_date($new_v);
-	    break;
-	    
-	  case 'e_cc':
-	    $new_v = b_cc::getCC($new_v);
-	    break;
-	    
-	  default:
-	  }
-	  $updates[$key] = $new_v;
-	}
-	$this->formDB_modified[$er['k']] = $this->formDB_modified[$av] = @$this->eaRecords->formDB_member[$er['k']];
+      case 'e_cc':
+	$new_v = b_cc::getCC($new_v);
+	break;
+	
+      default:
       }
+      
+      $updates[$key] = $new_v;
+      foreach(array($er['k'],$av) as $item) $this->getValue_reset($item,@$this->eaRecords->formDB_member[$er['k']]);
       $this->eaRecords->updateMember($updates,$lm_id);
     }
 
@@ -418,7 +420,7 @@ class bForm_Avatar_ea extends bForm_Avatar{
    * THERE IS SOMETHING WRONG HERE - THE FUNCTION IS HORRIBLY SLOW 
    *
    */
-  private function adjust_status($timestamp=Null){
+  function adjust_status($timestamp=Null){
     if (!$this->hook_employment()) return;
     if (empty($timestamp)) $timestamp = time();
 
@@ -430,16 +432,18 @@ class bForm_Avatar_ea extends bForm_Avatar{
 	myPear::WARNING("Missing 'Employment type'");
 	continue;
       }
-      // Set record type "Visiting appointment" for any visit marked as "major position"
+      // Set record type "Visiting appointment" if "major position" matches 'visit' 
       if (stripos($r['lm_value'],'visit') !== False){
-	myPear::WARNING_T(sprintf("Change e_type '%s' -> '40_mp' for position '%s'",$e_type,$r['lm_value'])); 
-	$e_type = '40_va';
+	$e = '40_va';
+	if ($e_type != $e) myPear::WARNING_T(sprintf("Change e_type '%s' -> '%s' for position '%s'",$e_type,$e,$r['lm_value'])); 
+	$e_type = $e;
       }elseif($e_type == '40_va'){
+	$e = '20_mp';
+	myPear::WARNING_T(sprintf("Change e_type '$e_type' -> '$e' for position '%s'",$r['lm_value'])); 
 	// ?? is it correct? Does the visiting position always contain word "visit"?
-	myPear::WARNING_T(sprintf("Change e_type '40_va' -> '20_mp' for position '%s'",$r['lm_value'])); 
-	$e_type = '20_mp';
+	$e_type = $e;
       }
-
+      
       // Change the record type if is was wrongly entered
       if ($e_type != $r['e_type']) $this->eaRecords->updateMember(array('e_type'=>$e_type),$r['lm_id']);
 
@@ -460,64 +464,42 @@ class bForm_Avatar_ea extends bForm_Avatar{
       myOrg()->eaMembers()->updateMember(array('day1'=>$day1,'day9'=>$day9),array('um_avid'=>$this->ID));
     }
     
-    // Walk thru the EA records and adjust the status according to the start/end date of the position. 
+    // Walk thru the EA records IN CHRONOLICAL ORDER and adjust the status according to the start/end date of the position. 
     // The most fresh record comes last
-    $this->eaRecords->sortArgs = ' ORDER BY '.self::$av2er['e_end']['k'].' ASC ';
+    $stat = array();
+    myOrg()->eaMembers()->setStatus($this->ID,'');
+    $this->eaRecords->sortArgs = ' ORDER BY '.self::$av2er['e_start']['k'].' ASC ';
     foreach($this->eaRecords->getMembers(array('e_org' => myOrg_ID)) as $r_id=>$r){
-      $stats = preg_split('//',myOrg()->eaMembers()->getUnitMemberStatus($this->ID), -1,PREG_SPLIT_NO_EMPTY);
+      if (empty($r['e_type'])) continue;
       $position_is_expired = (b_time::txt2unix($r[self::$av2er['e_end']['k']]) < $timestamp);
+      $id = ($position_is_expired ? 'was' : 'now');
 
-      // Special field for the board members,
-      // let's keep those people happy...
+      if (empty($r['role2'])) $r['role2'] = '';
       if (stripos($r['lm_value'],'Board') !== False){
-	$role2 = ($position_is_expired
-		  ? EA_role_boardMember.EA_role_alumnus 
-		  : EA_role_boardMember);
-	myOrg()->eaMembers()->updateMember(array('role2'=>$role2),array('um_avid'=>$this->ID));
-	$role2 = preg_split('//',$role2,-1,PREG_SPLIT_NO_EMPTY);
+	// let's keep those people happy, fill a special field for the board members (role2)
+   	$role2 = EA_role_boardMember;
       }else{
-	$role2 = array();
+	$role2 = '';
+	switch($r['e_type']){
+	case '20_mp': $stat[$id] = EA_role_employee;   break;
+	case '40_va': $stat[$id] = EA_role_lt_visitor; break;
+	default: if (empty($stat[$id])) $stat[$id] = EA_role_affiliate;  
+	}
       }
-
-      // Now check the status field and update it if needed
-      $status = array();
-      switch($type=(string)@$r['e_type']){
-      case '20_mp':
-	// "Major position",   has precedence over all the other emp. types
-	$status[] = EA_role_employee;
-	if ($position_is_expired) $status[] = EA_role_alumnus;
-	break;
-	
-      case '40_va':
-	// "Long term Visitor",
-	//  has precedence only over "affiliated"
-	if (array_intersect($stats,array(EA_role_employee))) $status[] = EA_role_employee;
-	else                                                 $status[] = EA_role_lt_visitor;
-	if ($position_is_expired)                            $status[] = EA_role_alumnus;
-	break;
-	
-      case '22_op':
-	// "Other activity", 
-	//  set EA status to "affiliated" if the person is neither visitor, employee nor alumnus
-	if ($rr=array_intersect($stats,array(EA_role_employee,
-					     EA_role_lt_visitor))) $status[] = $rr[0];
-	else                                                       $status[] = EA_role_affiliate;
-	if ($position_is_expired)                                  $status[] = EA_role_alumnus;
-	break;
-	
-      case '':
-	if (cnf_dev) b_debug::traceBack('empty e_type');
-	
-      default:
-	$status[] = EA_role_affiliate;
-	if ($position_is_expired) $status[] = EA_role_alumnus;
-      }
-      // $ddd = array(); foreach(array('e_type','lm_key','lm_value','lm_status') as $k) $ddd[$k] = $r[$k];      b_debug::print_r($ddd,join('',$stats).'-'.join('',$role2)." = $status");      
+      if (!empty($role2) || !empty($r['role2'])) $this->eaRecords->updateMember(array('role2'=>$role2),$r['lm_id']);
+      // $ddd = array(); foreach(array('e_type','lm_key','lm_value','lm_status') as $k) $ddd[$k] = $r[$k];  b_debug::print_r($ddd,join('',$status)."<--".join('',$status)." $role2<--".@$r['role2'] );      
     }
-    // Get the latest status and save it as the EA member status 
-    if (!empty($status)){
-      $this->dbg($status);
-      myOrg()->eaMembers()->setStatus($this->ID,join('',$status),$verbose=cnf_dev);
+    
+    // Save the latest status as the EA member status 
+    $status = (empty($stat['now'])
+	       ? $stat['was'].EA_role_alumnus
+	       : $stat['now']);
+    $status_was = myOrg()->eaMembers()->getUnitMemberStatus($this->ID);
+    if (!empty($status) || !empty($status_was)){
+      if ($status_was !== $status) $this->dbg(sprintf("status: '%s' --> '%s'",
+						      $status_was,
+						      $status),$this->debug||cnf_dev);
+      myOrg()->eaMembers()->setStatus($this->ID,$status,$verbose=cnf_dev);
     }
   }
   
@@ -569,7 +551,7 @@ class bForm_Avatar_ea extends bForm_Avatar{
     // SSN has precedence over the av_birthdate
     $this->isRO['av_birthdate'] = SSN::ssn2birthDate($this->getValue('av_ssn',True),$this);
     
-    // Sanity
+    // Do not show the EA page if we are not in the EA context
     if ((b_reg::$current_module != EA_MODULE) || !$this->isEA()){
 
       parent::getForm();

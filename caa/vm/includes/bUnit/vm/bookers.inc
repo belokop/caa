@@ -98,7 +98,7 @@ class bUnit_vm_bookers extends bUnit_vm{
    * Edit dialog
    */
   protected function edit_unitMember($av_id){
-    $rec = $this->get_unitMember($av_id);
+    $rec = $this->getUnitMember($av_id);
     $rec['duties'] = $this->arg_explode(@$rec['duties']);
 
     myPear::setPageHeader('Booker '.bForm_Avatar::_fmtName('fl',$rec,False));

@@ -179,8 +179,8 @@ class bUnit extends bList{
    */  
   public function getEmails($status=Null){
     $reply = array();
-    foreach ($this->get_unitMemberIDs() as $av_id){
-      $r = $this->get_unitMember($av_id);
+    foreach ($this->getUnitMemberIDs() as $av_id){
+      $r = $this->getUnitMember($av_id);
       if (empty($r['av_email'])){
 	if (cnf_dev) b_debug::var_dump($r,__METHOD__.': empty $r[av_email]');
       }else{
@@ -577,7 +577,7 @@ class bUnit extends bList{
   /*
    * Get the complete record of the member
    */
-  function get_unitMember($av){
+  function getUnitMember($av){
     if(is_object($av)) $av_id = $av->ID;
     else               $av_id = $av; 
     $reply = array();
@@ -996,7 +996,7 @@ class bUnit extends bList{
    */
   protected function getDutyHolders($trigger,$duty=Null){
     $reply = array();
-    foreach($this->get_unitMemberIDs() as $av_id){
+    foreach($this->getUnitMemberIDs() as $av_id){
       if (empty($duty)){
         $accept = True;
       }else{
@@ -1013,7 +1013,7 @@ class bUnit extends bList{
   /*
    *
    */
-  function get_unitMemberIDs($status=Null){
+  function getUnitMemberIDs($status=Null){
     if (empty($status)) return array_keys($this->get_memberInfo());
     else                return array_keys($this->get_memberInfo(Null,$status,'get_byStatus'));
   }
@@ -1034,7 +1034,7 @@ class bUnit extends bList{
     foreach (self::getUnits('',$parent) as $r){
       $u = new bUnit($r['u_parent'],$r['u_rank']);
       print "<ol>";
-      foreach ($u->get_unitMemberIDs() as $av_id){
+      foreach ($u->getUnitMemberIDs() as $av_id){
 	$av = myPear::getInstance_new('bForm_Avatar',$av_id,'nocache');
 	if (is_object($av)){
 	  $av->defineVariables();

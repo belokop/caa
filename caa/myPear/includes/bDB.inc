@@ -99,13 +99,15 @@ class bDB extends mysqli{
   public $in_transaction = 0;
   function transaction($mode='start',$msg=''){
     $this->dbg('',cnf_dev,'greenText');
+
+    $reply = Null;
     switch($mode){
     case 'start':
       if ($this->in_transaction++ == 0){
 	bTiming()->cpu(__function__);
 	$reply = $this->query('START TRANSACTION');
       }else{
-	$this->dbg(sprintf("Recursive transaction, depth %s, skip 'START TRANSACTION'",$this->in_transaction),cnf_dev);
+	$this->dbg(sprintf("Recursive transaction, depth %s, skip 'START TRANSACTION'",$this->in_transaction),cnf_dev||$this->debug);
 	// b_debug::internalError("Recursive transactions");
       }
       break;

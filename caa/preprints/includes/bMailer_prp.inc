@@ -44,7 +44,7 @@ If you want to publish ONLY at '.myOrg_name.' you can upload your paper now ("ed
   function censor($action,$formDB=array()){
     if (cnf_CLI)    return;
     $owner = myPear::getInstance('bForm_Avatar',$formDB['prp_avid']);
-    foreach(PRP_censors()->get_unitMemberIDs() as $av_id){
+    foreach(PRP_censors()->getUnitMemberIDs() as $av_id){
       $av = myPear::getInstance('bForm_Avatar',$av_id);
       $this->send($this->packPWD_axi($av),
 		  $av->getEmail(),

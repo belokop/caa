@@ -68,7 +68,7 @@ class bHolder_jam_rateReferees extends bHolder_jam{
 	$list = array(0);
 	if ($posID=JAM_posID()){
 	  foreach (bUnit_jam::getUnits($rank=False,$posID) as $r){
-	    foreach (JAM_unit($r['u_rank'])->get_unitMemberIDs() as $av_id)  if ($id=(int)$av_id) $list[] = "av_id=$id";
+	    foreach (JAM_unit($r['u_rank'])->getUnitMemberIDs() as $av_id)  if ($id=(int)$av_id) $list[] = "av_id=$id";
 	  }
 	}
 	

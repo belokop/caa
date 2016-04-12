@@ -2,7 +2,7 @@
 
 define('JAM_MODULE'  , 'jam');
 define('JAM_VERSION','5.49.rc');
-$releaseDate = '2016-04-09';
+$releaseDate = '2016-04-12';
 
 // Ranks and rights...
 define('RANK_jam_manager'    , 59); // same rights as superuser, but for JAM_MODULE only

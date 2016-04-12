@@ -61,7 +61,7 @@ class bUnit_vm_endorses extends bUnit_vm{
    *
    */
   protected function edit_unitMember($av_id){
-    $rec = $this->get_unitMember($av_id);
+    $rec = $this->getUnitMember($av_id);
     $rec['v_types'] = $this->arg_explode(@$rec['v_types']);
 
     myPear::setPageHeader('Endorser '.bForm_Avatar::_fmtName('fl',$rec,False));
@@ -141,7 +141,7 @@ class bUnit_vm_endorses extends bUnit_vm{
 				     APImenu::tab_code(tab_vm_guests),
 				     APImenu::tab_code(tab_vm_guests_to_approve)));
     
-    foreach($this->get_unitMemberIDs() as $av_id){
+    foreach($this->getUnitMemberIDs() as $av_id){
       $rec = $this->getMember(array('um_avid'=>$av_id));
       if (empty($rec['um_id'])) {
 	b_debug::var_dump($rec);
