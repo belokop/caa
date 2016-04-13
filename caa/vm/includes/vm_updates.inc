@@ -3,8 +3,11 @@
  * Update script 
  */
 
+myPear_db()->transaction('start');
 if ( myPear_db()->tableExists('abs_apartments')) myPear_db()->query("DROP TABLE `abs_rooms`",$stop_if_fails=False);
 if (!myPear_db()->tableExists('abs_rooms'))      myPear_db()->qquery("RENAME TABLE `abs_apartments` TO `abs_rooms`",True);
+myPear_db()->transaction('end');
+
 myPear_startup_queue('vm_updates');
 
 function vm_updates(){

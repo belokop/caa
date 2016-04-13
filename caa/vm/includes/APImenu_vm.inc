@@ -466,6 +466,12 @@ class APImenu_vm extends APImenu_ea{
    */
   function process($tab,$dynamicTab=''){
     
+    // There was an explicit request to send password. Do it
+    if (isset($_GET['mo_once'])){
+      $e = myPear::getInstance_new('bForm_vm_Event',$_GET['e_id'],array('strict','fatal'));
+      VM_mailer()->remind_organizer($_GET['av_id'],$e,'pwd','send_now');
+    }
+
     bTiming()->cpu(__FUNCTION__);
     //    print bHolder_Logs::wic();
     
@@ -718,22 +724,17 @@ class APImenu_vm extends APImenu_ea{
       
     case 'tab_vm_adm_unitOrganizers':
     case  tab_vm_adm_unitOrganizers:
-      if (isset($_GET['mo_once'])){
-	// There was an explicit request to send password. Do it
-	$e = myPear::getInstance_new('bForm_vm_Event',$_GET['e_id'],array('strict','fatal'));
-	VM_mailer()->remind_organizer($_GET['av_id'],$e,'pwd','send_now');
-      }else{	
-	locateAndInclude('bUnit_vm_organizers');
-	$units = bUnit_vm_organizers::get_all_events(@$_GET['avid_once']);
-	b_fmt::accordion('open',bUnit_vm_organizers::$e_index);
-	foreach($units as $e_id){
-	  VM_organizers($e_id)->getUnitMemberIDs();
-	  $u = VM_organizers($e_id);
-	  b_fmt::accordion($u->e->name());
-	  $u->getForm();
-	}
-	b_fmt::accordion('close');
+
+      locateAndInclude('bUnit_vm_organizers');
+      $units = bUnit_vm_organizers::get_all_events(@$_GET['avid_once']);
+      b_fmt::accordion('open',bUnit_vm_organizers::$e_index);
+      foreach($units as $e_id){
+	VM_organizers($e_id)->getUnitMemberIDs();
+	$u = VM_organizers($e_id);
+	b_fmt::accordion($u->e->name());
+	$u->getForm();
       }
+      b_fmt::accordion('close');
       break;
       
     case tab_vm_ap_add:
