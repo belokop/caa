@@ -2,7 +2,7 @@
 /**
  * Visitors Manager (VM) configuration file
  */
-$releaseDate = '2016-04-12';
+$releaseDate = '2016-04-13';
 define('VM_MODULE'   , 'vm');
 define('VM_VERSION','5.78');
 
@@ -10,11 +10,11 @@ define('VM_VERSION','5.78');
 // transition problems...
 //
 define('modal_sendmail_dialog',cnf_dev||cnf_demo); // Doesn't want to work...
-define('send_automatically_infoMail_to_registrants',cnf_dev||cnf_demo);
 define('include_payLunch_dinner',cnf_dev||cnf_demo);
-// Office space distribution
-define('distribute_offices',cnf_dev);
-// Final welcome mail settings
+// Office space allocation
+define('allocate_offices',True);
+// Automated mails to registrants
+define('send_automatically_infoMail_to_registrants',cnf_dev||cnf_demo);
 define('send_finalWelcomeEmail_to_registrants',cnf_dev||cnf_demo);
 define('include_personalPage_in_finalWelcomeEmail', send_finalWelcomeEmail_to_registrants && cnf_dev||cnf_demo);
 define('include_accommodation_in_finalWelcomeEmail',send_finalWelcomeEmail_to_registrants && cnf_dev||cnf_demo);

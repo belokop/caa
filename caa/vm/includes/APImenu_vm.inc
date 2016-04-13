@@ -394,7 +394,7 @@ class APImenu_vm extends APImenu_ea{
       case tab_ea_off_desk_labels:
       case tab_ea_off_assign:
       case tab_ea_off_wipe:
-	$reply = distribute_offices && VM_administrator_here && !VM::outOfScope() && (VM::e_ID()>0);
+	$reply = allocate_offices && VM_administrator_here && !VM::outOfScope() && (VM::e_ID()>0);
 	break;
 
       case tab_vm_vis_export:
