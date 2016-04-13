@@ -798,7 +798,7 @@ class bForm_vm_Visit extends bForm_vm {
 			    " LEFT JOIN zzz_list_members ON v_projectid=lm_status ".
 			    " LEFT JOIN abs_expenses     ON exp_vid=v_id ".
 			    " LEFT JOIN abs_leases       ON lease_vid=v_id ".
-			    " LEFT JOIN abs_apartments   ON lease_aid=a_id ".
+			    " LEFT JOIN abs_rooms   ON lease_aid=a_id ".
 			    " LEFT JOIN abs_huts         ON a_hutid=hut_id ".
 			    " LEFT JOIN zzz_avatars      ON v_avid=av_id ".
 			    " WHERE $this->TABLEID = '$this->ID' ".
@@ -1621,7 +1621,7 @@ class bForm_vm_Visit extends bForm_vm {
   function setBooking($lease=array(),$verbose=True){
     if (empty($lease)) return;
     if (!is_array($lease)){ // hence $lease is the apartment ID
-      $a = myPear::getInstance_new('bForm_vm_Apartment',$lease,'fatal');
+      $a = myPear::getInstance_new('bForm_vm_Room',$lease,'fatal');
       $lease = array('lease_aid'  =>$a->ID,
 		     'lease_start'=>$this->getValue('v_start'),
 		     'lease_end'  =>$this->getValue('v_end'));
@@ -1630,7 +1630,7 @@ class bForm_vm_Visit extends bForm_vm {
     
     // Sanity
     if (cnf_dev){
-      if (myPear::getClassFromID($lease['lease_aid'])!='bForm_vm_Apartment') b_debug::internalError("setBooking($lease) is not bForm_vm_Apartment",$this); // sanity
+      if (myPear::getClassFromID($lease['lease_aid'])!='bForm_vm_Room') b_debug::internalError("setBooking($lease) is not bForm_vm_Room",$this); // sanity
       if (!$lease['lease_start'] ||!$lease['lease_end'])                        b_debug::internalError("setBooking($lease) no start/end time") ;           
     }
     
@@ -1647,7 +1647,7 @@ class bForm_vm_Visit extends bForm_vm {
       }
       foreach(bForm_vm_Lease::get_ids($ll) as $l_id){
 	$l = new bForm_vm_Lease($l_id);
-	$l->hookApartment($lease['lease_aid'],$verbose);
+	$l->hookRoom($lease['lease_aid'],$verbose);
       }
       
       // Sanity
@@ -1826,7 +1826,7 @@ class bForm_vm_Visit extends bForm_vm {
     switch ($what){
     case 'Apartment':
       foreach ($this->get_allLeases() as $l){
-	if ($ap = myPear::getInstance_new('bForm_vm_Apartment',$l->getValue('lease_aid',1),'strict')) return $ap->name();
+	if ($ap = myPear::getInstance_new('bForm_vm_Room',$l->getValue('lease_aid',1),'strict')) return $ap->name();
       }
       break;
       

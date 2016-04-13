@@ -1,6 +1,6 @@
 <?php
 /*
- * List which keeps links to shared Apartment
+ * List which keeps links to shared rooms
  * List structure:
  * - l_parent  org_id
  * - lm_key    start of the share
@@ -9,7 +9,7 @@
  */
 locateAndInclude('bList_vm');
 locateAndInclude('bForm_vm_Lease');
-locateAndInclude('bForm_vm_Apartment');
+locateAndInclude('bForm_vm_Room');
 
 define('bList_vm_cotenants_name','Shared accommodation');
 define('bList_vm_cotenants_titl','cotenant');
@@ -117,7 +117,7 @@ class bList_vm_cotenants extends bList_vm{
   }
 
   /*
-   * Get list of tenants in the apartment within the given time period
+   * Get list of tenants in the room within the given time period
    *
    * @param (array) $rec contains
    *  - lease_start

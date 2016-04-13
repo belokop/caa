@@ -81,7 +81,7 @@ class bForm_vm_Lease extends bForm_vm{
    * Remove LODGING_REQ_ONLY requests, it was a bad idea
    */
   public static function cancel_LODGING_REQ_ONLY(){
-    $q = myPear_db()->qquery("SELECT lease_id FROM abs_leases WHERE lease_aid = ".VM::$REQ_ONLY->ID,cnf_dev);
+    $q = myPear_db()->qquery(sprintf("SELECT lease_id FROM abs_leases WHERE lease_aid = '%s'",VM::$REQ_ONLY->ID),cnf_dev);
     while($r = myPear_db()->next_record($q)){
       $l = new bForm_vm_Lease($r['lease_id']);
       b_debug::xxx($l->__toString());
@@ -108,7 +108,7 @@ class bForm_vm_Lease extends bForm_vm{
     
     $leases = array();
     $q = myPear_db()->query("SELECT lease_id,hut_code,a_id,a_code FROM abs_leases ".
-			    " LEFT JOIN abs_apartments ON a_id = lease_aid ".
+			    " LEFT JOIN abs_rooms ON a_id = lease_aid ".
 			    " LEFT JOIN abs_huts ON hut_id = a_hutid ".
 			    " WHERE lease_vid = '$v_id' ORDER BY lease_start");
     while($r = myPear_db()->next_record($q)){
@@ -169,7 +169,7 @@ class bForm_vm_Lease extends bForm_vm{
     
     $reply = array();
     $q = myPear_db()->query("SELECT lease_id,av_firstname,av_lastname FROM abs_leases ".
-			      " LEFT JOIN abs_apartments ON lease_aid = a_id ". 
+			      " LEFT JOIN abs_rooms ON lease_aid = a_id ". 
 			      " LEFT JOIN abs_visits     ON lease_vid = v_id ". 
 			      " LEFT JOIN zzz_avatars    ON v_avid = av_id ". 
 			      " WHERE ".join(' AND ',$w));
@@ -186,7 +186,7 @@ class bForm_vm_Lease extends bForm_vm{
   public static function queryLease($lease_ids,$debug=False){
     foreach($lease_ids as $lease_id) $where[] = "lease_id = $lease_id";
     return myPear_db()->query("SELECT * FROM abs_leases ".
-				 " LEFT JOIN abs_apartments ON lease_aid = a_id ". 
+				 " LEFT JOIN abs_rooms ON lease_aid = a_id ". 
 				 " LEFT JOIN abs_visits     ON lease_vid = v_id ". 
 				 " LEFT JOIN zzz_avatars    ON v_avid = av_id ". 
 				" WHERE " . join(' OR ',$where));
@@ -218,10 +218,10 @@ class bForm_vm_Lease extends bForm_vm{
       
       // assign apartment to the lease
       $lease_aid = $_POST['lease_aid'];
-      $this->hookApartment($lease_aid,$verbose=True);
+      $this->hookRoom($lease_aid,$verbose=True);
       
       // assign cotenant(s) to the lease
-      if(($a = myPear::getInstance_new('bForm_vm_Apartment',$lease_aid,'strict')) && $a->isShared()){
+      if(($a = myPear::getInstance_new('bForm_vm_Room',$lease_aid,'strict')) && $a->isShared()){
 	$cotenants = array();
 	foreach(preg_grep('/cotenant\d+$/',array_keys($_POST)) as $k){
 	  if (empty($cotenants))	  $cotenants = array($this->ID);
@@ -242,7 +242,7 @@ class bForm_vm_Lease extends bForm_vm{
   private $updateDB_preflight_done = 0;
   function updateDB_preflight(&$updates=array()){
     if (!$this->updateDB_preflight_done++){
-      if (!empty($updates['lease_aid'])) $this->hookApartment($updates['lease_aid'],True);
+      if (!empty($updates['lease_aid'])) $this->hookRoom($updates['lease_aid'],True);
     }
     return parent::updateDB_preflight();
   }
@@ -281,7 +281,7 @@ class bForm_vm_Lease extends bForm_vm{
   function readDefRecord() {
     $q = myPear_db()->query("SELECT * FROM $this->TABLE ".
 			    " LEFT JOIN abs_visits ON v_id=lease_vid ".
-			    " LEFT JOIN abs_apartments ON a_id=lease_aid ".
+			    " LEFT JOIN abs_rooms ON a_id=lease_aid ".
 			    " LEFT JOIN abs_huts   ON a_hutid=hut_id ".
 			    " WHERE $this->TABLEID = '$this->ID'");
     while ($r=myPear_db()->next_record($q))   $this->formDB = $r;
@@ -355,7 +355,7 @@ class bForm_vm_Lease extends bForm_vm{
   function accommodationCost(){
     $this->readDefRecord();
     $receipt = ($ok=($a_id = (int)$this->getValue('a_id')))
-      ? bForm_vm_Apartment::getReceipt($this->formDB,$this->nDays())
+      ? bForm_vm_Room::getReceipt($this->formDB,$this->nDays())
       : 0;
     $this->dbg($receipt);
     return array($receipt,$ok);
@@ -396,7 +396,7 @@ class bForm_vm_Lease extends bForm_vm{
 
     // Process "delete lease" which comes from the "visit dialog"
     if ($this->myPost_bForm() && @$_POST['lease_aid'] === LODGING_RM){
-      $this->hookApartment(LODGING_RM);
+      $this->hookRoom(LODGING_RM);
       return;
     }
 
@@ -431,7 +431,7 @@ class bForm_vm_Lease extends bForm_vm{
       $nLeases = count(self::_get_allLeases($this->getValue('lease_vid')));
       if ($nLeases  > 0 && 
 	  $this->maySplit($this->hut_code()) && 
-	  $this->hasApartment()){
+	  $this->hasAccommodation()){
 	$block_header[] = b_btn::submit_icon('i-arrow_divide', 
 					     btn_splitLease,
 					     b_url::same("?action_once=".btn_splitLease."&function=vm_edit_accommodation&resetcache_once=1&lease_id=$this->ID&v_id=".
@@ -449,7 +449,7 @@ class bForm_vm_Lease extends bForm_vm{
     $dialog = array('lease_id' => array('textHidden'));
     if ((time() - AUTO_EXPIRATION*86400) > $this->parentForm->getValue('v_end',1)) $this->isRO['lease_aid'] = !superUser_here;
 
-    if ($this->isRO('lease_aid') && (!$this->hasApartment() || ($this->getValue('lease_aid') == 0))){ 
+    if ($this->isRO('lease_aid') && (!$this->hasAccommodation() || ($this->getValue('lease_aid') == 0))){ 
       $this->getValue_reset('lease_aid',b_fmt::redText('No accommodation'));
       $dialog['lease_aid'] = array('textField');
     }else{
@@ -458,7 +458,7 @@ class bForm_vm_Lease extends bForm_vm{
 				   "onchange='submit()'");
     }
     
-    if (bForm_vm_Apartment::_isShared($this->formDB)){
+    if (bForm_vm_Room::_isShared($this->formDB)){
       if ($this->MODE == 'RO' && !VM_cotenants()->get_cotenants($this->ID)) $this->MODE = 'RW';
       $cotenant = self::select_cotenant('_cotenant',$this->formDB,($this->MODE == 'RW'));
       if (!empty($cotenant)) $dialog[b_rawData] = array('Cotenant',$cotenant);
@@ -537,7 +537,7 @@ class bForm_vm_Lease extends bForm_vm{
   /*
    * Check the accommodation, optionally skipping the "own accommodation"
    */
-  function hasApartment($exclude_OA=False){
+  function hasAccommodation($exclude_OA=False){
     $reply = $lease_aid = (int)$this->getValue('lease_aid',True);
     if ($exclude_OA && (($lease_aid == VM::$OA->ID) || 
 			($lease_aid == VM::$REQ_ONLY->ID))) $reply = False;
@@ -576,7 +576,7 @@ class bForm_vm_Lease extends bForm_vm{
     }
   }
 
-  function hookApartment($lease_aid,$verbose=True){
+  function hookRoom($lease_aid,$verbose=True){
     if (cnf_dev) $verbose = True;
 
     if ($lease_aid === LODGING_RM){
@@ -589,8 +589,8 @@ class bForm_vm_Lease extends bForm_vm{
       $this->hookVisit();
     }elseif ($lease_aid && (($old_aid=@$this->formDB['lease_aid']) != $lease_aid)){
       // sanity
-      if (!(myPear::getInstance_new('bForm_vm_Apartment',$lease_aid,'strict') instanceof bForm_vm_Apartment)) {
-	b_debug::internalError("$lease_aid is not bForm_vm_Apartment",$this);
+      if (!(myPear::getInstance_new('bForm_vm_Room',$lease_aid,'strict') instanceof bForm_vm_Room)) {
+	b_debug::internalError("$lease_aid is not bForm_vm_Room",$this);
       }
       $this->hookVisit();
 
@@ -671,14 +671,14 @@ class bForm_vm_Lease extends bForm_vm{
 			     : bList::getListInstance(myOrg_ID,'bList_vm_accommodationOptions')),
 			    $lease_start,
 			    $lease_end,
-			    $this->hasApartment(False),
+			    $this->hasAccommodation(False),
 			    $this);
   }
   
   /*
    *
    */
-  public static function _freeRooms($accommodationOptions,$v_start,$v_end, $hasApartment=False,$lease=Null,$hut_code=Null){
+  public static function _freeRooms($accommodationOptions,$v_start,$v_end, $hasAccommodation=False,$lease=Null,$hut_code=Null){
 
     $reply = array();
     $where = array(0);
@@ -698,25 +698,25 @@ class bForm_vm_Lease extends bForm_vm{
 	$OK = (empty($r['nrooms'])
 	       ? False
 	     : (count($accommodationOptions->get_occupiedRooms($r['lm_key'],$v_start,$v_end)) < $r['nrooms']));
-	if ($hasApartment && is_object($lease) && ($r['lm_key'] == bForm_vm_Apartment::a_hutid($lease->getValue('lease_aid')))) $OK = True;
+	if ($hasAccommodation && is_object($lease) && ($r['lm_key'] == bForm_vm_Room::a_hutid($lease->getValue('lease_aid')))) $OK = True;
 	if ($OK) $where[] = 'hut_id = '.$r['lm_key'];
       }
 
       // array_merge sucks...
       if (empty($hut_code)){
-	if ($hasApartment) $reply[LODGING_RM] = LODGING_RM_TXT;
+	if ($hasAccommodation) $reply[LODGING_RM] = LODGING_RM_TXT;
 	foreach($accommodationOptions->get_BI() as $k=>$v) $reply[$k] = $v;
       }
     }
     
     // Read the DB
-    $q = myPear_db()->query("SELECT a_start,a_end,a_area,a_id,a_name,hut_code,hut_name FROM abs_apartments ".
+    $q = myPear_db()->query("SELECT a_start,a_end,a_area,a_id,a_name,hut_code,hut_name FROM abs_rooms ".
 			    " LEFT JOIN abs_huts ON a_hutid = hut_id ".
 			    " WHERE ".join(' OR ',$where).
 			    " ORDER BY hut_code,hut_name,a_name");
     while ($ra = myPear_db()->next_record($q)){
       if (!empty($hut_code) && ($ra['hut_code'] != $hut_code)) continue;
-      if (bForm_vm_Apartment::_apIsAccessible($ra,$v_start,$v_end)) $reply[$ra['a_id']] = bForm_vm_Apartment::a_name($ra);
+      if (bForm_vm_Room::_apIsAccessible($ra,$v_start,$v_end)) $reply[$ra['a_id']] = bForm_vm_Room::a_name($ra);
     }
     return $reply;
   }
@@ -728,7 +728,7 @@ class bForm_vm_Lease extends bForm_vm{
     if (empty($e_id) && !empty(VM::$e)) $e_id = VM::$e->ID;
     $q = myPear_db()->query("SELECT v_id FROM abs_visits ".
 			    " LEFT JOIN abs_leases     ON abs_leases.lease_vid = abs_visits.v_id ".
-			    " LEFT JOIN abs_apartments ON abs_leases.lease_aid = abs_apartments.a_id ".
+			    " LEFT JOIN abs_rooms ON abs_leases.lease_aid = abs_rooms.a_id ".
 			    " WHERE v_eid = '$e_id' AND a_name = '".LODGING_REQ_ONLY_TXT."' GROUP BY v_id");
     $reply = array();
     while ($r = myPear_db()->next_record($q)) $reply[] = $r['v_id'];
@@ -760,9 +760,9 @@ class bForm_vm_Lease extends bForm_vm{
     if (is_object($this->parentForm)){ 
       $lease_aid = (int)$this->getValue('lease_aid',True);
       $this->parentForm->hookAvatar();
-      if ($ap = myPear::getInstance_new('bForm_vm_Apartment',$lease_aid,array('strict','nocache'))){ 
+      if ($ap = myPear::getInstance_new('bForm_vm_Room',$lease_aid,array('strict','nocache'))){ 
 	if ($lease_aid_old){
-	  $ap_old = myPear::getInstance_new('bForm_vm_Apartment',$lease_aid_old,array('strict','nocache'));
+	  $ap_old = myPear::getInstance_new('bForm_vm_Room',$lease_aid_old,array('strict','nocache'));
 	  $from = '"'.$ap_old->name().'" -> ';
 	}else{
 	  $from = '';
@@ -785,9 +785,9 @@ class bForm_vm_Lease extends bForm_vm{
    * 
    */
   public static function select_cotenant($name,$rec,$mode='auto'){
-    locateAndInclude('bForm_vm_Apartment');
+    locateAndInclude('bForm_vm_Room');
 
-    if (!bForm_vm_Apartment::_isShared($rec) || 
+    if (!bForm_vm_Room::_isShared($rec) || 
 	($rec['lease_end'] < time()+24*3600)) return '';
     
     $cotenants = VM_cotenants()->get_cotenants($rec['lease_id']);

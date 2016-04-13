@@ -1,7 +1,7 @@
 <?php
 locateAndInclude('bCover');
 locateAndInclude('bForm_vm_Lease');
-locateAndInclude('bHolder_vm_Apartments');
+locateAndInclude('bHolder_vm_Rooms');
 locateAndInclude('bHolder_vm_Offices');
 class bCover_vm extends bCover {
 
@@ -23,7 +23,7 @@ class bCover_vm extends bCover {
    *
    */
   public static function wipeAllocation($whatToWipe,$event){
-    static $ids = array('Office'    => 'v_oid',
+    static $ids = array('Offices'   => 'v_oid',
 			'Apartment' => '??',
 			'Cotenants' => '??');
     // Remove all office allocations for the event 
@@ -31,7 +31,7 @@ class bCover_vm extends bCover {
     myPear::MESSAGE("Wipe office allocations for ".x('"',x('em',$event->name(True,40))));
     
     // Force automatic office assignment for the staff members
-    if ($whatToWipe == 'Office') self::allocateOfficesForStaff($event->ID);
+    if ($whatToWipe == 'Offices') self::allocateOfficesForStaff($event->ID);
   }
 
   /*
@@ -60,7 +60,7 @@ class bCover_vm extends bCover {
       }
       break;
 
-    case 'Office':
+    case 'Offices':
       self::allocateOfficesForStaff($b->e->ID);
       break;
       
@@ -94,7 +94,7 @@ class bCover_vm extends bCover {
 					      'v_start'  => 'leasday1',
 					      'v_end'    => 'leasday9',
 					      ),
-			  'Office'   => array('v_roomID' =>'v_oid',
+			  'Offices'   => array('v_roomID' =>'v_oid',
 					      'room_ID'  =>'o_id',
 					      'room_name'=>'o_name',
 					      'room_d1'  =>'o_start',
@@ -123,7 +123,7 @@ class bCover_vm extends bCover {
    */
   protected function quality(){
     switch($this->whatToAllocate){
-    case 'Office':
+    case 'Offices':
       return parent::quality();
       $quality = 0;
       static $kjkjkj=0;$kjkjkj++;
@@ -150,7 +150,7 @@ class bCover_vm extends bCover {
     case 'Cotenants':
     case 'Apartment':
       return parent::clashing($ar1, $ar2);
-    case 'Office':
+    case 'Offices':
       return b_time::inInterval(b_time::oa_start($ar1[$this->start]),b_time::oa_end($ar1[$this->end]),
 				b_time::oa_start($ar2[$this->start]),b_time::oa_end($ar2[$this->end]));
     }
@@ -165,7 +165,7 @@ class bCover_vm extends bCover {
       $_GET['sBy'] = 'a_name';
       return VM_query($where);
 
-    case 'Office':
+    case 'Offices':
       $_GET['sBy'] = 'o_name';
       return VM_query($where,"LEFT JOIN abs_offices ON o_id = v_oid");
 
@@ -202,7 +202,7 @@ class bCover_vm extends bCover {
 	  $this->summary[LODGING_OA_TXT][] = $r['a_name'];
 	  break;
 	}
-      case 'Office':
+      case 'Offices':
 	if (!in_array($r['v_id'],$_SESSION['bCover_vm_dejaVu']) && (@$n++ < $this->maxClochards)){
 	  // Skip visitors with flag "no office provided"
 	  if (bForm_vm_Visit::_getPolicy(VM_V_provideOffice,$r)){
@@ -241,13 +241,13 @@ class bCover_vm extends bCover {
       $sols = array();
       foreach ($this->solution as $sol_id=>$visits){
 	switch($this->whatToAllocate){
-	case 'Office':
+	case 'Offices':
 	  $sol = myPear::getInstance_new('bForm_vm_Office',(int)($sol_id/100),'strict');
 	  if ($sol && ($sol->getValue('o_capacity') < ($sol_id%100))) $sol = 0;
 	  break;
 	  
 	case 'Apartment':
-	  $sol = myPear::getInstance_new('bForm_vm_Apartment',$sol_id,'fatal');
+	  $sol = myPear::getInstance_new('bForm_vm_Room',$sol_id,'fatal');
 	  break;
 	  
 	case 'Cotenants':
@@ -294,7 +294,7 @@ class bCover_vm extends bCover {
   private function getVisit($v_id){
     if (!empty($v_id)){
       switch($this->whatToAllocate){
-      case 'Office':    return myPear::getInstance_new('bForm_vm_Visit',$v_id,array('nocache','fatal'));
+      case 'Offices':    return myPear::getInstance_new('bForm_vm_Visit',$v_id,array('nocache','fatal'));
       case 'Apartment': return bForm_vm_Lease::visit($v_id);
       case 'Cotenants': b_debug::internalError("should not come here");
       }
@@ -369,8 +369,8 @@ class bCover_vm extends bCover {
      * note, the 'externalAccs' are NOT considered here
      */
     switch($this->whatToAllocate){
-    case 'Office':    $query = bHolder_vm_Offices::queryOffices("o_status = 'visitors'"); break;
-    case 'Apartment': $query = bHolder_vm_Apartments::_queryAps(); break;
+    case 'Offices':   $query = bHolder_vm_Offices::queryOffices("o_status = 'visitors'"); break;
+    case 'Apartment': $query = bHolder_vm_Rooms::_queryAps(); break;
     case 'Cotenants': $query = bForm_vm_Lease::queryLease($this->leases,$this->debug); break;
     }
     while ($r=myPear_db()->next_record($query)) {
@@ -381,7 +381,7 @@ class bCover_vm extends bCover {
       if (b_time::inInterval($this->day1, $this->day9,
 			     $r[room_d1],$r[room_d9])){
 
-	// Check that the office/apart is available during the visit period,
+	// Check that the office/room is available during the visit period,
 	// build a constrain if not.
 	$constrain = array();
 	if (    $r[room_d1]>$this->day1 && 
@@ -395,7 +395,7 @@ class bCover_vm extends bCover {
 							      'v_end'   => $this->day9,
 							      'name'    => 'not available');
 	elseif (False){ // Not sure...
-	  // Check that the office/apart is NOT occupied during the visit period
+	  // Check that the office/room is NOT occupied during the visit period
 	  // by someone who is NOT participating in the event,
 	  // build a constrain in case of clashes.
 	  $where = array("v_eid != ".$this->e->ID,
@@ -427,8 +427,8 @@ class bCover_vm extends bCover {
     $where = array();
     switch($this->whatToAllocate){
     case 'Apartment': 
-      $where[] = bHolder_vm_Apartments::rejectExtApp(); 
-    case 'Office':  
+      $where[] = bHolder_vm_Rooms::rejectExtApp(); 
+    case 'Offices':  
       $where[] =  v_roomID." > 0";
       $where[] = "v_eid = ".$this->e->ID;
       $q = $this->query($where);
@@ -459,7 +459,7 @@ class bCover_vm extends bCover {
      * Number of desks is the office capacity.
      */
     // b_debug::print_r($this->constraints,'this->constraints','nosort');
-    if ($this->whatToAllocate == 'Office'){
+    if ($this->whatToAllocate == 'Offices'){
       // Limit office allocation by the event period
       // $this->timeMn = $this->e->getValue('e_start');
       // $this->timeMx = $this->e->getValue('e_end');
@@ -480,7 +480,7 @@ class bCover_vm extends bCover {
   function pivotIndex(){
     return array(-9999, 'NOT ALLOCATED');
     $index = bMaster()->currentValue + 1;
-    if ($this->whatToAllocate == 'Office') $index = $index * 100;
+    if ($this->whatToAllocate == 'Offices') $index = $index * 100;
     return array($index, 'NOT ALLOCATED');
   }
 }

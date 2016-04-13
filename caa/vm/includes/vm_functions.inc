@@ -11,7 +11,7 @@ function VM_query($where=array(1),$join_rooms='',$debug=False){
   
   if (empty($join_rooms))  $join_rooms = ''
 			     .'LEFT JOIN abs_leases ON lease_vid = v_id '
-			     .'LEFT JOIN abs_apartments ON a_id = lease_aid '
+			     .'LEFT JOIN abs_rooms ON a_id = lease_aid '
 			     .'LEFT JOIN abs_huts ON a_hutid = hut_id '
 			     .'LEFT JOIN abs_expenses ON v_id = exp_vid '
 			     // .'LEFT JOIN abs_offices  ON v_oid = o_id'
@@ -25,7 +25,7 @@ function VM_query($where=array(1),$join_rooms='',$debug=False){
     $ok = False;
     foreach(array('abs_leases',
 		  'abs_expenses',
-		  'abs_apartments',
+		  'abs_rooms',
 		  'abs_visits',
 		  'abs_events',
 		  'abs_huts',

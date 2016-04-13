@@ -203,7 +203,7 @@ class APImenu_vm extends APImenu_ea{
     if (!$dejaVu++){
       
       foreach (array('bForm_Avatar_vm',
-		     'bForm_vm_Apartment',
+		     'bForm_vm_Room',
 		     ) as $object) locateAndInclude($object);
       
       /*
@@ -374,8 +374,6 @@ class APImenu_vm extends APImenu_ea{
 
       case tab_vm_adm_sync:
 	$reply = (VM_booker_here || VM_organizer_here);
-	//	$reply = cnf_dev;
-	//	myPear::MESSAGE("shit with tab_vm_adm_sync");
 	break;
 
 	// Probably not needed
@@ -739,7 +737,7 @@ class APImenu_vm extends APImenu_ea{
       break;
       
     case tab_vm_ap_add:
-      if (empty($_GET['form'])) $_GET['form'] = 'vm_Apartment';
+      if (empty($_GET['form'])) $_GET['form'] = 'vm_Room';
       if (empty($_GET['id']))   $_GET['id']   = 'new';
     case 'formTPL':
       if  (bAuth::authenticated()){
@@ -792,32 +790,56 @@ class APImenu_vm extends APImenu_ea{
       break;
       
     case tab_vm_adm_sync:
-      locateAndInclude('agenda_vm',
-		       'bUnit_vm_organizers',
-		       'b_cache_file');
-      b_cache_file::emptyCache();
-      
-      // Extract list of relevant events for the organizers
-      $events = array();
-      if (bAuth::$av->isOrganizer()){
-	$list = bUnit_vm_organizers::getEvents(bAuth::$av->ID,array(),True);
-	foreach(array_keys($list) as $e_id) $events[] = "conf=$e_id&show_reg=all";
-	if (empty($events)) $events = array("conf=0");
-	else myPear::MESSAGE('Synchronizing agenda entries:'.x('ul',b_fmt::joinMap('li',array_values($list))));
+      switch(b_btn::confirm()){
+      case 'yes':
+	locateAndInclude('agenda_vm',
+			 'bUnit_vm_organizers',
+			 'b_cache_file');
+	b_cache_file::emptyCache();
+
+	// Extract list of relevant events for the organizers
+	$events = array();
+	if (bAuth::$av->isOrganizer()){
+	  $list = bUnit_vm_organizers::getEvents(bAuth::$av->ID,array(),True);
+	  foreach(array_keys($list) as $e_id) $events[] = "conf=$e_id&show_reg=all";
+	  if (empty($events)) $events = array("conf=0");
+	  else myPear::MESSAGE('Synchronizing agenda entries:'.x('ul',b_fmt::joinMap('li',array_values($list))));
+	}
+	
+	VM_agenda()->sync($events);
+	break;
+	
+      case 'no':
+	b_url::header(b_url::same('?q='.join('/',array(VM_MODULE,
+						       APImenu::tab_code(tab_vm_vis)))));
+      case Null:
+	b_btn::confirm("Synchronization is a long procedure, are you sure you want to do it?");
+        return True;
       }
-      
-      VM_agenda()->sync($events);
       break;
       
     case tab_ea_off_wipe:
       $this->eventSelector();
-      locateAndInclude('bCover_vm','b_cache_file');
-      b_cache_file::emptyCache();
-      bCover_vm::wipeAllocation('Office',VM::$e);
+      $remove_msg = sprintf("wipe the office allocations for <em>%s</em>",VM::$e->name());
+      switch(b_btn::confirm()){
+      case 'yes':
+	locateAndInclude('bCover_vm','b_cache_file');
+	b_cache_file::emptyCache();
+	bCover_vm::wipeAllocation('Offices',VM::$e);
+	break;
+	
+      case 'no':
+	b_url::header(b_url::same('?q='.join('/',array(VM_MODULE,
+						       APImenu::tab_code(tab_ea_off),
+						       APImenu::tab_code(tab_ea_off_list)))));
+      case Null:
+	b_btn::confirm("Are you sure you want to $remove_msg?");
+        return True;
+      }
       break;
 
     case tab_ea_off_assign:
-      if (!isset($whatToAssign)) $whatToAssign = 'Office';
+      if (!isset($whatToAssign)) $whatToAssign = 'Offices';
       $this->eventSelector();
 
     case tab_vm_ap_assign:
@@ -837,12 +859,12 @@ class APImenu_vm extends APImenu_ea{
 
     case tab_vm_ap_usage:
       $doing = 'usage';
-      $title = 'Apartments balance';
+      $title = 'Rooms balance';
     case tab_vm_ap_aps:
       if (empty($doing))  $doing = 'list';
       if (empty($title))  $title = 'All apartments';
-      locateAndInclude('bHolder_vm_Apartments');
-      $holder = new bHolder_vm_Apartments($doing,$title);
+      locateAndInclude('bHolder_vm_Rooms');
+      $holder = new bHolder_vm_Rooms($doing,$title);
       $holder->listEntries();
       break;
       
@@ -1114,7 +1136,7 @@ class APImenu_vm extends APImenu_ea{
 	  
 	case LODGING_OA:
 	  // assign visits without the project number to OA project
-	  $q = myPear_db()->query("SELECT * FROM abs_leases LEFT JOIN abs_visits ON lease_vid=v_id WHERE v_projectid=0 AND lease_aid=".VM::$OA->ID);
+	  $q = myPear_db()->query(sprintf("SELECT * FROM abs_leases LEFT JOIN abs_visits ON lease_vid=v_id WHERE v_projectid=0 AND lease_aid='%s'",VM::$OA->ID));
 	  while ($r = myPear_db()->next_record($q)){
 	    $visit = new bForm_vm_Visit($r['v_id']);
             $visit->defineVariables();

@@ -441,11 +441,11 @@ class bHolder_vm_Visitors extends bHolder_vm{
 
       }elseif($p = preg_grep('/_a_id:\d+$/',array_keys($_POST))){
 
-	// Book an apartment according to the selection
+	// Book a room according to the selection
 	$v = new bForm_vm_Visit($_POST['v_id']);
 	if ($p[0] == LODGING_RM){
 	  $l = bForm_vm_Lease($_POST['lease_id']);
-	  $l->hookApartment(LODGING_RM);
+	  $l->hookRoom(LODGING_RM);
 	}else{
 	  $v->setBooking($_POST[$p[0]]);
 	}

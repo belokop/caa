@@ -1,6 +1,6 @@
 <?php
 /*
- * Helper for bForm_vm_Hut & bForm_vm_Apartment classes.
+ * Helper for bForm_vm_Hut & bForm_vm_Room classes.
  * Keep accommodation options available for the given event.
  * 
  * Member format:
@@ -241,7 +241,7 @@ class bList_vm_accommodationOptions extends bList_vm{
     if (!empty($av_id)){
       $this->debug = True;
       $this->hookJOIN = join(' ',array("LEFT JOIN abs_huts ON hut_id = lm_key",
-				       "LEFT JOIN abs_apartments ON a_hutid = hut_id",
+				       "LEFT JOIN abs_rooms ON a_hutid = hut_id",
 				       "LEFT JOIN abs_leases ON lease_aid = a_id",
 				       "LEFT JOIN abs_visits ON lease_vid = v_id"));
       $this->where_eq = array("v_host_avid = '$av_id'");
@@ -341,7 +341,7 @@ class bList_vm_accommodationOptions extends bList_vm{
 		  // first select the huts where the participans already allocated
 		  'hut_capacity,hut_id'.(($this->parent_ID == myOrg_ID)?'':',e_end') => 'FROM abs_visits '.
 		  ' LEFT JOIN abs_leases ON v_id = lease_vid '. 
-		  ' LEFT JOIN abs_apartments ON a_id = lease_aid '.
+		  ' LEFT JOIN abs_rooms ON a_id = lease_aid '.
 		  ' LEFT JOIN abs_huts ON hut_id = a_hutid '. 
 		  (($this->parent_ID == myOrg_ID)
 		   ? ' WHERE (v_type = "'.VISIT_TYPE_COLLABORATION.'" OR v_type = "'.VISIT_TYPE_OTHER.'")'
@@ -370,7 +370,7 @@ class bList_vm_accommodationOptions extends bList_vm{
    */
   function get_BI($Return_a_code=False){
     $reply = array();
-    $q = myPear_db()->query("SELECT a_id,a_name,a_code FROM abs_huts LEFT JOIN abs_apartments ON a_hutid = hut_id WHERE hut_code = '".HUT_BI."'");
+    $q = myPear_db()->query("SELECT a_id,a_name,a_code FROM abs_huts LEFT JOIN abs_rooms ON a_hutid = hut_id WHERE hut_code = '".HUT_BI."'");
     while($r = myPear_db()->next_record($q)){
       if(cancel_LODGING_REQ_ONLY && ($r['a_id'] == VM::$REQ_ONLY->ID)) continue;
       if ($Return_a_code) $reply[$r['a_id']] = $r['a_code'];
@@ -397,7 +397,7 @@ class bList_vm_accommodationOptions extends bList_vm{
     $q = myPear_db()->query('SELECT lease_id,a_name FROM abs_visits '.
 			    ($this->parent_ID == myOrg_ID ? '' : ' LEFT JOIN abs_events ON e_id = v_eid '). 
 			    ' LEFT JOIN abs_leases ON v_id = lease_vid '. 
-			    ' LEFT JOIN abs_apartments ON a_id = lease_aid '.
+			    ' LEFT JOIN abs_rooms ON a_id = lease_aid '.
 			    ' LEFT JOIN abs_huts ON hut_id = a_hutid '. 
 			    ' WHERE '.join(' AND ',$where).
 			    ' GROUP BY lease_id');

@@ -49,7 +49,7 @@ class bForm_vm_Hut extends bForm_vm {
       foreach($reply as $hut_id=>$x){
 	$reply_nAps = 0;
 	$q = myPear_db()->query("SELECT a_name,a_start,a_end ".
-				" FROM abs_apartments ".
+				" FROM abs_rooms ".
 				" LEFT JOIN abs_huts ON hut_id = a_hutid ".
 				" WHERE a_hutid = $hut_id ".
 				" AND a_end >= $e_end ".

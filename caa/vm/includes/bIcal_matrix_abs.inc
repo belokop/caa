@@ -158,7 +158,7 @@ class bIcal_matrix_abs extends bIcal_matrix{
 		 'clas' => $this->getRandomColor(abs_colorLegend($r)),
 		 'name' => (True
 			    ? $app
-			    : bJS()->popup($app,b_url::same("?mode=RO&form=vm_Apartment&id=$r[a_id]"))),
+			    : bJS()->popup($app,b_url::same("?mode=RO&form=vm_Room&id=$r[a_id]"))),
 		 'tips' => nbsp(preg_replace('/<br .><br .>/','<br/>',
 					     join('<br/>',array(x('strong',$r['name']),
 							       @$r['e_code']<0 ? @$r['e_name'] : '',

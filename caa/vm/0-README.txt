@@ -404,7 +404,7 @@ M       vm/v2v.sh
 M       vm/includes/bMailer_vm.inc
 
 2015-01-25, Version 5.17, release 2015-01-25
-M       vm/sql/abs_apartments.sql
+M       vm/sql/abs_rooms.sql
 M       vm/sql/abs_events.sql
 M       vm/sql/abs_expenses.sql
 M       vm/sql/abs_huts.sql
@@ -464,7 +464,7 @@ M       vm/includes/vm_updates.inc
 M       vm/includes/agenda_vm.inc
 M       vm/includes/bHolder/vm/Visitors.inc
 M       vm/includes/vm_updates.inc
-M       vm/sql/abs_apartments.sql
+M       vm/sql/abs_rooms.sql
 D       vm/tools/fix_local_users.php
 
 2015-01-16, Version 5.8, code cleanup

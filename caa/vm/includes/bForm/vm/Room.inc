@@ -1,21 +1,21 @@
 <?php
 /*
- * "Abstract apartmemnt" class, represents a bookable accomodation object (Hotel room, rented apartment, etc).
+ * "Abstract room" class, represents a bookable accomodation object (Hotel room, rented apartment, etc).
  *
  * Has the followins properties:
  * - Capacity (number of beds)
  * - First/Last dates when is available
  * - Price
  * - etc.
- * The apartments are grouped in a Building (Hut) 
+ * The roomss are grouped in a Building (Hut) 
  */
 
 define('VMaps_day1',b_time::txt2unix('2008-03-14'));
 
 locateAndInclude('bForm_vm');
-class bForm_vm_Apartment extends bForm_vm {
+class bForm_vm_Room extends bForm_vm {
 
-  var $TABLE  = 'abs_apartments';
+  var $TABLE  = 'abs_rooms';
   var $TABLEID= 'a_id';
   public static $receiptFormula = '';
   public $hut = Null; // The parent Hut class (if any)
@@ -49,6 +49,7 @@ class bForm_vm_Apartment extends bForm_vm {
   }
 
   function __construct($id, $mode='RO') {
+    if ($a_hutid = @$_GET['a_hutid']) $this->getValue_reset('a_hutid',$a_hutid);
     parent::__construct($id, $mode);
   }
 
@@ -57,8 +58,8 @@ class bForm_vm_Apartment extends bForm_vm {
    */
   function readDefRecord(){
     $q = myPear_db()->query("SELECT * FROM $this->TABLE ".
-			      " LEFT JOIN abs_huts ON a_hutid = hut_id ".
-			      " WHERE $this->TABLEID = '$this->ID'");
+			    " LEFT JOIN abs_huts ON a_hutid = hut_id ".
+			    " WHERE $this->TABLEID = '$this->ID'");
     while ($r=myPear_db()->next_record($q)) {
       $this->formDB = $r; 
       if ((int)$this->getValue('a_start',1,1) < VMaps_day1) $this->formDB['a_start'] = rent0;
@@ -68,7 +69,7 @@ class bForm_vm_Apartment extends bForm_vm {
   }
 
   /*
-   * True if the apartment is shared
+   * True if the room is shared
    */
   public function isShared(){
     return self::_isShared($this->formDB);
@@ -94,7 +95,7 @@ class bForm_vm_Apartment extends bForm_vm {
       self::$receiptFormula  = '('.LODGING_OA_TXT.')';
       return self::_dailyRent($formDB);
     }else{
-      //if ($ap = myPear::getInstance_new('bForm_vm_Apartment',$a_id,'strict')) $extraApFee = $ap->fee();
+      //if ($ap = myPear::getInstance_new('bForm_vm_Room',$a_id,'strict')) $extraApFee = $ap->fee();
       $p =  self::_dailyRent($formDB); 
       self::$receiptFormula = (($ip=(int)$p)?"($ip":'(???')."*$nDays".($extraApFee?"+$extraApFee)":')');
       return (int)($p * $nDays + $extraApFee);
@@ -162,8 +163,18 @@ class bForm_vm_Apartment extends bForm_vm {
     }else{
       $url = '';
     }
+
+    if ($a_hutid = $this->getValue('a_hutid')) {
+      $hut = new bForm_vm_hut($a_hutid);
+      $this->isRO['a_hutid'] = True;
+      $this->formBlock('Building',
+		       '',
+		       array('a_hutid'=>$this->selectMenu('a_hutid',array($a_hutid=>$hut->name()))),
+		       $url);
+    }
+    
     $this->formBlock('Accommodation',
-		     ($this->embedded?'Accommodation':' '),
+		     ($this->embedded?'Accommodation':'Room'),
 		     array('a_name',
 			   'a_area',
 			   'a_capacity',
@@ -183,22 +194,23 @@ class bForm_vm_Apartment extends bForm_vm {
 		       'Renting conditions',
 		       $dialog,
 		       array('d'=>btn_edit_ap,
-			     'l'=>b_url::same("?mode=RW&form=vm_Apartment&id=".$this->ID)));
+			     'l'=>b_url::same("?mode=RW&form=vm_Room&id=".$this->ID)));
       if (stripos($this->getValue('a_name',1),'shared') !== False) $this->textHidden('a_status',AP_SHARABLE);
     }
     
     // Now the "submit" buttons
     $submit= array();
     if ($this->MODE=='RO'){
-      // if ($this->isWritable())   $submit['modify'] = b_url::same("?form=vm_Apartment&mode=RW&id=".$this->ID);
+      // if ($this->isWritable())   $submit['modify'] = b_url::same("?form=vm_Room&mode=RW&id=".$this->ID);
       $submit['continue'] = b_url::getReferrer();
+    }else{
     }
     $this->closeForm('submit',$submit);
     if (!$this->embedded) bIcons()->explain();
   }
   
   /*
-   * Check that the apartment is accesible for the given time period
+   * Check that the room is accesible for the given time period
    */
   static function _apIsAccessible($formDB, $start, $end){
     if (empty($formDB['a_start'])) $formDB['a_start'] = rent0;
@@ -224,7 +236,7 @@ class bForm_vm_Apartment extends bForm_vm {
    */
   public static function a_hutid($a_id){
     $reply = Null;
-    $q  =  myPear_db()->query("SELECT a_hutid FROM abs_apartments WHERE a_id = $a_id");
+    $q  =  myPear_db()->query("SELECT a_hutid FROM abs_rooms WHERE a_id = $a_id");
     while ($r=myPear_db()->next_record($q)) {
       $reply = $r['a_hutid'];
     }
@@ -232,8 +244,9 @@ class bForm_vm_Apartment extends bForm_vm {
   }
 
   function name($includeArea=False){
-    if (!(int)$this->ID) return 'Adding new apartment';
-    else                 return self::a_name($this->formDB,$includeArea);
+    return (myPear::is_int($this->ID)
+	    ? self::a_name($this->formDB,$includeArea)
+	    : 'Adding new room');
   }
 
   function isUsed(){

@@ -1,6 +1,6 @@
 <?php
 locateAndInclude('bHolder_vm');
-class bHolder_vm_Apartments extends bHolder_vm{
+class bHolder_vm_Rooms extends bHolder_vm{
 
   var $cleanCost = 0;
   var $rent      = 0;
@@ -21,7 +21,15 @@ class bHolder_vm_Apartments extends bHolder_vm{
     parent::__construct();
     $this->title = bText::_($title);
     $this->doing = $doing;
-    //if ($this->doing == 'list') $this->doing = 'list2';
+
+    // Delete a room if requested
+    if ($a_id = @$_GET['delete_once']){
+      $room = new bForm_vm_Room($a_id);
+      myPear::MESSAGE("Deleting unused room ".x('em',$room->name()));
+      myPear::getInstance_new('bForm_vm_Room',$a_id,'delete');
+      unset($room);
+    }
+
     switch ($this->doing){
     case 'usage':
       $this->rf = b_time::noon(0, 1, 1);
@@ -36,7 +44,7 @@ class bHolder_vm_Apartments extends bHolder_vm{
 	$this->tabs_hutCodes[$r['lm_value']] = $r['lm_key'];
       }
 
-      // Since we will read only the apartments for a given tab (see functions "rejectRecord" & "query")
+      // Since we will read only the rooms for a given tab (see functions "rejectRecord" & "query")
       // lets point on the selected tab from the beginning.
       locateAndInclude('b_tabs');
       $this->b_tabs_hutCodes = new b_tabs_myPear(array_keys($this->tabs_hutCodes));
@@ -70,7 +78,7 @@ class bHolder_vm_Apartments extends bHolder_vm{
       $w[] = "(a_status = '".AP_AUTO_ALLOCATABLE."' OR a_name REGEXP 'Nordita')";
       $w[] = "a_start <= $this->rt";
       $w[] ="(a_end   >= $this->rf OR a_end = 0)";
-      $q = myPear_db()->query("SELECT * FROM abs_apartments WHERE ".join(' AND ',$w).
+      $q = myPear_db()->query("SELECT * FROM abs_rooms WHERE ".join(' AND ',$w).
 				" ORDER BY $_GET[sBy] ".@$_GET['sByDir']); 
       return $q;
       
@@ -116,7 +124,7 @@ class bHolder_vm_Apartments extends bHolder_vm{
    */  
   function format() {
 
-    $this->a = myPear::getInstance_new('bForm_vm_Apartment', @$this->rec['a_id'],'strict');
+    $this->a = myPear::getInstance_new('bForm_vm_Room', @$this->rec['a_id'],'strict');
 
     if (empty($this->rec['n_nosort'])) 	  $this->rec['n_nosort'] = 0;
     if (isset($this->rec['a_start'])) if ($this->rec['a_start'] <= rent0) unset($this->rec['a_start']); 
@@ -144,7 +152,7 @@ class bHolder_vm_Apartments extends bHolder_vm{
     case 'usage':
       $day1 = max($this->rf,$this->a->getValue('a_start',1));
       $day9 = min($this->rt,$this->a->getValue('a_end',  1));
-      $rent = bForm_vm_Apartment::_dailyRent($this->a->formDB) * b_time::diff($day9,$day1);
+      $rent = bForm_vm_Room::_dailyRent($this->a->formDB) * b_time::diff($day9,$day1);
       $this->rec['rent_nosort'] = b_fmt::escape(b_fmt::money($rent));
       $this->rent += $rent;
 
@@ -182,7 +190,7 @@ class bHolder_vm_Apartments extends bHolder_vm{
       $this->t->counter = 0;
       while($r = myPear_db()->next_record($q)) {
 	$this->t->extraTD = array();
-	$this->a = myPear::getInstance_new('bForm_vm_Apartment',$r['a_id'],'fatal');
+	$this->a = myPear::getInstance_new('bForm_vm_Room',$r['a_id'],'fatal');
 	$this->format_record_axi($r);
 	$this->t->prt($r);
       }
@@ -193,13 +201,13 @@ class bHolder_vm_Apartments extends bHolder_vm{
   private function format_record_axi(&$rec){
     if (!is_object($this->a)) return; 
     $this->t->extraTD[]= ($this->a->isWritable()
-			  ? bIcons()->getButton(array('l'=>b_url::same("?form=vm_Apartment&id=".$this->a->ID),
+			  ? bIcons()->getButton(array('l'=>b_url::same("?form=vm_Room&id=".$this->a->ID),
 						      'd'=>'modify',
 						      'i'=>'i-edit'))
 			  :'');
     
     $this->t->extraTD[]=(!$this->a->isUsed() && $this->a->isWritable()
-			 ? bIcons()->getButton(array('l'=>b_url::same("?form=vm_Apartment&id=".$this->a->ID),
+			 ? bIcons()->getButton(array('l'=>b_url::same("?delete_once=".$this->a->ID),
 						     'd'=>btn_deleteAp,
 						     'i'=>'i-drop'))
 			 :'');
@@ -216,9 +224,10 @@ class bHolder_vm_Apartments extends bHolder_vm{
       // Optionally draw edit buttons at the bottom
       $edit_buttons = array();
       if (VM_hutCodes()->isWritable() && VM_hutCodes()->isAddable()) {
+	$hut = new bForm_vm_Hut($this->current_hut);
 	
-	$edit_buttons[] = b_btn::submit('add new room',
-					b_url::same('?id=new&form=vm_Apartment&clean_once=act_code,act_id'));
+	$edit_buttons[] = b_btn::submit('add new room to '.$hut->name(),
+					b_url::same('?id=new&form=vm_Room&clean_once=act_code,act_id&a_hutid='.$hut->ID));
 	$edit_buttons[] = b_btn::submit("add new ".VM_hutCodes()->memberTitle(),
 					VM_hutCodes()->get_action('add'),
 					$confirm=True);
@@ -262,9 +271,9 @@ class bHolder_vm_Apartments extends bHolder_vm{
    *
    */
   public static function _queryAps($where=''){
-    if (!myPear_db()->columnExists(@$_GET['sBy'],'abs_apartments')) $_GET['sBy'] = 'a_name';
+    if (!myPear_db()->columnExists(@$_GET['sBy'],'abs_rooms')) $_GET['sBy'] = 'a_name';
     $q = myPear_db()->query("SELECT * FROM abs_huts ".
-			    " LEFT JOIN abs_apartments ON hut_id = a_hutid ".
+			    " LEFT JOIN abs_rooms ON hut_id = a_hutid ".
 			    $where.
 			    " ORDER BY hut_name,$_GET[sBy] ".@$_GET['sByDir']);
     return $q;

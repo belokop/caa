@@ -289,14 +289,14 @@ class bForm_vm_Expenses extends bForm_vm{
    * @return total cost for the selected accommodation option
    */
   function living($showFormula=False,$showDefaultOnly=False,$seeOnly=False){
-    locateAndInclude('bForm_vm_Apartment');
+    locateAndInclude('bForm_vm_Room');
     $this->hookVisit();
     $formula = array();
       $expenses = 0;
       foreach($this->visit->get_allLeases() as $l){
 	if (!empty($seeOnly) && ($l->hut_code() != $seeOnly) && ($l->ID != $seeOnly)) continue;
 	list($price,$lease_exists) = $l->accommodationCost();
-	$formula[] = bForm_vm_Apartment::$receiptFormula;
+	$formula[] = bForm_vm_Room::$receiptFormula;
 	$expenses += $price;
 	if (!$lease_exists) $this->colorCode['living'] = VM_color_budgetEstimate;
       }

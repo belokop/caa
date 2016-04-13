@@ -190,14 +190,14 @@ if (cancel_LODGING_REQ_ONLY) unset($GLOBALS['LODGING_FINDER'][LODGING_REQ_ONLY])
 //
 
 define('OFFICE_AUTO_ALLOCATABLE', 'visitors'); // offices with this status are auto-allocated by the bCover
-define('AP_AUTO_ALLOCATABLE','auto allocate'); // apartments with this status are auto-allocated by the bCover
-define('AP_SHARABLE','shared');                // apartments might be shared 
+define('AP_AUTO_ALLOCATABLE','auto allocate'); // rooms with this status are auto-allocated by the bCover
+define('AP_SHARABLE','shared');                // rooms might be shared 
 
-define('ICON_edit_event',       11);
-define('ICON_edit_apartment',   13);
-define('ICON_see_agenda',       14);
-define('ICON_edit_visit',       17);
-define('ICON_mail_tenant',      18);
+define('ICON_edit_event',  11);
+define('ICON_edit_room',   13);
+define('ICON_see_agenda',  14);
+define('ICON_edit_visit',  17);
+define('ICON_mail_tenant', 18);
 define('STATUS_PENDING', 'STATUS_PENDING');
 define('STATUS_YES',     'STATUS_YES'); 
 define('STATUS_NO',      'STATUS_NO'); 
@@ -211,7 +211,7 @@ define('btn_splitLease'         , 'split this accommodation');
 define('btn_edit_policy'        , 'modify policy');
 define('btn_edit_project', 'update payment source');
 define('btn_edit_ap',      'update information');
-define('btn_deleteAp',     'delete unused apartment');
+define('btn_deleteAp',     'delete unused room');
 define('btn_deleteLease',  'delete this accommodation');   
 define('txt_deleteVisit',  'delete this visit');
 define('btn_ok',      'OK');            
@@ -261,8 +261,8 @@ b_reg::add_module(VM_MODULE,
 			'classes'=>array('bForm_vm_Hut'              =>array('i'=>'hut_id',
 									     't'=>'abs_huts',   
 									     ),
-					 'bForm_vm_Apartment'        =>array('i'=>'a_id',
-									     't'=>'abs_apartments',
+					 'bForm_vm_Room'        =>array('i'=>'a_id',
+									     't'=>'abs_rooms',
 									     ),
 					 'bForm_vm_Expenses'         =>array('i'=>'exp_id',
 									     't'=>'abs_expenses',
@@ -510,22 +510,22 @@ class VM extends myPear{
   /*
    * Some useful icons
    */
-  static public $icons     = array(ICON_edit_apartment=> array('d'=>'update the apartment information',
-							       'i'=>'i-edit'),
-				   ICON_edit_event    => array('d'=>'update the event information',
-							       'i'=>'i-edit'),
-				   ICON_edit_visit    => array('d'=>'update accommodation for this tenant',
-							       'i'=>'bb-home'),
-				   ICON_mail_tenant   => array('d'=>'send an e-mail to the tenant',
-							       'i'=>'mail'),
-				   ICON_see_agenda    => array('d'=>'see the event in the agenda system',
-							       'i'=>'nordita'));
+  static public $icons     = array(ICON_edit_room  => array('d'=>'update the accomodation',
+							    'i'=>'i-edit'),
+				   ICON_edit_event => array('d'=>'update the event information',
+							    'i'=>'i-edit'),
+				   ICON_edit_visit => array('d'=>'update accommodation for this tenant',
+							    'i'=>'bb-home'),
+				   ICON_mail_tenant=> array('d'=>'send an e-mail to the tenant',
+							    'i'=>'mail'),
+				   ICON_see_agenda => array('d'=>'see the event in the agenda system',
+							    'i'=>'nordita'));
   static public $e         = Null;       // Selected event class
   static public $visitTypes=array();
   static public $formDummy = Null;
   static public $hut_bi    = 'hut_bi';   // "Built-in" hut
-  static public $REQ_ONLY  = 'REQ_ONLY'; // "request only" apartment
-  static public $OA        = 'OA';       // "own accommodation" apartment
+  static public $REQ_ONLY  = 'REQ_ONLY'; // "request only" room
+  static public $OA        = 'OA';       // "own accommodation" room
 
   static public $auto_maintained = array(); // Helper, filled from the previous array
   static public $when_approved   = array(); // Helper, filled from the previous array
@@ -597,22 +597,22 @@ class VM extends myPear{
 					   'key'   =>'hut_code',
 					   'fields'=>array('hut_name'=>'Built-in',
 							   'hut_code'=>HUT_BI)),
-		    // "own accommodation" apartment
-		    self::$OA      =>array('class' =>'bForm_vm_Apartment',
+		    // "own accommodation" 
+		    self::$OA      =>array('class' =>'bForm_vm_Room',
 					   'key'   =>'a_name',
 					   'fields'=>array('a_name'    => LODGING_OA_TXT,
 							   'a_price'   => 0.01,
 							   'a_capacity'=> 999)),
-		    // request-only apartment
-		    self::$REQ_ONLY=>array('class' =>'bForm_vm_Apartment',
+		    // request-only 
+		    self::$REQ_ONLY=>array('class' =>'bForm_vm_Room',
 					   'key'   =>'a_name',
 					   'fields'=>array('a_name'     => LODGING_REQ_ONLY_TXT,
 							   'a_price'    => 0.001,
 							   'a_capacity' => 999))) as $instance=>$args){
 	locateAndInclude($class_name=$args['class'],'fatal');
 	
-	// Hook the "build-in apartments" to the "build-in hut"
-	if ($class_name == 'bForm_vm_Apartment') $args['fields']['a_hutid'] = self::$hut_bi->ID;
+	// Hook the "build-in rooms" to the "build-in hut"
+	if ($class_name == 'bForm_vm_Room') $args['fields']['a_hutid'] = self::$hut_bi->ID;
 	
 	// Instantiate the build-in class
 	self::$$instance = new $class_name(b_fmt::joinX(' AND ',$args['fields'],"'"));

@@ -2368,7 +2368,7 @@ class bForm extends myPear_getValue{
             default: b_debug::internalError("add another case",$this);
             }
             $method=$method[0]; 
-          }else{
+          }elseif(!empty($method) && method_exists($this,$method)){
             call_user_func(array($this, $method), $field);
           }
           $this->dbg10("method='$method' field='$field'");

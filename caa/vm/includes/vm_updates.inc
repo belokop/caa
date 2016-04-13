@@ -2,6 +2,9 @@
 /*
  * Update script 
  */
+
+if ( myPear_db()->tableExists('abs_apartments')) myPear_db()->query("DROP TABLE `abs_rooms`",$stop_if_fails=False);
+if (!myPear_db()->tableExists('abs_rooms'))      myPear_db()->qquery("RENAME TABLE `abs_apartments` TO `abs_rooms`",True);
 myPear_startup_queue('vm_updates');
 
 function vm_updates(){
@@ -90,8 +93,11 @@ function vm_updates(){
       vm_compat_update_40();
     }
 
-    vm_compat_update_41();
-    vm_compat_update_42();
+    if (True){
+      vm_compat_update_41();
+      vm_compat_update_42();
+      vm_compat_update_43();
+    }
 
     myPear_logs()->doNotLog = False;
     myPear_db()->noAutoCommit('end');
@@ -113,6 +119,14 @@ function vm_compat_update_ad_hocks(){
     myPear_db()->truncateTable('zzz_templates');
     myPear_update_zzz_lists(VM_MODULE);
   }
+}
+
+/*
+ * Event logo...
+ */
+function vm_compat_update_43(){
+  if (!myPear_db()->columnExists('e_logo','abs_events')) myPear_db()->qquery("ALTER TABLE `abs_events` ADD `e_logo` MEDIUMBLOB NULL AFTER `e_name`",True); 
+  if (!myPear_db()->tableExists('abs_rooms')) myPear_db()->qquery("RENAME TABLE `abs_apartments` TO `abs_rooms`",True);
 }
 
 /*
@@ -217,7 +231,7 @@ function vm_compat_update_39(){
   // NOT NULL
   myPear_update_DBdefaults(array('abs_huts'      =>array('char(32)' =>array('hut_postcode','hut_code','hut_status','hut_entrance_code'),
 							 'char(230)'=>array('hut_name','hut_url','hut_city','hut_street')),
-				 'abs_apartments'=>array(
+				 'abs_rooms'=>array(
 							 'char(128)'=>array('a_price'),
 							 'char(230)'=>array('a_comment')),
 				 'abs_visits'    =>array('char(32)' =>array('v_type','v_group','v_status')),
@@ -315,10 +329,10 @@ function vm_compat_update_37(){
   */
 
   // fix ambiguous name
-  $q = myPear_db()->qquery("SELECT * FROM abs_apartments WHERE a_name REGEXP 'shared kitchenette'",True);
+  $q = myPear_db()->qquery("SELECT * FROM abs_rooms WHERE a_name REGEXP 'shared kitchenette'",True);
   while($r = myPear_db()->next_record($q)){
     $a_name = str_replace('shared kitchenette','common kitchenette',$r['a_name']);
-    myPear_db()->qquery("UPDATE abs_apartments SET ".myPear_db()->quote($a_name, 1,'a_name').",a_status='' WHERE a_id = $r[a_id]",True);
+    myPear_db()->qquery("UPDATE abs_rooms SET ".myPear_db()->quote($a_name, 1,'a_name').",a_status='' WHERE a_id = $r[a_id]",True);
   }
   
   // clean out a bad idea...
@@ -371,13 +385,13 @@ function vm_compat_update_36(){
   myPear_db()->qquery("UPDATE zzz_lists SET l_class = 'bList_vm_agendaEvents' WHERE l_class = 'bList_vm_agenda'",True);
 
   // Fixes for the latest (more strict) MySQL
-  if (myPear_db()->columnExists('a_admin_avid','abs_apartments')){
-    myPear_db()->qquery("ALTER TABLE `abs_apartments` DROP `a_admin_avid`",True);
+  if (myPear_db()->columnExists('a_admin_avid','abs_rooms')){
+    myPear_db()->qquery("ALTER TABLE `abs_rooms` DROP `a_admin_avid`",True);
     myPear_db()->reset_cache();
   }
   
   // NULL
-  myPear_update_DBdefaults(array('abs_apartments'=>array('int(11)'     =>array('a_start','a_end','a_hutid')),
+  myPear_update_DBdefaults(array('abs_rooms'=>array('int(11)'     =>array('a_start','a_end','a_hutid')),
 				 'abs_leases'    =>array('int(11)'     =>array('lease_start','lease_end','lease_vid','lease_aid')),
 				 'abs_visits'    =>array('int(11)'     =>array('v_start','v_end','v_created','v_owner_avid','v_admin_avid',
 									       'v_eid','v_oid','v_avid'),
@@ -389,7 +403,7 @@ function vm_compat_update_36(){
   // NOT NULL
   myPear_update_DBdefaults(array('abs_huts'      =>array('varchar(32)' =>array('hut_postcode','hut_code','hut_status','hut_entrance_code'),
 							 'varchar(230)'=>array('hut_name','hut_url','hut_city','hut_street')),
-				 'abs_apartments'=>array('int(11)'     =>array('a_area','a_price_cleaning','a_capacity'),
+				 'abs_rooms'=>array('int(11)'     =>array('a_area','a_price_cleaning','a_capacity'),
 							 'varchar(128)'=>array('a_price'),
 							 'varchar(230)'=>array('a_comment')),
 				 'abs_visits'    =>array('varchar(32)' =>array('v_type','v_group'),
@@ -402,9 +416,9 @@ function vm_compat_update_36(){
 
 function vm_compat_update_35(){
   $y2020 =    b_time::txt2unix('2020-01-01') - 365*24*3600;
-  $q = myPear_db()->qquery("SELECT * FROM abs_apartments WHERE a_end > $y2020 AND a_end != ".CONST_eternity_t,True);
+  $q = myPear_db()->qquery("SELECT * FROM abs_rooms WHERE a_end > $y2020 AND a_end != ".CONST_eternity_t,True);
   while($r = myPear_db()->next_record($q)){
-    myPear_db()->query("UPDATE abs_apartments SET a_end = ".CONST_eternity_t." WHERE a_id = $r[a_id]");
+    myPear_db()->query("UPDATE abs_rooms SET a_end = ".CONST_eternity_t." WHERE a_id = $r[a_id]");
   }
 }
 
@@ -456,7 +470,7 @@ function vm_compat_update_33(){
   locateAndInclude('bForm_vm_Hut');
   // First split all Hotels
   $hotels = array();
-  $q = myPear_db()->qquery("SELECT * FROM abs_apartments WHERE a_name REGEXP '^Hotel'",True);
+  $q = myPear_db()->qquery("SELECT * FROM abs_rooms WHERE a_name REGEXP '^Hotel'",True);
   while($r = myPear_db()->next_record($q)){
     $hotel_name = preg_replace('/\[.*/','',trim(str_ireplace('Hotel','',$r['a_name'])));
     myPear::DEBUG("$hotel_name <= ".$r['a_name']);
@@ -472,13 +486,13 @@ function vm_compat_update_33(){
     $hut->updateDB($updates_hut);
     
     // Link the rooms to the hotel
-    $q = myPear_db()->qquery("SELECT * FROM abs_apartments WHERE a_name REGEXP '^Hotel.*$h_name'",True);
+    $q = myPear_db()->qquery("SELECT * FROM abs_rooms WHERE a_name REGEXP '^Hotel.*$h_name'",True);
     while($r = myPear_db()->next_record($q)){
       $a_name = trim(preg_replace("/Hotel.*$h_name/",'',$r['a_name']));
       if (empty($a_name)) $a_name = 'Room';
       $updates = array("a_hutid=".$hut->ID,
 		       "a_name='$a_name'");
-      myPear_db()->query("UPDATE abs_apartments SET ".join(',',$updates)." WHERE a_id=$r[a_id]");
+      myPear_db()->query("UPDATE abs_rooms SET ".join(',',$updates)." WHERE a_id=$r[a_id]");
     }
   }
   
@@ -512,17 +526,17 @@ function vm_compat_update_33(){
     $hut->updateDB($updates_hut);
     
     // Assign rooms to this "hut"
-    $q = myPear_db()->qquery("SELECT * FROM abs_apartments WHERE a_name REGEXP '^$hut_name'",True);
+    $q = myPear_db()->qquery("SELECT * FROM abs_rooms WHERE a_name REGEXP '^$hut_name'",True);
     while($r = myPear_db()->next_record($q)){
       $a_name = trim(str_replace($hut_name,'',$r['a_name']));
       $updates = array("a_hutid=".$hut->ID,
 		       "a_name='$a_name'");
-      myPear_db()->query("UPDATE abs_apartments SET ".join(',',$updates)." WHERE a_id=$r[a_id]");
+      myPear_db()->query("UPDATE abs_rooms SET ".join(',',$updates)." WHERE a_id=$r[a_id]");
     }
   }
 
   // Sanity, check that I did not forget anything
-  $q = myPear_db()->qquery("SELECT * FROM  abs_apartments WHERE a_hutid = 0 OR a_hutid IS NULL",True);
+  $q = myPear_db()->qquery("SELECT * FROM  abs_rooms WHERE a_hutid = 0 OR a_hutid IS NULL",True);
   while($r = myPear_db()->next_record($q)){
     myPear::WARNING_T("No hut for $r[a_name]");
   }  
@@ -750,7 +764,7 @@ function vm_compat_update_22(){
 }
 
 function vm_compat_update_21(){
-  myPear_db()->qquery("UPDATE abs_apartments SET a_status = '".AP_SHARABLE."' WHERE a_name REGEXP 'Shared'",1);
+  myPear_db()->qquery("UPDATE abs_rooms SET a_status = '".AP_SHARABLE."' WHERE a_name REGEXP 'Shared'",1);
 }
 
 function vm_compat_update_20(){
