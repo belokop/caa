@@ -1,66 +1,76 @@
 <?php
 
 function lic_showDB($arg) {
-  global $Where;
   locateAndInclude('lic_updates.inc');
-  if ($arg == LIC_MODULE) $arg = 'ALL';
-  if (bAuth()->loginPrompt()){
-    print myPear::H1(($arg?"\"$arg\" ":' ').bText::_('licenses usage'),array('reset','noTranslate'));
-    
-    $show_all = (empty($arg) || mb_strToLower($arg)=='all');
-    $where = array();
+
+  if (!bAuth()->loginPrompt()) return '';
   
-    if (!$show_all)$where[] = "s_name  = '$arg'";
-    if ($where) $Where = "WHERE ".join(' AND ',$where);
-    
-    $considered_now = time() - 15*60; // last 15 minutes
-    if (!@$_GET['sBy'])             $_GET['sBy'] = 'e_time';
-    if (  $_GET['sBy'] == 'e_time') $_GET['sByDir'] = 'DESC';
-    
-    // get the software
-    $q=myPear_db()->query("SELECT MAX(e_time) AS last_access ".
-			  " FROM lic_event ".
-			  " LEFT JOIN lic_soft   ON lics_id   = e_sid ".
-			  " $Where GROUP BY NULL ");
-    while($r = myPear_db()->next_record($q)) $last_access = $r['last_access'] - 1;
-    
-    // get the logs
-    if (!myPear_db()->columnExists($_GET['sBy'])) $_GET['sBy'] = 'e_time';
-    $q=myPear_db()->query("SELECT *,CONCAT(srv_port,'@',srv_name) AS srv, CONCAT(s_name,'-',s_vrsn) AS soft ".
-			  " FROM lic_event ".
-			  " LEFT JOIN lic_server ON licsrv_id = e_srvid ".
-			  " LEFT JOIN lic_host   ON lich_id   = e_hostid ".
-			  " LEFT JOIN lic_user   ON licu_id   = e_userid ".
-			  " LEFT JOIN lic_soft   ON lics_id   = e_sid ".
-			  " $Where ORDER BY $_GET[sBy] $_GET[sByDir] ".
-			  " LIMIT ".b_cnf::variable_get('LIC_maxLines',111));
-    
-    $h['e_time']  = 'Date';
-    if ($show_all) $h['soft']   = 'Software';
-    else           $h['s_vrsn'] = 'Version';
-    $h['u_name']  = 'User';
-    $h['h_name']  = 'Host';
-    $h['srv']     = 'Lic.server';
-    print "<center>";
-    $t = new b_table_zebra($h);
-    $t->showLineCounter = False;
-    $t->repetValuesCol1only = $_GET['sBy'];
-    $t->getHeader();
-    while($r = myPear_db()->next_record($q)) {
-      if (preg_match("/^i000[-\.0-9]*$/",$r['soft']))                                 continue;
-      if ($r['e_time'] >= $considered_now) $t->extraTD[] = bIcons()->get(array('i'=>'i-sys-monitor','d'=>'Active now'));
-      $r['u_name'] = preg_replace("/administr.*/","administrator",mb_strToLower($r['u_name']));
-      $r['soft']   = preg_replace('/\.0+/','.0',$r['soft']);
-      $r['s_vrsn'] = preg_replace("/00$/",'',$r['s_vrsn']);
-      $r['srv']    = preg_replace('/.*@/','',$r['srv']);
-      $r['h_name'] = lic_tidyHost(mb_strToLower($r['h_name']));
-      $r['e_time'] = b_time::strftime("%Y-%m-%d",$r['e_time']);
-      $t->prt($r);
-    }
-    $t->close();
-    bIcons()->explain();
-    print "</center>";
+  if (empty($arg) || ($arg === LIC_MODULE)) $arg = 'ALL';
+  b_debug::xxx("arg=$arg",array(2,cnf_dev));
+
+  $show_all = (strToLower($arg)=='all');
+  $header = array('e_time' => 'Date',
+		  'soft'   => 'Software',
+		  's_vrsn' => 'Version',
+		  'u_name' => 'User',
+		  'h_name' => 'Host',
+		  'srv_name'=> 'Lic.server');
+
+  $h1 = sprintf('"%s" %s',$arg,bText::_('licenses usage'));
+  
+  $where = array(1);
+  //  if (!$show_all)
+  foreach(array_keys($header) as $k){
+    if (!myPear::is_empty($v=@$_GET[$k]) && myPear_db()->columnExists($k)){
+      $where[] = ($k == 'e_time'
+		  ? sprintf("$k > %s AND $k < %s",b_time::_($v,0),b_time::_($v,24))
+		  : myPear_DB()->quote($v,True,$k));
+      $h1 = ($k == 'e_time'
+	     ? $header[$k]." ".date('Y-m-d',$v) 
+	     : $header[$k]." $v"); 
+      b_cnf::_unset($k);
+    }  
+  }  
+  unset($header[$show_all||!empty($h1) ? 's_vrsn' : 'soft']);
+  if (!$show_all && ($where===array(1)))    $where[] = myPear_DB()->quote($arg,True,'s_name');
+  
+  print myPear::H1($h1,array('reset','noTranslate'));
+
+  $considered_now = time() - 15*60; // last 15 minutes
+  if (!myPear_db()->columnExists(@$_GET['sBy'])) $_GET['sBy'] = 'e_time';
+  if (  $_GET['sBy'] == 'e_time') $_GET['sByDir'] = 'DESC';
+  if (cnf_dev) b_debug::var_dump($where);
+  
+  // get the logs
+  $q=myPear_db()->qquery("SELECT *,CONCAT(srv_port,'@',srv_name) AS srv, CONCAT(s_name,'-',s_vrsn) AS soft ".
+			 " FROM lic_event ".
+			 " LEFT JOIN lic_server ON licsrv_id = e_srvid ".
+			 " LEFT JOIN lic_host   ON lich_id   = e_hostid ".
+			 " LEFT JOIN lic_user   ON licu_id   = e_userid ".
+			 " LEFT JOIN lic_soft   ON lics_id   = e_sid ".
+			 " WHERE ".join(' AND ',$where).
+			 " ORDER BY $_GET[sBy] $_GET[sByDir] ".
+			 " LIMIT ".b_cnf::variable_get('LIC_maxLines',111),cnf_dev);
+  
+  print "<center>";
+  $t = new b_table_zebra($header);
+  $t->showLineCounter = False;
+  $t->repetValuesCol1only = $_GET['sBy'];
+  $t->getHeader();
+  while($r = myPear_db()->next_record($q)) {
+    if (preg_match("/^i000[-\.0-9]*$/",$r['soft'])) continue;
+    if ($r['e_time'] >= $considered_now) $t->extraTD[] = bIcons()->get(array('i'=>'i-sys-monitor','d'=>'Active now'));
+    $t->prt(array('u_name' => x("a href=".x("'",b_url::same("?u_name=$r[u_name]")),preg_replace("/administr.*/","administrator",mb_strToLower($r['u_name']))),
+		  'soft'   => x("a href=".x("'",b_url::same("?soft=$r[soft]")),    preg_replace('/\.0+$/','.0',$r['soft'])),
+		  's_vrsn' => x("a href=".x("'",b_url::same("?s_vrsn=$r[s_vrsn]")),preg_replace("/0+$/",'',$r['s_vrsn'])),
+		  'h_name' => x("a href=".x("'",b_url::same("?h_name=$r[h_name]")),lic_tidyHost(mb_strToLower($r['h_name']))),
+		  'e_time' => x("a href=".x("'",b_url::same("?e_time=".b_time::noon(0,0,0,$r['e_time']))),b_time::strftime("%Y-%m-%d",$r['e_time'])),
+		  'srv_name'=> x("a href=".x("'",b_url::same("?srv_name=$r[srv_name]")),$r['srv_name']),
+		  ));
   }
+  $t->close();
+  bIcons()->explain();
+  print "</center>";
 }
 
 function lic_fillDB($debug=False) {

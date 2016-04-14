@@ -45,6 +45,7 @@ while (<SCAN>) {
   #$server =~ s/.fysik.su.se//;
   unless ($server =~ /[0-9]-[1-9]\./) { $table{$server}{$port} = $protocol; }
 }
+$table{'idllm.nordita.org'}{1700} = 'idl'; 
 
 print STDERR "\n\n";
 my $compactOutput = shift;

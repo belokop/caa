@@ -2127,6 +2127,8 @@ class b_time{
     if ($time===Null) $time = CONST_TIME;
     $date = self::txt2unix($date);
     switch($time){
+    case 0:             $time =  0; break;
+    case 24:            $time = 24;  break;
     case CONST_TIME_CO: $time = 10; break;
     case CONST_TIME_CI: $time = 15; break;
     case CONST_TIME:    $time = 12; break;

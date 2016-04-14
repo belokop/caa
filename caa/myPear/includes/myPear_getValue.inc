@@ -532,8 +532,8 @@ class myPear_getValue{
 	}
       }
       
-      // All the variables which are not declared as "might be empty" should be provided
-      if (!(bool)$this->isRO[$k] && !$this->isMBE[$k] && (strpos($k,'_select') === False)){
+      // All the variables which are NOT declared as "might be empty" should be set
+      if (!$this->isRO[$k] && !$this->isMBE[$k] && (strpos($k,'_select') === False)){
 	if (isset($_POST["${k}_select"])){
 	  // "Select menu" answer missing
 	  $msg = missing_value;                                 

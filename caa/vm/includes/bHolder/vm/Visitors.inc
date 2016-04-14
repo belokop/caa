@@ -1906,20 +1906,22 @@ class bHolder_vm_Visitors extends bHolder_vm{
 			|| !in_array($this->doing,array('lists','budget',)) 
 			)){
       $this->dbg('not my case? '.($not_my_case ? 'YES' : 'NO'));
-      return array();
+      //      $t = $reply; array_unshift($t,1,$this->rec['v_id']); $this->dbg($t,True);
+      return array('','');
     }
 
     // The event is endorsed (i.e. changes are locked), show only pending applicants and return
-    if (VM::isEventEndorsed() || ($this->rec['v_end'] < time())){
+    if(0)    if (VM::isEventEndorsed() || ($this->rec['v_end'] < time())){
       if (False){ // ? Strange... To be changed?
 	$reply = array('');
 	if ($this->fnc_beslut) $reply[] = $this->highlights['fnc'][$this->fnc_beslut]['i'];
 	else                   $reply[] = '';
-	if (stripos(serialize($reply),'send mail') !== False) var_dump('fnc_beslut',$this->fnc_beslut,date('Y-m-d',$this->rec['v_end']),$reply);
+	if (stripos(serialize($reply),'send mail') !== False) b_debug::var_dump('fnc_beslut',$this->fnc_beslut,date('Y-m-d',$this->rec['v_end']),$reply);
 	if (stripos(serialize($reply),'send mail') !== False) b_debug::internalError();
       }else{   
 	$reply = array('','');
       }
+      //      $t = $reply; array_unshift($t,2,$this->rec['v_id']); $this->dbg($t,True);
       return $reply;
     }
 
@@ -2017,26 +2019,24 @@ class bHolder_vm_Visitors extends bHolder_vm{
       }
     }
     bTiming()->cpu();
+    //    $t = $reply; array_unshift($t,3,$this->rec['v_id']); $this->dbg($t,True);
     return $reply;
   }
 
 
   /*
    * To pay or not to pay the scholarship
-   * @return array of 2 icons: trip & perdiem
+   * @return array of icons: trip, perdiem, office, etc.
    */
   private function btn_payments(){
-    $reply = array('','');
-    if ($not_my_case = VM::outOfScope()
-	|| !$this->isWritable() 
-	|| ($this->rec['v_type'] === VISIT_OUT_OF_SCOPE) 
-	|| ($this->rec['v_status']!= STATUS_YES)         
-	|| !in_array($this->doing,array('lists','budget',)) 
-	|| (is_object(VM::$e) && VM::$e->isEventEndorsed())
-	){
-      //      $this->dbg('not_my_case '.$this->rec['av_lastname']);
-      return array();
-    }
+
+    if ($not_my_case = (VM::outOfScope()
+			|| !$this->isWritable() 
+			|| ($this->rec['v_type'] === VISIT_OUT_OF_SCOPE) 
+			|| ($this->rec['v_status']!= STATUS_YES)         
+			|| !in_array($this->doing,array('lists','budget',)) 
+			|| (is_object(VM::$e) && VM::$e->isEventEndorsed())
+			))      $this->dbg('not_my_case '.$this->rec['av_lastname']);
 
     bTiming()->cpu(__FUNCTION__);
     $reply = array();
@@ -2044,24 +2044,21 @@ class bHolder_vm_Visitors extends bHolder_vm{
       if (empty($descr['i'])) continue; 
       $yes_no = (bool)bForm_vm_Visit::_getPolicy($p,$this->rec);
       $this->dbg($yes_no);
+      $icon = '';
       // don't draw useless button for the passed events
-      if (($yes_no || ($this->rec['v_end'] > time()-30*86400))){
+      if(!$not_my_case && (($yes_no || ($this->rec['v_end'] > time()-30*86400)))){
 	$already_payed = Null;
 	switch($p){
 	case VM_V_invoiceSent:
-	  if (VM_reimberser_here)
-	    $icon=bIcons()->getButton(array('i'=>'i-invoice',
-					    'd'=>'print invoice',
-					    'l'=>b_url::same("?invoice_once=yes&v_id=".$this->rec['v_id'])));
+	  if (VM_reimberser_here) $icon=bIcons()->getButton(array('i'=>'i-invoice',
+								  'd'=>'print invoice',
+								  'l'=>b_url::same("?invoice_once=yes&v_id=".$this->rec['v_id'])));
 	  break; 
 	    
 	case VM_V_provideOffice:
 	  if (myOrg()->eaMembers()->isMember($this->rec['av_id'])){
 	    $av = myPear::getInstance_new('bForm_Avatar_vm',$this->rec['av_id'],array('fatal','nocache'));
-	    if ($av->isE(True)){
-	      $icon = '';
-	      break;
-	    }
+	    if ($av->isE(True) && $av->get_staffOffice()) break;
 	  }
 	  $already_payed = '';
 	  $hasRightTo = 'assign_offices';
@@ -2079,29 +2076,27 @@ class bHolder_vm_Visitors extends bHolder_vm{
 	    $hasRightTo = 'setup_reimbursement';
 	    $payed = 'payed';
 	  }
-
+	  
 	  // Show either a click-able button or just an icon
 	  $img  = @$descr['i'] . ($yes_no ? '_on' : '_off');
 	  $icon = (!$already_payed && VM::hasRightTo('$hasRightTo',$this->rec)
 		   ? bIcons()->getButton(array('class'=>'page_load_progress',
-						       'i'=>$img,
-						       'c'=>($yes_no ? 'only_online' : 'only_online opacity_on'),
-						       'd'=>$descr['i'].($yes_no ? '' : ' not')." to be $payed, click to change",
-						       'l'=>b_url::same("?resetcache_once=1&toggle_once=$p&v_id=".$this->rec['v_id'])))
+					       'i'=>$img,
+					       'c'=>($yes_no ? 'only_online' : 'only_online opacity_on'),
+					       'd'=>$descr['i'].($yes_no ? '' : ' not')." to be $payed, click to change",
+					       'l'=>b_url::same("?resetcache_once=1&toggle_once=$p&v_id=".$this->rec['v_id'])))
 		   : bIcons()->get      (array('i'=>$img,
-						       'c'=>($yes_no ? 'only_online' : 'only_online opacity_on'),
-						       'd'=>$descr['i'].($yes_no ? '' :' not')." $payed")));
-	  break;
+					       'c'=>($yes_no ? 'only_online' : 'only_online opacity_on'),
+					       'd'=>$descr['i'].($yes_no ? '' :' not')." $payed")));
 	default:
 	}
       }else{
-	$icon   = ''; 
 	$this->dbg('too old visit '.$this->rec['av_lastname']);
       }
       $reply[] = $icon;
     }
     bTiming()->cpu();
-    return array_unique($reply);
+    return $reply;
   }
 
   /*

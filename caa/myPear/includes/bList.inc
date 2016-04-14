@@ -1033,14 +1033,12 @@ class bList extends myPear_getValue{
    *   True  - the input data is complete
    *   False - the input data is NOT complete, fatal 
    */
-  public $missing_values = array();
   function getFormAdd_OK(){
     $reply = !isset($_GET['act_once']);
     if($lm_id = $this->getValue($this->TABLEID_member)){
       foreach(array_keys($this->list_quering) as $q){
 	if ($this->getMemberValue($lm_id,$q) || @$this->isMBE[$q]) continue;
 	$this->dbg("missing '$q'",(bool)(cnf_dev || $this->debug));
-	$this->missing_values[] = $q;
 	$reply = False;
       }
     }
