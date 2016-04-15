@@ -37,20 +37,26 @@ function lic_showDB($arg) {
   print myPear::H1($h1,array('reset','noTranslate'));
 
   $considered_now = time() - 15*60; // last 15 minutes
+  $requestToSort = !empty($_GET['sBy']);
   if (!myPear_db()->columnExists(@$_GET['sBy'])) $_GET['sBy'] = 'e_time';
   if (  $_GET['sBy'] == 'e_time') $_GET['sByDir'] = 'DESC';
   if (cnf_dev) b_debug::var_dump($where);
   
   // get the logs
-  $q=myPear_db()->qquery("SELECT *,CONCAT(srv_port,'@',srv_name) AS srv, CONCAT(s_name,'-',s_vrsn) AS soft ".
-			 " FROM lic_event ".
-			 " LEFT JOIN lic_server ON licsrv_id = e_srvid ".
-			 " LEFT JOIN lic_host   ON lich_id   = e_hostid ".
-			 " LEFT JOIN lic_user   ON licu_id   = e_userid ".
-			 " LEFT JOIN lic_soft   ON lics_id   = e_sid ".
-			 " WHERE ".join(' AND ',$where).
-			 " ORDER BY $_GET[sBy] $_GET[sByDir] ".
-			 " LIMIT ".b_cnf::variable_get('LIC_maxLines',111),cnf_dev);
+  $query = $requestToSort 
+    ? $_SESSION[LIC_MODULE.'query']
+    : "SELECT *,CONCAT(srv_port,'@',srv_name) AS srv, CONCAT(s_name,'-',s_vrsn) AS soft ".
+    " FROM lic_event ".
+    " LEFT JOIN lic_server ON licsrv_id = e_srvid ".
+    " LEFT JOIN lic_host   ON lich_id   = e_hostid ".
+    " LEFT JOIN lic_user   ON licu_id   = e_userid ".
+    " LEFT JOIN lic_soft   ON lics_id   = e_sid ".
+    " WHERE ".join(' AND ',$where).
+    " ORDER BY $_GET[sBy] $_GET[sByDir] ".
+    " LIMIT ".b_cnf::variable_get('LIC_maxLines',111);
+  $_SESSION[LIC_MODULE.'query'] = $query;
+
+  $q=myPear_db()->qquery($query,cnf_dev);
   
   print "<center>";
   $t = new b_table_zebra($header);
@@ -61,12 +67,13 @@ function lic_showDB($arg) {
     if (preg_match("/^i000[-\.0-9]*$/",$r['soft'])) continue;
     if ($r['e_time'] >= $considered_now) $t->extraTD[] = bIcons()->get(array('i'=>'i-sys-monitor','d'=>'Active now'));
     $t->prt(array('u_name' => x("a href=".x("'",b_url::same("?u_name=$r[u_name]")),preg_replace("/administr.*/","administrator",mb_strToLower($r['u_name']))),
-		  'soft'   => x("a href=".x("'",b_url::same("?soft=$r[soft]")),    preg_replace('/\.0+$/','.0',$r['soft'])),
-		  's_vrsn' => x("a href=".x("'",b_url::same("?s_vrsn=$r[s_vrsn]")),preg_replace("/0+$/",'',$r['s_vrsn'])),
+		  'soft'   => x("a href=".x("'",b_url::same("?soft=$r[soft]")),    preg_replace('/\.(.)0+$/','.\\1',$r['soft'])),
+		  's_vrsn' => x("a href=".x("'",b_url::same("?s_vrsn=$r[s_vrsn]")),preg_replace("/\.(.)0+$/",'.\\1',$r['s_vrsn'])),
 		  'h_name' => x("a href=".x("'",b_url::same("?h_name=$r[h_name]")),lic_tidyHost(mb_strToLower($r['h_name']))),
-		  'e_time' => x("a href=".x("'",b_url::same("?e_time=".b_time::noon(0,0,0,$r['e_time']))),b_time::strftime("%Y-%m-%d",$r['e_time'])),
+		  'e_time' => x("a href=".x("'",b_url::same("?e_time=".b_time::noon(0,0,0,$r['e_time']))),date("Y-m-d",$r['e_time'])),
 		  'srv_name'=> x("a href=".x("'",b_url::same("?srv_name=$r[srv_name]")),$r['srv_name']),
 		  ));
+    b_time::strftime("%Y-%m-%d",$r['e_time']);
   }
   $t->close();
   bIcons()->explain();

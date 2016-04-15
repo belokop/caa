@@ -1,6 +1,6 @@
 <?php
 
-$releaseDate = '2016-04-14';
+$releaseDate = '2016-04-15';
 define('LIC_VERSION','5.8');
 define('LIC_MODULE'  , 'lic');
 

@@ -1922,7 +1922,7 @@ class b_time{
     if (b_time::strftime("%m%d",$date) == '0101') return True; // 1 Jan
     if (b_time::strftime("%m%d",$date) == '0106') return True; // Swedish 6-Jan
     if (b_time::strftime("%m%d",$date) == '0501') return True;
-    if (b_time::strftime("%m%d",$date) == '0606') return True;
+    if (b_time::strftime("%m%d",$date) == '0606') return True; // Swedish national day
     if (b_time::strftime("%m%d",$date) == '1225') return True;
     if (b_time::strftime("%m%d",$date) == '1226') return True;
 
@@ -2018,7 +2018,7 @@ class b_time{
   public static function strftime($fmt,$time=Null){
     if (empty($time)) $time = time();
     $reply = b_crypt::encode_utf8(strftime($fmt,self::txt2unix($time)));   
-    //    if (($x=strftime($fmt,$time)) != $reply) b_debug::xxx(date('Y-m-d ',$time)." $reply != $x ");
+    if (($x=strftime($fmt,$time)) != $reply) b_debug::xxx(date('Y-m-d ',$time)." $reply != $x ");
     return $reply;
   }
 

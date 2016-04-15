@@ -51,14 +51,37 @@ class SSN{
   }
   
   /*
+   * SE checksum
+   */
+  private static function checkPnr10($pnr) {
+    $pnr = str_replace(array('-','+'), '', (string)$pnr);
+    if (strlen($pnr) == 12)   $pnr = substr($pnr, 2);
+    if (strlen($pnr) != 10)   return False;
+    if (!preg_match('/^'.self::$yymmdd.'/',$pnr,self::$matches)) return False;
+
+    $n = 2;
+    $sum = 0;
+    for ($i=0; $i<9; $i++) {
+      $tmp = $pnr[$i] * $n;
+      ($tmp > 9) ? $sum += 1 + ($tmp % 10) : $sum += $tmp; ($n == 2) ? $n = 1 : $n = 2;
+    }
+    $reply = (bool)(!(($sum + $pnr[9]) % 10));
+    //    if($reply)    var_dump($pnr,self::$matches);
+    return (bool)$reply;
+  }
+
+  /*
    * SSN can't contain string "0000", exception is for provisional numbers
    */
   private static $matches = array();
   public static  $ssn_country = '?';
   public  static function valid($ssn,$verbose=False){
 
+    self::$ssn_country = 'SE';
     $ssn = preg_replace('/^(......)-[pP0]000$/','\\1'.'-P123',(string)$ssn);
-    
+    $reply = !empty($ssn) && (self::checkPnr10($ssn) || preg_match('/^(\d\d)?\d\d\d\d\d\d-[pP]\d\d\d$/',$ssn));
+
+    /*						  
     $reply = False;
     if (strpos((string)$ssn,'000') === False){
       foreach(self::known() as $country=>$patterns){
@@ -66,7 +89,7 @@ class SSN{
 	  if (preg_match($pattern, (string)$ssn,self::$matches)){
 	    
 	    // Carefull if the age is > 100 years
-	    if (strpos($ssn,'+') !== False) self::$matches[1] += 100 * (int)((int)(date('Y')/100) - 1);
+	    if (strpos($ssn,'+') == 6)   self::$matches[1] -= 100;
 	    
 	    // Guess the century...
 	    if(self::$matches[1] < 1900) self::$matches[1] += 1900;
@@ -75,10 +98,11 @@ class SSN{
 	    self::$ssn_country = $country;
 	    $reply = True;
 	    break 2;
+	    }
 	  }
 	}
-      }
-    } 
+      } 
+    */
 
     // Print a warning if the SSN is not valid & the record is editable
     if ($verbose === 'check_only') $verbose = False;

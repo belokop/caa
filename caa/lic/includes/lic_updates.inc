@@ -6,25 +6,17 @@ function lic_updates(){
   if (bMaster()->register_module_update_script(LIC_MODULE,LIC_VERSION,__FILE__)){
     lic_updates_0();
     lic_updates_1();
+    lic_updates_2();
   }
 }
 
-/*
- * Fix naming convension
- */
-function lic_updates_0(){
-  foreach(array('lic_server' => 'srv_id',
-		'lic_event'  => 'e_id',
-		'lic_host'   => 'h_id',
-		'lic_soft'   => 's_id',
-		'lic_user'   => 'u_id',
-		  ) as $t=>$c){
-    if (myPear_db()->columnExists($c,$t)){
-      myPear_db()->debug = 1;
-      myPear_db()->query("ALTER TABLE `$t` CHANGE `$c` `lic$c` INT( 128 ) NOT NULL AUTO_INCREMENT"); 
-      myPear_db()->debug = 0;
-      myPear_db()->reset_cache();
-    }
+function lic_updates_2(){
+  $y2000 = mktime(0, 0, 0, 0, 0, 2000);
+  $q = myPear_db()->qquery("SELECT e_time from lic_event WHERE e_time < $y2000",True);
+  while($r = myPear_db()->next_record($q)){
+    list($y,$m,$d,$hh,$mm,$ss) = explode('-',($was=date('Y-n-j-H-i-s',$r['e_time'])));
+    $newDate = mktime ($hh,$mm,$ss,$m,$d,$y+100);
+    myPear::DEBUG("$was -> ".date('Y-n-j-H-i-s',$newDate));
   }
 }
 
@@ -53,3 +45,24 @@ function lic_updates_1(){
     }
   }
 }
+
+
+/*
+ * Fix naming convension
+ */
+function lic_updates_0(){
+  foreach(array('lic_server' => 'srv_id',
+		'lic_event'  => 'e_id',
+		'lic_host'   => 'h_id',
+		'lic_soft'   => 's_id',
+		'lic_user'   => 'u_id',
+		  ) as $t=>$c){
+    if (myPear_db()->columnExists($c,$t)){
+      myPear_db()->debug = 1;
+      myPear_db()->query("ALTER TABLE `$t` CHANGE `$c` `lic$c` INT( 128 ) NOT NULL AUTO_INCREMENT"); 
+      myPear_db()->debug = 0;
+      myPear_db()->reset_cache();
+    }
+  }
+}
+
