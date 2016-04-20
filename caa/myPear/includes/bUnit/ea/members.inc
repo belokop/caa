@@ -38,7 +38,7 @@ class bUnit_ea_members extends bUnit_ea {
     set_time_limit(0);
 
     myPear_db()->transaction('start');
-    myPear::MESSAGE_open("Rebulding ".$this->name());
+    myPear::MESSAGE_open(sprintf("Rebuilding %s",$this->name()));
     foreach($this->getUnitMemberIDs() as $av_id){
       if (empty($av_id)){
 	if (cnf_dev) b_debug::traceBack("empty unit member???");
@@ -73,6 +73,7 @@ class bUnit_ea_members extends bUnit_ea {
       $ea = new bUnit_ea_members($org_id);
       $ea->rebuild();
     }
+    return True;
   }
  
 

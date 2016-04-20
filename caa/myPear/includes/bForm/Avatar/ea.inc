@@ -491,6 +491,7 @@ class bForm_Avatar_ea extends bForm_Avatar{
     }
     
     // Save the latest status as the EA member status 
+    if(empty($stat)) $stat['was'] = '';
     $status = (empty($stat['now'])
 	       ? $stat['was'].EA_role_alumnus
 	       : $stat['now']);

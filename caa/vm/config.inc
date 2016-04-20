@@ -2,7 +2,7 @@
 /**
  * Visitors Manager (VM) configuration file
  */
-$releaseDate = '2016-04-14';
+$releaseDate = '2016-04-20';
 define('VM_MODULE'   , 'vm');
 define('VM_VERSION','5.78');
 
@@ -14,13 +14,13 @@ define('include_payLunch_dinner',cnf_dev||cnf_demo);
 // Office space allocation
 define('allocate_offices',True);
 // Automated mails to registrants
-define('send_automatically_infoMail_to_registrants',cnf_dev||cnf_demo);
+define('send_automatically_infoMail_to_applicants',cnf_dev||cnf_demo);
 define('send_finalWelcomeEmail_to_registrants',cnf_dev||cnf_demo);
 define('include_personalPage_in_finalWelcomeEmail', send_finalWelcomeEmail_to_registrants && cnf_dev||cnf_demo);
 define('include_accommodation_in_finalWelcomeEmail',send_finalWelcomeEmail_to_registrants && cnf_dev||cnf_demo);
 define('include_payForms_in_finalWelcomeEmail', send_finalWelcomeEmail_to_registrants);
 define('send_denialEmail_to_registrants',cnf_dev||cnf_demo); 
-define('see_mails_exchange_with_attenders',(send_automatically_infoMail_to_registrants ||
+define('see_mails_exchange_with_attenders',(send_automatically_infoMail_to_applicants ||
 					    send_finalWelcomeEmail_to_registrants ||
 					    send_denialEmail_to_registrants));
 
@@ -683,8 +683,10 @@ class VM extends myPear{
    */
   static function e_ID($e_ID=Null){
     start_VM();
-    if ($e_ID===Null) $e_ID = (int)b_cnf::get('vm_eventSelector');
-
+    if ($e_ID===Null) $e_ID = (isset($_REQUEST['vm_eventSelector'])
+			       ? $_REQUEST['vm_eventSelector'] 
+			       : (int)b_cnf::get('vm_eventSelector'));
+    
     if ((int)$e_ID > 0){
       if (!is_object(self::$e))	self::$e = myPear::getInstance_new('bForm_vm_Event',$e_ID,'strict');
       if ($e_ID != ($id=@self::$e->ID)){
@@ -816,7 +818,7 @@ class VM extends myPear{
       b_debug::xxx('unexpected argument',array(cnf_dev));
     }
     
-    if (!isset($reply) && cnf_dev) b_debug::internalError("unexpected case");
+    if (!isset($reply) && cnf_dev) b_debug::internalError("unexpected case ".var_export($what,True));
     if (cnf_show_a||cnf_show_acl) myPear::DEBUG(__METHOD__."($what) <em>".($reply?'YES':'NO')."</em>");
     bTiming()->cpu();
     return $reply;
@@ -832,7 +834,7 @@ if (file_exists($f='../myPear/config.inc'))  require_once $f;
 function start_VM(){
   static $dejaVu = 0;
   if (!VM::$isReady && !$dejaVu++){
-    b_debug::xxx(starting);
+    b_debug::xxx(starting,array(2,'redText',cnf_dev));
     bTiming()->cpu(__FUNCTION__);
 
     VM::start();
@@ -853,7 +855,7 @@ function start_VM(){
     }
     VM::$isReady = True;
     bTiming()->cpu();
-    b_debug::xxx(exiting);
+    b_debug::xxx(exiting,array(2,'redText',cnf_dev));
   }
 }
 

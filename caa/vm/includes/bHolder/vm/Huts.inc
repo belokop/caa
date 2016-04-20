@@ -24,6 +24,7 @@ class bHolder_vm_Huts extends bHolder_vm{
 		    'hut_status'  => 'Default?',
 		    'hut_capacity'=> 'N rooms',
 		    'hut_address' => 'Address',
+		    'hut_url'     => ' ',
 		    // 'hut_entrance_code' => 'entrance<br/>code',
 		    		    );
     return $header; 
@@ -74,13 +75,15 @@ class bHolder_vm_Huts extends bHolder_vm{
     if (in_array($this->rec['hut_status'],b_checkBox::$ON)) $this->rec['hut_status'] = bIcons()->get('ok');
 
     $hut = myPear::getInstance_new('bForm_vm_Hut',$this->rec['hut_id'],'fatal');
+    if (!empty($this->rec['hut_url'])) $this->rec['hut_url'] = bJS()->modal_iframe($this->rec['hut_url'],x('em',x('span style="text-sice:smaller"','See web page')),'');
+
     if ($W=$hut->isWritable())$this->t->extraTD[]=bIcons()->getButton(array('l'=>b_url::same("?form=vm_Hut&id=".$hut->ID),
-										    'd'=>'modify',
-										    'i'=>'i-edit'));
+									    'd'=>'modify',
+									    'i'=>'i-edit'));
     else                    $this->t->extraTD[]='';
     if (0 &&   $W)          $this->t->extraTD[]=bIcons()->getButton(array('l'=>b_url::same("?form=vm_Hut&id=".$hut->ID),
-										  'd'=>btn_deleteAp,
-										  'i'=>'drop'));
+									  'd'=>btn_deleteAp,
+									  'i'=>'drop'));
   }
   
   function getAllEvents(){

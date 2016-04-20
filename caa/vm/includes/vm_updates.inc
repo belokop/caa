@@ -100,6 +100,7 @@ function vm_updates(){
       vm_compat_update_41();
       vm_compat_update_42();
       vm_compat_update_43();
+      vm_compat_update_44();
     }
 
     myPear_logs()->doNotLog = False;
@@ -122,6 +123,10 @@ function vm_compat_update_ad_hocks(){
     myPear_db()->truncateTable('zzz_templates');
     myPear_update_zzz_lists(VM_MODULE);
   }
+}
+
+function vm_compat_update_44(){
+  myPear_db()->qquery("ALTER TABLE `abs_visits` CHANGE `v_status` `v_status` CHAR( 32 ) NULL DEFAULT NULL",True); 
 }
 
 /*
@@ -893,7 +898,7 @@ function vm_compat_update_15(){
     myPear_db()->query("DELETE FROM `zzz_units` WHERE `u_id` = '5561'");
     myPear_db()->query("DELETE FROM `zzz_unit_members` WHERE um_uid = 5561");
 
-    foreach(array('m_registrant_approve',
+    foreach(array('m_applicant_approve',
 		  'm_apart_welcome',
 		  'm_apart_welcome_signature',
 		  'm_apart_general_description',

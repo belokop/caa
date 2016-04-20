@@ -34,7 +34,7 @@ class APIaccess{
 	}else{
 	  define($_here,False);
 	}
-	if (cnf_show_acl) myPear::DEBUG(get_class($this).": $_here = ".(constant($_here) ? 'YES' : 'NO'),'force');
+	if (cnf_show_acl) myPear::DEBUG(get_class($this).": $_here = ".(constant($_here) ? 'YES' : 'NO'),'forced');
       }
     }
   }

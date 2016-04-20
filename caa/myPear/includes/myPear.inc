@@ -351,7 +351,7 @@ class myPear{
 	$qquery = sprintf("can't locate table for %s::%s",b_reg::$current_module,$class);
 	$num_rows = 0;
       }else{
-	$q = myPear_db()->qquery($qquery="SELECT $id FROM $table WHERE $where_str",$verbose=(cnf_dev || cnf_show_i));
+	$q = myPear_db()->qquery($qquery="SELECT $id FROM $table WHERE $where_str",$verbose=cnf_show_i);
 	$num_rows = myPear_db()->num_rows($q);
       }
 
@@ -377,7 +377,7 @@ class myPear{
 
       case 1:
 	if (in_array('delete',$mode)){
-	  myPear_db()->qquery("DELETE FROM $table WHERE ".($id=join(' AND ',$where)),cnf_dev);
+	  myPear_db()->qquery("DELETE FROM $table WHERE ".($id=join(' AND ',$where)),cnf_dev||cnf_show_i);
 	  myPear::MESSAGE("Removing class $class($id)");
 	}else{
 	  while ($r = myPear_db()->next_record($q)){
@@ -555,7 +555,7 @@ class myPear{
     }elseif(myPear::is_int($id)){
       if ($reply = self::isIdentified($id,$current_module_only)){
 	self::$_getClassFromID = myPear::$sql_identities[$reply];
-	if    ($noFormPrefix==='class') $reply = self::getInstance_new($reply,$id);
+	if    ($noFormPrefix==='class') $reply = self::getInstance_new($reply,$id,'strict');
 	elseif($noFormPrefix)           $reply = str_replace(array('form','bForm_'),'',$reply);
       }
     }
@@ -789,8 +789,8 @@ self::MESSAGE($text, $class, 'error', 'ERROR'); }
     self::$show_this_message_in_NOUSER_context = False;
   }
 
-  static public function DEBUG ($text='',$class=Null){ 
-    $forced = ($class === 'force') || ($class === 'forced');
+  static public function DEBUG($text='',$class=Null){ 
+    $forced = ($class === 'forced');
     if (($class === False) || (!cnf_dev && !$forced))  return;
     if (!is_object($class)) $class = Null;
     if ($forced) self::MESSAGE_forced($text?$text:b_debug::__(2), $class, 'debug'); 
@@ -808,6 +808,7 @@ self::MESSAGE($text, $class, 'error', 'ERROR'); }
    * Display the unified message.
    */
   private static $MESSAGE_dejaVu = array();
+  public  static $always_print = False;
   static public function MESSAGE($text,$class=Null,$id='status',$heading='',$only_once=False){
 
     // By default we don't show any messages in no-user context, unless it is explicitly requested 
@@ -839,12 +840,13 @@ self::MESSAGE($text, $class, 'error', 'ERROR'); }
 	  $caller = b_debug::__(3,$class);
 	  $text = $caller.' '.x('strong',x('em',$text));
 	}
+	if (b_debug::$s_e_depth>0) $text = str_repeat('&nbsp;',5*b_debug::$s_e_depth).$text;
 	break;
       default:
       }
       if (b_cnf::get('noCompactMessages')) self::$MESSAGE_dejaVu = array();
       $msg_id = b_crypt::hash($text . $id . (is_object($class)?@$class->ID:'x'));
-      if (!@self::$MESSAGE_dejaVu[$msg_id]++){
+      if (self::$always_print || !@self::$MESSAGE_dejaVu[$msg_id]++){
 	if ($id=='message_bottom')  $_SESSION['message_bottom'][] = $text; 
         elseif (function_exists('drupal_set_message') && !b_cnf::get('nodrupal')) drupal_set_message($text,$css_class);
         elseif (cnf_CLI) b_fmt::printt($text);

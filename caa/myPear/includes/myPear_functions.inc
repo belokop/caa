@@ -12,6 +12,7 @@ function bAuth(){
     myPear_startup_queue(__function__,array(),True);
   }elseif (($bAuth === Null) && !$inside_bAuth++){
     if (($bTiming=!bAuth::$isReady && function_exists('bTiming'))) bTiming()->cpu(__FUNCTION__);
+    b_debug::xxx(starting,array(2,'fuchsiaText',cnf_dev));
     
     // Load the class file
     locateAndInclude('bAuth');
@@ -63,7 +64,8 @@ function bAuth(){
     
     $inside_bAuth = 0;
     if ($bTiming) bTiming()->cpu();
-    b_debug::xxx(exiting.(is_object(bAuth::$av) ? bAuth::$av->fmtName() : ''));
+    if (is_object(bAuth::$av)) b_debug::xxx(bAuth::$av->fmtName());
+    b_debug::xxx(exiting,array(2,'fuchsiaText',cnf_dev));
   }
   return $bAuth;
 }
@@ -529,7 +531,7 @@ function set_cb_expected(&$data,$name='',$value_to_set='off'){
 function start_myPear(){
 
   bTiming()->cpu(__FUNCTION__);
-  if (cnf_localhost) b_debug::xxx(starting);
+  if (cnf_localhost) b_debug::xxx(starting,array(2,'fuchsiaText',cnf_dev));
 
   // Decode $_SERVER["QUERY_STRING"];
   b_crypt::decodeURL();
@@ -639,7 +641,6 @@ function start_myPear(){
 					   (cnf_demo ? 'Demo version' : 'Developer sandbox'));
   // Now myPear is ready
   myPear::$isReady = True;
-  if (cnf_localhost) b_debug::xxx(exiting);
   bTiming()->cpu();
 
   // Now we can do everything what was postponed before...
@@ -655,4 +656,5 @@ function start_myPear(){
   locateAndInclude('bMailer');
   myPear_taskManager_queue();
   */
+  if (cnf_localhost) b_debug::xxx(exiting,array(2,'fuchsiaText',cnf_dev));
 }

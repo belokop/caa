@@ -529,16 +529,14 @@ class APImenu_vm extends APImenu_ea{
     case VM_MODULE:
     case tab__empty:
       if(is_object(bAuth::$av)){
-	$redirect = array();
-	if    (VM_organizer_here) $redirect[] = tab_vm_ogz;
-	elseif(VM_endorser_here)  $redirect[] = tab_vm_end;
-	else                      $redirect[] = tab_vm_guests;
-	foreach($redirect as $m){
-	  if (VM::_MENU()->access($m)){
-	    bTiming()->cpu();
-	    b_url::header(b_url::same('?q='.join('/',array(VM_MODULE,APImenu::tab_code($m)))));
-	    return; 
-	  }
+	if    (VM_organizer_here) $m = tab_vm_ogz;
+	elseif(VM_endorser_here)  $m = tab_vm_end;
+	else                      $m = tab_vm_guests;
+	if (VM::_MENU()->access($m)){
+	  bTiming()->cpu();
+	  b_debug::xxx(sprintf('Redirect %s --> %s',$tab,$m),array('redText',2,cnf_dev));
+	  b_url::header(b_url::same('?q='.join('/',array(VM_MODULE,APImenu::tab_code($m)))));
+	  return; 
 	}
       }
       
@@ -546,6 +544,7 @@ class APImenu_vm extends APImenu_ea{
       if (empty($engine)){
 	$engine    = 'bIcal_matrix_visits';
 	// Redirect to "program attenders" if this is selected in the "guests" context
+	b_debug::var_dump($_REQUEST['vm_eventSelector'],'vm_eventSelector');
 	if (!isset($_REQUEST['vm_eventSelector'])){
 	  VM::e_ID(EVT_ANY);
 	}elseif(VM::e_ID() > 0 && !headers_sent()){
@@ -554,6 +553,7 @@ class APImenu_vm extends APImenu_ea{
 			tab_vm_vis) as $m){
 	    if (VM::_MENU()->access($m)){
 	      bTiming()->cpu();
+	      b_debug::xxx(sprintf('Redirect %s --> %s',$tab,$m),array('redText',2,cnf_dev));
 	      b_url::header(b_url::same('?q='.join('/',array(VM_MODULE,APImenu::tab_code($m)))));
 	      return;
 	    }
@@ -791,13 +791,13 @@ class APImenu_vm extends APImenu_ea{
       break;
       
     case tab_vm_adm_sync:
+      locateAndInclude('agenda_vm',
+		       'bUnit_vm_organizers',
+		       'b_cache_file');
+      b_cache_file::emptyCache();
+
       switch(b_btn::confirm()){
       case 'yes':
-	locateAndInclude('agenda_vm',
-			 'bUnit_vm_organizers',
-			 'b_cache_file');
-	b_cache_file::emptyCache();
-
 	// Extract list of relevant events for the organizers
 	$events = array();
 	if (bAuth::$av->isOrganizer()){
@@ -806,7 +806,6 @@ class APImenu_vm extends APImenu_ea{
 	  if (empty($events)) $events = array("conf=0");
 	  else myPear::MESSAGE('Synchronizing agenda entries:'.x('ul',b_fmt::joinMap('li',array_values($list))));
 	}
-	
 	VM_agenda()->sync($events);
 	break;
 	
@@ -918,7 +917,7 @@ class APImenu_vm extends APImenu_ea{
     }
     
     // Avoid infinite loop;
-    if (!myPear_taskManager()->request){
+    if (!myPear_taskManager()->exec_request){
       // Remind organizers o the applications deadline is reached
       VM_mailer()->cronjob_remind_organizers();
       

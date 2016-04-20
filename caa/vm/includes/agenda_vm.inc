@@ -61,6 +61,7 @@ class agenda_vm extends agenda{
     if ($alreadySyncing++) return;
 
     bTiming()->cpu(__FUNCTION__);
+    $this->dbg(starting);
     myPear::H1("Synchronizing visitors database with Agenda");
 
     // Update list of events
@@ -102,6 +103,7 @@ class agenda_vm extends agenda{
     foreach ($conferences_to_sync as $args){
       myPear_db()->noAutoCommit('start');
       foreach ($this->parser($args) as $ev_id=>$program) {
+	$this->dbg(starting);
 	$program['title'] = strip_tags($program['title']);
 	$allRegistrants = array();
 
@@ -113,7 +115,7 @@ class agenda_vm extends agenda{
 	$this->r_start = b_time::txt2unix($program['regstart']);
 	$this->r_end   = b_time::txt2unix($program['regend']);
 	
-	/* update Events */
+	// update or create the Event instance 
 	$this->e = myPear::getInstance_new('bForm_vm_Event',array('e_code'=>$program['id']));
 	$this->newE = !$this->e->getValue('e_orgid');
 	$this->e->defineVariables();
@@ -132,8 +134,8 @@ class agenda_vm extends agenda{
 
 	// Get & update the time of the last sync
 	$lastSync = b_vars::set('agendaSync_'.$this->e->ID,time(),VM_MODULE); 
-	if (empty($lastSync)) $lastSync = time();
-	
+	if (empty($lastSync)) $lastSync = $this->r_start;
+	b_debug::xxx("Previous sync ".date('Y-m-d H:i',$lastSync),array(cnf_dev,2,'redText'));;
 	
 	// Update event organizers
 	$allOrganizers = array();
@@ -153,6 +155,7 @@ class agenda_vm extends agenda{
 	/* update Registrants */
 	if (empty($program['registrant'])) $program['registrant'] = array();
 	foreach  ($program['registrant'] as $reg){
+	  // $this->dbg(starting);
 
 	  $v_code = (int)$program['id'] * 100000 + (int)$reg['id'];
 	  $allRegistrants[] = $v_code;
@@ -232,15 +235,9 @@ class agenda_vm extends agenda{
 	    $time2 = min($time2,$this->e_end);
 	  }
 
-	  // Set the visit status to 'pending' if the visit is not approved
-	  $v_status = ($s = $this->v->getValue('v_status',True,True)) 
-	    ? $s 
-	    : STATUS_PENDING;
-
 	  // Update the Visit form
 	  $v_type = (bList_vm_agendaEvents::eventOutOfScope($program['id']) ? VISIT_OUT_OF_SCOPE : VISIT_TYPE_PROGRAM);
 	  $data = array('v_type'  => $v_type,
-			'v_status'=> $v_status,
 			'v_avid'  => $this->av->ID,
 			'v_eid'   => $this->e->ID,
 			'v_code'  => $v_code,
@@ -260,18 +257,27 @@ class agenda_vm extends agenda{
 			    ": application <i>$reg[familyname] ".b_time::period($time1,$time2)." is outside the event dates</i>");
 	  }
 
+	  // Send a welcome mail to the NEWLY REGISTERED applicants
+	  /*
+	  if (send_automatically_infoMail_to_applicants && ($registrationDate > $lastSync) && ($v_type == VISIT_TYPE_PROGRAM)){
+	    $this->dbg($this->v->av->name().' - registered '.b_time::delta($registrationDate,$this->r_start).' reg. start, '.
+		       " VM_V_infoMailSent = ".var_export((bool)$this->v->getPolicy(VM_V_infoMailSent),true));
+	    if (!VM_mailer()->m_applicant_info_mail($this->v,'status')){
+	      $this->dbg($this->v->av->name().' - to be sent m_applicant_info_mail ');
+	      VM_mailer()->m_applicant_info_mail($this->v,$no_preview=True);
+	    }
+	  }
+	  */	  
+	  if (send_automatically_infoMail_to_applicants) VM_mailer()->m_applicant_info_mail($this->v,$no_preview=True);
+
+	  // Set the visit status to 'pending' if the visit is not approved
+	  if (!$this->v->getValue('v_status',True,True)) $this->v->updateDB(array('v_status' => STATUS_PENDING));
+
 	  // Adjust the leases
 	  foreach(bForm_vm_Lease::adjust_all($this->v,0,True) as $message){
 	    $this->printInfo($message);
 	  }
 	  
-	  // Send a welcome mail to the NEWLY REGISTERED applicants
-	  if (($registrationDate > $lastSync) && 
-	      send_automatically_infoMail_to_registrants && ($v_type == VISIT_TYPE_PROGRAM)){
-	    if (!VM_mailer()->m_registrant_info($this->v,'status'))
-	      VM_mailer()->m_registrant_info($this->v,$no_preview=True);
-	  }
-
 	  /*
 	  // Detect changes in the 'own accommodation' wish 
 	  $accommodation_now = $this->v->hut_codes();
@@ -339,6 +345,7 @@ class agenda_vm extends agenda{
 	    $this->v->adjust_dates();
 	  }
 	  $this->v->__clean_cache();
+	  // $this->dbg(exiting);
 	}
 	
 	/* remove from the database the registrants who are not any more in agenda */
@@ -366,6 +373,7 @@ class agenda_vm extends agenda{
 	    VM_organizers($this->e->ID)->deleteMember($r['um_id'],cnf_dev);
 	  }
 	}
+	$this->dbg(exiting);
       }
       myPear_db()->noAutoCommit('end');
     }
@@ -380,6 +388,7 @@ class agenda_vm extends agenda{
 
     myPear_logs()->doNotLog = False;
     if ($this->nUpdates) myPear_logs()->add('sync');  
+    $this->dbg(exiting);
     bTiming()->cpu();
     $alreadySyncing = 0;
   }
@@ -479,8 +488,12 @@ class agenda_vm extends agenda{
      return $reply; 
    }
 
-  function dbg($o,$t1,$t2){
-    b_debug::xxx($o->name().' '.b_time::period($o->getValue($t1,1),$o->getValue($t2,1)),
-		 array('T',3, (bool)$this->debug));
-  }  
+   function dbg($o,$t1='',$t2=''){
+     if (is_string($o)){
+       b_debug::xxx($o,array(3,'fuchsiaText',(bool)(cnf_dev||$this->debug),$this));
+     }else{
+       b_debug::xxx($o->name().' '.b_time::period($o->getValue($t1,1),$o->getValue($t2,1)),
+		    array('T',3, cnf_dev||$this->debug));
+     }  
+   }  
 }

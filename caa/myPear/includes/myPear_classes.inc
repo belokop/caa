@@ -1511,11 +1511,22 @@ class b_debug{
    * Generic debug printout function
    */
   private static $xxx_cache = array();
+  public  static $s_e_depth = 0;
   static function xxx($text=' ',$flags=array()){
     static $default_flags = array('fuchsiaText',2);
     
+    $toPrint = Null;
     if (!defined('cnf_dev') || !defined('YBhere') || (!cnf_dev && !YBhere)) return;
     
+    // Start / End a block
+    $s_e_text = $text;
+    if ($starting_exiting = (($s_e_text === starting) || ($s_e_text === exiting))){
+      $toPrint = True;
+      if ($s_e_text === exiting) self::$s_e_depth--;
+      if (empty($flags)) $flags = array(3,'fuchsiaText',True); // always print 
+    }
+
+    // Object
     if (is_object($text)) $text = (method_exists($text,'__toString')
 				   ? $text->__toString()
 				   : "Object ".get_class($text));
@@ -1539,8 +1550,6 @@ class b_debug{
     if (!is_array($flags)) self::internalError('xxx');
 
     $text = b_fmt::_($text);
-    $toPrint = Null;
-    
     foreach($flags as $k => $item){
       if ($k === 'name'){
 	$class  = $item;
@@ -1614,13 +1623,23 @@ class b_debug{
       default:    $dbgString = sprintf("%s %s", $caller, $text);
       }
 
-      $dbgString = "<span class='$color'>$dbgString</span>";
-      if (!@self::$xxx_cache[b_crypt::hash($dbgString)]++){
-	if (isset($class) && is_object($class) && (bool)@$class->nodrupal) print "<br/>$dbgString";
-	else       myPear::DEBUG($dbgString);
-	//	static $hhh=0;if (strpos($dbgString,'accommodationOptions->')!==False)if($hhh++<3){echo'<pre>',debug_print_backtrace(),'</pre>';}
+      $dbgString = ((self::$s_e_depth > 0
+		     ? str_repeat('&nbsp;',5*self::$s_e_depth)
+		     : '') . 
+		    "<span class='$color'>$dbgString</span>");
+      if ($starting_exiting || !@self::$xxx_cache[b_crypt::hash($dbgString)]++){
+	if (isset($class) && is_object($class) && (bool)@$class->nodrupal){
+	  print "<br/>$dbgString";
+	}else{
+	  // if ($starting_exiting) printf("\n???????????? %s %s <br>\n",$s_e_text,b_debug::__(3));;
+	  $s_e_depth = self::$s_e_depth;	  $always_print = myPear::$always_print;
+	  self::$s_e_depth = 0;	          myPear::$always_print = True;
+	  myPear::DEBUG($dbgString);
+	  self::$s_e_depth = $s_e_depth;  myPear::$always_print = $always_print;
+	}
       }
     }
+    if ($s_e_text === starting) self::$s_e_depth++;
   }
   
   /*
@@ -2017,7 +2036,8 @@ class b_time{
 
   public static function strftime($fmt,$time=Null){
     if (empty($time)) $time = time();
-    $reply = b_crypt::encode_utf8(strftime($fmt,self::txt2unix($time)));   
+    $time = self::txt2unix($time);
+    $reply = b_crypt::encode_utf8(strftime($fmt,$time));
     if (($x=strftime($fmt,$time)) != $reply) b_debug::xxx(date('Y-m-d ',$time)." $reply != $x ");
     return $reply;
   }

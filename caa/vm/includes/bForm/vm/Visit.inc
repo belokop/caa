@@ -70,8 +70,8 @@ class bForm_vm_Visit extends bForm_vm {
     parent::__construct($id, $mode);
 
     // Force status update. This should be done as early as posible, so do it now...
-    if (empty($_GET['a_once']) && (($w=@$this->formDB['v_status']) !== ($n=$this->getValue('v_status')))){
-      $_GET['a_once'] = $this->getValue('v_status');
+    if (empty($_GET['a_once']) && (($w=(string)@$this->formDB['v_status']) !== ($n=(string)$this->getValue('v_status',True,True)))){
+      $_GET['a_once'] = $this->getValue('v_status',True,True);
       $this->dbg("Force status update $w --> $n",cnf_dev);
     }
 

@@ -61,7 +61,7 @@ If you want to publish ONLY at '.myOrg_name.' you can upload your paper now ("ed
   function reminder(){
     if (cnf_CLI)    return;
     
-    if (!myPear_taskManager()->request){
+    if (!myPear_taskManager()->exec_request){
       if (!@$_SESSION[__METHOD__]++) myPear_taskManager()->addTask(get_class($this),__function__);
       return;
     }

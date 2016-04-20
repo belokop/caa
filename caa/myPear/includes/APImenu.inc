@@ -180,7 +180,7 @@ class APImenu{
     // Process "off-line task manager" request
     ///
     if (isset($_REQUEST['myPear_taskManager'])){
-      myPear_taskManager()->executeTasks();
+      myPear_taskManager()->doTasks();
       return Null;
     }
 

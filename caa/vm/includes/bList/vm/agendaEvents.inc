@@ -260,7 +260,7 @@ class bList_vm_agendaEvents extends bList_vm{
 	$tab = date('Y',$e->getValue('e_start'));
       }elseif(cnf_dev){
 	$this->dbg("??? can't create bForm_vm_Event(e_code='$r[lm_value]')",True);
-	b_debug::print_r($r,"id=$id",'nosort');
+	b_debug::print_r($r,"lm_id=$id");
       }
       @self::$tabs[$tab]++;
     }

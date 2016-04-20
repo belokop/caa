@@ -1,6 +1,6 @@
 <?php
 // myPear module 
-$releaseDate = '2016-04-15';
+$releaseDate = '2016-04-20';
 define('myPear_VERSION','5.120');
 define('myPear_MODULE', 'myPear');
 define('myPear_DATE',    $releaseDate);
@@ -69,6 +69,9 @@ $GLOBALS['imapServers'] = array('kth.se'     => array('imap'=>array('ssl://webma
 //              - default
 // 
 
+// set flag "invoked as a script by the CLI interpreter, no httpd server"
+if (!defined('cnf_CLI'))          define('cnf_CLI',empty($_SERVER["HTTP_USER_AGENT"]));
+
 //  set flag "running locally, without a network on a Ryan-air jet"
 if (!defined('cnf_localhost')) define('cnf_localhost',
 				      (bool)(preg_match('/^((.*)?::1$|127.0.0.1|local)/',trim(@$_SERVER["REMOTE_ADDR"])) &&
@@ -81,9 +84,6 @@ define('cnf_myPear_taskManager',0 && isset($_REQUEST['myPear_taskManager']));
 // ------ cnf_demo
 //            - The user passwords are (almost) ignored, so the developer can login as any user
  
-// set flag "invoked as a script by the CLI interpreter, no httpd server"
-if (!defined('cnf_CLI'))          define('cnf_CLI',empty($_SERVER["HTTP_USER_AGENT"]));
-
 // define name of the block in $_SESSION array to keep options
 if (!defined('CONST_cnfOptions')) define('CONST_cnfOptions' , 'myPear_options');
 
@@ -213,6 +213,7 @@ define('CONST_year_not_considered' , -9999999999);
 
 define('CONST_noname', 'none');
 define('CONST_go_back','go back');
+define('CONST_not_concerned','not concerned');
 
 define('b_regsplit','/[ ,;]+/');
 define('cnf_emptyString','<empty>');

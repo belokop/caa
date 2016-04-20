@@ -60,7 +60,7 @@ if (locateAndInclude(array('Mail',
 			 $syslog_thisMail=True,
 			 $no_preview=False){
       global $listOfSentEmails, $listOfUnsentEmails;
-      
+
       $this->recipients = $this->headersEscaped = $this->recipientsEscaped = array();
       
       // Skip the installation phase
@@ -86,9 +86,20 @@ if (locateAndInclude(array('Mail',
       }
       
       // Do not remove 'cnf_localhost'...
-      $realTO = (cnf_localhost || cnf_dev || cnf_demo
+      $realTO = (cnf_localhost || cnf_dev || cnf_demo 
 		 ? cnf_demo_email 
 		 : $to);
+      // See myPear_taskManager
+      if ($av_send_to = @$GLOBALS['av_send_to']){
+	$this->_dbg("Replace recipient by a develoer: $realTO ==> $av_send_to");
+	$realTO = $av_send_to;
+      }
+
+      if ($realTO != cnf_demo_email) {
+	b_debug::traceBack("To be sent to $to... Correct?");
+	return False;
+      }
+      
       $semi_rand = md5(time());
       $charset   = 'iso-8859-1';
       $charset   = 'utf8';
@@ -230,8 +241,9 @@ if (locateAndInclude(array('Mail',
 	  // Connect to the SMTP server fails
 	  $this->error_message($mail_object->getMessage(),True);
 	  $output = ob_get_contents();
-	  $this->_dbg($output);
 	  ob_end_clean();
+	  $this->_dbg($output);
+	  myPear_logs()->syslog('sendmail FAIL '.str_replace(array("\n","\r"),'; ',$output));
 	  return False;
 	}
 
@@ -575,7 +587,7 @@ Remember to save this mail or book-mark the URL to facilitate later access to th
     /*
      *
      */
-    function dbg($txt=' ',$forced=False) {
+    function dbg($txt='',$forced=False) {
       if ($forced || $this->debug || cnf_debug){
 	if (cnf_CLI) printf("%s: %s\n",get_class($this),$txt);
 	else b_debug::xxx($txt,array(True,'orangeText',3,$this));

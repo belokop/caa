@@ -443,7 +443,7 @@ class bForm extends myPear_getValue{
     }else{
       $this->getFormOpen_execute();
     }
-    $this->dbg('finish');
+    $this->dbg(exiting);
   }
     
   /* 
@@ -637,7 +637,8 @@ class bForm extends myPear_getValue{
    * Print "<form>", also print _post_bForm_ID_once if needed
    */
   private function getFormOpen_execute($comment='',$width='width100'){
-    static $case=0;    $this->dbg(starting.(++$case));
+    static $case = 0;    $case++;
+    $this->dbg(starting);
 
     $hidden = (($this->MODE == 'RW')
 	       ? array('_post_bForm_ID_once'   => $this->ID,
@@ -725,7 +726,7 @@ class bForm extends myPear_getValue{
       $this->dbg('ZZZ $this->t = '.$this->t);
       $this->t->highlightRows = False;
     }
-    $this->dbg('finish'.$case);
+    $this->dbg(exiting);
   }
 
   /*
@@ -808,7 +809,7 @@ class bForm extends myPear_getValue{
     }else{
       $this->vitalFieldMissing();
     }
-    $this->dbg('finish',cnf_dev);
+    $this->dbg(exiting);
   }
   
   /*

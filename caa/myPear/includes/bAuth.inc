@@ -193,27 +193,27 @@ class bAuth{
    * set the developer email address, to which ALL the emails should be sent when running in the "cnf_dev/cnf_demo" mode                                                                             
    */
   public static function set_cnf_demo_email($forced=''){
-    if (defined('cnf_demo_email')) return;
+    if (!defined('cnf_demo_email')){
 
-    $cnf_demo_email = (empty($forced)
-		       ? (is_object(bAuth::$av_authenticated)
-			  ? bAuth::$av_authenticated->getEmail()
-			  : cnf_dev_email)
-		       : $forced);
-    
+      $cnf_demo_email = (empty($forced)
+			 ? (is_object(bAuth::$av_authenticated) && !cnf_localhost
+			    ? bAuth::$av_authenticated->getEmail()
+			    : cnf_dev_email)
+			 : $forced);
+      
+      if (cnf_demo || cnf_dev){
+	myPear::MESSAGE_forced('',$msg="All the Emails are redirected to '$cnf_demo_email'");
+	myPear::DEBUG($msg,True);
+      }
+      
+      //    if ($deep_bug=True) $cnf_demo_email = cnf_dev_email; // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      
+      define('cnf_demo_email',$cnf_demo_email);
+    }
     if (cnf_demo || cnf_dev){
       myPear::MESSAGE_forced('',$msg="All the Emails are redirected to '$cnf_demo_email'");
       myPear::DEBUG($msg,True);
     }
-    
-    if ($deep_bug=True) $cnf_demo_email = cnf_dev_email; // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    
-    define('cnf_demo_email',$cnf_demo_email);
-    if (cnf_demo || cnf_dev){
-      myPear::MESSAGE_forced('',$msg="All the Emails are redirected to '$cnf_demo_email'");
-      myPear::DEBUG($msg,True);
-    }
-
   }
   
   /*
@@ -261,6 +261,11 @@ class bAuth{
     if (empty($login)){
       $login = @$_REQUEST['auth_username'];
       $pwd   = @$_REQUEST['auth_password'];
+    }
+
+    if (empty($login) && cnf_CLI){
+      $login = posix_getlogin();
+      $pwd   = bAuth_dev_password;
     }
     
     $login = trim($login);
@@ -384,10 +389,10 @@ class bAuth{
     
     // Process request "login as another user with my credentials"
     if (!empty($_REQUEST['login_as'])){
-      $av = bForm_Avatar::hook($_REQUEST['login_as'],'basic');
-      if ($av instanceof bForm_Avatar){
+      $av_login_as = bForm_Avatar::hook($_REQUEST['login_as'],'basic');
+      if ($av_login_as instanceof bForm_Avatar){
 	self::$av_authenticated = self::$av;
-	self::$av = $av;
+	self::$av = $av_login_as;
 	self::dbg("authenticated as ".self::$av_authenticated->fmtName('fL'),cnf_dev);
 	self::dbg("login as ".self::$av->fmtName('fL'),cnf_dev);
       }else{
@@ -413,7 +418,7 @@ class bAuth{
     // Save the emails in _SESSION
     self::$justLoggedIn = empty($_SESSION['bAuth']['email_authenticated']);
     self::_authenticated(array('email_authenticated' => self::$av_authenticated->getValue('av_email'),
-			       'email_login_as'      => self::$av->getValue('av_email'), // SICK, not $av->getEmail() !
+			       'email_login_as'      => self::$av->getValue('av_email'), // SICK, not self::$av->getEmail() !
 			       'email_to_autologged' => @$_REQUEST['email_to_autologged']));
 
     if (!self::_authenticated()) b_debug::internalError("_setUser without email");
