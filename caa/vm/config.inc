@@ -2,7 +2,7 @@
 /**
  * Visitors Manager (VM) configuration file
  */
-$releaseDate = '2016-04-20';
+$releaseDate = '2016-04-21';
 define('VM_MODULE'   , 'vm');
 define('VM_VERSION','5.78');
 
@@ -76,6 +76,7 @@ define('VM_V_payLunches',1024);      // Flag 'pay lunch'
 define('VM_V_payOther',2048);        // Flag 'pay other expenses, (whatever "other expenses" mean)' 
 define('VM_V_rdlMailSent',4096);     // Flag 'registration-deadline mail to organizer sent'
 define('VM_V_payConfDiner',8192);    // Flag 'pay conference dinner'
+define('VM_V_mailInQueue',16384);    // Flag 'pay conference dinner'
 
 /*
  * Policies are either 
@@ -86,6 +87,7 @@ define('VM_V_payConfDiner',8192);    // Flag 'pay conference dinner'
  */
 define('auto_maintained', 'auto'); 
 define('when_approved',   'w_a'); 
+define('in_queue',        'queue');
 
 /*
  * Define per-diem in the default currency
@@ -449,8 +451,10 @@ class VM extends myPear{
 								't'=> auto_maintained),
 				 VM_V_invoiceSent      => array('d'=>'Was the invoice sent?',
 								'i'=>'i-invoice',
+								't'=> auto_maintained),
+				 VM_V_mailInQueue      => array('d'=>'isMailWaitingInQueue',
 								't'=> auto_maintained));
-				 
+  
   /*
    * Event policies
    */  
@@ -473,14 +477,14 @@ class VM extends myPear{
 								   'f'=>'debit', 
 								   'p'=>array(VM_V_payTrip,VM_V_payAccommodation,VM_V_payLunches,VM_V_provideOffice,
 									      // VM_V_payPerdiem, 
-									      VM_V_scrtrInfoSent)),
+									      VM_V_scrtrInfoSent,VM_V_mailInQueue)),
 				   VISIT_TYPE_PROGRAM      =>array('d'=>'Program attender',
 								   'i'=>'a_conf',
 								   'f'=>'debit',
 								   'p'=>array(VM_V_payTrip,VM_V_payAccommodation,VM_V_provideOffice, 
 									      // VM_V_payLunches,VM_V_payConfDiner,
 									      VM_V_denialMailSent,VM_V_welcomeMailSent,VM_V_infoMailSent,
-									      VM_V_rdlMailSent,VM_V_enMailSent)),
+									      VM_V_rdlMailSent,VM_V_enMailSent,VM_V_mailInQueue)),
 				   VISIT_TYPE_POSSIBLE     =>array('d'=>'Virtual visit, used to estimate budget',
 								   'i'=>'i-avatar',
 								   'f'=>'debit',
@@ -493,7 +497,7 @@ class VM extends myPear{
 								   'i'=>'a_meeting',
 								   'f'=>'debit',
 								   'p'=>array(VM_V_payTrip,VM_V_payAccommodation, // VM_V_payPerdiem,VM_V_payOther,
-									      VM_V_scrtrInfoSent)),
+									      VM_V_scrtrInfoSent,VM_V_mailInQueue)),
 				   VISIT_OUT_OF_SCOPE      =>array('d'=>'Out of VM scope',
 								   'i'=>'a_meeting',
 								   'p'=>array()),
@@ -781,7 +785,6 @@ class VM extends myPear{
       
       case 'send_finalWelcomeEmail':  
 	$reply = VM_booker_here || self::hasRightTo('endorse_event');
-	// $reply = cnf_dev;	myPear::WARNING_T("pending problem");
 	break;
 	
     case 'endorse_event':

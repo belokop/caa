@@ -544,7 +544,6 @@ class APImenu_vm extends APImenu_ea{
       if (empty($engine)){
 	$engine    = 'bIcal_matrix_visits';
 	// Redirect to "program attenders" if this is selected in the "guests" context
-	b_debug::var_dump($_REQUEST['vm_eventSelector'],'vm_eventSelector');
 	if (!isset($_REQUEST['vm_eventSelector'])){
 	  VM::e_ID(EVT_ANY);
 	}elseif(VM::e_ID() > 0 && !headers_sent()){
@@ -813,7 +812,7 @@ class APImenu_vm extends APImenu_ea{
 	b_url::header(b_url::same('?q='.join('/',array(VM_MODULE,
 						       APImenu::tab_code(tab_vm_vis)))));
       case Null:
-	b_btn::confirm("Synchronization is a long procedure, are you sure you want to do it?");
+	b_btn::confirm("Synchronization is a long procedure, please confirm that you want to do it");
         return True;
       }
       break;

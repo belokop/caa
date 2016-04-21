@@ -5,11 +5,6 @@
  */
 class b_vars{
 
-  private static $num_rows = 0;
-  private static $cache = array();
-  private static $args  = Null;
-  private static $module= Null;
-
   public static $debug = False;
 
   /*
@@ -37,6 +32,8 @@ class b_vars{
    */
   static function get($name,$module=Null,$regexp=False){
 
+    $reply = array();
+      
     if ($regexp){
       // Get the variable names which match the regular expression
       $q = myPear_db()->qquery($x="SELECT * FROM zzz_variables WHERE ".
@@ -44,7 +41,6 @@ class b_vars{
 			       " ORDER BY var_timestamp",self::$debug||cnf_dev);
       
       // Get recursively all the values & modules
-      $reply = array();
       while($r = myPear_db()->next_record($q)){
 	// add the variable name to the output
 	$var = self::get($r['var_name'],$r['var_module']);
@@ -53,45 +49,32 @@ class b_vars{
       }
       return $reply;
     }else{
-      // Get one variable, store it in cache, and return as reply      
-      self::$module = (empty($module)
-		       ? b_reg::$current_module
-		       : $module);
+      $q = myPear_db()->qquery("SELECT * FROM zzz_variables WHERE ".join(' AND ',self::args($name,$module)),self::$debug);
+      while($r = myPear_db()->next_record($q)) $reply = b_fmt::safe_decode($r['var_value']);
       
-      self::$args = array(myPear_db()->quote(self::$module,True,'var_module'),
-			  myPear_db()->quote($name,True,'var_name'));
-      
-      if (isset(self::$cache[self::$module][$name])){
-	self::$num_rows = 1;
-      }else{
-	$q = myPear_db()->qquery("SELECT * FROM zzz_variables WHERE ".join(' AND ',self::$args),self::$debug);
-	self::$num_rows = myPear_db()->num_rows($q);
-	while($r = myPear_db()->next_record($q)) self::$cache[self::$module][$name] = b_fmt::safe_decode($r['var_value']);
-      }
-      if (self::$debug) b_debug::xxx(@self::$cache[self::$module][$name]);
-      return @self::$cache[self::$module][$name];
+      if (self::$debug) b_debug::xxx($reply);
+      return $reply;
     }
   }
 
   /*
    *
    */
-  static function set($name,$value,$module=Null){
-    // Get the cache
-    $old_value = self::get($name,$module);
+  private static function args($name,$module=Null){
+    if (empty($module)) $module = b_reg::$current_module;
+    $args = array(myPear_db()->quote($module,True,'var_module'),
+		  myPear_db()->quote($name,True,'var_name'));
+    return $args;
+  }
 
-    if ($old_value !== $value){
-      // Update the cache
-      self::$cache[$module][$name] = $value;
-      
-      // Update the database
-      $var_value = array(myPear_db()->quote(b_fmt::safe_encode($value),True,'var_value'));
-      myPear_db()->query((self::$num_rows > 0
-			  ? "UPDATE zzz_variables SET ".join(',',$var_value)." WHERE ".join(' AND ',self::$args)
-			  : "INSERT INTO zzz_variables SET ".join(',',array_merge($var_value,self::$args))));
-    }    
-    if (self::$debug) b_debug::xxx("$name: ".var_export($old_value,True)." --> ".var_export($value,True));
-    return $old_value;
+  /*
+   *
+   */
+  static function set($name,$value,$module=Null){
+    $var_value = array(myPear_db()->quote(b_fmt::safe_encode($value),True,'var_value'));
+    myPear_db()->query((myPear::is_empty(self::get($name,$module))
+			? "INSERT INTO zzz_variables SET ".join(',',array_merge($var_value,self::args($name,$module)))
+			: "UPDATE zzz_variables SET ".join(',',$var_value)." WHERE ".join(' AND ',self::args($name,$module))));
   }
 }
 
@@ -189,8 +172,6 @@ class b_btn{
     //        if ($text=='Cancel') return x("a href='javascript:;' onclick='parent.jQuery.fn.fancybox.close();'",$text);
     //    if ($text=='Cancel') return x("a href='javascript:;' onclick=\"jQuery('.fancybox-close').fancybox().trigger('click');\"",$text);
       
-    $style = sprintf("style='padding:1px; font-size:small;' class='%s page_load_progress' id='submit_%s'",
-		     $class,strToLower(str_replace(' ','_',$text)));
     $style = sprintf("style='padding:1px; font-size:small;' class='%s page_load_progress'",$class);
     list($img,$type)= (!empty($img)
 		       ? array("src='$img'", 'image')
@@ -382,7 +363,7 @@ class b_fmt{
       $dejaVu = 0,
       $stay_lower = array('at','in','by','the','for', 'and', 'of','och',// Connecting words
 			  //			  'van','van de','van der'
-			  'v.','van','von','di','de','del','der','den','la','los','\\\'t', // Dutch, French, German nobility
+			  'v.','van','von','di','de','del','der','den','la','los',"'t", // Dutch, French, German nobility
 			  'degli'),   // Common names
       
       // specific words like PhD
@@ -391,9 +372,11 @@ class b_fmt{
       $sustr      = array("/\\bD'/i"=>"d'", "/\\bDe'/i"=>"de'");
     
     // Small optimization
-    if (!$dejaVu++) foreach (array_merge($stay_lower,$specific) as $l) $sustr["/\\b$l\\b/i"] = $l;
+    if (!$dejaVu++){
+      foreach (array_merge($stay_lower,$specific) as $l) $sustr["/\\b$l\\b/i"] = $l;
+    }
     
-    // Convert evening to the lower case, then selectively apply 'mb_convert_case'
+    // Convert everything to the lower case, then selectively apply 'mb_convert_case'
     $text = mb_convert_case(mb_convert_case($text,MB_CASE_LOWER,'utf-8'),MB_CASE_TITLE,'utf-8');;
     foreach(array(',','.','-','/',"'") as $s){
       if (strpos($text,$s) !== False){
@@ -414,7 +397,11 @@ class b_fmt{
       }
     }
     
-    if (!empty($sustr)) $text = preg_replace(array_keys($sustr), array_values($sustr),$text);
+    if (!empty($sustr)){
+      $text = trim(preg_replace(array_keys($sustr), array_values($sustr),$text));
+      // 't Hooft ...
+      if (strpos($text,"'T ") === 0) $text = preg_replace("/^.T /","'t ",$text);
+    }
     
     // Catch 'McInne' && 'MacDenees', skip 'Macej'
     if ($catchMc) self::ucwords_Mc($text);
@@ -1520,12 +1507,16 @@ class b_debug{
     
     // Start / End a block
     $s_e_text = $text;
-    if ($starting_exiting = (($s_e_text === starting) || ($s_e_text === exiting))){
-      $toPrint = True;
-      if ($s_e_text === exiting) self::$s_e_depth--;
-      if (empty($flags)) $flags = array(3,'fuchsiaText',True); // always print 
+    if ($starting_exiting = is_string($s_e_text)){
+      $s_e_s = (strpos($s_e_text,starting) !== False);
+      $s_e_e = (strpos($s_e_text,exiting)  !== False);
+      if ($starting_exiting = ($s_e_s || $s_e_e)){
+	$toPrint = True;
+	if ($s_e_e) self::$s_e_depth--;
+	if (empty($flags)) $flags = array(3,'fuchsiaText',True); // always print 
+      }
     }
-
+    
     // Object
     if (is_object($text)) $text = (method_exists($text,'__toString')
 				   ? $text->__toString()
@@ -1639,7 +1630,7 @@ class b_debug{
 	}
       }
     }
-    if ($s_e_text === starting) self::$s_e_depth++;
+    if ($starting_exiting && $s_e_s) self::$s_e_depth++;
   }
   
   /*

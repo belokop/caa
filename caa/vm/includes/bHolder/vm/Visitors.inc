@@ -144,12 +144,10 @@ class bHolder_vm_Visitors extends bHolder_vm{
       //
       $q = $this->query();
       while($rec = myPear_db()->next_record($q)){
-	if(@$rec['v_status'] === STATUS_NO){
-	  if(VM_mailer()->m_applicant_deny($rec['v_id'],'status')===False)
-	    VM_mailer()->m_applicant_deny($rec['v_id'],$no_preview=True);
-	}elseif(@$rec['v_status'] === STATUS_YES){
-	  if(VM_mailer()->welcome_applicant($rec['v_id'],'status')===False)
-	    VM_mailer()->welcome_applicant($rec['v_id'],$rec['hut_id'],$rec['a_name'],$no_preview=True);
+	if(VM_mailer()->m_applicant_deny($rec['v_id'],'status',$rec['v_status'])===False){
+	  VM_mailer()->m_applicant_deny($rec['v_id'],$no_preview=True);
+	}elseif(VM_mailer()->welcome_applicant($rec['v_id'],'status',0,0,$rec['v_status'])===False){
+	  VM_mailer()->welcome_applicant($rec['v_id'],$rec['hut_id'],$rec['a_name'],$no_preview=True);
 	}
       }
       
@@ -1040,7 +1038,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
       // b_debug::print_r($this->mails_which_are_not_yet_sent);
       if ((!empty($this->mails_which_are_not_yet_sent[VM_V_welcomeMailSent])  ||
 	   !empty($this->mails_which_are_not_yet_sent[VM_V_denialMailSent]))
-	  && (VM::$e->getValue('e_start',1) > time()) 
+	  //	  && (VM::$e->getValue('e_start',1) > time()) 
 	  &&  VM::hasRightTo('send_finalWelcomeEmail') 
 	  &&  VM::isEventEndorsed()
 	  // && !empty($this->collected_highlights)
@@ -1122,8 +1120,8 @@ class bHolder_vm_Visitors extends bHolder_vm{
 			     '',
 			     'All the applicants get 2 Emails from the system:'.
 			     x('ul',
-			       x('li','Informational email, sent after the application form submittion').
-			       x('li','"Welcome email", sent by the '.myOrg_name.' staff shortly after endorsing of the program budget'.
+			       x('li','Informational email, automatically sent when we get the application').
+			       x('li','"Welcome email", sent shortly after approving the program budget:'.
 				 x('ul',
 				   x('li','EITHER the confirmation email with all the needed information if application was successful').
 				   x('li','OR a refusal email if the application was denied')))).
@@ -1610,9 +1608,8 @@ class bHolder_vm_Visitors extends bHolder_vm{
   private $mails_which_are_not_yet_sent = array();
   private function get_sendMail_buttons($policy,$id,$title,$vm_f){
 
-    if (VM_mailer()->getStatus($this->rec['v_id'],$policy) === CONST_not_concerned){
-      // Exclude "non-conserned" visitors
-      $already_sent = CONST_not_concerned;    
+    if (is_string($already_sent=VM_mailer()->getStatus($this->rec['v_id'],$policy))){
+      // Exclude "non-conserned" visitors and requests which are still in the queue
     }elseif (!($already_sent = (bool)bForm_vm_Visit::_getPolicy($policy,$this->rec,True))){
       // Count the mails which are still in a queue
       if (empty($this->mails_which_are_not_yet_sent[$policy])) $this->mails_which_are_not_yet_sent[$policy] = 0; 
@@ -1641,6 +1638,9 @@ class bHolder_vm_Visitors extends bHolder_vm{
       case False:
 	$rec["${vm_f}_2"] = $this->sendMail_btn($id,$title,($policy != VM_V_infoMailSent),$already_sent);
       }
+    }elseif($already_sent === in_queue){
+      $rec["${vm_f}_1"] = ICON_mail_sent_y;
+      $rec["${vm_f}_2"] = '';
     }
     $this->dbg(join(', ',array_keys($rec)).', already_sent='.var_export($already_sent,True));
     if (!empty($rec)) $this->rec = array_merge($rec,$this->rec);

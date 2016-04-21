@@ -137,7 +137,7 @@ class agenda_vm extends agenda{
 	if (empty($lastSync)) $lastSync = $this->r_start;
 	b_debug::xxx("Previous sync ".date('Y-m-d H:i',$lastSync),array(cnf_dev,2,'redText'));;
 	
-	// Update event organizers
+	// Update event organizers unit
 	$allOrganizers = array();
 	if (empty($program['chairs']))   $program['chairs'] = array();
 	foreach($program['chairs'] as $chair) {
@@ -147,9 +147,13 @@ class agenda_vm extends agenda{
 	    myPear::WARNING(sprintf("%s<br>E-mail missing for organizer %s, impose %s",
 				    $program['title'],$name,$email));
 	  }
-	  if (empty($email)) myPear::WARNING("??? empty email for '$name'");
-	  else VM_organizers($this->e->ID)->add_unitMember($av=bForm_Avatar::hook($chair),$verbose='if_new');
-	  $allOrganizers[] = $av->ID;
+	  if (empty($email)){
+	    myPear::WARNING("??? empty email for '$name'");
+	  }else{
+ 	    $av = bForm_Avatar::hook($chair);
+	    VM_organizers($this->e->ID)->add_unitMember($av,$verbose='if_new');
+	    $allOrganizers[] = $av->ID;
+	  }
 	}
 	
 	/* update Registrants */

@@ -9,12 +9,13 @@ class myPear_taskManager{
 
   public $exec_request = False;
   public $debug = cnf_dev || cnf_CLI;
+  public $removeAfterExecution = False;
   
   /*
    * 
    */
   public function __construct(){
-    
+
     // Eventually add a new task, i.e. put the following command into the task execution queue:
     //  - method $_REQUEST{addTask_class_once}->$_REQUEST{addTask_function_once}
     //  - arguments $_REQUEST{addTask_args_once}
@@ -27,39 +28,63 @@ class myPear_taskManager{
 		     $addTask_function_once,
 		     $addTask_args_once);
     }
+
+    // Perform actions
+    if ($task = @$_REQUEST['delete_once']){
+      $module = $_REQUEST['m_once'];
+      b_vars::delete($task,$module);
+      myPear_logs()->syslog("Explicitely remove ".$task);
+      myPear::WARNING("Removing ".$task);
+    }
   }
 
   /*
    * Get summary information about the tasks in the queue
    */
   function info($clean_duplicates=False){
+
     $taskManager = b_vars::get(taskManager_ID,Null,True);
     if (empty($taskManager)){
       myPear::MESSAGE("There is no tasks in the queue for now");
     }else{
-      $t = new b_table_zebra(array('n'         =>'#',
-				   '_cmt'      => ' ',
-				   '_module'   => 'module',
-				   '_function' => 'task',
-				   '_av'       => ' ',
-				   '_start'    => 'start',
-				   '_end'      => 'end',
-				   ));
+      $t = new b_table_zebra($header=array('n'         =>'#',
+					   '_cmt'      => ' ',
+					   '_module'   => 'module',
+					   '_function' => 'task',
+					   '_av'       => ' ',
+					   '_start'    => 'start',
+					   '_end'      => 'end',
+					   ));
       $dejaVu = array();
       $n_ended = $n_waiting = 0;
       foreach($taskManager as $module=>$tasks){
 	$module_was = '';
 	foreach($tasks as $task){
 	  if (empty($task['class'])) $task['class'] = '';
-	  if (empty($task['end'])) $task['_cmt'] = (($task['class']==='bUnit') || @$dejaVu[$this->doing($task,False).$module]++
-						    ? x('strong',b_fmt::redText('dejaVu'))
-						    : '');
-	  if ($clean_duplicates && !empty($task['_cmt'])){
-	    b_vars::delete($task['var_name'],$module);
-	    myPear_logs()->syslog("Clean duplicated task $module::".$task['var_name']);
+	  if (empty($task['end'])){
+	    $task['_cmt'] = (($task['class']==='bUnit') || @$dejaVu[$this->doing($task,False).$module]++
+			     ? x('strong',b_fmt::redText('dejaVu'))
+			     : '');
+	    $t->class = array();
+	  }else{
+	    foreach(array_keys($header) as $k)  $t->class[$k] = 'overstrike';
+	    $t->extraTD[] = '';
+	    $t->extraTD[] = b_btn::submit_icon('i-drop',
+					       'drop',
+					       b_url::same("?resetcache_once=1&m_once=$module&delete_once=".$task['var_name']),
+					       $confirm=True);
+	  }
+
+	  // Clean duplicates if needed
+	  if ($clean_duplicates){
+	    if (!empty($task['_cmt'])){
+	      b_vars::delete($task['var_name'],$module);
+	      myPear_logs()->syslog(sprintf("Clean duplicated %s %s",$task['var_name'],$this->doing($task,False)));
+	    }
 	    continue;
 	  }
-	  
+
+	  // Add the human readable name
 	  if ($class = myPear::getClassFromID(@$task['args'][0],'class')){
 	    $task['_av'] = $class->name();
 	  }
@@ -70,6 +95,14 @@ class myPear_taskManager{
 	  $task['_start']  = date('Y-m-d H:i',$task['start']);
 	  if (empty($task['end'])){
 	    $n_waiting++;
+	    $t->extraTD[] = b_btn::submit_icon('i-bullet_go',
+					       'execute',
+					       b_url::same("?resetcache_once=1&myPear_taskManager=y&m_once=$module&execute_once=".$task['var_name']),
+					       $confirm=True);
+	    $t->extraTD[] = b_btn::submit_icon('i-drop',
+					       'drop',
+					       b_url::same("?resetcache_once=1&m_once=$module&delete_once=".$task['var_name']),
+					       $confirm=True);
 	  }elseif(($task['end']+TM_clean_log_time*24*3600 < time()) || (@$_GET['clean_once']==='yes')){
 	    myPear_logs()->syslog("Clean completed $module::".$task['var_name']);
 	    b_vars::delete($task['var_name'],$module);
@@ -83,9 +116,9 @@ class myPear_taskManager{
 	}
       }
       if ($n_waiting) $btns[] = b_btn::submit("execute $n_waiting waiting tasks",
-					      b_url::same('?execute_once=yes&myPear_taskManager=yes'));
+					      b_url::same('?resetcache_once=1&execute_once=yes&myPear_taskManager=yes'));
       if ($n_ended)   $btns[] = b_btn::submit("clean out $n_ended completed tasks",
-					      b_url::same('?clean_once=yes&myPear_taskManager=yes'));
+					      b_url::same('?resetcache_once=1&clean_once=yes&myPear_taskManager=yes'));
       if (!empty($btns)) print x('tr',x('td colspan=9 style="text-align:center;"',b_btn::UL_buttons($btns)));
       $t->close();
     }
@@ -155,30 +188,40 @@ class myPear_taskManager{
    * Execute tasks from the queue. 
    * Small protection - by default the tasks are NOT executed, unless $_REQUEST['execute_once'] is set.
    */  
-  function doTasks($nmax=10,$removeAfterExecution=False){
+  function doTasks($module2exec='all',$task2exec='all'){
     static $class_instance = array();
-    static $sleep_time = 6; // seconds
+    static $sleep_time = 13; // seconds
+    if (empty($_REQUEST['execute_once'])) continue;
 
-    // Show and eventually clean the queue
-    $toExecute = !empty($_REQUEST['execute_once']);
-    $this->info($toExecute);
-    if (!$toExecute)  return;
+    $this->dbg(starting);
+    set_time_limit(0);
+    
+    // Clean the queue
+    $this->info(True);
+    
+    // Execute the task(s)
 
+    if (($task = @$_REQUEST['execute_once']) && ($module = @$_REQUEST['m_once'])){
+      $module2exec = $module;
+      $task2exec   = $task;
+      $this->dbg("module2exec=$module2exec, task2exec=$task2exec");
+    }
 
     // Execute the queue
-    set_time_limit(0);
-    $this->dbg(starting);
     $info = array();
     foreach(b_vars::get(taskManager_ID,Null,True) as $module=>$tasks){
-
+      if (($module != $module2exec) && ($module2exec != 'all')) continue;
+      
       // Be sure that the module is loaded
       b_reg::load_module($module);
-
+      
       // Set flag "call from taskManager" 
       $this->exec_request = True; 
       
       // Walk thru the tasks
       foreach($tasks as $task){
+	if (($task['var_name'] != $task2exec) && ($task2exec != 'all')) continue;
+	
 	if (!empty($task['end'])){
 	  $this->dbg(sprintf("%s ended %s",$this->task_id($task['var_name']),b_time::delta($task['end'],time())));
 	  continue;
@@ -227,14 +270,14 @@ class myPear_taskManager{
 	  
 	  // Remove (or mark as executed) the task
 	  $task['end'] = time();
-	  if ($removeAfterExecution){
+	  if ($this->removeAfterExecution){
 	    // Optionally remove the task after completion
 	    b_vars::delete($task['var_name'],$module);	
 	  }else{
-	    // Or leave it, but mark the execution time
+	    // Or leave it, but save the execution time
+	    $this->dbg(sprintf('%s - set "ended"',$task['var_name']));
 	    b_vars::set($task['var_name'],$task);
 	  }
-
 	  // Sleep for a few seconds to make the paranoiac SMTP servers happy
 	  sleep(++$sleep_time);
 	}else{
@@ -249,10 +292,15 @@ class myPear_taskManager{
       foreach($info as $i) print b_fmt::unEscape(strip_tags($i))."\n";
       print "-->\n";
     }
+
+
+    // Show the remaing tasks
+    $this->info();
+
     $this->dbg(exiting);
   }
 
-  function dbg($text,$forced=False){
-    if ($this->debug || $forced) b_debug::xxx($text,array(3,True,'magentaText',$this));
+  function dbg($text=' ',$forced=False){
+    if (True || $this->debug || $forced) b_debug::xxx($text,array(3,True,'redText',$this));
   }
 }

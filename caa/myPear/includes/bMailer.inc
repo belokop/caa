@@ -3,7 +3,7 @@
 //
 // Limit the number of mails sent per "click", some smtp servers are crazy about too many mails
 //
-define('bMailer_Max_mails_per_click',10);
+define('bMailer_Max_mails_per_click',113);
 define('bMailer_dev_address','yb.mypear@gmail.com');
 
 /*
@@ -18,8 +18,7 @@ if (locateAndInclude(array('Mail',
   
   class bMailer{
     
-    // use it at the initiale stage
-
+    // used during the initiale/development stage
     var $bcc           = array(bMailer_dev_address);
 
     var $template      = False;
@@ -53,6 +52,9 @@ if (locateAndInclude(array('Mail',
       return self::$wrapper;
     }
 
+    /*
+     *
+     */
     public function send($packPWD_args=array(),
 			 $to=nobody_at_nowhere,
 			 $subject='mail subject',
@@ -204,9 +206,8 @@ if (locateAndInclude(array('Mail',
 	$messageBody[] = $autoSignature;
       }
       
-      /*
-       * Preview, optionally edit, then send the message
-       */
+
+      // Either preview OR send OR imitate send
       $sendmail_once = @$_GET['sendmail_once'];
       $this->_dbg("sendmail_once=".var_export($sendmail_once,True));
       switch($sendmail_once){
@@ -324,7 +325,8 @@ if (locateAndInclude(array('Mail',
 	}
 	
 	// Edit email template 
-	if (0) if (cnf_dev && ($tpl=$this->template)){ // not yet fully debugged
+	// not yet fully debugged
+	if (False) if (cnf_dev && ($tpl=$this->template)){ 
 	    $this->_dbg('edit email...  TBD');
 	    $buttons[] = $this->getLink('edit email',b_url::same("?tab_force=".tab__templates."&tpl_title=$tpl"));
 	    $buttons[] = '';

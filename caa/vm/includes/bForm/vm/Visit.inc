@@ -1878,14 +1878,16 @@ class bForm_vm_Visit extends bForm_vm {
     switch($status=self::_getStatus($buffer)){
     case STATUS_YES:
       if (send_finalWelcomeEmail_to_registrants && $VM_E_endorsed && !empty($policies[VM_V_welcomeMailSent])){
-	if (!self::_getPolicy(VM_V_welcomeMailSent,$buffer)) $reply = STATUS_YES;
+	if (!self::_getPolicy(VM_V_welcomeMailSent,$buffer) && 
+	    !self::_getPolicy(VM_V_mailInQueue,$buffer)) $reply = STATUS_YES;
       }
       break;
       
     case STATUS_NO:
       if (send_denialEmail_to_registrants && $VM_E_endorsed && !empty($policies[VM_V_denialMailSent])){
 	// The denial letter should be, but was not sent
-	if (!self::_getPolicy(VM_V_denialMailSent,$buffer))  $reply = STATUS_NO;
+	if (!self::_getPolicy(VM_V_denialMailSent,$buffer) &&
+	    !self::_getPolicy(VM_V_mailInQueue,$buffer))  $reply = STATUS_NO;
       }
       break;
 

@@ -1122,7 +1122,11 @@ class bForm_Avatar extends bForm {
 	if ($v = @$rec['av_von']) $reply[] = $v;
 	switch($item){
 	case 'l': $reply[] = b_fmt::ucWords($rec['av_lastname'],True);     break;
-	case 'L': $reply[] =  mb_strToUpper($rec['av_lastname'],'utf-8');  break;
+	case 'L':
+	  $text =  mb_strToUpper($rec['av_lastname'],'utf-8');  
+	  if (strpos($text,"'T ") === 0) $text = preg_replace("/^.T /","'t ",$text);  // 't Hooft ... 
+	  $reply[] = $text;
+	  break;
 	}
 	break;
       default:
