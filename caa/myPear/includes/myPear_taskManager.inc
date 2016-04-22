@@ -8,7 +8,7 @@ define('TM_clean_log_time',7); // in days
 class myPear_taskManager{
 
   public $exec_request = False;
-  public $debug = cnf_dev || cnf_CLI;
+  public $debug = cnf_dev;
   public $removeAfterExecution = False;
   
   /*
@@ -29,12 +29,16 @@ class myPear_taskManager{
 		     $addTask_args_once);
     }
 
-    // Perform actions
-    if ($task = @$_REQUEST['delete_once']){
-      $module = $_REQUEST['m_once'];
-      b_vars::delete($task,$module);
-      myPear_logs()->syslog("Explicitely remove ".$task);
-      myPear::WARNING("Removing ".$task);
+    // Perform "delete" action, mark task as completed
+    if ($task_id = @$_REQUEST['delete_once']){
+      $task = b_vars::get($task_id,$module = $_REQUEST['m_once']);
+      if (empty($task['end'])){
+	b_vars::set($task_id,array_merge($task,array('cmt'=>'Removed','end'=>time())));
+      }else{
+	b_vars::delete($task_id,$module);
+      }
+      myPear_logs()->syslog("Explicitely remove ".$this->doing($task));
+      myPear::WARNING("Removing ".$this->doing($task));
     }
   }
 
@@ -49,7 +53,7 @@ class myPear_taskManager{
     }else{
       $t = new b_table_zebra($header=array('n'         =>'#',
 					   '_cmt'      => ' ',
-					   '_module'   => 'module',
+					   // '_module'   => 'module',
 					   '_function' => 'task',
 					   '_av'       => ' ',
 					   '_start'    => 'start',
@@ -93,7 +97,8 @@ class myPear_taskManager{
 	  $task['n'] = x('tt',(int)str_replace(taskManager_ID,'',$task['var_name']));
 	  $task['_module'] = ($module == $module_was ? '' : x('strong',$module));
 	  $task['_start']  = date('Y-m-d H:i',$task['start']);
-	  if (empty($task['end'])){
+	  if (!empty($task['cmt'])) $task['_cmt'] = x('strong',b_fmt::redText($task['cmt']));
+	  if ( empty($task['end'])){
 	    $n_waiting++;
 	    $t->extraTD[] = b_btn::submit_icon('i-bullet_go',
 					       'execute',
