@@ -679,11 +679,13 @@ class APImenu_vm extends APImenu_ea{
     case tab_vm_vis_mails:
     case tab_vm_ogz_mails:
     case tab_vm_end_mails:
-      if (empty($doing))    $doing = 'show_mails_exchange';
-      if (VM::e_ID() && VM::$e->getValue('e_end',1) < time()){
-	$this->eventSelector();
-	myPear::WARNING("Sorry, the event is from the past, the mail exchange page is expired...");
-	return;
+      if (empty($doing)){
+	$doing = 'show_mails_exchange';
+	if (VM::e_ID() && VM::$e->getValue('e_end',1) < time()){
+	  $this->eventSelector();
+	  myPear::WARNING("Sorry, the event is from the past, the mail exchange page is expired...");
+	  return;
+	}
       }
       
     case tab_vm_vis_budget:
