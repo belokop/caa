@@ -144,9 +144,9 @@ class bHolder_vm_Visitors extends bHolder_vm{
       //
       $q = $this->query();
       while($rec = myPear_db()->next_record($q)){
-	if(VM_mailer()->m_applicant_deny($rec['v_id'],'status',$rec['v_status'])===False){
+	if(VM_mailer()->m_applicant_deny($rec['v_id'],'status',$rec['v_status']) === False){
 	  VM_mailer()->m_applicant_deny($rec['v_id'],$no_preview=True);
-	}elseif(VM_mailer()->welcome_applicant($rec['v_id'],'status',0,0,$rec['v_status'])===False){
+	}elseif(VM_mailer()->welcome_applicant($rec['v_id'],'status',0,0,$rec['v_status']) === False){
 	  VM_mailer()->welcome_applicant($rec['v_id'],$rec['hut_id'],$rec['a_name'],$no_preview=True);
 	}
       }
@@ -1035,14 +1035,9 @@ class bHolder_vm_Visitors extends bHolder_vm{
       //
       // Big-Button "Send E-mails to all attenders"
       //
-      // b_debug::print_r($this->mails_which_are_not_yet_sent);
-      if ((!empty($this->mails_which_are_not_yet_sent[VM_V_welcomeMailSent])  ||
-	   !empty($this->mails_which_are_not_yet_sent[VM_V_denialMailSent]))
-	  //	  && (VM::$e->getValue('e_start',1) > time()) 
-	  &&  VM::hasRightTo('send_finalWelcomeEmail') 
-	  &&  VM::isEventEndorsed()
-	  // && !empty($this->collected_highlights)
-	  ){ 
+      if ($this->mails_which_are_not_yet_sent
+	  &&  VM::hasRightTo('send_welcomeEmail') 
+	  &&  VM::isEventEndorsed()){ 
 	$to_show[] = b_btn::big_button('Send welcome/denial Emails to the attenders',array('mail2all_once'=>1,'resetcache_once'=>1));
       }
       break;
@@ -1471,7 +1466,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
       /*
        * --------------------------------------------------------------------------------- Mails...
        */
-      // Replace the "b_table" by a standard class to avoid printing the table
+      // Replace the "b_table" by the standard class to avoid printing the table
       $this->t = new stdClass();
       $this->t->extraTD = array();
       $this->t->class   = array();
@@ -1603,20 +1598,15 @@ class bHolder_vm_Visitors extends bHolder_vm{
   }
   
   /*
-   *
+   * Get the button
    */
-  private $mails_which_are_not_yet_sent = array();
+  private $mails_which_are_not_yet_sent = 0;
   private function get_sendMail_buttons($policy,$id,$title,$vm_f){
 
-    if (is_string($already_sent=VM_mailer()->getStatus($this->rec['v_id'],$policy))){
-      // Exclude "non-conserned" visitors and requests which are still in the queue
-    }elseif (!($already_sent = (bool)bForm_vm_Visit::_getPolicy($policy,$this->rec,True))){
-      // Count the mails which are still in a queue
-      if (empty($this->mails_which_are_not_yet_sent[$policy])) $this->mails_which_are_not_yet_sent[$policy] = 0; 
-      $this->mails_which_are_not_yet_sent[$policy]++;
-    }
-    
-    // Get the button
+    // Get the mail status
+    $already_sent = VM_mailer()->getStatus($this->rec['v_id'],$policy);
+
+    // Get button
     $rec = array();
     if ($already_sent === True){
       //
@@ -1630,10 +1620,11 @@ class bHolder_vm_Visitors extends bHolder_vm{
       // The mail was NOT sent, print "send/preview email".
       // Note, there is no reason to send the "information" e-mail after the event is endorsed.
       //
+      $this->mails_which_are_not_yet_sent++;
       switch(VM::isEventEndorsed()){
       case True:
-	if ((send_finalWelcomeEmail_to_registrants && ($vm_f=='m_yes')) ||
-	    (send_denialEmail_to_registrants       && ($vm_f=='m_no'))) $rec["${vm_f}_2"] = $this->sendMail_btn($id,$title,!VM::hasRightTo('send_finalWelcomeEmail'),$already_sent);
+	if ((send_welcomeEmail_to_applicants && ($vm_f=='m_yes')) ||
+	    (send_denialEmail_to_applicants       && ($vm_f=='m_no'))) $rec["${vm_f}_2"] = $this->sendMail_btn($id,$title,!VM::hasRightTo('send_welcomeEmail'),$already_sent);
 	break;
       case False:
 	$rec["${vm_f}_2"] = $this->sendMail_btn($id,$title,($policy != VM_V_infoMailSent),$already_sent);
@@ -1642,16 +1633,16 @@ class bHolder_vm_Visitors extends bHolder_vm{
       $rec["${vm_f}_1"] = ICON_mail_sent_y;
       $rec["${vm_f}_2"] = '';
     }
-    $this->dbg(join(', ',array_keys($rec)).', already_sent='.var_export($already_sent,True));
     if (!empty($rec)) $this->rec = array_merge($rec,$this->rec);
+    $this->dbg(sprintf('%s - %s, already_sent=%s',$this->rec['av_lastname'],join(', ',array_keys($rec)),$already_sent),cnf_dev);
   }      
-
+  
   /*
    *
    */  
   private function sendMail_btn($id,$title,$preview_only,$already_sent){
 
-    if ($already_sent === CONST_not_concerned){    
+    if (is_string($already_sent)){
       $reply = '';
     }else{
       $text = (empty($title) 
@@ -2056,11 +2047,13 @@ class bHolder_vm_Visitors extends bHolder_vm{
       if(!$not_my_case && (($yes_no || ($this->rec['v_end'] > time()-30*86400)))){
 	$already_payed = Null;
 	switch($p){
+	  /*
 	case VM_V_invoiceSent:
 	  if (VM_reimberser_here) $icon=bIcons()->getButton(array('i'=>'i-invoice',
 								  'd'=>'print invoice',
 								  'l'=>b_url::same("?invoice_once=yes&v_id=".$this->rec['v_id'])));
 	  break; 
+	  */
 	    
 	case VM_V_provideOffice:
 	  if (myOrg()->eaMembers()->isMember($this->rec['av_id'])){
@@ -2609,9 +2602,9 @@ class bHolder_vm_Visitors extends bHolder_vm{
 			'm_info_1'   => '',
 			'm_info_2'   => '',
 			);
-	if (!send_denialEmail_to_registrants)           unset($header['m_no_1'],  $header['m_no_2'], $header['space4']);
-	if (!send_finalWelcomeEmail_to_registrants)     unset($header['m_yes_1'], $header['m_yes_2'],$header['space3']);
-	if (!send_automatically_infoMail_to_applicants)unset($header['m_info_1'],$header['m_info_2']);
+	if (!send_denialEmail_to_applicants)           unset($header['m_no_1'],  $header['m_no_2'], $header['space4']);
+	if (!send_welcomeEmail_to_applicants)     unset($header['m_yes_1'], $header['m_yes_2'],$header['space3']);
+	if (!send_auto_infoMail_to_applicants)unset($header['m_info_1'],$header['m_info_2']);
 
 	foreach(array('pwd','yes','no','info') as $c) $this->css["m_${c}_1"]["style"] = "width:0;";
 

@@ -44,7 +44,7 @@ function VM_mailer_render($what,$args=array(),$preview=False){
 				   'd'=>'URL to the personal page'),
 	     'org'         =>array('r'=>myOrg_name,
 				   'd'=>'Organization'),
-	     'event'       =>array('r'=>(is_object($e) ? $e->nameSimple() : ''),
+	     'event'       =>array('r'=>(is_object($e) ? $e->name(False) : ''),
 				   'd'=>'Event title'),
 	     'event_period'=>array('r'=>(is_object($e) ? b_time::period($e->getValue('e_start',1),$e->getValue('e_end',1)):''),
 				   'd'=>'Event duration'),
@@ -107,18 +107,33 @@ class bMailer_vm extends bMailer{
   /*
    *
    */
-  function getStatus($arg,$mail_code,$v_status=Null){
-    $m_applicant_info_mail = $this->m_applicant_info_mail($arg,'status');
-    switch($mail_code){
-    case VM_V_infoMailSent:        return $m_applicant_info_mail;
-    case VM_V_denialMailSent:      return $this->m_applicant_deny($arg, 'status',$v_status);
-    case VM_V_welcomeMailSent:     return $this->welcome_applicant($arg,'status',0,0,$v_status);
-    case VM_E_endorsmentSent:
+  function getStatus($arg,$code,$v_status=Null){
+    switch($code){
+    case VM_V_infoMailSent:  
+      return $this->m_applicant_info_mail($arg,'status');
+
+    case VM_V_denialMailSent:  
+      $this->m_applicant_info_mail($arg,'status');
+      return $this->m_applicant_deny($arg, 'status',$v_status);
+
+    case VM_V_welcomeMailSent:   
+      $this->m_applicant_info_mail($arg,'status');
+      return $this->welcome_applicant($arg,'status',0,0,$v_status);
+
     case VM_V_enMailSent:
+      if (empty($policyQ)) $policyQ = VM_V_enMailQueued;
     case VM_V_rdlMailSent:
+      if (empty($policyQ)) $policyQ = VM_V_rdlMailQueued;
+
+      $v = myPear::getInstance_new('bForm_vm_Visit',$arg,'fatal');
+      return ($v->getPolicy($policyQ)
+	      ? in_queue
+	      : $v->getPolicy($code));
+
+    case VM_E_endorsmentSent:
     case VM_V_scrtrInfoSent:
-    case VM_V_invoiceSent:
-      return Null;
+    defailt:
+      b_debug::internalError(myPear::getClassFromID($arg)."($code)");
     }
   }
 
@@ -192,7 +207,11 @@ class bMailer_vm extends bMailer{
       $v  = $av_id;
       $av = $v->av;
     }else{
-      $av = myPear::getInstance_new('bForm_Avatar_vm',$av_id,array('strict','fatal'));
+      if ($v = myPear::getInstance_new('bForm_vm_Visit',$av_id,'strict')){
+	$av = $v->av;
+      }else{
+	$av = myPear::getInstance_new('bForm_Avatar_vm',$av_id,'fatal');
+      }
     }
 
     // Continue parsing, the argument might be the visit ID...
@@ -217,8 +236,8 @@ class bMailer_vm extends bMailer{
     // Is the mail should be sent once only?
     // Don't send it if it is too late...
     $policy = Null;
-    if ($mode == 'en')  $policy = VM_V_enMailSent;
-    if ($mode == 'rdl') $policy = VM_V_rdlMailSent;
+    if ($mode == 'en')  { $policy = VM_V_enMailSent;  $policyQ = VM_V_enMailQueued;  }
+    if ($mode == 'rdl') { $policy = VM_V_rdlMailSent; $policyQ = VM_V_rdlMailQueued; }
     if (!empty($policy) && (time() > $e->getValue('e_start'))) $v->setPolicy($policy,1);
     
     if (!empty($policy) && $v->getPolicy($policy)){
@@ -232,7 +251,7 @@ class bMailer_vm extends bMailer{
       $this->dbg("Queue the request"); 
       myPear::MESSAGE(sprintf("E-mail to %s is send to the mail queue",$fqn));
       myPear_taskManager()->addTask(get_class($this),__function__,array($av->ID,$e->ID,$mode,$no_preview));
-      $v->setPolicy(VM_V_mailInQueue,1);
+      $v->setPolicy($policyQ,1);
       return;
     }
 
@@ -311,7 +330,7 @@ Remember to save this mail or book-mark the web page to facilitate later access 
 	if (!empty($policy) && !empty($v)){
 	  $this->_dbg("setPolicy($policy,1,True,True)");
 	  $v->setPolicy($policy,1);
-	  $v->setPolicy(VM_V_mailInQueue,0);
+	  $v->setPolicy($policyQ,0);
 	}
       }
     }
@@ -331,7 +350,7 @@ Remember to save this mail or book-mark the web page to facilitate later access 
     if (!myPear_taskManager()->exec_request && $no_preview){
       foreach(array('v_id','av_lastname','av_firstname','av_salutation') as $i) $r[$i] = @$rec[$i];
       myPear_taskManager()->addTask(get_class($this),__function__,array($av_id,b_fmt::safe_encode($r),$no_preview));
-      return;
+      return Null;
     }
 
     // Might be called from the queue...
@@ -417,75 +436,75 @@ $subject by $endorser.
   /*
    * This mail has to be sent only once
    */
-  public function m_applicant_info_mail($v_id,$no_preview=False){
+  public function m_applicant_info_mail($v_id,$no_preview=False,$debug=Null){
 
-    if (empty($v_id)) return CONST_not_concerned;
+    $debug_sv = $this->debug;
+    if ($debug !== Null) $this->debug = $debug;
 
-    // Get visit class    
+    // Return if the visitor "is not concerned"
     $this->visit = ($v_id instanceof bForm_vm_Visit
 		    ? $v_id
 		    : myPear::getInstance_new('bForm_vm_Visit',$v_id,'fatal'));
     
-    $VM_V_infoMailSent = (bool)$this->visit->getPolicy(VM_V_infoMailSent);
-    $v_status = $this->visit->getValue('v_status',True);
-
-    if (!$VM_V_infoMailSent && ($no_preview !== 'sendIt')){
-      if($this->visit->getValue('v_type',1) != VISIT_TYPE_PROGRAM){
-	$case = 'not_VISIT_TYPE_PROGRAM';
-	$reply = CONST_not_concerned; 
-	
-      }elseif($this->visit->getPolicy(VM_V_denialMailSent) ||
-	      $this->visit->getPolicy(VM_V_welcomeMailSent)){
-	$case = 'welcome_mail_sent';
-	$reply = CONST_not_concerned; 
-	
-      }elseif(!empty($v_status) || 
-	      (empty($v_status) && ($this->visit->getValue('v_start') < time()))){
-	// Don't send outdated mails
-	$case = ($v_status == STATUS_NO ? STATUS_NO : 'too_late_'.$v_status);
-	$reply = CONST_not_concerned; 
-	if (($v_status === STATUS_PENDING) && ($this->visit->e->getValue('e_start') > time())) unset($case,$reply);
-	
-      }elseif ($this->visit->av->isOrganizer($this->visit->e->ID)){
-	// This mail should not be sent/shown to the organizers
-	$case = 'is_organizer';
-	$reply = CONST_not_concerned;
-	
-      }elseif ($this->visit->av->isE(True)){
-	// Don't send/show it to the employees
-	$case = 'employee';
-	$reply = CONST_not_concerned;
-      }
+    // Not conserned
+    if ($this->visit->getPolicy(VM_V_infoMailNC)){
+      $case = 'flag already set';
+      
+    }elseif (!$this->visit->getValue('v_status',1) &&
+	 $this->visit->getValue('v_start',1) < time()){
+      $case = 'visit started';
     
-      // Exit if the visitor is not concerned
-      if (isset($case)){
-	$this->dbg("$reply, $case ".x('em',$this->visit->av->fmtName('fl')));
-	return $reply;
-      }
+    }elseif($this->visit->getValue('v_type',1) != VISIT_TYPE_PROGRAM){
+      $case = 'not_VISIT_TYPE_PROGRAM';
+
+    }elseif($this->visit->getPolicy(VM_V_denialMailSent) ||
+	    $this->visit->getPolicy(VM_V_welcomeMailSent)){
+      $case = 'welcome_mail_sent';
+
+    }elseif ($this->visit->av->isOrganizer($this->visit->e->ID)){
+      $case = 'is_organizer';
+
+    }elseif ($this->visit->av->isE(True)){
+      $case = 'employee';
+    }
+    
+    // Exit if the visitor is not concerned
+    if (!empty($case)){
+      $this->visit->setPolicy(VM_V_infoMailNC,1);
+      $reply = CONST_not_concerned;
+      $this->dbg("$reply, $case ".x('em',$this->visit->av->fmtName('fl')));
+      $this->debug = $debug_sv;
+      return $reply;
     }
     
     // Is it just an enquiry?
+    $VM_V_infoMailSent = (bool)$this->visit->getPolicy(VM_V_infoMailSent);
     if ($no_preview === 'status'){
-      $reply = ($this->visit->getPolicy(VM_V_mailInQueue)
+      $reply = ($this->visit->getPolicy(VM_V_infoMailQueued)
 		? in_queue
 		: $VM_V_infoMailSent);
-      // $this->dbg($reply);
+      $this->dbg("$reply, ".x('em',$this->visit->av->fmtName('fl')));
+      $this->debug = $debug_sv;
       return $reply;
     }
-
-    // This mail has to be sent only once
-    if ($no_preview && $VM_V_infoMailSent){
-      $this->dbg("Mail to ".$this->visit->av->name()." was already sent",$this->debug||cnf_dev);
+    
+    // No preview requested, the mail is just to be send, and only once
+    if ($no_preview && !myPear_taskManager()->exec_request){
+      if ($VM_V_infoMailSent){
+	// This mail has to be sent only once
+	$this->dbg("Mail to ".$this->visit->av->name()." was already sent",$this->debug||cnf_dev);
+      }else{
+	// Put this mail into the execution queue, not waist time in the interactive session
+	myPear_taskManager()->addTask(get_class($this),__function__,array($this->visit->ID,'sendIt'));
+	$this->visit->setPolicy(VM_V_infoMailQueued,1);
+      }
+      $this->debug = $debug_sv;
       return True;
     }
-
-    // Put this mail into the execution queue, not waist time in the interactive session
-    if (!myPear_taskManager()->exec_request && ($no_preview || empty($v_status))){
-      myPear_taskManager()->addTask(get_class($this),__function__,array($this->visit->ID,'sendIt'));
-      $this->visit->setPolicy(VM_V_mailInQueue,1);
-      return;
-    }
     
+    //
+    // Preview and/or send the mail
+    //
     locateAndInclude('bTpl');
     $tpl = new bTpl(array('title' => __METHOD__,
 			  'render'=> VM_mailer_render('SHOW_ID'),
@@ -514,13 +533,14 @@ Organizing committee for \"<event/>\".
 			 $syslog_thisMail=True,
 			 $no_preview)){
       $this->visit->setPolicy(VM_V_infoMailSent,1,True,True);
-      $this->visit->setPolicy(VM_V_mailInQueue,0);
+      $this->visit->setPolicy(VM_V_infoMailQueued,0);
       myPear::MESSAGE(sprintf('Info mail is sent to %s',$this->visit->av->name()));
     }
     $msg = sprintf('%s(%s) %s',__FUNCTION__,$this->visit->av->getEmail(),($ok ? 'OK' : 'NOT sent ...'));
     $this->dbg($msg, cnf_dev||cnf_CLI);
     myPear_logs()->syslog($msg);
-    return $ok;
+    $this->debug = $debug_sv;
+    return (bool)$ok;
   }
   
   
@@ -530,22 +550,36 @@ Organizing committee for \"<event/>\".
   public function m_applicant_deny($v_id=0,$no_preview=False,$v_status=Null){
     
     $this->dbg();
-    if (!empty($v_status) && ($v_status !== STATUS_NO)){
-      $this->dbg(CONST_not_concerned.", ".$v_status);
-      return CONST_not_concerned;
-    }
-    
-    // Get visit  
-    $this->visit = myPear::getInstance_new('bForm_vm_Visit',$v_id,'fatal');
-    if ($this->visit->getValue('v_status',1) !== STATUS_NO){
-      $this->dbg(CONST_not_concerned.", $v_status ".x('em',$this->visit->av->fmtName('fl')));
-      return CONST_not_concerned;
+
+    //
+    // Check is the visitor subject of getting the "denial Email" 
+    if (!send_denialEmail_to_applicants){
+      $case = "NO DENIAL MAILS configured";
+    }elseif (!empty($v_status) && ($v_status !== STATUS_NO)){
+      // Shortcut to save time
+      $case = $v_status;
+    }else{
+      $this->visit = myPear::getInstance_new('bForm_vm_Visit',$v_id,'fatal');
+      $name = $this->visit->av->fmtName('fl');
+
+      // Catch the approved/pending visits
+      if ($this->visit->getValue('v_status',1) !== STATUS_NO) $case = $v_status;
     }
 
+    // Exit if the visitor is not concerned
+    if (!empty($case)){
+      $reply = CONST_not_concerned;
+      if (empty($name)) $name = 'visitor';
+      $this->dbg("%s, %s, <em>%s</em>",var_export($reply,True),$case,$name);
+      return $reply;
+    }
+    
+    // Is it just an enquary?
+    if (empty($this->visit)) $this->visit = myPear::getInstance_new('bForm_vm_Visit',$v_id,'fatal');
     $VM_V_denialMailSent = (bool)$this->visit->getPolicy(VM_V_denialMailSent);
     if ($no_preview === 'status'){
-      $this->m_applicant_info_mail($this->visit,'status');
-      $reply = ($this->visit->getPolicy(VM_V_mailInQueue)
+      $this->m_applicant_info_mail($this->visit,'status',False);
+      $reply = ($this->visit->getPolicy(VM_V_denialMailQueued)
 		? in_queue
 		: $VM_V_denialMailSent);
       $this->dbg($reply);
@@ -561,7 +595,7 @@ Organizing committee for \"<event/>\".
     // Put this mail into the execution queue, not waist time in the interactive session
     if (!myPear_taskManager()->exec_request && $no_preview){
       myPear_taskManager()->addTask(get_class($this),__function__,array($this->visit->ID,$no_preview));
-      $this->visit->setPolicy(VM_V_mailInQueue,1);
+      $this->visit->setPolicy(VM_V_denialMailQueued);
       return;
     }
 
@@ -587,8 +621,8 @@ Organizing committee for \"<event/>\"."));
 			  $syslog_thisMail=True,
 			  $no_preview)){
       $this->visit->setPolicy(VM_V_denialMailSent,1,True,True);
-      $this->visit->setPolicy(VM_V_mailInQueue,0);
-      $this->m_applicant_info_mail($this->visit,'status');
+      $this->visit->setPolicy(VM_V_denialMailQueued,0);
+      $this->m_applicant_info_mail($this->visit,'status',False);
       myPear::MESSAGE(sprintf('Denial mail is sent to %s',$this->visit->av->name()));
     }
     $this->dbg('Mail to '.$this->visit->av->fmtName('fl').' is '.($ok ? 'OK' : 'NOT sent ...'),cnf_dev);
@@ -596,30 +630,44 @@ Organizing committee for \"<event/>\"."));
   }
   
   /*
-   *
+   * The visit confirmation mail
    */
   public function welcome_applicant($v_id,$hut_id,$a_name='',$no_preview=False,$v_status=Null){
 
-    $this->dbg();
-    if (!empty($v_status) && ($v_status !== STATUS_YES)){
-      $this->dbg(CONST_not_concerned.", ".$v_status);
-      return CONST_not_concerned;
+    //
+    // Check is the visitor subject of getting the "welcome Email" 
+    if (!send_welcomeEmail_to_applicants){
+      $case = "NO WELCOME MAILS configured";
+    }elseif (!empty($v_status) && ($v_status !== STATUS_YES)){
+      // Shortcut to save time
+      $case = $v_status;
+    }else{
+      $this->visit = myPear::getInstance_new('bForm_vm_Visit',$v_id,'fatal');
+      $name = $this->visit->av->fmtName('fl');
+
+      // Catch the refused/pending visits
+      if ($this->visit->getValue('v_status',1) !== STATUS_YES) $case = $v_status;
+      
+      // This mail should not be sent to the local organizers
+      if ($this->visit->av->isOrganizer($this->visit->e->ID) && $this->visit->av->isE(True)) $case = 'isOrganizer';
     }
 
-    $this->visit = myPear::getInstance_new('bForm_vm_Visit',$v_id,'fatal');
-    $VM_V_welcomeMailSent = (bool)$this->visit->getPolicy(VM_V_welcomeMailSent);
-    if ($hut_id === 'status'){
-      $this->m_applicant_info_mail($this->visit,'status');
-      $reply = ($this->visit->getPolicy(VM_V_mailInQueue)
-		? in_queue
-		: $VM_V_welcomeMailSent);
-      $this->dbg($reply);
+    // Exit if the visitor is not concerned
+    if (!empty($case)){
+      $reply = CONST_not_concerned;
+      if (empty($name)) $name = 'visitor';
+      $this->dbg("%s, %s, <em>%s</em>",var_export($reply,True),$case,$name);
       return $reply;
     }
-
-    if (!send_finalWelcomeEmail_to_registrants){
-      return;
-      // $this->dontSendThisMail = 'NOT send_finalWelcomeEmail_to_registrants';
+    
+    // Is it the status request?
+    if ($hut_id === 'status'){
+      $this->m_applicant_info_mail($this->visit,'status',False);
+      $reply = ($this->visit->getPolicy(VM_V_welcomeMailQueued)
+		? in_queue
+		: $this->visit->getPolicy(VM_V_welcomeMailSent));
+      $this->dbg("$reply ".x('em',$this->visit->av->fmtName('fl')));
+      return $reply;
     }
 
     // This mail to be sent once, but there is no harm to send it again
@@ -628,9 +676,9 @@ Organizing committee for \"<event/>\"."));
     }
         
     // Put this mail into the execution queue, not waist time in the interactive session
-    if (!myPear_taskManager()->exec_request && send_finalWelcomeEmail_to_registrants && $no_preview){
+    if (!myPear_taskManager()->exec_request && $no_preview){
       myPear_taskManager()->addTask(get_class($this),__function__,array($this->visit->ID,$hut_id,$a_name,$no_preview));
-      $this->visit->setPolicy(VM_V_mailInQueue,1);
+      $this->visit->setPolicy(VM_V_welcomeMailQueued,1);
       return;
     }
     
@@ -638,7 +686,7 @@ Organizing committee for \"<event/>\"."));
      * Accommodation block (not for the local people)
      */
     $blabla = array();
-    if (include_accommodation_in_finalWelcomeEmail && !empty($hut_id) && $this->visit->hut_codes($without_BI=True)){
+    if (include_accommodation_in_welcomeEmail && !empty($hut_id) && $this->visit->hut_codes($without_BI=True)){
       $hut = myPear::getInstance_new('bForm_vm_Hut',$hut_id,array('strict','fatal'));
       if (!($hut instanceof bForm_vm_Hut)){
 	// Sanity... 
@@ -689,7 +737,7 @@ Please read carefully the cancellation policy. The violation of the cancellation
     $VM_V_payPerdiem = $this->visit->getPolicy(VM_V_payPerdiem);
     
     $this->attachments = array();
-    if (include_payForms_in_finalWelcomeEmail && ($VM_V_payTrip || $VM_V_payPerdiem)){
+    if (include_payForms_in_welcomeEmail && ($VM_V_payTrip || $VM_V_payPerdiem)){
       $this->cc[] = reimbursement_email;
       foreach(VM::$forms2send as $pdf_tpl){
 	$this->attachments[] = $exp->pdfReceipt($pdf_tpl,sys_get_temp_dir() . "/${pdf_tpl}_" . $this->visit->ID . '.pdf');
@@ -726,11 +774,11 @@ Bring the forms together with copies of your tickets to the Nordita administrati
     }
     
     
-    /*
-     * personal web site
-     */
-    if (include_personalPage_in_finalWelcomeEmail){
-      if (!$this->visit->av->isE()) $blabla[] = '
+    //
+    // personal web site
+    //
+    if (include_personalPage_in_welcomeEmail){
+      if (!$this->visit->av->isE(True)) $blabla[] = '
 PERSONAL WEB PAGE
 -----------------
 We have created a web page for you which you can access here:
@@ -743,20 +791,20 @@ Please use this page to update your contact information. We also ask for the fol
 Via your personal page you obtain more information about the event, including photos and dates of stay of other participants.';
       if (!empty($pay)) $blabla[] = '
 Note, that the forms for the reimbursement get your personal information, like the address, affiliation, email, etc.  from (naively saying) "your web page". Please check that your record is correct.'; 
-    }elseif(cnf_dev){
-      myPear::WARNING("Block 'Personal web page' is not included in the Email");
     }
     
+    //
     // Gather all the pieces...
+    //
     $messageBody = 'Dear '.$this->visit->av->fmtName('sfl',0).',
  
 '.(is_object($this->visit->e)
    ?'This is to confirm that your application for the upcoming '.myOrg_name.' Event "'.$this->visit->e->name(False).'" which takes place '.b_time::period($this->visit->getValue('v_start',1),$this->visit->getValue('v_end',1),'h').' has been accepted.
 
-We look forward to seeing you at '.myOrg_name.' and hope you will have a pleasant and productive meeting.
-For directions to '.myOrg_name.', see http://www.nordita.org/map
+We look forward '.($this->visit->av->isE(True) ? '' : 'to seeing you at '.myOrg_name).' and hope you will have a pleasant and productive meeting.
+'.($this->visit->av->isE(True) ? '' : 'For directions to '.myOrg_name.", see http://www.nordita.org/map\n")
+   .join("\n",$blabla).'
 
-'.join("\n",$blabla).'
 Sincerely,
 Organizing committee for "'.$this->visit->e->name(False).'".'
    :'');
@@ -771,7 +819,8 @@ Organizing committee for "'.$this->visit->e->name(False).'".'
 			  $syslog_thisMail=True,
 			  $no_preview)){
       $this->visit->setPolicy(VM_V_welcomeMailSent,1,True,True);
-      $this->m_applicant_info_mail($this->visit,'status');
+      $this->visit->setPolicy(VM_V_welcomeMailQueued,0);
+      $this->m_applicant_info_mail($this->visit,'status',False);
       myPear::MESSAGE(sprintf('Confirmation mail is sent to %s',$this->visit->av->name()));
     }
     $this->dbg('Mail to '.$this->visit->av->fmtName('fl').' is '.($ok ? 'OK' : 'NOT sent ...'),cnf_dev);

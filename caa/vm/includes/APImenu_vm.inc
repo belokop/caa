@@ -351,6 +351,10 @@ class APImenu_vm extends APImenu_ea{
 	  $reply = False;
 	  break;
 	}
+	if (VM::e_ID() && VM::$e->getValue('e_end',1) < time()){
+	  $reply = False;
+	  return;
+	}
       case tab_vm_end:
       case tab_vm_end_vlist:
       case tab_vm_end_budget:
@@ -368,6 +372,10 @@ class APImenu_vm extends APImenu_ea{
 	if (!see_mails_exchange_with_attenders){
 	  $reply = cnf_dev;
 	  break;
+	}
+	if (VM::e_ID() && VM::$e->getValue('e_end',1) < time()){
+	  $reply = False;
+	  return;
 	}
 	$reply = VM_administrator_here && !VM::outOfScope();
 	break;
@@ -672,6 +680,11 @@ class APImenu_vm extends APImenu_ea{
     case tab_vm_ogz_mails:
     case tab_vm_end_mails:
       if (empty($doing))    $doing = 'show_mails_exchange';
+      if (VM::e_ID() && VM::$e->getValue('e_end',1) < time()){
+	$this->eventSelector();
+	myPear::WARNING("Sorry, the event is from the past, the mail exchange page is expired...");
+	return;
+      }
       
     case tab_vm_vis_budget:
     case tab_vm_ogz_budget:

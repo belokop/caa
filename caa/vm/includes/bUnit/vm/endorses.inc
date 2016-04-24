@@ -131,7 +131,7 @@ class bUnit_vm_endorses extends bUnit_vm{
 
   /*
    * Remind the endorses about their duties.
-   * he reminder is sent once every VM_reminding_period days 
+   * The reminder is sent once every "VM_reminding_period" days 
    */
   function remind(){
     if (@$_SESSION[__METHOD__]++) return;

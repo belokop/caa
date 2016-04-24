@@ -38,7 +38,7 @@ class b_vars{
       // Get the variable names which match the regular expression
       $q = myPear_db()->qquery($x="SELECT * FROM zzz_variables WHERE ".
 			       myPear_db()->quote($name,'RR','var_name').
-			       " ORDER BY var_timestamp",self::$debug||cnf_dev);
+			       " ORDER BY var_name",self::$debug||cnf_dev);
       
       // Get recursively all the values & modules
       while($r = myPear_db()->next_record($q)){
@@ -50,7 +50,10 @@ class b_vars{
       return $reply;
     }else{
       $q = myPear_db()->qquery("SELECT * FROM zzz_variables WHERE ".join(' AND ',self::args($name,$module)),self::$debug);
-      while($r = myPear_db()->next_record($q)) $reply = b_fmt::safe_decode($r['var_value']);
+      while($r = myPear_db()->next_record($q)){
+	$reply = b_fmt::safe_decode($r['var_value']);
+	if (is_array($reply) && empty($reply['var_name'])) $reply['var_name'] = $name;
+      }
       
       if (self::$debug) b_debug::xxx($reply);
       return $reply;
@@ -201,7 +204,7 @@ class b_btn{
     $text_action = strip_tags($text_action);
     return x("span class='only_online'",
              x("a href='$url'".($confirm ? " onClick='return confirm(\"Really $text_action?\");'" : ""),
-	       bIcons()->get(array('i'=>$icon,'d'=>$text_action))));
+	       bIcons()->get(array('i'=>$icon,'d'=>$text_action,'class'=>'page_load_progress'))));
   }
 
   /*
@@ -2359,8 +2362,13 @@ class b_time{
    * human-readable time period between $t2 & $t2
    */
   public static function delta($t1, $t2=Null) {
-    if (is_null($t2))  $s = $t1;
-    else               $s = ($t1 > $t2) ? $t1-$t2 : $t2-$t1;
+    if (!is_numeric($t1))  return '???';
+    if ($t2 === Null){
+      $s = $t1;
+    }else{
+      if (!is_numeric($t2))  return '???';
+      $s = ($t1 > $t2) ? $t1-$t2 : $t2-$t1;
+    }
     $m = (int)($s/60);
     $h = (int)($m/60);
     $d = (int)($h/24);

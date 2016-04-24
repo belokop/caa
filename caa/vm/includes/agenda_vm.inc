@@ -261,19 +261,14 @@ class agenda_vm extends agenda{
 			    ": application <i>$reg[familyname] ".b_time::period($time1,$time2)." is outside the event dates</i>");
 	  }
 
+	  //
 	  // Send a welcome mail to the NEWLY REGISTERED applicants
-	  /*
-	  if (send_automatically_infoMail_to_applicants && ($registrationDate > $lastSync) && ($v_type == VISIT_TYPE_PROGRAM)){
-	    $this->dbg($this->v->av->name().' - registered '.b_time::delta($registrationDate,$this->r_start).' reg. start, '.
-		       " VM_V_infoMailSent = ".var_export((bool)$this->v->getPolicy(VM_V_infoMailSent),true));
-	    if (!VM_mailer()->m_applicant_info_mail($this->v,'status')){
-	      $this->dbg($this->v->av->name().' - to be sent m_applicant_info_mail ');
-	      VM_mailer()->m_applicant_info_mail($this->v,$no_preview=True);
-	    }
+	  if ((VM_mailer()->m_applicant_info_mail($this->v,'status') === False)){
+	    // This function expects "v_status" being empty for the newly created visits
+	    if (send_auto_infoMail_to_applicants) VM_mailer()->m_applicant_info_mail($this->v,$no_preview=True);
+	    else   $this->v->setPolicy(VM_V_infoMailNC,1);
 	  }
-	  */	  
-	  if (send_automatically_infoMail_to_applicants) VM_mailer()->m_applicant_info_mail($this->v,$no_preview=True);
-
+	  
 	  // Set the visit status to 'pending' if the visit is not approved
 	  if (!$this->v->getValue('v_status',True,True)) $this->v->updateDB(array('v_status' => STATUS_PENDING));
 

@@ -226,23 +226,22 @@ class bForm_vm_Visit extends bForm_vm {
    */
   static function _getPolicy($policy,$buffer,$onlyIfExpected=False,$visit=Null){ 
 
-    if (!in_array($policy,array_keys(VM::$v_policies)))      return False;
-    
-    if (is_object($visit)){
-      $buffer = array('id'         => $visit->__toString().'->',
-		      'v_policy'   => $visit->getValue('v_policy',True),
-		      'av_lastname'=> $visit->av->getValue('av_lastname',True,True));
-    }elseif(!is_array($buffer)){
-      $buffer = array('id'         => '',
-		      'av_lastname'=> 'anonymous',
-		      'v_policy'   => $buffer);
-    }
-    if (empty($buffer['v_policy'])){
-      $reply = False;
-    }else{
-      $reply = (bool)b_mask::get($buffer['v_policy'],$policy);
-      if(cnf_show_pv || ($onlyIfExpected === 'verbose')){
-	myPear::DEBUG(@$buffer['id'].__FUNCTION__."($buffer[av_lastname],$policy) ".x('i',VM::$v_policies[$policy]['d'].($reply?' YES ':' NO  ')));
+    $reply = False;
+    if (in_array($policy,array_keys(VM::$v_policies))){
+      if (is_object($visit)){
+	$buffer = array('id'         => $visit->__toString().'->',
+			'v_policy'   => $visit->getValue('v_policy',True),
+			'av_lastname'=> $visit->av->getValue('av_lastname',True,True));
+      }elseif(!is_array($buffer)){
+	$buffer = array('id'         => '',
+			'av_lastname'=> 'anonymous',
+			'v_policy'   => $buffer);
+      }
+      if (!empty($buffer['v_policy'])){
+	$reply = (bool)b_mask::get($buffer['v_policy'],$policy);
+	if(cnf_show_pv || ($onlyIfExpected === 'verbose')){
+	  myPear::DEBUG(@$buffer['id'].__FUNCTION__."($buffer[av_lastname],$policy) ".x('i',VM::$v_policies[$policy]['d'].($reply?' YES ':' NO  ')));
+	}
       }
     }
     return $reply;
@@ -1603,7 +1602,7 @@ class bForm_vm_Visit extends bForm_vm {
 
   function setResource($what,$id,$dates=array(),$verbose=True){
     switch($what){
-    case 'Office':  
+    case 'Offices':  
       $this->updateDB(array('v_oid' => $id)); 
       break;
       
@@ -1877,17 +1876,17 @@ class bForm_vm_Visit extends bForm_vm {
     $reply = False;
     switch($status=self::_getStatus($buffer)){
     case STATUS_YES:
-      if (send_finalWelcomeEmail_to_registrants && $VM_E_endorsed && !empty($policies[VM_V_welcomeMailSent])){
+      if (send_welcomeEmail_to_applicants && $VM_E_endorsed && !empty($policies[VM_V_welcomeMailSent])){
 	if (!self::_getPolicy(VM_V_welcomeMailSent,$buffer) && 
-	    !self::_getPolicy(VM_V_mailInQueue,$buffer)) $reply = STATUS_YES;
+	    !self::_getPolicy(VM_V_welcomeMailQueued,$buffer)) $reply = STATUS_YES;
       }
       break;
       
     case STATUS_NO:
-      if (send_denialEmail_to_registrants && $VM_E_endorsed && !empty($policies[VM_V_denialMailSent])){
+      if (send_denialEmail_to_applicants && $VM_E_endorsed && !empty($policies[VM_V_denialMailSent])){
 	// The denial letter should be, but was not sent
 	if (!self::_getPolicy(VM_V_denialMailSent,$buffer) &&
-	    !self::_getPolicy(VM_V_mailInQueue,$buffer))  $reply = STATUS_NO;
+	    !self::_getPolicy(VM_V_denialMailQueued,$buffer))  $reply = STATUS_NO;
       }
       break;
 

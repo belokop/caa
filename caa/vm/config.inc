@@ -2,7 +2,7 @@
 /**
  * Visitors Manager (VM) configuration file
  */
-$releaseDate = '2016-04-21';
+$releaseDate = '2016-04-24';
 define('VM_MODULE'   , 'vm');
 define('VM_VERSION','5.78');
 
@@ -11,18 +11,21 @@ define('VM_VERSION','5.78');
 //
 define('modal_sendmail_dialog',cnf_dev||cnf_demo); // Doesn't want to work...
 define('include_payLunch_dinner',cnf_dev||cnf_demo);
+
 // Office space allocation
 define('allocate_offices',True);
+
 // Automated mails to registrants
-define('send_automatically_infoMail_to_applicants',cnf_dev||cnf_demo);
-define('send_finalWelcomeEmail_to_registrants',cnf_dev||cnf_demo);
-define('include_personalPage_in_finalWelcomeEmail', send_finalWelcomeEmail_to_registrants && cnf_dev||cnf_demo);
-define('include_accommodation_in_finalWelcomeEmail',send_finalWelcomeEmail_to_registrants && cnf_dev||cnf_demo);
-define('include_payForms_in_finalWelcomeEmail', send_finalWelcomeEmail_to_registrants);
-define('send_denialEmail_to_registrants',cnf_dev||cnf_demo); 
-define('see_mails_exchange_with_attenders',(send_automatically_infoMail_to_applicants ||
-					    send_finalWelcomeEmail_to_registrants ||
-					    send_denialEmail_to_registrants));
+define('send_auto_infoMail_to_applicants',(cnf_dev||cnf_demo));
+define('send_welcomeEmail_to_applicants',(cnf_dev||cnf_demo));
+define('include_personalPage_in_welcomeEmail', (cnf_dev||cnf_demo));
+define('include_accommodation_in_welcomeEmail',(cnf_dev||cnf_demo));
+define('include_office_in_welcomeEmail',(cnf_dev||cnf_demo));
+define('include_payForms_in_welcomeEmail', True);
+define('send_denialEmail_to_applicants',cnf_dev||cnf_demo); 
+define('see_mails_exchange_with_attenders',(send_auto_infoMail_to_applicants ||
+					    send_welcomeEmail_to_applicants ||
+					    send_denialEmail_to_applicants));
 
 //
 // VM module "knows" about those visit types
@@ -62,21 +65,25 @@ define('VM_E_endorsed',      1); // Flag 'event is endorsed and locked, no chang
 define('VM_E_archived',      2); // Flag 'event is archived'. Has precedence over other locks
 define('VM_E_endorsmentSent',8); // Flag 'mail to organizers "event is endorsed" is sent'
 
-define('VM_V_payPerdiem' ,1);        // Flag 'pay per-diem'
-define('VM_V_payTrip',2);            // Flag 'pay trip'
-define('VM_V_denialMailSent',4);     // Flag 'application denial sent'
-define('VM_V_welcomeMailSent',8);    // Flag 'application approval sent'
-define('VM_V_invoiceSent',16);       // Flag 'invoice for the rent sent'
-define('VM_V_scrtrInfoSent',32);     // Flag 'guest invitation communicated'
-define('VM_V_payAccommodation',64);  // Flag 'cover living expenses'
-define('VM_V_provideOffice',128);    // Flag 'assign office for the visit'
-define('VM_V_infoMailSent',256);     // Flag 'informal informational mail sent'
-define('VM_V_enMailSent',512);       // Flag '"Event is endorsed" mail to organizer sent'
-define('VM_V_payLunches',1024);      // Flag 'pay lunch'
-define('VM_V_payOther',2048);        // Flag 'pay other expenses, (whatever "other expenses" mean)' 
-define('VM_V_rdlMailSent',4096);     // Flag 'registration-deadline mail to organizer sent'
-define('VM_V_payConfDiner',8192);    // Flag 'pay conference dinner'
-define('VM_V_mailInQueue',16384);    // Flag 'pay conference dinner'
+define('VM_V_payPerdiem' ,1);           // Flag 'pay per-diem'
+define('VM_V_payTrip',2);               // Flag 'pay trip'
+define('VM_V_payLunches',1024);         // Flag 'pay lunch'
+define('VM_V_payOther',2048);           // Flag 'pay other expenses, (whatever "other expenses" mean)' 
+define('VM_V_payAccommodation',64);     // Flag 'cover living expenses'
+define('VM_V_payConfDiner',8192);       // Flag 'pay conference dinner'
+define('VM_V_provideOffice',128);       // Flag 'assign office for the visit'
+define('VM_V_infoMailSent',256);        // Flag 'informal informational mail sent'
+define('VM_V_infoMailQueued',16384);    // Flag 'waiting in the queue'
+define('VM_V_infoMailNC',32768);        // Flag 'informal informational mail is Not Conserned'
+define('VM_V_denialMailSent',4);        // Flag 'application denial sent'
+define('VM_V_denialMailQueued',131072); // Flag 'waiting in the queue'
+define('VM_V_welcomeMailSent',8);       // Flag 'application approval sent'
+define('VM_V_welcomeMailQueued',65536); // Flag 'waiting in the queue'
+define('VM_V_scrtrInfoSent',32);        // Flag 'guest invitation communicated'
+define('VM_V_enMailSent',512);          // Flag '"Event is endorsed" mail to organizer sent'
+define('VM_V_enMailQueued',16);         // Flag '"Event is endorsed" mail to organizer sent'
+define('VM_V_rdlMailSent',4096);        // Flag 'registration-deadline mail to organizer sent'
+define('VM_V_rdlMailQueued',262144);    // Flag '"Event is endorsed" mail to organizer sent'
 
 /*
  * Policies are either 
@@ -87,7 +94,7 @@ define('VM_V_mailInQueue',16384);    // Flag 'pay conference dinner'
  */
 define('auto_maintained', 'auto'); 
 define('when_approved',   'w_a'); 
-define('in_queue',        'queue');
+define('in_queue',        'queued');
 
 /*
  * Define per-diem in the default currency
@@ -439,6 +446,8 @@ class VM extends myPear{
   
   static $communications = array(VM_V_infoMailSent     => array('d'=>'Was a general info mail sent?',
 								't'=> auto_maintained),
+				 VM_V_infoMailNC       => array('d'=>'Is a general info mail needed?',
+								't'=> auto_maintained),
 				 VM_V_denialMailSent   => array('d'=>'Was the denial letter sent?',
 								't'=> auto_maintained),
 				 VM_V_welcomeMailSent  => array('d'=>'Was the approval letter sent?',
@@ -449,11 +458,13 @@ class VM extends myPear{
 								't'=> auto_maintained),
 				 VM_V_enMailSent       => array('d'=>'Was the endorsement communicated?',
 								't'=> auto_maintained),
-				 VM_V_invoiceSent      => array('d'=>'Was the invoice sent?',
-								'i'=>'i-invoice',
+				 VM_V_infoMailQueued   => array('d'=>'isMailWaitingInQueue',
 								't'=> auto_maintained),
-				 VM_V_mailInQueue      => array('d'=>'isMailWaitingInQueue',
-								't'=> auto_maintained));
+				 VM_V_welcomeMailQueued=> array('d'=>'VM_V_welcomeMailQueued',
+								't'=> auto_maintained),
+				 VM_V_denialMailQueued => array('d'=>'VM_V_denialMailQueued',
+								't'=> auto_maintained),
+);
   
   /*
    * Event policies
@@ -477,14 +488,15 @@ class VM extends myPear{
 								   'f'=>'debit', 
 								   'p'=>array(VM_V_payTrip,VM_V_payAccommodation,VM_V_payLunches,VM_V_provideOffice,
 									      // VM_V_payPerdiem, 
-									      VM_V_scrtrInfoSent,VM_V_mailInQueue)),
+									      VM_V_scrtrInfoSent)),
 				   VISIT_TYPE_PROGRAM      =>array('d'=>'Program attender',
 								   'i'=>'a_conf',
 								   'f'=>'debit',
 								   'p'=>array(VM_V_payTrip,VM_V_payAccommodation,VM_V_provideOffice, 
 									      // VM_V_payLunches,VM_V_payConfDiner,
-									      VM_V_denialMailSent,VM_V_welcomeMailSent,VM_V_infoMailSent,
-									      VM_V_rdlMailSent,VM_V_enMailSent,VM_V_mailInQueue)),
+									      VM_V_denialMailSent,   VM_V_welcomeMailSent,  VM_V_infoMailSent,  VM_V_infoMailNC,
+									      VM_V_denialMailQueued, VM_V_welcomeMailQueued,VM_V_infoMailQueued,
+									      VM_V_rdlMailSent,VM_V_enMailSent,VM_V_welcomeMailQueued)),
 				   VISIT_TYPE_POSSIBLE     =>array('d'=>'Virtual visit, used to estimate budget',
 								   'i'=>'i-avatar',
 								   'f'=>'debit',
@@ -492,12 +504,12 @@ class VM extends myPear{
 				   VISIT_TYPE_RENT         =>array('d'=>'Tenant renting out apartment, to be invoiced',
 								   'i'=>'bb-home',
 								   'f'=>'credit',
-								   'p'=>array(VM_V_invoiceSent)),
+								   'p'=>array()),
 				   VISIT_TYPE_OTHER        =>array('d'=>'Other',
 								   'i'=>'a_meeting',
 								   'f'=>'debit',
 								   'p'=>array(VM_V_payTrip,VM_V_payAccommodation, // VM_V_payPerdiem,VM_V_payOther,
-									      VM_V_scrtrInfoSent,VM_V_mailInQueue)),
+									      VM_V_scrtrInfoSent)),
 				   VISIT_OUT_OF_SCOPE      =>array('d'=>'Out of VM scope',
 								   'i'=>'a_meeting',
 								   'p'=>array()),
@@ -783,7 +795,7 @@ class VM extends myPear{
       else                 $reply = (!self::isEventEndorsed() && (VM_observer_here || VM_organizer_here));
       break;
       
-      case 'send_finalWelcomeEmail':  
+      case 'send_welcomeEmail':  
 	$reply = VM_booker_here || self::hasRightTo('endorse_event');
 	break;
 	

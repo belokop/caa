@@ -37,7 +37,7 @@ class myPear_taskManager{
       }else{
 	b_vars::delete($task_id,$module);
       }
-      myPear_logs()->syslog("Explicitely remove ".$this->doing($task));
+      myPear_logs()->syslog("Explicitly remove ".$this->doing($task));
       myPear::WARNING("Removing ".$this->doing($task));
     }
   }
@@ -61,6 +61,7 @@ class myPear_taskManager{
 					   ));
       $dejaVu = array();
       $n_ended = $n_waiting = 0;
+      ksort($taskManager);
       foreach($taskManager as $module=>$tasks){
 	$module_was = '';
 	foreach($tasks as $task){
@@ -129,6 +130,9 @@ class myPear_taskManager{
     }
   }
 
+  /*
+   *
+   */
   private function doing($task,$strong=True){
     $_function = array();
     if (!empty($task['class']))    $_function[] = $task['class'].'()->';
@@ -190,18 +194,51 @@ class myPear_taskManager{
   }
 
   /*
+   * Lock the taskManager
+   */
+  private $lock_start = Null; 
+  private function lock_acquire(){
+    static $deadlock = 10; // Minutes
+    static $wait_for = 30; // Seconds
+
+    $this->dbg();
+    while($lock = b_vars::get('taskManager_lock',myPear_MODULE)){
+      $locked_at = $lock['time'];
+      if ((time() - $locked_at) > 60*$deadlock){
+	myPear::WARNING(sprintf("taskManager is locked for %s, remove the deadlock",b_time::delta(time(),$locked_at)));
+	$this->lock_release();
+      }else{
+	sleep($wait_for);
+      }
+    }
+    // Write the lock record
+    b_vars::set('taskManager_lock',array('time'=>time()),myPear_MODULE);
+    $this->lock_start = time();
+    if ($this->lock_start != time()) myPear::MESSAGE("Lock acquired in ".b_time::delta(time(),$this->lock_start));
+  }
+  
+  /*
+   * Unlock the taskManager
+   */
+  private function lock_release(){
+    b_vars::delete('taskManager_lock',myPear_MODULE);
+    $this->dbg("Locked during ".b_time::delta(time(),$this->lock_start));
+  }
+
+  /*
    * Execute tasks from the queue. 
-   * Small protection - by default the tasks are NOT executed, unless $_REQUEST['execute_once'] is set.
+   * The function/method executed by the taskManager must return boolean status ('true' for success, 'false' for failure)
    */  
   function doTasks($module2exec='all',$task2exec='all'){
     static $class_instance = array();
     static $sleep_time = 13; // seconds
-    if (empty($_REQUEST['execute_once'])) continue;
-
-    $this->dbg(starting);
+    if (empty($_REQUEST['execute_once'])) return;
+    
+    //    $this->dbg(starting);
+    //    $this->lock_acquire();
     set_time_limit(0);
     
-    // Clean the queue
+    // Clean out the duplicated entries
     $this->info(True);
     
     // Execute the task(s)
@@ -224,72 +261,85 @@ class myPear_taskManager{
       $this->exec_request = True; 
       
       // Walk thru the tasks
-      foreach($tasks as $task){
-	if (($task['var_name'] != $task2exec) && ($task2exec != 'all')) continue;
+      foreach($tasks as $task_p){
+	if (($task_p['var_name'] != $task2exec) && ($task2exec != 'all')) continue;
 	
-	if (!empty($task['end'])){
-	  $this->dbg(sprintf("%s ended %s",$this->task_id($task['var_name']),b_time::delta($task['end'],time())));
-	  continue;
-	}
-	$args = (empty($task['args'])
-		 ? array()
-		 : b_fmt::safe_decode($task['args']));
+	$this->dbg(starting);
+	$this->lock_acquire();
 	
-	// Transmit the debugger email, the tasks started by him should be sent back
-	if ($av_id = @$task['avid']){
-	  $av_authenticated = myPear::getInstance_new('bForm_Avatar',$av_id,'fatal');
-	  $GLOBALS['av_send_to'] = $av_authenticated->getEmail();
+	// Reread the task, it might have been changed by
+	// another process while we were waiting for the lock
+	$task = b_vars::get($task_p['var_name'],$module);
+	//	if (!empty($task)) $task['var_name'] = $task_p['var_name']; // shit... should be better
+	
+	if (($task_already_completed = @$task['end']) || empty($task)){
+	  if (empty($task_already_completed)) $task_already_completed = time();
+	  $this->dbg(sprintf("%s ended %s",$this->task_id($task['var_name']),b_time::delta($task_already_completed,time())));
 	}else{
-	  unset($GLOBALS['av_send_to']);
-	}
-
-	$this->dbg($this->doing($task));
-	if (empty($task['class'])){
-	  //	  
-	  // Calling (static method) function
-	  //
-	  list($class,$function) = explode('::',$task['function']);
-	  if (!empty($function)) locateAndInclude($class,'fatal');
-	  $OK = call_user_func_array($task['function'],$args);
-	}else{
-	  //
-	  // Calling class method
-	  // Instantiate the class
-	  //
-	  locateAndInclude(($class=$task['class']),'fatal');
-	  if (empty($class_instance[$task['class']])) $class_instance[$task['class']] = new $class();
-	  $class_instance[$task['class']]->debug = $this->debug;
+	  $args = (empty($task['args'])
+		   ? array()
+		   : b_fmt::safe_decode($task['args']));
 	  
-	  // Execute the task
-	  $OK = call_user_func_array(array($class_instance[$task['class']],$task['function']),$args);
-	}
-
-	if ($OK){
-	  // Log the task execution	
-	  myPear_logs()->add('TM_exec','',$this->doing($task,False),myPear_cronjob()->ID,b_reg::$current_module,False);
-	  $log_info=implode(' ',array(__METHOD__,
-				      $this->task_id($task['var_name']),
-				      $this->doing($task)));
-	  myPear_logs()->syslog(strip_tags($log_info));
-	  $info[] = x('p',$log_info);
-	  
-	  // Remove (or mark as executed) the task
-	  $task['end'] = time();
-	  if ($this->removeAfterExecution){
-	    // Optionally remove the task after completion
-	    b_vars::delete($task['var_name'],$module);	
+	  // Transmit the developer email, the mails from tasks started by the developer should be sent back to him
+	  if ($av_id = @$task['avid']){
+	    $av = myPear::getInstance_new('bForm_Avatar',$av_id,'fatal');
+	    $GLOBALS['av_send_to'] = $av->getEmail();
 	  }else{
-	    // Or leave it, but save the execution time
-	    $this->dbg(sprintf('%s - set "ended"',$task['var_name']));
-	    b_vars::set($task['var_name'],$task);
+	    unset($GLOBALS['av_send_to']);
 	  }
-	  // Sleep for a few seconds to make the paranoiac SMTP servers happy
-	  sleep(++$sleep_time);
-	}else{
-	  myPear::ERROR($this->doing($task).' FAILED');
+	  
+	  $this->dbg($this->doing($task));
+	  if (empty($task['class'])){
+	    //	  
+	    // Calling (static method) function
+	    //
+	    list($class,$function) = explode('::',$task['function']);
+	    if (!empty($function)) locateAndInclude($class,'fatal');
+	    // Execute the task
+	    $OK = call_user_func_array($task['function'],$args);
+	  }else{
+	    //
+	    // Calling class method
+	    // Instantiate the class
+	    //
+	    locateAndInclude(($class=$task['class']),'fatal');
+	    if (empty($class_instance[$task['class']])) $class_instance[$task['class']] = new $class();
+	    $class_instance[$task['class']]->debug = $this->debug;
+	    
+	    // Execute the task
+	    $OK = call_user_func_array(array($class_instance[$task['class']],$task['function']),$args);
+	  }
+	  
+	  if ($OK){
+	    // Log the task execution	
+	    myPear_logs()->add('TM_exec','',$this->doing($task,False),myPear_cronjob()->ID,b_reg::$current_module,False);
+	    $log_info=implode(' ',array(__METHOD__,
+					$this->task_id($task['var_name']),
+					$this->doing($task)));
+	    myPear_logs()->syslog(strip_tags($log_info));
+	    $info[] = x('p',$log_info);
+	    
+	    // Remove (or mark as executed) the task
+	    if ($this->removeAfterExecution){
+	      // Optionally remove the task after completion
+	      b_vars::delete($task['var_name'],$module);	
+	    }else{
+	      // Or leave it, but save the execution time
+	      $this->dbg(sprintf('%s - set "ended"',$task['var_name']));
+	      b_vars::set($task['var_name'],array_merge($task,array('end'=>time())),$module);
+	    }
+	  }else{
+	    myPear::ERROR($this->doing($task).' FAILED');
+	  }
 	}
+	$this->lock_release();
+	$this->dbg(exiting);
+	// Sleep for a few seconds to make the paranoiac SMTP servers happy
+	if (!$task_already_completed) sleep(++$sleep_time);
       }
     }
+
+    // Print a summary information
     if (!empty($info)){
       myPear::INFO($info,__CLASS__.' - Executing collected tasks'); 
       // Print comments to the html file, to be extracted by a cron job
@@ -297,15 +347,16 @@ class myPear_taskManager{
       foreach($info as $i) print b_fmt::unEscape(strip_tags($i))."\n";
       print "-->\n";
     }
-
-
-    // Show the remaing tasks
+    
+    
+    // Show the remaining tasks
     $this->info();
-
-    $this->dbg(exiting);
-  }
-
+    //    $this->lock_release();
+    //    $this->dbg(exiting);
+    }
+  
   function dbg($text=' ',$forced=False){
     if (True || $this->debug || $forced) b_debug::xxx($text,array(3,True,'redText',$this));
   }
 }
+  
