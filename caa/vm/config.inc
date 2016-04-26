@@ -2,7 +2,7 @@
 /**
  * Visitors Manager (VM) configuration file
  */
-$releaseDate = '2016-04-24';
+$releaseDate = '2016-04-26';
 define('VM_MODULE'   , 'vm');
 define('VM_VERSION','5.78');
 
@@ -61,16 +61,19 @@ define('RANK_vm_registrant', 10); // event registrant, same rights as RANK_vm_vi
 /*
  * Event & visit policies
  */
-define('VM_E_endorsed',      1); // Flag 'event is endorsed and locked, no changes allowed'. 
-define('VM_E_archived',      2); // Flag 'event is archived'. Has precedence over other locks
-define('VM_E_endorsmentSent',8); // Flag 'mail to organizers "event is endorsed" is sent'
+define('VM_E_endorsed',      1);   // Flag 'event is endorsed and locked, no changes allowed'. 
+define('VM_E_archived',      2);   // Flag 'event is archived'. Has precedence over other locks
+define('VM_E_provideOffice',4);    // Flag 'assign offices for the event'
+define('VM_E_provideLunches',16);  // Flag 'provide lunches'
+define('VM_E_conferenceDinner',32);// Flag 'dinner'
+define('VM_E_endorsmentSent',8);   // Flag 'mail to organizers "event is endorsed" is sent'
 
 define('VM_V_payPerdiem' ,1);           // Flag 'pay per-diem'
 define('VM_V_payTrip',2);               // Flag 'pay trip'
-define('VM_V_payLunches',1024);         // Flag 'pay lunch'
+define('VM_V_provideLunches',1024);         // Flag 'pay lunch'
 define('VM_V_payOther',2048);           // Flag 'pay other expenses, (whatever "other expenses" mean)' 
 define('VM_V_payAccommodation',64);     // Flag 'cover living expenses'
-define('VM_V_payConfDiner',8192);       // Flag 'pay conference dinner'
+define('VM_V_conferenceDinner',8192);   // Flag 'pay conference dinner'
 define('VM_V_provideOffice',128);       // Flag 'assign office for the visit'
 define('VM_V_infoMailSent',256);        // Flag 'informal informational mail sent'
 define('VM_V_infoMailQueued',16384);    // Flag 'waiting in the queue'
@@ -410,12 +413,12 @@ class VM extends myPear{
   static $reimbursable_visits = array(VISIT_TYPE_PROGRAM       =>array('d'            =>'Program/Conference attenders',
 								       VM_V_payPerdiem=>'no',
 								       VM_V_payOther  =>'no',
-								       VM_V_payConfDiner=>'maybe',
-								       VM_V_payLunches=>'maybe'),
+								       VM_V_conferenceDinner=>'maybe',
+								       VM_V_provideLunches=>'maybe'),
 				      VISIT_TYPE_COLLABORATION =>array('d'            =>'Invited researchers',
 								       VM_V_payPerdiem=>'maybe',
 								       VM_V_payOther  =>'maybe',
-								       VM_V_payLunches=>'maybe'),
+								       VM_V_provideLunches=>'maybe'),
 				      VISIT_TYPE_OTHER         =>array('d'            =>'Other visits',
 								       VM_V_payPerdiem=>'no',
 								       VM_V_payOther  =>'no'),
@@ -428,15 +431,15 @@ class VM extends myPear{
 
   static $offers         = array(VM_V_provideOffice    => array('d'=>'To allocate office?',
 								't'=>when_approved,
-								'i'=>'office'));
+								'i'=>'i-office'));
   
   static $reimbursements = array(VM_V_payPerdiem       => array('d'=> VM_wordPerdiem_pay,
 								'i'=> VM_wordPerdiem),
 				 VM_V_payTrip          => array('d'=>'To pay the trip?',
 								'i'=>'trip'),
-				 VM_V_payLunches       => array('d'=>'To pay the lunches?',
+				 VM_V_provideLunches       => array('d'=>'To pay the lunches?',
 								'i'=>'i-burger'),
-				 VM_V_payConfDiner     => array('d'=>'To pay the conference dinner?',
+				 VM_V_conferenceDinner     => array('d'=>'To pay the conference dinner?',
 								'i'=>'i-drink'),
 				 VM_V_payOther         => array('d'=>'To cover other expenses?'
 								),
@@ -469,12 +472,18 @@ class VM extends myPear{
   /*
    * Event policies
    */  
-  static $e_policies   = array(VM_E_archived       => array('d'=>'Is the event archived?',
-							    'i'=>'i-wallet'),
+  static $e_policies   = array(VM_E_provideOffice  => array('d'=>'Provide offices for attenders?',
+							    'i'=>'i-office'),
+			       VM_E_provideLunches => array('d'=>'Provide lunch tickets for attenders?',
+							    'i'=>'i-burger'),
+			       VM_E_conferenceDinner=>array('d'=>'Organize a conference dinner?',
+							    'i'=>'i-drink'),
 			       VM_E_endorsed       => array('d'=>'Is the event endorsed & changes are locked?',
 							    'i'=>'i-lock'),
 			       VM_E_endorsmentSent => array('d'=>'Was the endorsement communicated?',
 							    't'=> auto_maintained),
+//			       VM_E_archived       => array('d'=>'Is the event archived?',
+//							    'i'=>'i-lock'),
 			       );
   
   /*
@@ -486,17 +495,17 @@ class VM extends myPear{
   static public $description=array(VISIT_TYPE_COLLABORATION=>array('d'=>'Scientific collaboration',
 								   'i'=>'a_lecture',
 								   'f'=>'debit', 
-								   'p'=>array(VM_V_payTrip,VM_V_payAccommodation,VM_V_payLunches,VM_V_provideOffice,
+								   'p'=>array(VM_V_payTrip,VM_V_payAccommodation,VM_V_provideLunches,VM_V_provideOffice,
 									      // VM_V_payPerdiem, 
 									      VM_V_scrtrInfoSent)),
 				   VISIT_TYPE_PROGRAM      =>array('d'=>'Program attender',
 								   'i'=>'a_conf',
 								   'f'=>'debit',
 								   'p'=>array(VM_V_payTrip,VM_V_payAccommodation,VM_V_provideOffice, 
-									      // VM_V_payLunches,VM_V_payConfDiner,
+									      // VM_V_provideLunches,VM_V_conferenceDinner,
 									      VM_V_denialMailSent,   VM_V_welcomeMailSent,  VM_V_infoMailSent,  VM_V_infoMailNC,
 									      VM_V_denialMailQueued, VM_V_welcomeMailQueued,VM_V_infoMailQueued,
-									      VM_V_rdlMailSent,VM_V_enMailSent,VM_V_welcomeMailQueued)),
+									      VM_V_rdlMailSent,VM_V_enMailSent)),
 				   VISIT_TYPE_POSSIBLE     =>array('d'=>'Virtual visit, used to estimate budget',
 								   'i'=>'i-avatar',
 								   'f'=>'debit',
@@ -556,9 +565,11 @@ class VM extends myPear{
     if (!$dejaVu++){
       
       if (!include_payLunch_dinner){
-	foreach(array(VM_V_payConfDiner,VM_V_payLunches) as $item){ 
+	foreach(array(VM_V_conferenceDinner, VM_E_conferenceDinner,
+		      VM_V_provideLunches,   VM_E_provideLunches) as $item){ 
 	  foreach (self::$reimbursable_visits as $type=>$x) unset(self::$reimbursable_visits[$type][$item]);
 	  foreach (self::$description as $type=>$x) self::$description[$type]['p'] = array_diff(self::$description[$type]['p'],array($item));
+	  unset(self::$e_policies[$item]);
 	  unset(self::$reimbursements[$item]);
 	}
       }
@@ -752,7 +763,7 @@ class VM extends myPear{
    *
    */
   static function hasRightTo($what,$argv=array()){
-    
+
     // Visits with the closed budget can be edited by the superuser only
     if (is_array($argv)){
       locateAndInclude('bForm_vm_Expenses');
@@ -801,7 +812,7 @@ class VM extends myPear{
 	
     case 'endorse_event':
       if (self::isArchived()) $reply = False;
-      else                    $reply = VM_manager_here || bAuth::$av->isEndorser(VISIT_TYPE_PROGRAM);
+      else                    $reply = VM_unlocker_here || VM_manager_here || bAuth::$av->isEndorser(VISIT_TYPE_PROGRAM);
       break;
       
     case 'approve_guest_invitation':

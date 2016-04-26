@@ -400,7 +400,7 @@ class APImenu_vm extends APImenu_ea{
       case tab_ea_off_desk_labels:
       case tab_ea_off_assign:
       case tab_ea_off_wipe:
-	$reply = allocate_offices && VM_administrator_here && !VM::outOfScope() && (VM::e_ID()>0);
+	$reply = allocate_offices && VM_administrator_here && !VM::outOfScope() && (VM::e_ID()>0) && VM::$e->getPolicy(VM_E_provideOffice);
 	break;
 
       case tab_vm_vis_export:
@@ -625,6 +625,13 @@ class APImenu_vm extends APImenu_ea{
       $holder->listEntries();
       break;
       
+    case tab_vm_ogz:
+    case tab_vm_end:
+    case tab_vm_vis:
+      $this->eventSelector();
+      VM::$e->show_policies();
+      break;
+      
     case tab_ea_off_desk_labels:
       if (empty($doing)){
 	$doing = 'deskLabels';
@@ -650,9 +657,6 @@ class APImenu_vm extends APImenu_ea{
     case tab_vm_guests_budgetBP:
       if (empty($doing))    $doing = 'budget_byProjects';
       
-    case tab_vm_ogz:
-    case tab_vm_end:
-    case tab_vm_vis:
     case tab_vm_vis_list:   
     case tab_vm_ogz_vlist:
     case tab_vm_end_vlist:

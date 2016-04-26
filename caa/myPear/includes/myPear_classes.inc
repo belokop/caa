@@ -1642,18 +1642,44 @@ class b_debug{
   public static $_internalError = 0;
   static function internalError($txt='',$class=Null){
     // Sanity...
-    if (self::$_internalError++) return;
-
-    // Clean locks
-    if (class_exists('bDB',False) && defined('YBhere')){
-      if(cnf_dev || cnf_demo || YBhere) b_cnf::get('nodrupal',($_GET['nodrupal']=1));
-      myPear_db()->debug = cnf_dev || YBhere;
+    if (!self::$_internalError++){
+      
+      // Clean locks
+      if (class_exists('bDB',False) && defined('YBhere')){
+	if(cnf_dev || cnf_demo || YBhere) b_cnf::get('nodrupal',($_GET['nodrupal']=1));
+	myPear_db()->debug = cnf_dev || YBhere;
+      }
+      
+      // Print diagnostics
+      if (cnf_CLI){
+	debug_print_backtrace();
+      }else{
+	$diagnostics = self::get_diagnostics();
+	if(cnf_dev || YBhere){ 
+	  print $diagnostics;
+	}else{
+	  // Do not show the traceback to the production users, just return to the top page
+	  self::mail_diagnostics($diagnostics,'BUG REPORT');
+	  b_url::header(b_url::same('?','drop_all'));
+	}
+      }
     }
-    
-    // Print diagnostics
-    if (cnf_CLI){
-      debug_print_backtrace();
-    }else{
+    die("INTERNAL ERROR: $txt");
+  }
+  
+  static function mail_diagnostics($diagnostics=Null,$subject='BUG REPORT'){
+    bAuth();
+    if (empty($diagnostics)) $diagnostics = self::get_diagnostics();
+    myPear_mailer()->send(array(),
+			  cnf_superUser_email(),
+			  $subject,
+			  "<html><body><pre>\n".$diagnostics."\n</pre></body></html>",
+			  True,
+			  True);
+  }
+  
+  static function get_diagnostics(){
+
       ob_start();
       b_cnf::get('nodrupal',($_GET['nodrupal']=1));
       if (is_array($class)){
@@ -1696,24 +1722,11 @@ class b_debug{
 	unset($_SESSION['messages']);
       }
       b_cnf::get('nodrupal',($_GET['nodrupal']=0));
-      $internalError = str_replace(trim(`pwd -P`).'/','',ob_get_contents());
+      $get_diagnostics = str_replace(trim(`pwd -P`).'/','',ob_get_contents());
       ob_end_clean();
-      if(cnf_dev || YBhere){ 
-	print $internalError;
-      }else{
-	// Do not show the traceback to the production users, just return to the top page
-	bAuth();
-	myPear_mailer()->send(array(),
-			      cnf_superUser_email(),
-			      "BUG REPORT",
-			      "<html><body><pre>\n".$internalError."\n</pre></body></html>",
-			      True,
-			      True);
-	b_url::header(b_url::same('?','drop_all'));
-      }
-    }
-    die("INTERNAL ERROR: $txt");
+      return $get_diagnostics;
   }
+
   
   /*
    *

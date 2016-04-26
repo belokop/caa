@@ -997,22 +997,16 @@ class bHolder_vm_Visitors extends bHolder_vm{
 
     $this->dbg();
     $to_show = array();
-    $e_reg_end = VM::$e->getValue('e_reg_end',1);
-    $e_start   = VM::$e->getValue('e_start',1);
-    $e_end     = VM::$e->getValue('e_end',1);
-    
-    VM::$e->budgetSource()->get_budgetSource($default_only=False,$verbose=False);
-    $mightBeEndorced = ($e_reg_end < time()) && ($e_end > time()) && (VM::$e->budgetSource()->total > 0);
 
     switch ($this->doing){
       
     case 'lists':
     case 'budget':
-      if ($mightBeEndorced){
+      if (VM::$e->mightBeEndorced()){
 	// Build the FNC message if something goes wrong
 	$fnc_message = '';
-	if (!empty($this->fatal_fnc) && (time()+VM_lease_zapas*24*3600 > $e_start) &&
-	    (VM_organizer_here || VM_manager_here || VM::hasRightTo('endorse_event'))){
+	$e_start   = VM::$e->getValue('e_start',1);
+	if (!empty($this->fatal_fnc) && (time()+VM_lease_zapas*24*3600 > $e_start)){
 	  $fatal_p = "style='font-weight:bold;color:red;'";
 	  foreach($this->fatal_fnc as $msg=>$n) $li[] = x("li $fatal_p","$n $msg");
 	  $fnc_message = (VM::$e->isEventEndorsed()

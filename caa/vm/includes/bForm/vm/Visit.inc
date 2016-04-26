@@ -269,10 +269,30 @@ class bForm_vm_Visit extends bForm_vm {
     // Sanity, fix eventual mistypes of the organizers
     if ($this->getPolicy(VM_V_denialMailSent)  && !$this->isDenied())   $this->setPolicy(VM_V_denialMailSent, 0,cnf_dev,False,True);
     if ($this->getPolicy(VM_V_welcomeMailSent) && !$this->isApproved()) $this->setPolicy(VM_V_welcomeMailSent,0,cnf_dev,False,True);
-    if (($policy == VM_V_provideOffice) && empty($value)){
-      $this->getValue_reset_forced('v_oid');
-      $this->getValue_reset('_o_name');
-    }    
+
+    //
+    // Cancel the visit policy if the event policy is off, say
+    // no visit office allocation if the Event policy is "no office"
+    foreach(array(VM_V_provideOffice    => VM_E_provideOffice,
+		  VM_V_conferenceDinner => VM_E_conferenceDinner,
+		  VM_V_provideLunches   => VM_E_provideLunches,
+		  ) as $p_v=>$p_e){
+      if ($policy == $p_v){
+	if ($this->hookEvent() && !$this->e->getPolicy($p_e)) $value = 0;
+	if (empty($value)){
+	  switch($p_e){
+	  case VM_E_provideOffice:
+	    // Remove office allocation if the Visit policy is "no office"
+	    $this->getValue_reset_forced('v_oid');
+	    $this->getValue_reset('_o_name');
+	    break;
+	  case VM_E_conferenceDinner:
+	  case VM_E_provideLunches:
+	  }
+	}
+      }    
+    }
+    
     // Now set the requested policy
     if (defined('VM_booker_here') && 
 	(!(VM_booker_here||VM_organizer_here) || 
@@ -289,8 +309,8 @@ class bForm_vm_Visit extends bForm_vm {
     $this->setPolicyRecursion = 0;
   }
   
-  /*
-   * Set the status
+    /*
+     * Set the status
    */
   public function setStatus($v_status=Null){
     if (!myPear::is_int($this->ID)) return;

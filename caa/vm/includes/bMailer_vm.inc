@@ -174,7 +174,8 @@ class bMailer_vm extends bMailer{
 	    locateAndInclude('bForm_vm_Visit');
 	    $v = new bForm_vm_Visit("v_avid = $av_id AND v_eid = ".$r['e_id']);
 	    if ((int)$v->ID){
-	      if (!$v->getPolicy(VM_V_rdlMailSent)){
+	      if (!$v->getPolicy(VM_V_rdlMailSent) &&
+		  !$v->getPolicy(VM_V_rdlMailQueued)){
 		$info_body[] = 'Informing organizer '.$v->av->fmtName('Lf');
 		$this->remind_organizer($v,$e,$mode='rdl',$no_preview=True);
 	      }
@@ -238,9 +239,16 @@ class bMailer_vm extends bMailer{
     $policy = Null;
     if ($mode == 'en')  { $policy = VM_V_enMailSent;  $policyQ = VM_V_enMailQueued;  }
     if ($mode == 'rdl') { $policy = VM_V_rdlMailSent; $policyQ = VM_V_rdlMailQueued; }
-    if (!empty($policy) && (time() > $e->getValue('e_start'))) $v->setPolicy($policy,1);
+
+    // Dont't send the reminder if it is too late
+    if (!empty($policy) &&
+	!$v->getPolicy($policyQ) &&
+	(time() > $e->getValue('e_start'))){
+      $v->setPolicy($policy,1);
+    }
     
-    if (!empty($policy) && $v->getPolicy($policy)){
+    // Is it already done?
+    if (!empty($policy) && ($v->getPolicy($policy) || $v->getPolicy($policyQ))){
       $this->_dbg("$mode already done... ".exiting);
       return;
     }
@@ -495,7 +503,7 @@ $subject by $endorser.
 	$this->dbg("Mail to ".$this->visit->av->name()." was already sent",$this->debug||cnf_dev);
       }else{
 	// Put this mail into the execution queue, not waist time in the interactive session
-	myPear_taskManager()->addTask(get_class($this),__function__,array($this->visit->ID,'sendIt'));
+	myPear_taskManager()->addTask(get_class($this),__function__,array($this->visit->ID,'send_now'));
 	$this->visit->setPolicy(VM_V_infoMailQueued,1);
       }
       $this->debug = $debug_sv;

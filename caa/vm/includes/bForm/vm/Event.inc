@@ -26,6 +26,7 @@ class bForm_vm_Event extends bForm_vm {
     if (!$this->getValue('e_v_policy')) $this->set_e_v_policy(VM::$description[VISIT_TYPE_PROGRAM]['p']);
     // the policy is a serialized array
     $reply = b_fmt::safe_decode($this->getValue('e_v_policy'));
+    sort($reply,SORT_NUMERIC);
     $this->dbg($reply);
     return $reply;
   }
@@ -36,6 +37,69 @@ class bForm_vm_Event extends bForm_vm {
     }
   }
 
+  /*
+   * Dialog to set the event policies 
+   */
+  public function show_policies(){
+    print x('h2','Event policy');
+
+    // Togle policy if requested
+    if ($p = @$_GET['toggle_once']) $this->setPolicy($p,(int)!$this->getPolicy($p),True);
+    
+    // Print policies
+    $t = new b_table_zebra(array('_d'=>' '));
+    $t->showLineCounter = False;
+    foreach(VM::$e_policies as $policy=>$p){
+      if (@$p['t'] === auto_maintained) continue;
+      if (($policy == VM_E_endorsed) && !$this->mightBeEndorced(False)) continue;
+
+      $on_off = $this->getPolicy($policy);
+      $t->extraTD[] = ($this->show_policies_writable($policy)
+		       ? bIcons()->getButton(array('class'=>'page_load_progress',
+						   'i'=>$p['i'].($on_off ? '_on' : '_off'),
+						   'c'=>($on_off ? 'only_online' : 'only_online opacity_on'),
+						   'd'=>($on_off ? 'YES' : 'NO').", click to change",
+						   'l'=>b_url::same("?resetcache_once=1&toggle_once=$policy")))
+		       : bIcons()->get      (array('i'=>$p['i'].($on_off ? '_on' : '_off'),
+						   'c'=>($on_off ? 'only_online' : 'only_online opacity_on'),
+						   'd'=>($on_off ? 'YES' : 'NO'))));
+      $t->prt(array('_d'=>x('h4',$p['d'])));
+    }
+    $t->close();
+  }
+
+  /*
+   * Helper for show_policies
+   */
+  private function show_policies_writable($policy){
+    if ($this->getValue('e_start') < time()) return VM_manager_here;
+    switch($policy){
+    case VM_E_endorsed:        return $this->mightBeEndorced(True);
+    case VM_E_archived:        return superUser_here; 
+    case VM_E_provideOffice:   
+    case VM_E_provideLunches:
+    case VM_E_conferenceDinner:return !$this->getPolicy(VM_E_endorsed) && VM_administrator_here;
+    default:
+      b_debug::internalError("Unknown option '$policy'");
+    }
+    return False;
+  }
+
+  /*
+   *
+   */
+  public function mightBeEndorced($checkRights=True){
+    $this->budgetSource()->get_budgetSource($default_only=False,$verbose=False);
+    $mightBeEndorced = (($this->getValue('e_reg_end') < time()) && 
+			($this->getValue('e_end') > time()) &&
+			($this->budgetSource()->total > 0) &&
+			($checkRights
+			 ? (VM_organizer_here || VM_manager_here || VM::hasRightTo('endorse_event'))
+			 : True));
+    $this->dbg($mightBeEndorced);
+    return $mightBeEndorced;
+  }
+  
   /*
    *
    */
@@ -135,15 +199,26 @@ class bForm_vm_Event extends bForm_vm {
     return self::_attenders($this->ID,$only_approved);
   }
 
+  /*
+   * return list visits if $only_approved === 'v_id'
+   * otherwise return True/False
+   */
   static function _attenders($e_id,$only_approved=False){
-    $where = array("e_id = $e_id");
-    if ($only_approved) $where[] = "v_status = '".STATUS_YES."'";
-    $q = myPear_db()->query("SELECT v_avid FROM abs_visits LEFT JOIN abs_events ON e_id = v_eid WHERE ".
-			    join(' AND ',$where));
-    $reply = myPear_db()->num_rows($q);
+    $where = array(myPear_db()->quote($e_id,1,'v_eid'));
+    if ($only_approved) $where[] = myPear_db()->quote(STATUS_YES,1,'v_status');
+    $q = myPear_db()->query("SELECT v_id FROM abs_visits WHERE ".join(' AND ',$where));
+    if ($only_approved === 'v_id'){
+      $reply = array();
+      while ($r = myPear_db()->next_record($q)) $reply[] = $r['v_id'];
+    }else{
+      $reply = myPear_db()->num_rows($q);
+    }
     return $reply;
   }
 
+  /*
+   *
+   */
   function getVisit_ID($av_id){
     $reply = Null;
     $q = myPear_db()->query("SELECT v_id FROM abs_visits WHERE v_avid = '$av_id' AND v_eid = ".$this->ID);
@@ -270,13 +345,11 @@ class bForm_vm_Event extends bForm_vm {
   /*
    * Get policy
    */
-  private $getPolicy = array();
   function getPolicy($policy){
-    if (@$this->getPolicy[$policy] === Null) $this->getPolicy[$policy] = (bool)self::_getPolicy($policy,
-												array('e_policy'=>$this->getValue('e_policy'),
-												      'e_end'   =>$this->getValue('e_end')),
-												(bool)$this->debug);
-    return $this->getPolicy[$policy];
+    return (bool)self::_getPolicy($policy,
+				  array('e_policy'=>$this->getValue('e_policy'),
+					'e_end'   =>$this->getValue('e_end')),
+				  (bool)$this->debug);
   }
   
   /*
@@ -307,22 +380,42 @@ class bForm_vm_Event extends bForm_vm {
   }
 
   /*
-   *
+   *   VM_E_endorsed       Flag 'event is endorsed and locked, no changes allowed'.                                                                                                                    
+   *   VM_E_archived       Flag 'event is archived'. Has precedence over other locks                                                                                                                   
+   *   VM_E_endorsmentSent Flag 'mail to organizers "event is endorsed" is sent'                                                                                                                       
+   *   VM_E_provideOffice  Flag 'assign offices for the event'                                                                                                                                         
    */
   function setPolicy($policy,$value,$verbose=True){
-    switch(in_array($policy,array(VM_E_endorsed,VM_E_endorsmentSent)) || !$this->isEventEndorsed()){
-    case False:
-      myPear::WARNING(x('i',$this->name()."'s record is LOCKED, \"".VM::$e_policies[$policy]['d']."\" was not changed"));
+    switch($policy){
+    case VM_E_archived:
+      if ($value) $this->setPolicy(VM_E_endorsed,1,False);
+      if ($value) $this->setPolicy(VM_E_endorsmentSent,1,False);
       break;
+      //    case VM_E_endorsed:
+      //    case VM_E_endorsmentSent:
+    case VM_E_provideOffice:
+      if ($this->isEventEndorsed()){
+	myPear::WARNING(x('i',$this->name()."'s record is LOCKED, \"".VM::$e_policies[$policy]['d']."\" was not changed"));
+	return;
+      }
+    }
+    
+    $isChanged = $this->setBitMask($policy,'e_policy',$value);
+    b_debug::var_dump($isChanged);
+
+    if ($isChanged){
+      if ($verbose) myPear::MESSAGE(x('i',$this->name().": ").VM::$e_policies[$policy]['d']."  ".($value?'YES':'NO'));
       
-    case True:
-      $isChanged = $this->setBitMask($policy,'e_policy',$value);
-      if ($verbose && $isChanged){
-	myPear::MESSAGE(x('i',$this->name().": ").VM::$e_policies[$policy]['d']."  ".($value?'YES':'NO'));
+      // Change the office policy for all visits
+      if ($policy == VM_E_provideOffice){
+	foreach(self::_attenders($this->ID,'v_id') as $v_id){
+	  $v = myPear::getInstance_new('bForm_vm_Visit',$v_id,'fatal');
+	  $v->setPolicy(VM_V_provideOffice,$value,$verbose);
+	}
       }
     }
   }
-
+  
   function nameSimple(){
     return $this->name(False,40);
   }

@@ -159,7 +159,7 @@ function vm_compat_update_41(){
   VM_agendaEvents()->addMember(array('lm_key'=>'cat','lm_value'=>'283'));
   VM_agendaEvents()->syncEventsInCategories(True);
 
-  // Update policy, add new object VM_V_payLunches
+  // Update policy, add new object VM_V_provideLunches
   $q = myPear_db()->qquery("SELECT e_id,e_v_policy FROM abs_events WHERE e_code > 0",cnf_dev);
   while($r = myPear_db()->next_record($q)){
     $e = new bForm_vm_Event($r['e_id']);
