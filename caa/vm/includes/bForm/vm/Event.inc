@@ -47,23 +47,33 @@ class bForm_vm_Event extends bForm_vm {
     if ($p = @$_GET['toggle_once']) $this->setPolicy($p,(int)!$this->getPolicy($p),True);
     
     // Print policies
-    $t = new b_table_zebra(array('_d'=>' '));
+    $t = new b_table_zebra(array('_i'=>' ','_d'=>' '));
     $t->showLineCounter = False;
+    $t->class['_i'] = 'b_transparent';
     foreach(VM::$e_policies as $policy=>$p){
       if (@$p['t'] === auto_maintained) continue;
-      if (($policy == VM_E_endorsed) && !$this->mightBeEndorced(False)) continue;
+      if ($policy == VM_E_endorsed){
+	if (!$this->mightBeEndorced(False)) continue;
+	$t->tr(); $t->tr();
+	$i_on  = 'i-lock_on';
+	$i_off = 'i-lock_off';
+      }else{
+	$i_on  = 'i-finger_up';
+	$i_off = 'i-finger_down';
+      }
 
       $on_off = $this->getPolicy($policy);
       $t->extraTD[] = ($this->show_policies_writable($policy)
 		       ? bIcons()->getButton(array('class'=>'page_load_progress',
-						   'i'=>$p['i'].($on_off ? '_on' : '_off'),
-						   'c'=>($on_off ? 'only_online' : 'only_online opacity_on'),
+						   'i'=>($on_off ? $i_on : $i_off),
+						   'c'=>($on_off ? '' : 'opacity_on'),
 						   'd'=>($on_off ? 'YES' : 'NO').", click to change",
 						   'l'=>b_url::same("?resetcache_once=1&toggle_once=$policy")))
-		       : bIcons()->get      (array('i'=>$p['i'].($on_off ? '_on' : '_off'),
-						   'c'=>($on_off ? 'only_online' : 'only_online opacity_on'),
+		       : bIcons()->get      (array('i'=>($on_off ? $i_on : $i_off),
+						   'c'=>($on_off ? '' : 'opacity_on'),
 						   'd'=>($on_off ? 'YES' : 'NO'))));
-      $t->prt(array('_d'=>x('h4',$p['d'])));
+      $t->prt(array(//'_i'=>(($policy == VM_E_endorsed) ? '' : bIcons()->get($p['i'])),
+		    '_d'=>x('h4',$p['d'])));
     }
     $t->close();
   }
