@@ -343,7 +343,7 @@ class bHolder_Logs extends bHolder{
     
     $this->rec['log_avid'] = x('em',bForm_Avatar::_fmtName('Lf',$this->rec));
 
-    $this->rec['log_comment'] = x('em',$this->rec['log_comment']);
+    $this->rec['log_comment'] = x('em',strip_tags($this->rec['log_comment']));
     
     if ($this->doing == CONST_wic) $this->rec['log_time'] = b_time::short_date_time($this->rec['log_time']);
     else                           $this->rec['log_time'] = b_checkBox::isOn('24_hours')
@@ -375,11 +375,12 @@ class bHolder_Logs extends bHolder{
       $name = x('em',str_replace('bForm_','',$class->name('Lf')));
       $this->rec['log_form'] = ($form == 'bForm_vm_Lease'
 				? $name
-				: $this->rec['log_form'] = bJS()->popup($name,"?".b_crypt_no."=1&info=yes&mode=RO&form=$form&id=$id"));
+				: bJS()->popup($name,"?".b_crypt_no."=1&info=yes&mode=RO&form=$form&id=$id"));
+    }elseif(myPear::is_int($f=$this->rec['log_form'])){
+      $this->rec['log_form'] = x('em',"${form}_${f}");
     }else{
-      if (empty($form)) $form = 'ID';
-      if (is_numeric($f=$this->rec['log_form']) && ($f>0)) $this->rec['log_form'] = x('em',"${form}_${f}");
-      else $this->rec['log_form'] = x('em',preg_replace('/ from=.*/',' ',str_replace('to=','',$this->rec['log_comment'])));
+      $this->rec['log_form'] = x('em',preg_replace('/ from=.*/',' ',str_replace('to=','',$this->rec['log_comment'])));
+      $this->rec['log_comment'] = '';
     }    
 
     

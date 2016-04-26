@@ -1,5 +1,17 @@
 Changes log
 
+2016-04-26, Version 5.122, Minor fixes
+M       myPear/includes/bHolder/Logs.inc
+
+2016-04-26, Version 5.121, test
+M       myPear/includes/bHolder/Logs.inc
+
+2016-04-26, Version 5.121, test
+M       myPear/includes/bHolder/Logs.inc
+
+2016-04-26, Version 5.121, test
+M       myPear/includes/bHolder/Logs.inc
+
 2016-01-02, Version 5.120, prp updates
 M       myPear/includes/bDB_myPear.inc
 M       myPear/includes/bForm/Avatar/Search.inc

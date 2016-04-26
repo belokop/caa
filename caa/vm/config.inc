@@ -16,16 +16,16 @@ define('include_payLunch_dinner',cnf_dev||cnf_demo);
 define('allocate_offices',True);
 
 // Automated mails to registrants
-define('send_auto_infoMail_to_applicants',(cnf_dev||cnf_demo));
-define('send_welcomeEmail_to_applicants',(cnf_dev||cnf_demo));
-define('include_personalPage_in_welcomeEmail', (cnf_dev||cnf_demo));
-define('include_accommodation_in_welcomeEmail',(cnf_dev||cnf_demo));
-define('include_office_in_welcomeEmail',(cnf_dev||cnf_demo));
-define('include_payForms_in_welcomeEmail', True);
-define('send_denialEmail_to_applicants',cnf_dev||cnf_demo); 
-define('see_mails_exchange_with_attenders',(send_auto_infoMail_to_applicants ||
-					    send_welcomeEmail_to_applicants ||
-					    send_denialEmail_to_applicants));
+define('send_infoMail_to_applicants',(cnf_dev||cnf_demo));
+define('send_welcomeMail_to_applicants',(cnf_dev||cnf_demo));
+define('send_denialMail_to_applicants',cnf_dev||cnf_demo); 
+define('include_personalPage_in_welcomeMail', (cnf_dev||cnf_demo));
+define('include_accommodation_in_welcomeMail',(cnf_dev||cnf_demo));
+define('include_office_in_welcomeMail',(cnf_dev||cnf_demo));
+define('include_payForms_in_welcomeMail', True);
+define('see_mails_exchange_with_attenders',(send_infoMail_to_applicants ||
+					    send_welcomeMail_to_applicants ||
+					    send_denialMail_to_applicants));
 
 //
 // VM module "knows" about those visit types
@@ -806,7 +806,7 @@ class VM extends myPear{
       else                 $reply = (!self::isEventEndorsed() && (VM_observer_here || VM_organizer_here));
       break;
       
-      case 'send_welcomeEmail':  
+      case 'send_welcomeMail':  
 	$reply = VM_booker_here || self::hasRightTo('endorse_event');
 	break;
 	

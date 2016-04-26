@@ -561,7 +561,7 @@ Organizing committee for \"<event/>\".
 
     //
     // Check is the visitor subject of getting the "denial Email" 
-    if (!send_denialEmail_to_applicants){
+    if (!send_denialMail_to_applicants){
       $case = "NO DENIAL MAILS configured";
     }elseif (!empty($v_status) && ($v_status !== STATUS_NO)){
       // Shortcut to save time
@@ -644,7 +644,7 @@ Organizing committee for \"<event/>\"."));
 
     //
     // Check is the visitor subject of getting the "welcome Email" 
-    if (!send_welcomeEmail_to_applicants){
+    if (!send_welcomeMail_to_applicants){
       $case = "NO WELCOME MAILS configured";
     }elseif (!empty($v_status) && ($v_status !== STATUS_YES)){
       // Shortcut to save time
@@ -694,7 +694,7 @@ Organizing committee for \"<event/>\"."));
      * Accommodation block (not for the local people)
      */
     $blabla = array();
-    if (include_accommodation_in_welcomeEmail && !empty($hut_id) && $this->visit->hut_codes($without_BI=True)){
+    if (include_accommodation_in_welcomeMail && !empty($hut_id) && $this->visit->hut_codes($without_BI=True)){
       $hut = myPear::getInstance_new('bForm_vm_Hut',$hut_id,array('strict','fatal'));
       if (!($hut instanceof bForm_vm_Hut)){
 	// Sanity... 
@@ -745,7 +745,7 @@ Please read carefully the cancellation policy. The violation of the cancellation
     $VM_V_payPerdiem = $this->visit->getPolicy(VM_V_payPerdiem);
     
     $this->attachments = array();
-    if (include_payForms_in_welcomeEmail && ($VM_V_payTrip || $VM_V_payPerdiem)){
+    if (include_payForms_in_welcomeMail && ($VM_V_payTrip || $VM_V_payPerdiem)){
       $this->cc[] = reimbursement_email;
       foreach(VM::$forms2send as $pdf_tpl){
 	$this->attachments[] = $exp->pdfReceipt($pdf_tpl,sys_get_temp_dir() . "/${pdf_tpl}_" . $this->visit->ID . '.pdf');
@@ -785,7 +785,7 @@ Bring the forms together with copies of your tickets to the Nordita administrati
     //
     // personal web site
     //
-    if (include_personalPage_in_welcomeEmail){
+    if (include_personalPage_in_welcomeMail){
       if (!$this->visit->av->isE(True)) $blabla[] = '
 PERSONAL WEB PAGE
 -----------------

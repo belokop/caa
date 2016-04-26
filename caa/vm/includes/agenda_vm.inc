@@ -265,7 +265,7 @@ class agenda_vm extends agenda{
 	  // Send a welcome mail to the NEWLY REGISTERED applicants
 	  if ((VM_mailer()->m_applicant_info_mail($this->v,'status') === False)){
 	    // This function expects "v_status" being empty for the newly created visits
-	    if (send_auto_infoMail_to_applicants) VM_mailer()->m_applicant_info_mail($this->v,$no_preview=True);
+	    if (send_infoMail_to_applicants) VM_mailer()->m_applicant_info_mail($this->v,$no_preview=True);
 	    else   $this->v->setPolicy(VM_V_infoMailNC,1);
 	  }
 	  

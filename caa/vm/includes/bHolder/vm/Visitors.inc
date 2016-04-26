@@ -1030,7 +1030,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
       // Big-Button "Send E-mails to all attenders"
       //
       if ($this->mails_which_are_not_yet_sent
-	  &&  VM::hasRightTo('send_welcomeEmail') 
+	  &&  VM::hasRightTo('send_welcomeMail') 
 	  &&  VM::isEventEndorsed()){ 
 	$to_show[] = b_btn::big_button('Send welcome/denial Emails to the attenders',array('mail2all_once'=>1,'resetcache_once'=>1));
       }
@@ -1617,8 +1617,8 @@ class bHolder_vm_Visitors extends bHolder_vm{
       $this->mails_which_are_not_yet_sent++;
       switch(VM::isEventEndorsed()){
       case True:
-	if ((send_welcomeEmail_to_applicants && ($vm_f=='m_yes')) ||
-	    (send_denialEmail_to_applicants       && ($vm_f=='m_no'))) $rec["${vm_f}_2"] = $this->sendMail_btn($id,$title,!VM::hasRightTo('send_welcomeEmail'),$already_sent);
+	if ((send_welcomeMail_to_applicants && ($vm_f=='m_yes')) ||
+	    (send_denialMail_to_applicants       && ($vm_f=='m_no'))) $rec["${vm_f}_2"] = $this->sendMail_btn($id,$title,!VM::hasRightTo('send_welcomeMail'),$already_sent);
 	break;
       case False:
 	$rec["${vm_f}_2"] = $this->sendMail_btn($id,$title,($policy != VM_V_infoMailSent),$already_sent);
@@ -2596,9 +2596,9 @@ class bHolder_vm_Visitors extends bHolder_vm{
 			'm_info_1'   => '',
 			'm_info_2'   => '',
 			);
-	if (!send_denialEmail_to_applicants)           unset($header['m_no_1'],  $header['m_no_2'], $header['space4']);
-	if (!send_welcomeEmail_to_applicants)     unset($header['m_yes_1'], $header['m_yes_2'],$header['space3']);
-	if (!send_auto_infoMail_to_applicants)unset($header['m_info_1'],$header['m_info_2']);
+	if (!send_denialMail_to_applicants)           unset($header['m_no_1'],  $header['m_no_2'], $header['space4']);
+	if (!send_welcomeMail_to_applicants)     unset($header['m_yes_1'], $header['m_yes_2'],$header['space3']);
+	if (!send_infoMail_to_applicants)unset($header['m_info_1'],$header['m_info_2']);
 
 	foreach(array('pwd','yes','no','info') as $c) $this->css["m_${c}_1"]["style"] = "width:0;";
 
