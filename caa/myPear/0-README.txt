@@ -1,5 +1,9 @@
 Changes log
 
+2016-04-27, Version 5.123, trying to include conf.dinner...
+A       myPear/images/plane.png
+M       myPear/includes/myPear_classes.inc
+
 2016-04-26, Version 5.122, Minor fixes
 M       myPear/includes/bHolder/Logs.inc
 

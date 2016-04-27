@@ -12,4 +12,4 @@ stylesheets[all][] = css/drp.css
 
 configure = admin/config/user-interface/myPear
 core = 6.x
-version = 6.x-5.122
+version = 6.x-5.123

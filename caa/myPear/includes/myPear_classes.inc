@@ -171,10 +171,6 @@ class b_btn{
    * Raison d'être - to have multiple submit buttons in the form, not all of them "parts" of the <form>
    */
   static function submit($text, $url='', $confirm=False, $class='', $img=''){
-    //        if ($text=='Cancel') return x("a href='javascript:;' onclick='parent.jQuery.fancybox.close();'",$text);
-    //        if ($text=='Cancel') return x("a href='javascript:;' onclick='parent.jQuery.fn.fancybox.close();'",$text);
-    //    if ($text=='Cancel') return x("a href='javascript:;' onclick=\"jQuery('.fancybox-close').fancybox().trigger('click');\"",$text);
-      
     $style = sprintf("style='padding:1px; font-size:small;' class='%s page_load_progress'",$class);
     list($img,$type)= (!empty($img)
 		       ? array("src='$img'", 'image')

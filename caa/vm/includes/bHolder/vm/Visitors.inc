@@ -2018,7 +2018,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
 
   /*
    * To pay or not to pay the scholarship
-   * @return array of icons: trip, perdiem, office, etc.
+   * @return array of icons: trip, perdiem, office, lunch, etc.
    */
   private function btn_payments(){
 
@@ -2033,7 +2033,10 @@ class bHolder_vm_Visitors extends bHolder_vm{
     bTiming()->cpu(__FUNCTION__);
     $reply = array();
     foreach(bForm_vm_Visit::_getPolicies($this->rec) as $p=>$descr){
+      // The event policy has precedence over the visit policy
+      if (($p_e = @VM::$E_V_policies[$p]) && !VM::$e->getPolicy($p_e)) continue;
       if (empty($descr['i'])) continue; 
+
       $yes_no = (bool)bForm_vm_Visit::_getPolicy($p,$this->rec);
       $this->dbg($yes_no);
       $icon = '';
@@ -2057,6 +2060,13 @@ class bHolder_vm_Visitors extends bHolder_vm{
 	  $already_payed = '';
 	  $hasRightTo = 'assign_offices';
 	  $payed = 'provided';
+
+	case VM_E_provideLunches:
+	case VM_E_conferenceDinner:
+	  if ($already_payed === Null){
+	    $already_payed = '';
+	    var_dump($descr['i']);
+	  }
 
 	case VM_V_payPerdiem:
 	  if ($already_payed === Null){

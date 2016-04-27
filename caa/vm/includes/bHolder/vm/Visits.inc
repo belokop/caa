@@ -58,11 +58,11 @@ class bHolder_vm_Visits extends bHolder_vm{
     }
     foreach ($this->clashes as $pear=>$cl) if (in_array($visit->ID,$cl) || $pear==$visit->ID) {
       $this->t->extraTD[] = bIcons()->getButton(array('l'=>$url,
-							      'd'=>'edit clash', 
-							      'i'=>'i-edit'));
+						      'd'=>'edit clash', 
+						      'i'=>'i-edit'));
       $this->t->extraTD[] = b_btn::submit_icon('i-drop',
-						  txt_deleteVisit,
-						  b_url::same("?action_once=".txt_deleteVisit."&function=vm_edit_accommodation&resetcache_once=1&v_id=$visit->ID"));
+					       txt_deleteVisit,
+					       b_url::same("?action_once=".txt_deleteVisit."&function=vm_edit_accommodation&resetcache_once=1&v_id=$visit->ID"));
     }
     $this->rec['v_type'] = bIcons()->get($this->rec['v_type']); 
     $this->rec['v_start']   = x("a href='$url'",b_time::period($this->rec['v_start'],$this->rec['v_end']));

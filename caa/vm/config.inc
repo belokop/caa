@@ -2,7 +2,7 @@
 /**
  * Visitors Manager (VM) configuration file
  */
-$releaseDate = '2016-04-26';
+$releaseDate = '2016-04-27';
 define('VM_MODULE'   , 'vm');
 define('VM_VERSION','5.78');
 
@@ -10,7 +10,8 @@ define('VM_VERSION','5.78');
 // transition problems...
 //
 define('modal_sendmail_dialog',cnf_dev||cnf_demo); // Doesn't want to work...
-define('include_payLunch_dinner',cnf_dev||cnf_demo);
+//define('include_payLunch_dinner',cnf_dev||cnf_demo);
+define('include_payLunch_dinner',False);
 
 // Office space allocation
 define('allocate_offices',True);
@@ -65,19 +66,20 @@ define('VM_E_endorsed',      1);   // Flag 'event is endorsed and locked, no cha
 define('VM_E_archived',      2);   // Flag 'event is archived'. Has precedence over other locks
 define('VM_E_provideOffice',4);    // Flag 'assign offices for the event'
 define('VM_E_provideLunches',16);  // Flag 'provide lunches'
+define('VM_E_payTrip',64);         // Flag 'pay trip'
 define('VM_E_conferenceDinner',32);// Flag 'dinner'
 define('VM_E_endorsmentSent',8);   // Flag 'mail to organizers "event is endorsed" is sent'
 
 define('VM_V_payPerdiem' ,1);           // Flag 'pay per-diem'
 define('VM_V_payTrip',2);               // Flag 'pay trip'
-define('VM_V_provideLunches',1024);         // Flag 'pay lunch'
+define('VM_V_provideLunches',1024);     // Flag 'pay lunch'
 define('VM_V_payOther',2048);           // Flag 'pay other expenses, (whatever "other expenses" mean)' 
 define('VM_V_payAccommodation',64);     // Flag 'cover living expenses'
 define('VM_V_conferenceDinner',8192);   // Flag 'pay conference dinner'
 define('VM_V_provideOffice',128);       // Flag 'assign office for the visit'
 define('VM_V_infoMailSent',256);        // Flag 'informal informational mail sent'
 define('VM_V_infoMailQueued',16384);    // Flag 'waiting in the queue'
-define('VM_V_infoMailNC',32768);        // Flag 'informal informational mail is Not Conserned'
+define('VM_V_infoMailNC',32768);        // Flag 'informal informational mail is Not Concerned'
 define('VM_V_denialMailSent',4);        // Flag 'application denial sent'
 define('VM_V_denialMailQueued',131072); // Flag 'waiting in the queue'
 define('VM_V_welcomeMailSent',8);       // Flag 'application approval sent'
@@ -402,6 +404,7 @@ class VM extends myPear{
 		     'Visit to The Nobel Museum'           => array('p'=> 60,'m'=>'ppp'),
 		     );
   
+
   static $endorsements = array(VISIT_TYPE_COLLABORATION =>'bList::orgGroups',
 			       VISIT_TYPE_PROGRAM       =>array('All Programs'), 
 			       VISIT_TYPE_RENT          =>array('Renting aps'),
@@ -424,6 +427,16 @@ class VM extends myPear{
 								       VM_V_payOther  =>'no'),
 				      'checkbox'               =>array(VM_V_payOther));
   
+
+  /*
+   * Event / visit policy pairs
+   */
+  static $E_V_policies = array(VM_V_payTrip          => VM_E_payTrip,
+			       VM_V_provideOffice    => VM_E_provideOffice,
+			       VM_V_conferenceDinner => VM_E_conferenceDinner,
+			       VM_V_provideLunches   => VM_E_provideLunches,
+			       );
+
   /*
    * Visit policy bits 
    */
@@ -476,6 +489,8 @@ class VM extends myPear{
 							    'i'=>'i-office'),
 			       VM_E_provideLunches => array('d'=>'Provide lunch tickets for attenders?',
 							    'i'=>'i-burger'),
+			       VM_E_payTrip        => array('d'=>'Reimburse travel expenses for some attenders/speakers?',
+							    'i'=>'plane'),
 			       VM_E_conferenceDinner=>array('d'=>'Organize a conference dinner?',
 							    'i'=>'i-drink'),
 			       VM_E_endorsed       => array('d'=>'Is the event endorsed & changes are locked?',
@@ -502,7 +517,7 @@ class VM extends myPear{
 								   'i'=>'a_conf',
 								   'f'=>'debit',
 								   'p'=>array(VM_V_payTrip,VM_V_payAccommodation,VM_V_provideOffice, 
-									      // VM_V_provideLunches,VM_V_conferenceDinner,
+									      VM_V_provideLunches,VM_V_conferenceDinner,
 									      VM_V_denialMailSent,   VM_V_welcomeMailSent,  VM_V_infoMailSent,  VM_V_infoMailNC,
 									      VM_V_denialMailQueued, VM_V_welcomeMailQueued,VM_V_infoMailQueued,
 									      VM_V_rdlMailSent,VM_V_enMailSent)),
@@ -535,7 +550,7 @@ class VM extends myPear{
   /*
    * Some useful icons
    */
-  static public $icons     = array(ICON_edit_room  => array('d'=>'update the accomodation',
+  static public $icons     = array(ICON_edit_room  => array('d'=>'update the accommodation',
 							    'i'=>'i-edit'),
 				   ICON_edit_event => array('d'=>'update the event information',
 							    'i'=>'i-edit'),
@@ -570,6 +585,7 @@ class VM extends myPear{
 	  foreach (self::$reimbursable_visits as $type=>$x) unset(self::$reimbursable_visits[$type][$item]);
 	  foreach (self::$description as $type=>$x) self::$description[$type]['p'] = array_diff(self::$description[$type]['p'],array($item));
 	  unset(self::$e_policies[$item]);
+	  unset(self::$E_V_policies[$item]);
 	  unset(self::$reimbursements[$item]);
 	}
       }

@@ -41,7 +41,8 @@ class bForm_vm_Visit extends bForm_vm {
     }
     return $reply;
   }
-
+  
+  
   /*
    * Check does the avatar have visit with the active policy,
    * say, with payed trip 
@@ -69,7 +70,7 @@ class bForm_vm_Visit extends bForm_vm {
     // Ask the parent...
     parent::__construct($id, $mode);
 
-    // Force status update. This should be done as early as posible, so do it now...
+    // Force status update. This should be done as early as possible, so do it now...
     if (empty($_GET['a_once']) && (($w=(string)@$this->formDB['v_status']) !== ($n=(string)$this->getValue('v_status',True,True)))){
       $_GET['a_once'] = $this->getValue('v_status',True,True);
       $this->dbg("Force status update $w --> $n",cnf_dev);
@@ -169,7 +170,7 @@ class bForm_vm_Visit extends bForm_vm {
   }
 
   /*
-   * RegExp search thru GSF
+   * Reg-Exp search thru GSF
    */
   function getGSF($what='travel.*support',$li='<li>'){
     $gsf = self::_getGSF($what,array('v_gsf'=>$this->getValue('v_gsf',True)),$li);
@@ -273,10 +274,7 @@ class bForm_vm_Visit extends bForm_vm {
     //
     // Cancel the visit policy if the event policy is off, say
     // no visit office allocation if the Event policy is "no office"
-    foreach(array(VM_V_provideOffice    => VM_E_provideOffice,
-		  VM_V_conferenceDinner => VM_E_conferenceDinner,
-		  VM_V_provideLunches   => VM_E_provideLunches,
-		  ) as $p_v=>$p_e){
+    foreach(VM::$E_V_policies as $p_v=>$p_e){
       if ($policy == $p_v){
 	if ($this->hookEvent() && !$this->e->getPolicy($p_e)) $value = 0;
 	if (empty($value)){
@@ -286,8 +284,12 @@ class bForm_vm_Visit extends bForm_vm {
 	    $this->getValue_reset_forced('v_oid');
 	    $this->getValue_reset('_o_name');
 	    break;
-	  case VM_E_conferenceDinner:
+	  case VM_E_payTrip:
 	  case VM_E_provideLunches:
+	  case VM_E_conferenceDinner:
+	    break;
+	  default:
+	    b_debug::internalError("Unexpected visit policy '$policy'");
 	  }
 	}
       }    
@@ -658,7 +660,7 @@ class bForm_vm_Visit extends bForm_vm {
      $reply = (is_object($this->av) && is_object($this->exp));
      $this->dbg($reply);
      
-     // Ask for the residenship country if the travel is expected to be reimburced
+     // Ask for the residentship country if the travel is expected to be reimbursed
      if ($reply && ($this->need_av_residentship === Null)){
        $this->need_av_residentship = (bool)($this->getPolicy(VM_V_payTrip) &&
 					    !$this->av->getValue('av_residentship',True) &&
@@ -1125,7 +1127,10 @@ class bForm_vm_Visit extends bForm_vm {
     // If the visit was approved, check the status/policy 
     if ($this->isApproved() || VM::hasRightTo('edit_visit',$this)){
       foreach ($this->getPolicies() as $p=>$descr){
+	// The event policy has precedence over the visit policy
+	if (($p_e = @VM::$E_V_policies[$p]) && !$this->e->getPolicy($p_e)) continue;
 	if (in_array($p,VM::$auto_maintained)) continue;
+
 	$k = '_virt_policy_' . $p;
 	if ($this->exp_arePayed()) $this->isRO[$k] = True;
 	$this->defineVariable($descr['d'],$k);
@@ -1186,7 +1191,8 @@ class bForm_vm_Visit extends bForm_vm {
    * Office
    */  
   private function officeBlock(){
-    if ($this->getPolicy(VM_V_provideOffice)){
+    if ($this->getPolicy(   VM_V_provideOffice) &&
+	$this->e->getPolicy(VM_E_provideOffice)){
       if (($s = @$this->getValue('v_start',1)) && ($e = @$this->getValue('v_end',1))){
 	locateAndInclude('bForm_vm_Office');
 	$v_oid = $this->getValue('v_oid');

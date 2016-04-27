@@ -103,6 +103,10 @@ function vm_updates(){
       vm_compat_update_44();
     }
 
+    if (True){
+      vm_compat_update_45();
+    }
+
     myPear_logs()->doNotLog = False;
     myPear_db()->noAutoCommit('end');
     bTiming()->cpu();
@@ -122,6 +126,16 @@ function vm_compat_update_ad_hocks(){
     locateAndInclude('b_updates');
     myPear_db()->truncateTable('zzz_templates');
     myPear_update_zzz_lists(VM_MODULE);
+  }
+}
+
+function vm_compat_update_45(){
+  $q = myPear_db()->qquery("SELECT v_policy,v_eid FROM abs_visits WHERE v_eid > 0 AND v_policy > 1",cnf_dev);
+  while($r = myPear_db()->next_record($q)){
+    if (bForm_vm_Visit::_getPolicy(VM_V_payTrip,$r)){
+      $v = myPear::getInstance_new('bForm_vm_Event',$r['v_eid'],'fatal');
+      $v->setPolicy(VM_E_payTrip,1,True);
+    }
   }
 }
 

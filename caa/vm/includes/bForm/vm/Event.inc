@@ -64,14 +64,21 @@ class bForm_vm_Event extends bForm_vm {
 
       $on_off = $this->getPolicy($policy);
       $t->extraTD[] = ($this->show_policies_writable($policy)
+		       /*
+		       ? b_btn::submit(($on_off ? 'YES' : 'NO').", click to change",
+				       $url=b_url::same("?confirm_yes&resetcache_once=1&toggle_once=$policy"), 
+				       $confirm=True, 
+				       $class='page_load_progress',
+				       $img=bIcons()->get($on_off ? $i_on : $i_off))
+		       */
 		       ? bIcons()->getButton(array('class'=>'page_load_progress',
 						   'i'=>($on_off ? $i_on : $i_off),
-						   'c'=>($on_off ? '' : 'opacity_on'),
+						   //'c'=>($on_off ? '' : 'opacity_on'),
 						   'd'=>($on_off ? 'YES' : 'NO').", click to change",
 						   'l'=>b_url::same("?resetcache_once=1&toggle_once=$policy")))
-		       : bIcons()->get      (array('i'=>($on_off ? $i_on : $i_off),
-						   'c'=>($on_off ? '' : 'opacity_on'),
-						   'd'=>($on_off ? 'YES' : 'NO'))));
+		       : bIcons()->get(array('i'=>($on_off ? $i_on : $i_off),
+					     //'c'=>($on_off ? '' : 'opacity_on'),
+					     'd'=>($on_off ? 'YES' : 'NO'))));
       $t->prt(array(//'_i'=>(($policy == VM_E_endorsed) ? '' : bIcons()->get($p['i'])),
 		    '_d'=>x('h4',$p['d'])));
     }
@@ -86,6 +93,7 @@ class bForm_vm_Event extends bForm_vm {
     switch($policy){
     case VM_E_endorsed:        return $this->mightBeEndorced(True);
     case VM_E_archived:        return superUser_here; 
+    case VM_E_payTrip:
     case VM_E_provideOffice:   
     case VM_E_provideLunches:
     case VM_E_conferenceDinner:return !$this->getPolicy(VM_E_endorsed) && VM_administrator_here;
