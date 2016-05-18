@@ -271,7 +271,7 @@ class legacy_maildb{
     foreach(array_keys($this->possible_accounts) as $acc){
       if ($login = $this->maildb($this->parent_AV->ID,$acc)) $logins[] = $login;
     }
-    $this->parent_AV->setIdentity($logins,$verbose=True){
+    $this->parent_AV->setIdentity($logins,$verbose=True);
   }
 
   private function update_etc_passwd(){
