@@ -10,7 +10,7 @@ class bUnit_vm extends bUnit{
    */
   function  __construct($parent_ID,$rank){
 
-    // We might be called before the "official start"
+    // This class might be instantiated before the "official start"
     start_VM();
 
     if (empty($parent_ID))    $parent_ID = myOrg_ID;
@@ -29,6 +29,6 @@ class bUnit_vm extends bUnit{
    *
    */  
   function isAdmin(){
-    return VM_booker_here;
+    return VM_program_coordinator_here;
   }
 }

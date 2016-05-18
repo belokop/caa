@@ -177,7 +177,7 @@ class bMailer_vm extends bMailer{
 	      if (!$v->getPolicy(VM_V_rdlMailSent) &&
 		  !$v->getPolicy(VM_V_rdlMailQueued)){
 		$info_body[] = 'Informing organizer '.$v->av->fmtName('Lf');
-		$this->remind_organizer($v,$e,$mode='rdl',$no_preview=True);
+		$this->remind_organizer($v,$e,$mode='rdl',True);
 	      }
 	    }elseif(VM_manager_here){
 	      $av = new bForm_Avatar($av_id);
@@ -197,6 +197,7 @@ class bMailer_vm extends bMailer{
    * - 'pwd' just remind the password, might be sent at any time
    * - 'rdl' the event registration deadline is reached, invite the organizer to look into his event
    * - 'en'  the event budget is endorsed, inform the organizer about it
+   * - 'reg' invitation to register for the event
    */
   public function remind_organizer($av_id,$e,$mode='pwd',$no_preview=True){
     $this->dbg(starting); 
@@ -235,15 +236,13 @@ class bMailer_vm extends bMailer{
     }
 
     // Is the mail should be sent once only?
-    // Don't send it if it is too late...
-    $policy = Null;
-    if ($mode == 'en')  { $policy = VM_V_enMailSent;  $policyQ = VM_V_enMailQueued;  }
-    if ($mode == 'rdl') { $policy = VM_V_rdlMailSent; $policyQ = VM_V_rdlMailQueued; }
+    if     ($mode == 'en')  { $policy = VM_V_enMailSent;  $policyQ = VM_V_enMailQueued;  }
+    elseif ($mode == 'rdl') { $policy = VM_V_rdlMailSent; $policyQ = VM_V_rdlMailQueued; }
+    else                      $policy = Null;
+
 
     // Dont't send the reminder if it is too late
-    if (!empty($policy) &&
-	!$v->getPolicy($policyQ) &&
-	(time() > $e->getValue('e_start'))){
+    if (!empty($policy) && !$v->getPolicy($policyQ) && (time() > $e->getValue('e_start'))){
       $v->setPolicy($policy,1);
     }
     
@@ -603,7 +602,7 @@ Organizing committee for \"<event/>\".
     // Put this mail into the execution queue, not waist time in the interactive session
     if (!myPear_taskManager()->exec_request && $no_preview){
       myPear_taskManager()->addTask(get_class($this),__function__,array($this->visit->ID,$no_preview));
-      $this->visit->setPolicy(VM_V_denialMailQueued);
+      $this->visit->setPolicy(VM_V_denialMailQueued,1);
       return;
     }
 
@@ -841,7 +840,7 @@ Organizing committee for "'.$this->visit->e->name(False).'".'
    */
   private function get_secretaries($duty=DUTY_guests){
     $this->dbg();
-    $secretaries = VM_bookers()->membersOnDuty($duty);
+    $secretaries = VM_administrators()->membersOnDuty($duty);
     if (empty($secretaries)){
       myPear::WARNING("Please update the administrators list and nominate a person responsible for the claims reimbursement");
     }

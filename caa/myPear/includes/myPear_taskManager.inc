@@ -65,6 +65,7 @@ class myPear_taskManager{
       foreach($taskManager as $module=>$tasks){
 	$module_was = '';
 	foreach($tasks as $task){
+
 	  if (empty($task['class'])) $task['class'] = '';
 	  if (empty($task['end'])){
 	    $task['_cmt'] = (($task['class']==='bUnit') || @$dejaVu[$this->doing($task,False).$module]++
@@ -109,8 +110,9 @@ class myPear_taskManager{
 					       'drop',
 					       b_url::same("?resetcache_once=1&m_once=$module&delete_once=".$task['var_name']),
 					       $confirm=True);
-	  }elseif(($task['end']+TM_clean_log_time*24*3600 < time()) || (@$_GET['clean_once']==='yes')){
-	    myPear_logs()->syslog("Clean completed $module::".$task['var_name']);
+	  }elseif(($task['end']+TM_clean_log_time*24*3600 < time()) || (@$_REQUEST['clean_once']==='yes')){
+	    myPear_logs()->syslog($msg="Clean completed $module::".$task['var_name']);
+	    myPear::WARNING($msg);
 	    b_vars::delete($task['var_name'],$module);
 	    continue;
 	  }else{
@@ -124,7 +126,7 @@ class myPear_taskManager{
       if ($n_waiting) $btns[] = b_btn::submit("execute $n_waiting waiting tasks",
 					      b_url::same('?resetcache_once=1&execute_once=yes&myPear_taskManager=yes'));
       if ($n_ended)   $btns[] = b_btn::submit("clean out $n_ended completed tasks",
-					      b_url::same('?resetcache_once=1&clean_once=yes&myPear_taskManager=yes'));
+					      b_url::same('?execute_once=1&resetcache_once=1&clean_once=yes&myPear_taskManager=yes'));
       if (!empty($btns)) print x('tr',x('td colspan=9 style="text-align:center;"',b_btn::UL_buttons($btns)));
       $t->close();
     }

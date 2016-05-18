@@ -203,7 +203,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
     // Define some useful shortcuts
     define('split_by_huts',(!is_object($this->av) &&
 			    !VM::outOfScope() &&			
-			    (VM_organizer_here || VM_booker_here) &&
+			    (VM_organizer_here || VM_program_coordinator_here) &&
 			    in_array($doing,array('2excel','lists'))));
     $this->dbg('split_by_huts - '.(split_by_huts ? 'YES' : 'NO')); 
     

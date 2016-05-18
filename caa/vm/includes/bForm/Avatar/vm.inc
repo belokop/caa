@@ -78,7 +78,7 @@ class bForm_Avatar_vm extends bForm_Avatar_ea{
     $role = $roleIcon = array();
     if    ($this->isSuperUser())   $role[] = RANK__superuser;
     if    (VM_managers()->isMember($this->ID)) $role[] = RANK_vm_manager;
-    if    ($this->isBooker())      $role[] = RANK_vm_booker;
+    if    ($this->isProgramCoordinator())      $role[] = RANK_vm_program_coordinator;
     if    ($this->isObserver())    $role[] = RANK_vm_observer;
     if    ($this->isEndorser())    $role[] = RANK_vm_endorser;
     if    ($this->isOrganizer())   $role[] = RANK_vm_organizer;
@@ -150,7 +150,7 @@ class bForm_Avatar_vm extends bForm_Avatar_ea{
   function isWritable(){
     $reply = $this->isReady() && (parent::isWritable() || bAuth::authenticated() && 
 				  ((bAuth::$av->ID == $this->ID) ||
-				   (bAuth::$av->isBooker()) ||
+				   (bAuth::$av->isProgramCoordinator()) ||
 				   $this->isHostedBy(bAuth::$av)));
     $this->dbg($reply);
     return $reply;
@@ -174,8 +174,8 @@ class bForm_Avatar_vm extends bForm_Avatar_ea{
     return VM::isOrganizer($this->ID,$e_id);
   }
   
-  function isBooker($av_id=Null){
-    return $this->unitMember($av_id,RANK_vm_booker);
+  function isProgramCoordinator($av_id=Null){
+    return $this->unitMember($av_id,RANK_vm_program_coordinator);
   }
 
   function isObserver($av_id=Null){

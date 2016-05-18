@@ -157,7 +157,7 @@ class bIcons{
 	}
       }
       if (cnf_show_ic) {
-	if (empty($reply)) myPear::WARNING("missing icon ".var_export($icon,True),$this);
+	if (empty($reply)) myPear::WARNING_T("missing icon ".var_export($icon,True),$this);
 	else               b_debug::xxx(b_fmt::escape($reply),array(2,True,'blueText'));
       }
     }

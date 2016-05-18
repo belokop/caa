@@ -17,10 +17,10 @@ class APIaccess_vm extends APIaccess{
     $authenticated = bAuth::authenticated();
     $this->who_is_here(array('VM_manager_here'      => array('rank'=> 'RANK_vm_manager',
 							     'def' => 'superUser_here'),
-			     'VM_booker_here'       => array('rank'=> 'RANK_vm_booker',
+			     'VM_program_coordinator_here'       => array('rank'=> 'RANK_vm_program_coordinator',
 							     'def' => 'VM_manager_here'),
 			     'VM_observer_here'     => array('rank'=> 'RANK_vm_observer',
-							     'def' => 'VM_booker_here'),
+							     'def' => 'VM_program_coordinator_here'),
 			     'VM_visitor_here'      => array('rank'=> 'RANK_vm_visitor'),
 			     'VM_registrant_here'   => array('rank'=> 'RANK_vm_registrant'),
 			     'VM_stranger_here'=> array('rank'=> 'RANK__authenticated'),
@@ -30,10 +30,10 @@ class APIaccess_vm extends APIaccess{
 			     'VM_lt_visitor_here'   => array('IF'  => ($authenticated && method_exists(bAuth::$av,'isV')        && bAuth::$av->isV())),
 			     ));
 
-    $this->who_is_here(array('VM_guests_handlare_here'    =>array('IF'=> ($authenticated && VM_bookers()->isHandlingDuty(DUTY_guests))),
-			     'VM_rooms_updater_here'      =>array('IF'=> ($authenticated && VM_bookers()->isHandlingDuty(DUTY_update_rooms))),
-			     'VM_reimberser_here'         =>array('IF'=> ($authenticated && VM_bookers()->isHandlingDuty(DUTY_reimbursement))),
-			     'VM_unlocker_here'           =>array('IF'=> ($authenticated &&(VM_bookers()->isHandlingDuty(DUTY_unlock_events)||VM_manager_here))),
+    $this->who_is_here(array('VM_guests_handlare_here'    =>array('IF'=> ($authenticated && VM_administrators()->isHandlingDuty(DUTY_guests))),
+			     'VM_rooms_updater_here'      =>array('IF'=> ($authenticated && VM_administrators()->isHandlingDuty(DUTY_update_rooms))),
+			     'VM_reimberser_here'         =>array('IF'=> ($authenticated && VM_administrators()->isHandlingDuty(DUTY_reimbursement))),
+			     'VM_unlocker_here'           =>array('IF'=> ($authenticated &&(VM_administrators()->isHandlingDuty(DUTY_unlock_events)||VM_manager_here))),
 			     'VM_external_registrant_here'=>array('IF'=>VM_registrant_here && !VM_lt_visitor_here && !VM_employee_here),
 			     'VM_administrator_here'      =>array('IF'=>VM_observer_here || VM_endorser_here || VM_organizer_here || superUser_here),
 			     ));
@@ -117,7 +117,7 @@ class APIaccess_vm extends APIaccess{
       $organizational_duty = myPear::org_duty($av_id,array(RANK__superuser,
 							   RANK_vm_manager,
 							   RANK_vm_endorser,
-							   RANK_vm_booker,
+							   RANK_vm_program_coordinator,
 							   RANK_vm_observer,
 							   ));
       

@@ -1501,8 +1501,8 @@ class b_debug{
   static function xxx($text=' ',$flags=array()){
     static $default_flags = array('fuchsiaText',2);
     
-    $toPrint = Null;
     if (!defined('cnf_dev') || !defined('YBhere') || (!cnf_dev && !YBhere)) return;
+    $toPrint = Null;
     
     // Start / End a block
     $s_e_text = $text;
@@ -1682,10 +1682,10 @@ class b_debug{
 	self::print_r($class);
 	$class = Null;
       }
-      print x('h1',__METHOD__);
-      print x('pre',__method__."($txt)");
+      print x('h2',__method__."($txt)");
+      print x('pre',date('Y-m-d H:i:s',time()));
       if ($class !== Null) self::var_dump($class,'Second argument');
-
+      
       print "\n<h2>---Database transactions</h2>\n";
       printf("%s = %s\n",x('strong','in_autocommit'), var_export(myPear_db()->in_autocommit, True));
       printf("%s = %s\n",x('strong','in_transaction'),var_export(myPear_db()->in_transaction,True));
@@ -1837,8 +1837,11 @@ class b_debug{
    * Print php back_trace in the "debug" section
    */
   static function traceBack($id='',$object=Null,$ignore_args=False){
-    if (cnf_CLI)                   print "\n".self::getTraceBack(False,$ignore_args)."\n";
-    elseif (!defined('cnf_dev') || !defined('YBhere') || (!cnf_dev && !YBhere)) return;
+    if (cnf_CLI){
+      print "\n".self::getTraceBack(False,$ignore_args)."\n";
+      return;
+    }
+    if (!defined('cnf_dev') || !defined('YBhere') || (!cnf_dev && !YBhere)) return;
     elseif(b_cnf::get('nodrupal')) print      self::getTraceBack();
     else{
       if (empty($id)) $id = 'TraceBack:';

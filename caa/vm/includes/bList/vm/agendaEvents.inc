@@ -8,7 +8,7 @@
 
 // workaround
 // vm_compat_update_36();
-define('agenda_url','http://bgenda.albanova.se/');
+define('agenda_url','http://agenda.albanova.se/');
 
 locateAndInclude('bList_vm');
 class bList_vm_agendaEvents extends bList_vm{
@@ -49,7 +49,9 @@ class bList_vm_agendaEvents extends bList_vm{
     
     if (empty($cats[$catID])){
       $url = sprintf("%s/tools/getConf.py?catinfo=%s",agenda_url,$catID);
-      $xml = simplexml_load_string(`curl $url`); 
+      $xml = `curl $url`; 
+      b_debug::var_dump($xml);
+      $xml = simplexml_load_string($xml);
       $json= json_encode($xml);
       
       foreach(json_decode($json,TRUE) as $categories){
@@ -215,7 +217,7 @@ class bList_vm_agendaEvents extends bList_vm{
   }
 
   function isWritable(){
-    $reply = VM_booker_here;
+    $reply = VM_program_coordinator_here;
     return $reply;
   }
 

@@ -52,7 +52,7 @@ Supported arguments:
    */
   function getCategoryInfo($category='270',$args='') {
     if ($this->debug) print "\n================================= \$agenda->getCategoryInfo('$category','$args')\n\n";
-    $xml   = simplexml_load_string(`curl http://bgenda.albanova.se/tools/getConf.py?catinfo=270`);
+    $xml   = simplexml_load_string(`curl http://agenda.albanova.se/tools/getConf.py?catinfo=270`);
 				   //
 				   $json  = json_encode($xml);
 				   $array = json_decode($json,TRUE);

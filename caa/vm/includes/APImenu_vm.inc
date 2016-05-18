@@ -295,7 +295,7 @@ class APImenu_vm extends APImenu_ea{
       case tab_vm_ap_usage:
       case tab_vm_ap_types:
       case tab_vm_adm_agendaList:
-	$reply = VM_booker_here;
+	$reply = VM_program_coordinator_here;
 	break;
 	
       case tab__tasks:
@@ -381,7 +381,7 @@ class APImenu_vm extends APImenu_ea{
 	break;
 
       case tab_vm_adm_sync:
-	$reply = (VM_booker_here || VM_organizer_here);
+	$reply = (VM_program_coordinator_here || VM_organizer_here);
 	break;
 
 	// Probably not needed

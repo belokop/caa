@@ -1,5 +1,14 @@
 Changes log
 
+2016-05-18, Version 5.124, Minor fixes
+M       myPear/includes/bForm/Avatar.inc
+M       myPear/includes/bIcons.inc
+M       myPear/includes/bMailer.inc
+M       myPear/includes/myPear_classes.inc
+M       myPear/includes/myPear_functions.inc
+M       myPear/includes/myPear_taskManager.inc
+M       myPear/myIndico/agenda.inc
+
 2016-04-27, Version 5.123, trying to include conf.dinner...
 A       myPear/images/plane.png
 M       myPear/includes/myPear_classes.inc

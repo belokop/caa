@@ -17,7 +17,7 @@ class bUnit_vm_bookers extends bUnit_vm{
 						    'def'=>'manager'),
 			 );
   
-  function __construct($parent_ID=myOrg_ID,$rank=RANK_vm_booker){
+  function __construct($parent_ID=myOrg_ID,$rank=RANK_vm_program_coordinator){
 
     parent::__construct($parent_ID,$rank);
 

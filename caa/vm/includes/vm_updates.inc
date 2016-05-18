@@ -96,14 +96,15 @@ function vm_updates(){
       vm_compat_update_40();
     }
 
-    if (True){
+    if (False){
       vm_compat_update_41();
       vm_compat_update_42();
       vm_compat_update_43();
-      vm_compat_update_44();
     }
 
     if (True){
+      // 2016-05-01
+      vm_compat_update_44();
       vm_compat_update_45();
     }
 
@@ -130,6 +131,7 @@ function vm_compat_update_ad_hocks(){
 }
 
 function vm_compat_update_45(){
+  locateAndInclude('bForm_vm_Visit');
   $q = myPear_db()->qquery("SELECT v_policy,v_eid FROM abs_visits WHERE v_eid > 0 AND v_policy > 1",cnf_dev);
   while($r = myPear_db()->next_record($q)){
     if (bForm_vm_Visit::_getPolicy(VM_V_payTrip,$r)){
@@ -587,7 +589,7 @@ function vm_compat_update_32(){
 					   $um_id);
       }
     }
-    // Populate secretaries
+    // Populate administrators
     foreach(array('eyang'=>array(DUTY_programs,
 				 DUTY_reimbursement,
 				 DUTY_unlock_events,
@@ -600,8 +602,8 @@ function vm_compat_update_32(){
 		  ) as $who=>$what){
       if ($av=bForm_Avatar::hook(array('av_identity'=>$who))){
 	sort($what);
-	$um_id = VM_bookers()->add_unitMember($av->ID,False);
-	VM_bookers()->updateMember(array('duties'=>join(',',$what),
+	$um_id = VM_administrators()->add_unitMember($av->ID,False);
+	VM_administrators()->updateMember(array('duties'=>join(',',$what),
 					 'um_status'=>''),
 				   $um_id);
       }else{

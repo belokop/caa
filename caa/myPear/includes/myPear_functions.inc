@@ -141,14 +141,13 @@ function myPear_setConstants(){
   // Are we in the development or demo mode?
   ///
   if (!defined('cnf_dev')){
-    if (cnf_localhost)      define('cnf_dev',True);
-    else                    define('cnf_dev',(bool)(empty($_GET['demo']) && b_cnf::get('dev',cnf_localhost) && YBhere));
+    define('cnf_dev',(bool)(cnf_localhost || (b_cnf::get('dev') && YBhere)));
   }
   
+  // Demo site has "test" as part of the name
   if (!defined('cnf_demo')){
     if (cnf_dev)            define('cnf_demo',False);
-    else                    define('cnf_demo',(bool)b_cnf::get('demo',
-								   preg_match('/(test|^192.168|130.242.129.1[01])/',@$_SERVER["HTTP_HOST"])));
+    else                    define('cnf_demo',preg_match('/(test|^192.168|130.242.129.1[01])/',@$_SERVER["HTTP_HOST"]));
   }
   if (cnf_dev && cnf_inside_fb) myPear::DEBUG(cnf_inside_fb_iframe
 					      ?'cnf_inside_fb_iframe YES'

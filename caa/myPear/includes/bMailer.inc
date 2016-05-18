@@ -18,7 +18,7 @@ if (locateAndInclude(array('Mail',
   
   class bMailer{
     
-    // used during the initiale/development stage
+    // used during the initial/development stage
     var $bcc           = array(bMailer_dev_address);
 
     var $template      = False;
@@ -93,7 +93,7 @@ if (locateAndInclude(array('Mail',
 		 : $to);
       // See myPear_taskManager
       if ($av_send_to = @$GLOBALS['av_send_to']){
-	$this->_dbg("Replace recipient by a develoer: $realTO ==> $av_send_to");
+	$this->_dbg("Replace recipient by a developer: $realTO ==> $av_send_to");
 	$realTO = $av_send_to;
       }
 
@@ -712,7 +712,7 @@ Remember to save this mail or book-mark the URL to facilitate later access to th
 
 /*
  * The sendMailsInQueue method, since version 1.2.3, has callback support.
- * This may be utilised for report generation and postprocessing.
+ * This may be utilized for report generation and post-processing.
  * 
  * The callback function is called before the relevant entry is deleted from the mail_queue table 
  * in the database so if necessary you could add extra fields to it for inserting into your log/report table. 

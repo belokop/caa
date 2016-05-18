@@ -53,7 +53,7 @@ class bList_vm extends bList{
   }
 
   function isAdmin(){
-    return VM_booker_here;
+    return VM_program_coordinator_here;
   }
 
   /*

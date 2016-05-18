@@ -23,13 +23,16 @@ class legacy_maildb{
 					    );
   
 
-  public $possible_hooks = array('m_myorg' => array('d'=>'maildb name'),
-				 'acc_su'  => array('d'=>'SU account',
-//						    'h'=>'/afs/su.se/home', // SU abandoned AFS
-						    'h'=>'/home',
-						    ),
-				 'acc_kth' => array('d'=>'KTH account',
-						    'h'=>'/afs/kth.se/home')); 
+  public $possible_accounts = array('acc_su'  => array('d'=>'SU account',
+						       //'h'=>'/afs/su.se/home', // SU abandones AFS
+						       'h'=>'/home',
+						       ),
+				    'acc_kth' => array('d'=>'KTH account',
+						       'h'=>'/afs/kth.se/home')); 
+  // 
+  public $possible_hooks    = array('m_myorg' => array('d'=>'maildb name'));
+								      
+
   public $pwd_file = array();  
   public $domains  = array(
 			   'albanova.se',
@@ -46,6 +49,12 @@ class legacy_maildb{
    * The constructor is practically empty
    */
   function __construct(&$parent_AV){
+
+    // Include accounts into possible hhoks
+    foreach(array_keys($this->possible_accounts) as $acc){
+      $this->possible_hooks[$acc] = $this->possible_accounts[$acc];
+    } 
+
     if (empty(self::$maildb_fields_org[myOrg_code])) 
       self::$maildb_fields_org[myOrg_code] = array('m'=>array(),
 						   'c'=>'X');
@@ -253,7 +262,16 @@ class legacy_maildb{
       myPear::MESSAGE("No hook for the maildb record \"".$this->parent_AV->name()."\" , create a new maildb entry as \"$user\"");
     }
     $this->avatar2maildb($user);
+
+    // Update /etc/password file
     $this->update_etc_passwd();
+
+    // Update av_identity field
+    $logins = array();
+    foreach(array_keys($this->possible_accounts) as $acc){
+      if ($login = $this->maildb($this->parent_AV->ID,$acc)) $logins[] = $login;
+    }
+    $this->parent_AV->setIdentity($logins,$verbose=True){
   }
 
   private function update_etc_passwd(){

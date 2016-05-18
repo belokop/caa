@@ -296,8 +296,8 @@ class bForm_vm_Visit extends bForm_vm {
     }
     
     // Now set the requested policy
-    if (defined('VM_booker_here') && 
-	(!(VM_booker_here||VM_organizer_here) || 
+    if (defined('VM_program_coordinator_here') && 
+	(!(VM_program_coordinator_here||VM_organizer_here) || 
 	 (@VM::$v_policies[$policy]['t'] === auto_maintained) ||
 	 ($this->getValue('v_end') < time()))) $verbose = False;
     
@@ -334,7 +334,7 @@ class bForm_vm_Visit extends bForm_vm {
       
     case STATUS_YES:
       // Send informational letter to the administrators
-      foreach(VM_bookers()->membersOnDuty(VISIT_TYPE_COLLABORATION) as $s_name=>$s_email){
+      foreach(VM_administrators()->membersOnDuty(VISIT_TYPE_COLLABORATION) as $s_name=>$s_email){
 	VM_mailer()->inform_secretary_about_visit($this,$s_email,$v_status,bAuth::$av->fmtName('fl'));
       }
 
@@ -1903,6 +1903,7 @@ class bForm_vm_Visit extends bForm_vm {
     switch($status=self::_getStatus($buffer)){
     case STATUS_YES:
       if (send_welcomeMail_to_applicants && $VM_E_endorsed && !empty($policies[VM_V_welcomeMailSent])){
+	// The welcome letter should be, but has not been sent 
 	if (!self::_getPolicy(VM_V_welcomeMailSent,$buffer) && 
 	    !self::_getPolicy(VM_V_welcomeMailQueued,$buffer)) $reply = STATUS_YES;
       }
@@ -1910,7 +1911,7 @@ class bForm_vm_Visit extends bForm_vm {
       
     case STATUS_NO:
       if (send_denialMail_to_applicants && $VM_E_endorsed && !empty($policies[VM_V_denialMailSent])){
-	// The denial letter should be, but was not sent
+	// The denial letter should be, but has not been sent 
 	if (!self::_getPolicy(VM_V_denialMailSent,$buffer) &&
 	    !self::_getPolicy(VM_V_denialMailQueued,$buffer))  $reply = STATUS_NO;
       }
@@ -2027,7 +2028,7 @@ class bForm_vm_Visit extends bForm_vm {
 							      True  => array('endorser'   => (is_object(bAuth::$av) && 
 											      in_array(bAuth::$av->ID,VM_endorsers()->getEndorsers($this->getValue('v_group',1)))),
 									     'isOrganizer'=> VM_organizer_here,
-									     'booker'     => VM_booker_here,
+									     'booker'     => VM_program_coordinator_here,
 									     'owner'      => $exp_owner),
 							      'default' => parent::isWritable()),
 							$this,

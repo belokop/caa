@@ -1230,7 +1230,7 @@ class bForm_Avatar extends bForm {
     $args_ok = False;
     foreach($identity as $login) if (posix_getpwnam($login) !== False) $args_ok = True;
     if (!$args_ok){
-      myPear::WARNING_T("Refuse to set the identity");
+      myPear::WARNING_T("Refuse to set the identity ".x('"',join(',',$identity)));
       return;
     }
 

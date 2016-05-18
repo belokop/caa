@@ -106,7 +106,7 @@ class bList_vm_accommodationOptions extends bList_vm{
    * This list might be administrated by the event organizers
    */
   function isAdmin(){
-    return VM_booker_here || VM_organizer_here;
+    return VM_program_coordinator_here || VM_organizer_here;
   }
   
   /*
