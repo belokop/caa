@@ -289,7 +289,7 @@ class myPear_taskManager{
 	  if ($avid = @$task['avid']){
 	    $av = myPear::getInstance_new('bForm_Avatar',$avid,'fatal');
 	    $GLOBALS['av_send_to'] = $av->getEmail();
-	    myPear::WARNING("<em>%s</em> id declared as the task submitter (debug mode)",$av->name());
+	    myPear::WARNING(sprintf("<em>%s</em> id declared as the task submitter (debug mode)",$av->getEmail()));
 	  }else{
 	    unset($GLOBALS['av_send_to']);
 	  }
