@@ -93,12 +93,12 @@ if (locateAndInclude(array('Mail',
 		 : $to);
       // See myPear_taskManager
       if ($av_send_to = @$GLOBALS['av_send_to']){
-	$this->_dbg("Replace recipient by a developer: $realTO ==> $av_send_to");
+	myPear::WARNING("Replace recipient by a developer: $realTO ==> $av_send_to");
 	$realTO = $av_send_to;
       }
 
-      if ($realTO != cnf_demo_email) {
-	b_debug::traceBack("To be sent to $to... Correct?");
+      if (($realTO != cnf_demo_email) && !(cnf_localhost || cnf_dev || cnf_demo)){
+	myPear::ERROR("To be sent to <em>$to</em>, not to <em>".cnf_demo_email."</em>... Correct?");
 	return False;
       }
       

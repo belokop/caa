@@ -1,5 +1,8 @@
 Changes log
 
+2016-05-19, Version 5.127, Minor fixes
+M       myPear/includes/bMailer.inc
+
 2016-05-19, Version 5.126, fixing b_vars class
 M       myPear/includes/myPear_classes.inc
 
