@@ -182,6 +182,7 @@ class bMailer_vm extends bMailer{
 	    }elseif(VM_manager_here){
 	      $av = new bForm_Avatar($av_id);
 	      myPear::WARNING($msg = 'Organizer '.$av->fmtName('fl').' has not yet registered for his event '.$e->name());
+	      $this->remind_organizer($av,$e,$mode='reg',True);
 	      $info_body[] = $msg;
 	    }
 	  }
@@ -204,6 +205,7 @@ class bMailer_vm extends bMailer{
 
     // Parse the arguments
     if ($av_id instanceof bForm_Avatar_vm){
+      $v  = Null;
       $av = $av_id;
     }elseif($av_id instanceof bForm_vm_Visit){
       $v  = $av_id;
@@ -227,7 +229,7 @@ class bMailer_vm extends bMailer{
     if (!($e instanceof bForm_vm_Event)) $e = myPear::getInstance_new('bForm_vm_Event',$e,'fatal');
     
     // Guess the visit if not given explicitly
-    if (empty($v)){
+    if (empty($v) && ($mode !== 'reg')){
       if (!($v_id = $e->getVisit_ID($av->ID))){
 	myPear::WARNING($av->fmtName('fl').' is not yet registered for "'.$e->name().'"<br>No mail sent');
 	return False;
@@ -238,7 +240,7 @@ class bMailer_vm extends bMailer{
     // Is the mail should be sent once only?
     if     ($mode == 'en')  { $policy = VM_V_enMailSent;  $policyQ = VM_V_enMailQueued;  }
     elseif ($mode == 'rdl') { $policy = VM_V_rdlMailSent; $policyQ = VM_V_rdlMailQueued; }
-    else                      $policy = Null;
+    else                      $policy = $policyQ = Null;
 
 
     // Dont't send the reminder if it is too late
@@ -258,7 +260,7 @@ class bMailer_vm extends bMailer{
       $this->dbg("Queue the request"); 
       myPear::MESSAGE(sprintf("E-mail to %s is send to the mail queue",$fqn));
       myPear_taskManager()->addTask(get_class($this),__function__,array($av->ID,$e->ID,$mode,$no_preview));
-      $v->setPolicy($policyQ,1);
+      if (!empty($v)) $v->setPolicy($policyQ,1);
       return;
     }
 
@@ -307,6 +309,11 @@ The event budget is now endorsed by ".myOrg_name." and locked.
 You can see the event budget from your personal web page, which you can access directly as:
 ";
 	break;
+
+      case 'reg': // ----------------------- the organizer is not yet registered for the event
+	myPear::WARNING("'$mode' is not yet ready");	return True;
+	break;
+
       default:
 	$this->dbg("Unexpected argument mode='$mode'",cnf_dev);
 	return Null;
@@ -327,6 +334,7 @@ Remember to save this mail or book-mark the web page to facilitate later access 
 			     $syslog_thisMail=True,
 			     $no_preview)) && 
 	  !in_array($email,$sec_mails)){
+	// Log the mail sending 
 	switch($mode){
 	case 'rdl':  // ----------------------- application deadline is over
 	  myPear_logs()->add('reminder',$av->ID,'applications deadline is over',myPear_cronjob()->ID);

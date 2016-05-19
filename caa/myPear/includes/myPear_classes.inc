@@ -18,12 +18,19 @@ class b_vars{
    * Check is the value known 
    */
   static function isValueKnown($value,$module=Null){
-    if(empty($module))    $module = b_reg::$current_module;
-    if (is_array($value)) $value  = b_fmt::safe_encode($value);
-    $q = myPear_db()->query("SELECT var_name FROM zzz_variables WHERE ".
-			    "var_module = '$module' AND ".myPear_db()->quote($value,True,'var_value'));
     $reply = array();
-    while($r = myPear_db()->next_record($q)) $reply[] = $r['var_name']; 
+    if(empty($module))    $module = b_reg::$current_module;
+    if (is_array($value)){
+      $q = myPear_db()->query("SELECT var_name,var_value FROM zzz_variables WHERE ".
+			      "var_module = '$module'");
+      while($r = myPear_db()->next_record($q)){
+	if (count(array_keys(array_intersect(b_fmt::safe_decode($r['var_value']),$value))) == count(array_keys($value)))	$reply[] = $r['var_name']; 
+      }
+    }else{
+      $q = myPear_db()->query("SELECT var_name FROM zzz_variables WHERE ".
+			      "var_module = '$module' AND ".myPear_db()->quote($value,True,'var_value'));
+      while($r = myPear_db()->next_record($q)) $reply[] = $r['var_name']; 
+    }
     return $reply;
   }
   
