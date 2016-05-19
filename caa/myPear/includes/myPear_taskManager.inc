@@ -171,7 +171,10 @@ class myPear_taskManager{
       // Store the task description as a variable
       // Take care about "login as other user", used for debugging
       $extras = array('start'=>time());
-      if (is_object(bAuth::$av_authenticated)) $extras['avid'] = bAuth::$av_authenticated->ID;
+      if (is_object(bAuth::$av_authenticated)){
+	$extras['avid'] = bAuth::$av_authenticated->ID;
+	myPear::WARNING(sprinf('Set <em>%s</em>  as the task submitter',bAuth::$av_authenticated->name()));
+      }
 
       b_vars::set($this->task_id($task_counter),array_merge($extras,$taskManager_args));
       myPear_logs()->add('TM_add','',$this->doing($taskManager_args,False),myPear_cronjob()->ID,b_reg::$current_module,False);
@@ -283,9 +286,10 @@ class myPear_taskManager{
 		   : b_fmt::safe_decode($task['args']));
 	  
 	  // Transmit the developer email, the mails from tasks started by the developer should be sent back to him
-	  if ($av_id = @$task['avid']){
-	    $av = myPear::getInstance_new('bForm_Avatar',$av_id,'fatal');
+	  if ($avid = @$task['avid']){
+	    $av = myPear::getInstance_new('bForm_Avatar',$avid,'fatal');
 	    $GLOBALS['av_send_to'] = $av->getEmail();
+	    myPear::WARNING("<em>%s</em> id declared as the task submitter (debug mode)",$av->name());
 	  }else{
 	    unset($GLOBALS['av_send_to']);
 	  }

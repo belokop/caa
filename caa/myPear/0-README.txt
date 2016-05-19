@@ -1,5 +1,10 @@
 Changes log
 
+2016-05-19, Version 5.128, Minor fixes
+M       myPear/includes/bAuth.inc
+M       myPear/includes/bMailer.inc
+M       myPear/includes/myPear_taskManager.inc
+
 2016-05-19, Version 5.127, Minor fixes
 M       myPear/includes/bMailer.inc
 

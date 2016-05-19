@@ -391,7 +391,7 @@ class bAuth{
     if (!empty($_REQUEST['login_as'])){
       $av_login_as = bForm_Avatar::hook($_REQUEST['login_as'],'basic');
       if ($av_login_as instanceof bForm_Avatar){
-	self::$av_authenticated = self::$av;
+	if (empty(self::$av_authenticated))	self::$av_authenticated = self::$av;
 	self::$av = $av_login_as;
 	self::dbg("authenticated as ".self::$av_authenticated->fmtName('fL'),cnf_dev);
 	self::dbg("login as ".self::$av->fmtName('fL'),cnf_dev);
