@@ -6,8 +6,11 @@
 ##### Not used since the end of 2015
 # repository=https://plushkin.googlecode.com/svn/trunk/setup/maintenance/mail/2leif
 
-# In production since 2016-01-13
-repository=https://svn.csc.kth.se/~iourib/setup/maintenance/mail/2leif
+##### Not used since the spring 2016
+# repository=https://svn.csc.kth.se/~iourib/setup/maintenance/mail/2leif
+
+# In production since 2016-04-01
+repository=https://svn.csc.kth.se/~iourib/setup/registration
 
 function usage(){
     msg="$1"
@@ -45,7 +48,7 @@ home=/afs/kth.se/home/$l1/$l2/$user
 # Get the latest passwd file from the repository
 #
 [ -d /data ] && tmp=/data/.2leif || tmp=/tmp/.2leif
-tmp_passwd=$tmp/2leif/passwd
+tmp_passwd=$tmp/`basename $repository`/passwd
 
 if [ -s $tmp_passwd ]; then
     [ -w $tmp_passwd ] ||  usage "You don\'t have enougth priviliges to add user" 

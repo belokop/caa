@@ -23,8 +23,8 @@ class legacy_maildb{
 					    );
   
 
-  public $possible_accounts = array('acc_su'  => array('d'=>'SU account',
-						       //'h'=>'/afs/su.se/home', // SU abandones AFS
+  public $possible_logins = array('acc_su'  => array('d'=>'SU account',
+						       //'h'=>'/afs/su.se/home', // SU abandons AFS
 						       'h'=>'/home',
 						       ),
 				    'acc_kth' => array('d'=>'KTH account',
@@ -50,9 +50,9 @@ class legacy_maildb{
    */
   function __construct(&$parent_AV){
 
-    // Include accounts into possible hhoks
-    foreach(array_keys($this->possible_accounts) as $acc){
-      $this->possible_hooks[$acc] = $this->possible_accounts[$acc];
+    // Include accounts into possible hooks
+    foreach(array_keys($this->possible_logins) as $acc){
+      $this->possible_hooks[$acc] = $this->possible_logins[$acc];
     } 
 
     if (empty(self::$maildb_fields_org[myOrg_code])) 
@@ -267,8 +267,15 @@ class legacy_maildb{
     $this->update_etc_passwd();
 
     // Update av_identity field
+    $this->setIdentity();
+  }
+
+  /*
+   * Update av_identity field
+   */
+  function setIdentity(){
     $logins = array();
-    foreach(array_keys($this->possible_accounts) as $acc){
+    foreach(array_keys($this->possible_logins) as $acc){
       if ($login = $this->maildb($this->parent_AV->ID,$acc)) $logins[] = $login;
     }
     $this->parent_AV->setIdentity($logins,$verbose=True);

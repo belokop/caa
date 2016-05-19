@@ -8,7 +8,7 @@ define('TM_clean_log_time',7); // in days
 class myPear_taskManager{
 
   public $exec_request = False;
-  public $debug = cnf_dev;
+  public $debug = (cnf_dev || cnf_debug);
   public $removeAfterExecution = False;
   
   /*

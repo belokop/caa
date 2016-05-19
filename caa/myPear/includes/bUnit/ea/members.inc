@@ -49,9 +49,10 @@ class bUnit_ea_members extends bUnit_ea {
       $av = new bForm_Avatar_ea($av_id);
       myPear::MESSAGE_add($av->fmtName('Lf'),True);
       $av->want_legacy_maildb = $av->isE(True) && (myOrg($this->myOrg_ID)->getCode() == 'nordita');
+      $av->getForm();
       $av->adjust_status();
-      $av->update_AVpos_AVinst('av_institute');
-      $av->update_AVpos_AVinst('av_position');
+//    $av->update_AVpos_AVinst('av_institute');
+//    $av->update_AVpos_AVinst('av_position');
       $x = ob_get_contents();
       ob_end_clean();
       // We do not need an output, just kill it
