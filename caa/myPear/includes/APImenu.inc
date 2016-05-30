@@ -140,7 +140,7 @@ class APImenu{
     case tab__fixes:
     case tab__fixes_bList:
     case tab__tasks:
-      $reply = superUser_here;
+      $reply = superUser_here || (is_object(bAuth::$av) && bAuth::$av->isManager());
       break;
 
       // Lets rely on the primary tab access control (this one is normally secondary)

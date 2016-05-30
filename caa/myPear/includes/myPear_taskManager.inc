@@ -51,14 +51,20 @@ class myPear_taskManager{
     if (empty($taskManager)){
       myPear::MESSAGE("There is no tasks in the queue for now");
     }else{
-      $t = new b_table_zebra($header=array('n'         =>'#',
-					   '_cmt'      => ' ',
-					   // '_module'   => 'module',
-					   '_function' => 'task',
-					   '_av'       => ' ',
-					   '_start'    => 'start',
-					   '_end'      => 'end',
-					   ));
+      $header=array('n'         =>'#',
+		    '_cmt'      => ' ',
+		    // '_module'   => 'module',
+		    '_function' => 'task',
+		    '_av'       => ' ',
+		    '_start'    => 'start',
+		    '_end'      => 'end',
+		    '_av_dev'   => '',
+		    );
+      // if (!cnf_dev && !cnf_demo && !YBhere) unset($header['_av_dev']);
+
+      // Create the table
+      $t = new b_table_zebra($header);
+
       $dejaVu = array();
       $n_ended = $n_waiting = 0;
       ksort($taskManager);
@@ -119,6 +125,11 @@ class myPear_taskManager{
 	    $n_ended++;
 	    $task['_end']  = x('em','in '.b_time::delta(b_time::txt2unix($task['start']),$task['end']));
 	  }
+
+	  if ($_av_dev = @$task['av_dev']){
+	    $av = myPear::getInstance_new('bForm_Avatar',$_av_dev,'fatal');
+	    $task['_av_dev'] = $av->getEmail();
+	  } 
 	  $t->prt($task);
 	  $module_was = $module;
 	}
@@ -171,9 +182,9 @@ class myPear_taskManager{
       // Store the task description as a variable
       // Take care about "login as other user", used for debugging
       $extras = array('start'=>time());
-      if (is_object(bAuth::$av_authenticated)){
-	$extras['avid'] = bAuth::$av_authenticated->ID;
-	myPear::WARNING(sprinf('Set <em>%s</em>  as the task submitter',bAuth::$av_authenticated->name()));
+      if ((cnf_dev || cnf_demo) && bAuth::authenticated()){
+	$extras['av_dev'] = bAuth::$av_authenticated->ID;
+	myPear::WARNING(sprintf('Set <em>%s</em>  as the task submitter',bAuth::$av_authenticated->name()));
       }
 
       b_vars::set($this->task_id($task_counter),array_merge($extras,$taskManager_args));
@@ -286,12 +297,12 @@ class myPear_taskManager{
 		   : b_fmt::safe_decode($task['args']));
 	  
 	  // Transmit the developer email, the mails from tasks started by the developer should be sent back to him
-	  if ($avid = @$task['avid']){
-	    $av = myPear::getInstance_new('bForm_Avatar',$avid,'fatal');
-	    $GLOBALS['av_send_to'] = $av->getEmail();
+	  if ($av_dev = @$task['av_dev']){
+	    $av = myPear::getInstance_new('bForm_Avatar',$av_dev,'fatal');
+	    $GLOBALS['task_report_to'] = $av->getEmail();
 	    myPear::WARNING(sprintf("<em>%s</em> id declared as the task submitter (debug mode)",$av->getEmail()));
 	  }else{
-	    unset($GLOBALS['av_send_to']);
+	    unset($GLOBALS['task_report_to']);
 	  }
 	  
 	  $this->dbg($this->doing($task));

@@ -376,8 +376,8 @@ class bCover_vm extends bCover {
     while ($r=myPear_db()->next_record($query)) {
       //      if (isset($r['o_status']) && ($r['o_status'] != OFFICE_AUTO_ALLOCATABLE)) continue;
       //      if (isset($r['a_status']) && ($r['a_status'] !=     AP_AUTO_ALLOCATABLE)) continue;
-      if (empty($r[room_d1])) $r[room_d1] = rent0;
-      if (empty($r[room_d9])) $r[room_d9] = rent9;
+      if (empty($r[room_d1])) $r[room_d1] = myPear_day0;
+      if (empty($r[room_d9])) $r[room_d9] = myPear_day9;
       if (b_time::inInterval($this->day1, $this->day9,
 			     $r[room_d1],$r[room_d9])){
 

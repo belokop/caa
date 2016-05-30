@@ -28,6 +28,7 @@ function bAuth(){
     $bAuth->authenticate();
       
     bAuth::set_cnf_demo_email();
+    bAuth::debug_auth();
     
     // Create the first Avatar for the empty database
     switch(HOSTED_BY_CMS){
@@ -104,6 +105,10 @@ function myPear_setConstants(){
   // Fine grade the debugging option
   if (!defined('cnf_debug_level'))define('cnf_debug_level',(int)b_cnf::get('debug'));
   if (!defined('cnf_debug'))      define('cnf_debug',(cnf_debug_level > 0));
+
+  // myPear first day
+  define('myPear_day0',b_time::txt2unix('1999-12-31'));
+  define('myPear_day9',CONST_eternity_t);
 
   // No File System
   if (!defined('cnf_noFS'))       define('cnf_noFS',      (bool)b_cnf::get('noFS')); 

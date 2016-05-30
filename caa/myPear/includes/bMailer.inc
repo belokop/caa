@@ -92,15 +92,15 @@ if (locateAndInclude(array('Mail',
 		 ? cnf_demo_email 
 		 : $to);
       // See myPear_taskManager
-      if ($av_send_to = @$GLOBALS['av_send_to']){
-	myPear::WARNING("Replace recipient by a developer: $realTO ==> $av_send_to");
-	$realTO = $av_send_to;
+      if ($task_report_to = @$GLOBALS['task_report_to']){
+	myPear::WARNING("Replace recipient by a developer: $realTO ==> $task_report_to");
+	//	$realTO = $task_report_to;
       }
-
-      //      if (($realTO != cnf_demo_email) && !(cnf_localhost || cnf_dev || cnf_demo)){
-      myPear::ERROR("To be sent to <em>$realTO</em>, not to <em>".cnf_demo_email."</em>... Correct?");
-      return False;
-      //      }
+      
+      if (($realTO != cnf_demo_email) && (cnf_localhost || cnf_dev || cnf_demo)){
+	myPear::ERROR("To be sent to <em>$realTO</em>, not to <em>".cnf_demo_email."</em>... Correct?");
+	return False;
+      }
       
       $semi_rand = md5(time());
       $charset   = 'iso-8859-1';

@@ -575,6 +575,8 @@ class bHolder_vm_Visitors extends bHolder_vm{
     $this->v = Null;
     if (!$reply && empty($this->av)) switch ($this->doing){
 	
+      case 'photos':
+	if (bForm_vm_Visit::_getStatus($this->rec) == STATUS_NO) return True;
       case 'budget':
       case 'myguests':
       case 'budget_byProjects':

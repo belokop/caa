@@ -305,7 +305,7 @@ class bForm_vm_Visit extends bForm_vm {
     if ($isChanged = $this->setBitMask($policy,'v_policy',$value,$check_only=True)){
       $this->setBitMask($policy,'v_policy',$value);
       if ($verbose || cnf_show_pv){
-	myPear::MESSAGE_add(VM::$v_policies[$policy]['d']." ".x('em',($value?'YES':'NO')." for ".$this->av->fmtname()));
+	myPear::MESSAGE_add(VM::$v_policies[$policy]['d']." ".x('em',($value?'YES':'NO')." for ".$this->av->fmtName()));
       }
     }
     $this->setPolicyRecursion = 0;
@@ -1128,9 +1128,9 @@ class bForm_vm_Visit extends bForm_vm {
     if ($this->isApproved() || VM::hasRightTo('edit_visit',$this)){
       foreach ($this->getPolicies() as $p=>$descr){
 	// The event policy has precedence over the visit policy
-	if (($p_e = @VM::$E_V_policies[$p]) && !$this->e->getPolicy($p_e)) continue;
+	if (!empty($this->e) && (($p_e = @VM::$E_V_policies[$p]) && !$this->e->getPolicy($p_e))) continue;
 	if (in_array($p,VM::$auto_maintained)) continue;
-
+	
 	$k = '_virt_policy_' . $p;
 	if ($this->exp_arePayed()) $this->isRO[$k] = True;
 	$this->defineVariable($descr['d'],$k);
@@ -1191,7 +1191,8 @@ class bForm_vm_Visit extends bForm_vm {
    * Office
    */  
   private function officeBlock(){
-    if ($this->getPolicy(   VM_V_provideOffice) &&
+    if (!empty($this->e) && 
+	$this->getPolicy(   VM_V_provideOffice) &&
 	$this->e->getPolicy(VM_E_provideOffice)){
       if (($s = @$this->getValue('v_start',1)) && ($e = @$this->getValue('v_end',1))){
 	locateAndInclude('bForm_vm_Office');

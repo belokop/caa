@@ -50,7 +50,7 @@ class bList_eaCV extends bList{
 										     'cvs'   =>'',
 										     'cvf'   =>''));
       
-      $this->existing_CV = array($this->av->ID => $this->av->fmtname());
+      $this->existing_CV = array($this->av->ID => $this->av->fmtName());
     }elseif (EA_administrator_here){
       // List of existing CV's
       $list = array(0);
@@ -58,16 +58,16 @@ class bList_eaCV extends bList{
       
       $q = myPear_db()->query("SELECT av_id,av_firstname,av_lastname FROM zzz_avatars WHERE ".join(' OR ',$list).myPear_db()->orderBy());
       while($r = myPear_db()->next_record($q)){
-	$this->existing_CV[$r['av_id']] = bForm_Avatar::_fmtname('Lf',$r);
+	$this->existing_CV[$r['av_id']] = bForm_Avatar::_fmtName('Lf',$r);
       }
       
       // List of non-existing CV's
       foreach(myOrg()->eaMembers()->getMembers_byStatus(array(EA_role_employee)) as $av_id=>$r){
-	if (!in_array($av_id,array_keys($this->existing_CV))) $this->missing_CV[$av_id] = bForm_Avatar::_fmtname('Lf',$r);
+	if (!in_array($av_id,array_keys($this->existing_CV))) $this->missing_CV[$av_id] = bForm_Avatar::_fmtName('Lf',$r);
       }
     }elseif(is_object(bAuth::$av)){
-      $this->existing_CV[bAuth::$av->ID] = bAuth::$av->fmtname('Lf',$r);
-      $this->missing_CV[bAuth::$av->ID]  = bAuth::$av->fmtname('Lf',$r);
+      $this->existing_CV[bAuth::$av->ID] = bAuth::$av->fmtName('Lf');
+      $this->missing_CV[bAuth::$av->ID]  = bAuth::$av->fmtName('Lf');
     }
   }
 

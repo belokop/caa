@@ -180,10 +180,11 @@ class bMailer_vm extends bMailer{
 		$this->remind_organizer($v,$e,$mode='rdl',True);
 	      }
 	    }elseif(VM_manager_here){
-	      $av = new bForm_Avatar($av_id);
+	      $av = new bForm_Avatar_vm($av_id);
 	      myPear::WARNING($msg = 'Organizer '.$av->fmtName('fl').' has not yet registered for his event '.$e->name());
-	      $this->remind_organizer($av,$e,$mode='reg',True);
 	      $info_body[] = $msg;
+	      $mode = 'reg';
+	      if (!@$_SESSION[__METHOD__.$mode]++)  $this->remind_organizer($av,$e,$mode,True);
 	    }
 	  }
 	}
@@ -311,7 +312,10 @@ You can see the event budget from your personal web page, which you can access d
 	break;
 
       case 'reg': // ----------------------- the organizer is not yet registered for the event
-	myPear::WARNING("'$mode' is not yet ready");	return True;
+	if (!isset($subject))  $subject = "Please register for the event you organize";
+	$body .= "
+The deadline for the applications is now over and you can estimate now the event budget.
+However, in order to do this you have to be registered as the event participant, please register as soon as posible."; 
 	break;
 
       default:
@@ -319,7 +323,7 @@ You can see the event budget from your personal web page, which you can access d
 	return Null;
       }
       
-      $body .= "{login_url}
+      if ($mode != 'reg') $body .= "{login_url}
 
 Remember to save this mail or book-mark the web page to facilitate later access to the web page.
 ";

@@ -159,12 +159,25 @@ class bAuth{
     return $reply;
   }
   
+  public static function debug_auth(){
+    if (is_object(bAuth::$av))               myPear::DEBUG(sprintf("%s: %s",'bAuth::$av',bAuth::$av->getEmail()));
+    if (is_object(bAuth::$av_authenticated)) myPear::DEBUG(sprintf("%s: %s",'bAuth::$av_authenticated',bAuth::$av_authenticated->getEmail()));
+    foreach(array('email_authenticated',
+		  'email_login_as',
+		  'email_to_autologged',
+		  ) as $e) if ($m = @$_SESSION['bAuth'][$e]) myPear::DEBUG(sprintf("%s: %s",$e,$m),YBhere);
+    myPear::DEBUG(sprintf("%s: %s",'cnf_demo_email',cnf_demo_email),YBhere);
+  }
+
   private static function _authenticated($arg=array()){
 
     $av_email = !empty($_SESSION['bAuth']['email_authenticated']);
     if(@$arg['reset']==='yes')$_SESSION['bAuth'] = array();
 
-    foreach(array('email_authenticated','email_login_as','email_to_autologged') as $e){
+    foreach(array('email_authenticated',
+		  'email_login_as',
+		  'email_to_autologged',
+		  ) as $e){
       if ($set=@$arg[$e]) $_SESSION['bAuth'][$e] = $set;
       if (!self::$isReady) continue;
       

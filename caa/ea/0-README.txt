@@ -1,5 +1,8 @@
 Changes log
 
+2016-05-30, Version 5.19, prp
+M       ea/includes/bForm/ea/Office.inc
+
 
 2015-06-17, Version 5.18, EA bug fix
 

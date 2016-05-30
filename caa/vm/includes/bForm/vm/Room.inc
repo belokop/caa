@@ -62,8 +62,8 @@ class bForm_vm_Room extends bForm_vm {
 			    " WHERE $this->TABLEID = '$this->ID'");
     while ($r=myPear_db()->next_record($q)) {
       $this->formDB = $r; 
-      if ((int)$this->getValue('a_start',1,1) < VMaps_day1) $this->formDB['a_start'] = rent0;
-      if ((int)$this->getValue('a_end'  ,1,1) < VMaps_day1) $this->formDB['a_end']   = rent9;
+      if ((int)$this->getValue('a_start',1,1) < VMaps_day1) $this->formDB['a_start'] = myPear_day0;
+      if ((int)$this->getValue('a_end'  ,1,1) < VMaps_day1) $this->formDB['a_end']   = myPear_day9;
       if (!empty($r['a_hutid'])) $this->hut = myPear::getInstance_new('bForm_vm_Hut',$r['a_hutid'],'strict');
     }
   }
@@ -140,8 +140,8 @@ class bForm_vm_Room extends bForm_vm {
 
   function period(){
     $reply = '';
-    if (($d=(int)$this->getValue('a_start',1)) > rent0) $reply .= b_time::strftime('%e %h %Y ->',$d);
-    if (($d=(int)$this->getValue('a_end',1))   < rent9) $reply .= b_time::strftime('-> %e %h %Y',$d);
+    if (($d=(int)$this->getValue('a_start',1)) > myPear_day0) $reply .= b_time::strftime('%e %h %Y ->',$d);
+    if (($d=(int)$this->getValue('a_end',1))   < myPear_day9) $reply .= b_time::strftime('-> %e %h %Y',$d);
     return str_replace('->->','->',$reply);
   }
 
@@ -188,8 +188,8 @@ class bForm_vm_Room extends bForm_vm {
     
     if (!$this->embedded){
       $dialog = array();
-      if ($this->MODE == 'RW' || $this->getValue('a_start',1) > rent0) $dialog['a_start'] = 'datePickerField';
-      if ($this->MODE == 'RW' || $this->getValue('a_end',1)   < rent9) $dialog['a_end']   = 'datePickerField';
+      if ($this->MODE == 'RW' || $this->getValue('a_start',1) > myPear_day0) $dialog['a_start'] = 'datePickerField';
+      if ($this->MODE == 'RW' || $this->getValue('a_end',1)   < myPear_day9) $dialog['a_end']   = 'datePickerField';
       $this->formBlock('Renting conditions',
 		       'Renting conditions',
 		       $dialog,
@@ -213,8 +213,8 @@ class bForm_vm_Room extends bForm_vm {
    * Check that the room is accesible for the given time period
    */
   static function _apIsAccessible($formDB, $start, $end){
-    if (empty($formDB['a_start'])) $formDB['a_start'] = rent0;
-    if (empty($formDB['a_end']))   $formDB['a_end']   = rent9;
+    if (empty($formDB['a_start'])) $formDB['a_start'] = myPear_day0;
+    if (empty($formDB['a_end']))   $formDB['a_end']   = myPear_day9;
     $available = 
       (b_time::_($start) >= b_time::_($formDB['a_start'])) &&
       (b_time::_($end)   <= b_time::_($formDB['a_end']));

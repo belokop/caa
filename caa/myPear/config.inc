@@ -1,7 +1,7 @@
 <?php
 // myPear module 
-$releaseDate = '2016-05-19';
-define('myPear_VERSION','5.129');
+$releaseDate = '2016-05-30';
+define('myPear_VERSION','5.130');
 define('myPear_MODULE', 'myPear');
 define('myPear_DATE',    $releaseDate);
 
@@ -344,6 +344,7 @@ require_once (dirname(__FILE__).DIRECTORY_SEPARATOR.'includes'.DIRECTORY_SEPARAT
  */
 myPear_sessionStart();
 myPear_setConstants();
+
                              
 /*
  * Define the myPear common roles.

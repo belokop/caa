@@ -1240,7 +1240,7 @@ class bForm_Avatar extends bForm {
     
     if (($old_identity=$this->getIdentity()) != $identity){
       $reply = $this->updateDB(array('av_identity'=>implode(',',$identity)));
-      if (cnf_dev || $verbose) myPear::MESSAGE($this->fmtname().": av_identity '".implode(',',$old_identity)."'->'".implode(',',$identity)."'");
+      if (cnf_dev || $verbose) myPear::MESSAGE($this->fmtName().": av_identity '".implode(',',$old_identity)."'->'".implode(',',$identity)."'");
     }
     return $old_identity;
   }

@@ -18,19 +18,25 @@ class b_vars{
    * Check is the value known 
    */
   static function isValueKnown($value,$module=Null){
-    $reply = array();
     if(empty($module))    $module = b_reg::$current_module;
+
     if (is_array($value)){
+      $reply = False;
       $q = myPear_db()->query("SELECT var_name,var_value FROM zzz_variables WHERE ".
 			      "var_module = '$module'");
       while($r = myPear_db()->next_record($q)){
-	if (count(array_keys(array_intersect(b_fmt::safe_decode($r['var_value']),$value))) == count(array_keys($value)))	$reply[] = $r['var_name']; 
+	if (is_array($var_value = b_fmt::safe_decode($r['var_value']))){
+	  $reply = True;
+	  foreach($value as $k=>$v) if (@$var_value[$k] !== $v) $reply = False;
+	  if ($reply) break;
+	}
       }
     }else{
       $q = myPear_db()->query("SELECT var_name FROM zzz_variables WHERE ".
-			      "var_module = '$module' AND ".myPear_db()->quote($value,True,'var_value'));
-      while($r = myPear_db()->next_record($q)) $reply[] = $r['var_name']; 
+			      "var_module = '$module' AND ".myPear_db()->quote($value,True,'var_value')." LIMIT 1");
+      $reply = (bool)myPear_db()->num_rows($q);
     }
+    b_debug::xxx($reply,array(2,cnf_dev));
     return $reply;
   }
   
@@ -2216,8 +2222,8 @@ class b_time{
       $reply = 0;
       $dbg = 'NO';
     }
-    if (cnf_dev && ($reply <= 0) && ($reply != -2))  b_debug::xxx("$dbg, error code=$reply");
-
+    if (defined('cnf_dev') && cnf_dev && ($reply <= 0) && ($reply != -2))  b_debug::xxx("$dbg, error code=$reply");
+    
     // Save the result for the later use
     return (self::$is_valid = $reply);
   }
@@ -2303,11 +2309,11 @@ class b_time{
       $reply = SSN::ssn2birthDate($date);
       break;
     }
-    if (cnf_dev) if(($date != $reply) &&
-		    ($date != ($r=date('Y-m-d',(int)$reply))) &&
-		    ($date != ($r=date('Y-m-d H:i',(int)$reply))) &&
-		    ($date != ($r=date('d-F-Y-H:i',(int)$reply)))
-		    ) b_debug::xxx("case=$case? $reply != $r");
+    if (defined('cnf_dev') && cnf_dev) if(($date != $reply) &&
+					  ($date != ($r=date('Y-m-d',(int)$reply))) &&
+					  ($date != ($r=date('Y-m-d H:i',(int)$reply))) &&
+					  ($date != ($r=date('d-F-Y-H:i',(int)$reply)))
+					  ) b_debug::xxx("case=$case? $reply != $r");
     return $reply;
   }
   

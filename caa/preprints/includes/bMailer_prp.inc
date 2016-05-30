@@ -1,5 +1,7 @@
 <?php
 locateAndInclude('bMailer');
+locateAndInclude('APImenu_prp');
+
 class bMailer_prp extends bMailer{
   
   var $debug  = False;

@@ -28,8 +28,8 @@ class bForm_ea_Office extends bForm{
     $this->defineVariables();
 
     $day1 = b_time::txt2unix('2008-03-14');
-    if ((int)$this->getValue('o_start',1) < $day1) $this->getValue_reset('o_start',rent0);
-    if ((int)$this->getValue('o_end'  ,1) < $day1) $this->getValue_reset('o_end',  rent9);
+    if ((int)$this->getValue('o_start',1) < $day1) $this->getValue_reset('o_start',myPear_day0);
+    if ((int)$this->getValue('o_end'  ,1) < $day1) $this->getValue_reset('o_end',  myPear_day9);
     $this->dbg('------------------------');
   }
 

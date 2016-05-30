@@ -793,7 +793,7 @@ class myPear{
 
   static public function DEBUG($text='',$class=Null){ 
     $forced = ($class === 'forced');
-    if (($class === False) || (!cnf_dev && !$forced))  return;
+    if (($class === False) || (!YBhere && !cnf_dev && !$forced))  return;
     if (!is_object($class)) $class = Null;
     if ($forced) self::MESSAGE_forced($text?$text:b_debug::__(2), $class, 'debug'); 
     else         self::MESSAGE       ($text?$text:b_debug::__(2), $class, 'debug'); 

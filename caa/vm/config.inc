@@ -2,7 +2,7 @@
 /**
  * Visitors Manager (VM) configuration file
  */
-$releaseDate = '2016-05-19';
+$releaseDate = '2016-05-30';
 define('VM_MODULE'   , 'vm');
 define('VM_VERSION','5.78');
 
@@ -125,10 +125,6 @@ define('VM_reminding_period', 3); // in days
 /*
  * Infinite dates...
  */
-// long in the past
-define('rent0',b_time::txt2unix('1999-12-31'));
-// long in the future
-define('rent9',CONST_eternity_t);
 // Infinite hut capacity
 define('VM_capacity999',999);
 

@@ -1,5 +1,16 @@
 Changes log
 
+2016-05-30, Version 5.130, prp
+M       myPear/includes/APImenu.inc
+M       myPear/includes/bAuth.inc
+M       myPear/includes/bForm/Avatar.inc
+M       myPear/includes/bList/eaCV.inc
+M       myPear/includes/bMailer.inc
+M       myPear/includes/myPear.inc
+M       myPear/includes/myPear_classes.inc
+M       myPear/includes/myPear_functions.inc
+M       myPear/includes/myPear_taskManager.inc
+
 2016-05-19, Version 5.129, Minor fixes
 M       myPear/includes/myPear_taskManager.inc
 
