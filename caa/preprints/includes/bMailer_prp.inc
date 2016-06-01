@@ -43,15 +43,15 @@ If you want to publish ONLY at '.myOrg_name.' you can upload your paper now ("ed
   /*
    * Inform the censors about new preprints
    */
-  function censor($action,$prp){
+  function censor($action,$preprint){
     if (cnf_CLI)    return;
-    $owner = myPear::getInstance_new('bForm_Avatar',$prp->getValue('prp_avid'));
+    $owner = myPear::getInstance_new('bForm_Avatar',$preprint->getValue('prp_avid'));
     foreach(PRP_censors()->getUnitMemberIDs() as $av_id){
       $av = myPear::getInstance('bForm_Avatar',$av_id);
       $this->send($this->packPWD_axi($av),
 		  $av->getEmail(),
-		  bForm_prp::_serial($prp->formDB)." $action for ".b_fmt::unescape($owner->fmtName('fl')),
-		  $this->prp_info($action,$av,$prp->formDB),
+		  bForm_prp::_serial($preprint->formDB)." $action for ".b_fmt::unescape($owner->fmtName('fl')),
+		  $this->prp_info($action,$av,$preprint->formDB),
 		  $syslog_thisMail=False,
 		  $no_preview =True);
     }
