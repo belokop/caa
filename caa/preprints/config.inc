@@ -1,6 +1,6 @@
 <?php
 
-$releaseDate = '2016-05-30';
+$releaseDate = '2016-06-01';
 define('PRP_MODULE'   , 'prp');
 define('PRP_VERSION','5.9.rc');
 

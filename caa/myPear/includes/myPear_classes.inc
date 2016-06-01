@@ -1,4 +1,3 @@
-
 <?php
 /*
  * Variables
@@ -3399,9 +3398,11 @@ class b_url{
   /*
    * add http(s)://host in front of url
    */
-  static function _($url){
-    if (!stripos($url,'http') !== 0){
-      $url = 'http'.($_SERVER['SERVER_PORT'] == 80 ? '' : 's').'://'. $_SERVER['HTTP_HOST'].str_replace('//','/','/'.$url);
+  static function _($url,$replace=False){
+    $url = trim($url);
+    if ($replace) $url = preg_replace('|^https?:/*|i','',$url);
+    if (stripos($url,'http') !== 0){
+      $url = sprintf('http%s://%s',($_SERVER['SERVER_PORT'] == 80 ? '' : 's'),str_replace('//','/',$url));
     }
     return $url;
   }

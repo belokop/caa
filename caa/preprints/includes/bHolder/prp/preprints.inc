@@ -174,7 +174,7 @@ class bHolder_prp_preprints extends bHolder{
     if (preg_match('/\.(gz|pdf|doc)$/',($l=trim($this->rec['prp_archive'])))){
       $reply = x("a href='$l'",$title);
     }elseif ($url=$this->rec['prp_archive']){
-      $reply = bJS()->modal_iframe($url,$title,'',True);
+      $reply = bJS()->modal_iframe(b_url::_($url,True),$title,'',True);
     }elseif($this->rec['prp_local']){
       $p = new bForm_prp($this->rec['prp_id']);
       $l = $p->url_local();
@@ -203,8 +203,8 @@ class bHolder_prp_preprints extends bHolder{
     $this->rec['serial'] = x('strong',bForm_prp::_serial($this->rec,False));
     $this->rec['preprint'] = $this->href(x('strong',$t)).' <br/>'.x('em',$a);
     $this->rec['prp_publisher'] = str_replace(',','&#44;',$this->rec['prp_publisher']);
-    if ($doi=$this->rec['prp_doi'])  $this->rec['prp_publisher'] = bJS()->modal_iframe("http://dx.doi.org/doi:$doi",x('strong',$this->rec['prp_publisher']));
-
+    if ($doi=$this->rec['prp_doi'])  $this->rec['prp_publisher'] = bJS()->modal_iframe(b_url::_("http://dx.doi.org/doi:$doi",True),x('strong',$this->rec['prp_publisher']));
+    
     if ($this->rec["prp_status"] == PRP_CANCELED) $this->rec['preprint'] = strip_tags($this->rec['preprint']);
     
     $this->rec['prp_avid'] = bForm_Avatar::_fmtName('fl',$this->rec);

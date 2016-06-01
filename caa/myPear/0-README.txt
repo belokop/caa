@@ -1,5 +1,8 @@
 Changes log
 
+2016-06-01, Version 5.131, Mixed Active Content problem
+M       myPear/includes/myPear_classes.inc
+
 2016-05-30, Version 5.130, prp
 M       myPear/includes/APImenu.inc
 M       myPear/includes/bAuth.inc
