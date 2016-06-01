@@ -1,5 +1,9 @@
 Changes log
 
+2016-06-01, Version 5.132, Mixed Active Content problem
+M       myPear/includes/myPear_classes.inc
+M       myPear/includes/myPear_taskManager.inc
+
 2016-06-01, Version 5.131, Mixed Active Content problem
 M       myPear/includes/myPear_classes.inc
 

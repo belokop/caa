@@ -22,12 +22,12 @@ class bHolder_prp_preprints extends bHolder{
     else                       $doing = 'list';
     $this->doing = $doing;
 
-    if ($id = @$_GET['accept_once']){
+    if ($id = @$_GET['prp_accept_once']){
       $p = new bForm_prp($id);
       $p->setAccepted();
     }
 
-    if ($id = @$_GET['delete_once']){
+    if ($id = @$_GET['prp_delete_once']){
       $p = new bForm_prp($id);
       $p->setCanceled();
     }
@@ -223,11 +223,11 @@ class bHolder_prp_preprints extends bHolder{
       foreach($this->header() as $k=>$v) $this->t->class[$k] = 'redText';
       $this->rec['prp_avid'] .= '<br/>'.date(' Y-m-d',$this->rec['prp_tm']);
       if (is_object($p) && $p->isWritable()){
-	if (PRP_censor_here) $this->t->extraTD[]=x("a href='".b_url::same("?accept_once=$p->ID").
+	if (PRP_censor_here) $this->t->extraTD[]=x("a href='".b_url::same("?prp_accept_once=$p->ID").
 						   "' onClick='return confirm(\"Really accept?\");'",
 						   bIcons()->get(array('d'=>'accept',
 									       'i'=>'ok')));
-	$this->t->extraTD[]=x("a href='".b_url::same("?delete_once=$p->ID")."' onClick='return confirm(\"Really delete?\");'",
+	$this->t->extraTD[]=x("a href='".b_url::same("?prp_delete_once=$p->ID")."' onClick='return confirm(\"Really delete?\");'",
 			      bIcons()->get(array('d'=>'delete',
 							  'i'=>'drop')));
       }

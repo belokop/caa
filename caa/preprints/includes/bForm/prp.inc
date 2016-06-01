@@ -244,9 +244,12 @@ class bForm_prp extends bForm{
   }
 
   private function serial(){
-    return self::_serial($this->formDB);
+    return self::_serial(array('prp_id'    =>$this->getValue('prp_id'),
+			       'prp_day0'  =>$this->getValue('prp_day0'),
+			       'prp_report'=>$this->getValue('prp_report'),
+			       'prp_field' =>$this->getValue('prp_field')));
   }
-
+  
   /*
    *
    */

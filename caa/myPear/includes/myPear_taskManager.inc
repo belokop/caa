@@ -30,8 +30,8 @@ class myPear_taskManager{
     }
 
     // Perform "delete" action, mark task as completed
-    if ($task_id = @$_REQUEST['delete_once']){
-      $task = b_vars::get($task_id,$module = $_REQUEST['m_once']);
+    if ($task_id = @$_REQUEST['tm_delete_once']){
+      $task = b_vars::get($task_id,$module = $_REQUEST['tm_m_once']);
       if (empty($task['end'])){
 	b_vars::set($task_id,array_merge($task,array('cmt'=>'Removed','end'=>time())));
       }else{
@@ -83,7 +83,7 @@ class myPear_taskManager{
 	    $t->extraTD[] = '';
 	    $t->extraTD[] = b_btn::submit_icon('i-drop',
 					       'drop',
-					       b_url::same("?resetcache_once=1&m_once=$module&delete_once=".$task['var_name']),
+					       b_url::same("?resetcache_once=1&tm_m_once=$module&tm_delete_once=".$task['var_name']),
 					       $confirm=True);
 	  }
 
@@ -110,13 +110,13 @@ class myPear_taskManager{
 	    $n_waiting++;
 	    $t->extraTD[] = b_btn::submit_icon('i-bullet_go',
 					       'execute',
-					       b_url::same("?resetcache_once=1&myPear_taskManager=y&m_once=$module&execute_once=".$task['var_name']),
+					       b_url::same("?resetcache_once=1&myPear_taskManager=y&tm_m_once=$module&tm_execute_once=".$task['var_name']),
 					       $confirm=True);
 	    $t->extraTD[] = b_btn::submit_icon('i-drop',
 					       'drop',
-					       b_url::same("?resetcache_once=1&m_once=$module&delete_once=".$task['var_name']),
+					       b_url::same("?resetcache_once=1&tm_m_once=$module&tm_delete_once=".$task['var_name']),
 					       $confirm=True);
-	  }elseif(($task['end']+TM_clean_log_time*24*3600 < time()) || (@$_REQUEST['clean_once']==='yes')){
+	  }elseif(($task['end']+TM_clean_log_time*24*3600 < time()) || (@$_REQUEST['tm_clean_once']==='yes')){
 	    myPear_logs()->syslog($msg="Clean completed $module::".$task['var_name']);
 	    myPear::WARNING($msg);
 	    b_vars::delete($task['var_name'],$module);
@@ -135,9 +135,9 @@ class myPear_taskManager{
 	}
       }
       if ($n_waiting) $btns[] = b_btn::submit("execute $n_waiting waiting tasks",
-					      b_url::same('?resetcache_once=1&execute_once=yes&myPear_taskManager=yes'));
+					      b_url::same('?resetcache_once=1&tm_execute_once=yes&myPear_taskManager=yes'));
       if ($n_ended)   $btns[] = b_btn::submit("clean out $n_ended completed tasks",
-					      b_url::same('?execute_once=1&resetcache_once=1&clean_once=yes&myPear_taskManager=yes'));
+					      b_url::same('?tm_execute_once=1&resetcache_once=1&tm_clean_once=yes&myPear_taskManager=yes'));
       if (!empty($btns)) print x('tr',x('td colspan=9 style="text-align:center;"',b_btn::UL_buttons($btns)));
       $t->close();
     }
@@ -248,7 +248,7 @@ class myPear_taskManager{
   function doTasks($module2exec='all',$task2exec='all'){
     static $class_instance = array();
     static $sleep_time = 13; // seconds
-    if (empty($_REQUEST['execute_once'])) return;
+    if (empty($_REQUEST['tm_execute_once'])) return;
     
     //    $this->dbg(starting);
     //    $this->lock_acquire();
@@ -259,7 +259,7 @@ class myPear_taskManager{
     
     // Execute the task(s)
 
-    if (($task = @$_REQUEST['execute_once']) && ($module = @$_REQUEST['m_once'])){
+    if (($task = @$_REQUEST['tm_execute_once']) && ($module = @$_REQUEST['tm_m_once'])){
       $module2exec = $module;
       $task2exec   = $task;
       $this->dbg("module2exec=$module2exec, task2exec=$task2exec");

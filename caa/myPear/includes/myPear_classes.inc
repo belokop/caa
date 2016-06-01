@@ -3398,12 +3398,15 @@ class b_url{
   /*
    * add http(s)://host in front of url
    */
-  static function _($url,$replace=False){
-    $url = trim($url);
-    if ($replace) $url = preg_replace('|^https?:/*|i','',$url);
-    if (stripos($url,'http') !== 0){
-      $url = sprintf('http%s://%s',($_SERVER['SERVER_PORT'] == 80 ? '' : 's'),str_replace('//','/',$url));
+  static function _($url_,$replace=False){
+    $url = trim($url_);
+    $http = sprintf('http%s://',($_SERVER['SERVER_PORT'] == 80 ? '' : 's'));
+    if ($replace){
+      if (stripos($url,'https://') === False) $url = preg_replace('|^http?:/+|i',$http,$url);
+    }else{
+      $url = sprintf('%s%s/%s',$http,$_SERVER['HTTP_HOST'],$url);
     }
+    if ($url !== $url_) b_debug::xxx($url,array(2,'redText',True));
     return $url;
   }
 
