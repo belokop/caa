@@ -130,13 +130,13 @@ class bHolder_prp_preprints extends bHolder{
   
   private function query_select($where=array()){
     // if (!myPear_db()->columnExists(@$_GET['sBy'],'prp_list')) $_GET['sBy'] = 'prp_day0'; 
-    // if (@$_GET['sBy'] === 'prp_day0')                           $_GET['sByDir'] = 'DESC'; 
-    $_GET['sBy']    = 'prp_day0'; 
+    // if (@$_GET['sBy'] === 'prp_day0')                         $_GET['sByDir'] = 'DESC'; 
+    $_GET['sBy']    = 'pn';
     $_GET['sByDir'] = 'DESC'; 
-    return myPear_db()->qquery("SELECT * FROM prp_list LEFT JOIN zzz_avatars ON av_id = prp_avid ".
-				 " WHERE ".join(' AND ',$where).
-				 " ORDER BY $_GET[sBy] $_GET[sByDir]",
-				 (bool)b_cnf::get('prpdebug') || $this->debug);
+    return myPear_db()->qquery("SELECT *,YEAR(FROM_UNIXTIME(prp_day0))*1000+prp_report AS pn FROM prp_list LEFT JOIN zzz_avatars ON av_id = prp_avid ".
+			       " WHERE ".join(' AND ',$where).
+			       " ORDER BY $_GET[sBy] $_GET[sByDir]",
+			       cnf_dev || (bool)b_cnf::get('prpdebug') || $this->debug);
   }
     
   function listEntries(){
@@ -155,6 +155,14 @@ class bHolder_prp_preprints extends bHolder{
       myPear::MESSAGE($message);
     }
 
+  }
+
+  function drawHeader(){
+    parent::drawHeader();
+
+    $this->t->autoBreakLine = True;
+    $this->t->class['serial'] = 'bg_transp b_nowrap'; 
+    print x('tr',x('td',''));
   }
 
   function header(){
@@ -240,11 +248,6 @@ class bHolder_prp_preprints extends bHolder{
       
     case PRP_OK:
       if (is_object($this->t)) $this->t->class = array();
-    }
-    
-    if (is_object($this->t)){
-      $this->t->autoBreakLine = True;
-      $this->t->class['serial'] = 'bg_transp b_nowrap'; 
     }
   }
   

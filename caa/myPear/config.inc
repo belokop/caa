@@ -1,7 +1,7 @@
 <?php
 // myPear module 
-$releaseDate = '2016-06-01';
-define('myPear_VERSION','5.132');
+$releaseDate = '2016-06-05';
+define('myPear_VERSION','5.133');
 define('myPear_MODULE', 'myPear');
 define('myPear_DATE',    $releaseDate);
 
@@ -344,7 +344,6 @@ require_once (dirname(__FILE__).DIRECTORY_SEPARATOR.'includes'.DIRECTORY_SEPARAT
  */
 myPear_sessionStart();
 myPear_setConstants();
-
                              
 /*
  * Define the myPear common roles.
@@ -431,7 +430,7 @@ function locateAndInclude($objects,$flag=''){
   foreach($objects as $o) if (!class_exists($o)) $something_missing[] = $o;
   if (empty($something_missing)) return True;
   elseif(($something_missing !== $objects) && class_exists('b_debug',0)) b_debug::print_r($something_missing,
-											  "still missing... ".__FUNCTION__.'('.join(',',$objects).')');
+											  __FUNCTION__.'('.join(',',$objects).'), looking for:');
   // Switch on timing, if needed
   if ($bTiming = function_exists('bTiming')) bTiming()->cpu(__FUNCTION__);
   

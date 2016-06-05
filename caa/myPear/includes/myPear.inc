@@ -38,7 +38,6 @@ class myPear{
 						  'bList_formDescription'=>array('p'=>'bList',
 										 'd'=>'Forms descriptors'),
 						  'bForm_Avatar_Search'  =>array('p'=>'bForm_Avatar'),
-						  'zzz_mail_queue'       =>array('t'=>'zzz_mail_queue'),
 						  'zzz_variables'        =>array('t'=>'zzz_variables'),
 						  'zzz_countries'        =>array('t'=>'zzz_countries'),
 						  'zzz_crypt'            =>array('t'=>'zzz_crypt'),

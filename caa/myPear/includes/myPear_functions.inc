@@ -387,7 +387,7 @@ function myOrg($org_id=Null){
 		    'myOrg_name',
 		    'myOrg_nameS',
 		    'myOrg_domain',
-		  'myOrg_code',
+		    'myOrg_code',
 		    'myOrg_theme',  
 		    ) as $k ) $dbg[] = "$k = ".constant($k);
       b_debug::xxx(join('<br/>',$dbg));

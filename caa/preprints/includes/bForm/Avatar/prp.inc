@@ -54,11 +54,11 @@ class bForm_Avatar_prp extends bForm_Avatar{
     parent::formOKspecific();
     // Automatically add the newly created preprint user to the submitters list
     // and send him the password 
-    if ($this->errorless() && !PRP_writers()->isMember($this->ID)){
+    if ($this->errorless() && !PRP_submitters()->isMember($this->ID)){
       // Force creation of the Avatar
       $this->updateDB();
       $this->dbg("created",True);
-      PRP_writers()->add_unitMember($this);
+      PRP_submitters()->add_unitMember($this);
       PRP_mailer()->remind_password($this);
     }
   }

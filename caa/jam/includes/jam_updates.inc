@@ -1,5 +1,6 @@
 <?php
 
+ini_set("memory_limit",-1);
 myPear_startup_queue('jam_update13');
 myPear_startup_queue('jam_updates');
 
@@ -14,7 +15,6 @@ function jam_updates(){
   if (bMaster()->register_module_update_script(JAM_MODULE,JAM_VERSION,__FILE__)){
     bTiming()->cpu(__FUNCTION__);
     
-    ini_set("memory_limit","1111M");
     set_time_limit(0);
     
     jam_update01();

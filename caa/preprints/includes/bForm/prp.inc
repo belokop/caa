@@ -5,6 +5,8 @@
 locateAndInclude('bForm');
 locateAndInclude('bForm_Avatar');
 
+define('prp_IDV','http://arxiv.org/abs/');
+
 /*
  * Load the debug helper
  */
@@ -98,9 +100,8 @@ class bForm_prp extends bForm{
 						   'prp_local',
 						   'prp_doi',
 						   'prp_tm',),
-			     'isRO'        =>array(
-						   'prp_avid'),
-			     'IDV'         =>array('prp_archive'=>'http://arxiv.org/abs/'),
+			     'isRO'        =>array('prp_avid'),
+			     'IDV'         =>array('prp_archive'=>prp_IDV),
 			     'expected_ext'=>array('prp_local'  =>''), // no restriction
 			     ));
   }
@@ -146,7 +147,7 @@ class bForm_prp extends bForm{
       $q = myPear_db()->qquery("SELECT MAX(prp_report) as N FROM prp_list WHERE prp_orgid = ".myOrg_ID." AND YEAR(FROM_UNIXTIME(prp_day0)) = ".prp_year9);
       while ($r = myPear_db()->next_record($q)) $prp_report = $r['N'] + 1;
       
-      // Set the "enviromantal variables"
+      // Set the "environmental variables"
       foreach(array('prp_report' => $prp_report + 1,
 		    'prp_avid'   => $this->getValue('prp_avid'),
 		    'prp_orgid'  => myOrg_ID,
@@ -154,6 +155,8 @@ class bForm_prp extends bForm{
 		    'prp_day0'   => time(),
 		    'prp_tm'     => time()) as $k=>$v) $this->getValue_reset($k,$v);
     }
+    // Workaround
+    if ($this->getValue('prp_archive') === prp_IDV) $this->getValue_reset_forced('prp_archive');
   }
 
   function isWritable(){
@@ -228,11 +231,11 @@ class bForm_prp extends bForm{
       /*
        * Preprint owner
        */
-      if (PRP_manager_here){
+      if (PRP_manager_here && !$this->getValue('prp_avid')){
 	$this->isRO['prp_avid'] = False;
-	$submitters = PRP_writers()->get();
+	$submitters = PRP_submitters()->get();
 	if (empty($submitters[bAuth::$av->ID]))  $submitters[bAuth::$av->ID] = bAuth::$av->name();
-	$this->formBlock('','Preprint owner', array('prp_avid' => array('selectMenu',$submitters)));
+	$this->formBlock('','Preprint submitter', array('prp_avid' => array('selectMenu',$submitters)));
       }else{
         $this->textHidden('prp_avid',bAuth::$av->ID);
       }

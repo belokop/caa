@@ -1,9 +1,9 @@
 <?php
 locateAndInclude('bUnit_prp');
-class bUnit_prp_writers extends bUnit_prp{
+class bUnit_prp_submitters extends bUnit_prp{
 
-  function __construct($parent_id=myOrg_ID,$rank=RANK_prp_writer){
-    parent::__construct(myOrg_ID,RANK_prp_writer);
+  function __construct($parent_id=myOrg_ID,$rank=RANK_prp_submitter){
+    parent::__construct(myOrg_ID,RANK_prp_submitter);
     $this->bUnit_init();
   }
   
@@ -11,7 +11,7 @@ class bUnit_prp_writers extends bUnit_prp{
    * Include all the employers to the submitter unit, if not yet done
    */
   private function bUnit_init(){
-    if (($this->rank == RANK_prp_writer) && !@$_SESSION[get_class($this)]++){
+    if (($this->rank == RANK_prp_submitter) && !@$_SESSION[get_class($this)]++){
       $members = $this->getUnitMemberIDs();
       // Accept all the employers to to club
       foreach(myOrg($this->parent_ID)->eaMembers()->getUnitMemberIDs('e') as $av_id){

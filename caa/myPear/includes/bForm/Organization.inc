@@ -93,6 +93,13 @@ class bForm_Organization extends bForm {
     return $organizations[$org_id];
   }
 
+  private static function is_orgID_valid($org_id){
+    $org_id = trim($org_id);
+    $reply  = (myPear::is_int($org_id) || (is_string($org_id) && preg_match('/^[a-zA-Z0-9]*$/',$org_id)));
+    b_debug::xxx($reply,array(2));
+    return $reply;
+  }
+
   /*
    * get org_id from org_code
    */
@@ -102,7 +109,10 @@ class bForm_Organization extends bForm {
     b_reg::_(False);
     b_reg::load_module(b_reg::$current_module);
 
-    if (empty($org_id) && ($o=b_cnf::get('org'))) $org_id = $o;
+    // Be shure that the org code is not fake
+    if (!self::is_orgID_valid($org_id)) $org_id = Null;
+
+    if (empty($org_id) && ($o=b_cnf::get('org')) && self::is_orgID_valid($o)) $org_id = $o;
     if (empty($org_id) && function_exists($f=b_reg::$current_module.'_select_organization')) $org_id = $f();
     if (empty($org_id) && !empty($default)) $org_id = $default;
 

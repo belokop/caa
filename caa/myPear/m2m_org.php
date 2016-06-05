@@ -3,7 +3,7 @@ define('myPear_root_files','/Users/yb/Sites/drupal/sites/default/files/');
 if (!isset($_SESSION)) session_start();
 $_GET['q'] = 'ea';
 $_GET['org'] = @$argv[1];
-ini_set("memory_limit","888M");
+ini_set("memory_limit",-1);
 
 print ('<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />'.
        '<pre>'.

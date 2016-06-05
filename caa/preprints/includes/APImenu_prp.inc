@@ -89,11 +89,11 @@ class APImenu_prp extends APImenu{
 	break;
 	
       case tab_prp_mng:
-	$reply = PRP_writer_here;
+	$reply = PRP_submitter_here;
 	break;
 
       case tab_prp_new:
-	$reply = !PRP_writer_here;
+	$reply = !PRP_submitter_here;
 	$reply = True;
 	break;
 	

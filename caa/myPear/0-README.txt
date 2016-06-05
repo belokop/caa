@@ -1,5 +1,14 @@
 Changes log
 
+2016-06-05, Version 5.133, preprints-rc1
+M       myPear/includes/APIaccess.inc
+M       myPear/includes/bForm/Organization.inc
+M       myPear/includes/bMailer.inc
+M       myPear/includes/myPear.inc
+M       myPear/includes/myPear_functions.inc
+M       myPear/m2m_org.php
+D       myPear/sql/zzz_mail_queue.sql
+
 2016-06-01, Version 5.132, Mixed Active Content problem
 M       myPear/includes/myPear_classes.inc
 M       myPear/includes/myPear_taskManager.inc

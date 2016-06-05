@@ -1,15 +1,15 @@
 <?php
 
-$releaseDate = '2016-06-01';
+$releaseDate = '2016-06-05';
 define('PRP_MODULE'   , 'prp');
-define('PRP_VERSION','5.9.rc');
+define('PRP_VERSION','5.9.rc2');
 
 define('PRP_OK'          , 'ok');
 define('PRP_CANCELED'    , 'canceled');
 define('PRP_RESERVED'    , 'reserved');
 define('PRP_TEXT_reserve', 'register new preprint');
 
-define('RANK_prp_writer' , 10);
+define('RANK_prp_submitter' , 10);
 define('RANK_prp_censor' , 12);
 define('RANK_prp_manager', 14);
 
@@ -36,7 +36,7 @@ b_reg::add_module(PRP_MODULE,
 				       RANK_prp_censor => array('class'=>'bUnit_prp_censors',
 								'd'    =>'Preprints censor',  
 								'i'    =>'i-user2_no'),
-				       RANK_prp_writer => array('class'=>'bUnit_prp_writers',
+				       RANK_prp_submitter => array('class'=>'bUnit_prp_submitters',
 								'd'    =>'Preprints submitter', 
 								'i'    =>'bb-edit'))));
 
@@ -93,11 +93,11 @@ function PRP_censors(){
   return $unit;
 }
 
-function PRP_writers(){
+function PRP_submitters(){
   static $unit = Null;
   if ($unit === Null){
-    locateAndInclude('bUnit_prp_writers');
-    $unit = new bUnit_prp_writers();
+    locateAndInclude('bUnit_prp_submitters');
+    $unit = new bUnit_prp_submitters();
   }
   return $unit;
 }
