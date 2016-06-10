@@ -10,7 +10,7 @@ define('VM_VERSION','5.78');
 // transition problems...
 //
 define('modal_sendmail_dialog',cnf_dev||cnf_demo); // Doesn't want to work...
-define('include_payLunch_dinner',cnf_dev||cnf_demo);
+define('include_payLunch_dinner',cnf_dev);
 
 // Office space allocation
 define('allocate_offices',True);
