@@ -135,7 +135,7 @@ class bList_vm_accommodationOptions extends bList_vm{
   /*
    *
    */
-  protected function getFormAdd(){
+  function getFormAdd(){
 
     $this->bForm($this->list_quering,True);
     $this->f->tips = array();

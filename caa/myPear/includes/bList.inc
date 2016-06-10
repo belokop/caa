@@ -1441,7 +1441,7 @@ class bList extends myPear_getValue{
     $this->dbg('done');
   }
 
-  protected function getFormAdd(){
+  function getFormAdd(){
 
     $this->bForm(array('name'               =>'lm_key',
 		       $this->memberTitle() => 'lm_value'));

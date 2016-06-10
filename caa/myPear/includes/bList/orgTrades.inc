@@ -68,7 +68,7 @@ class bList_orgTrades extends bList{
   /*
    * Input form
    */
-  protected function getFormAdd(){
+  function getFormAdd(){
     myPear::H1('Updating '.$this->getValue('l_name'));
     
     // Create the record if it is empty

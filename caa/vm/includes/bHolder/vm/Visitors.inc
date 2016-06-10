@@ -761,7 +761,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
     //
     if ($detailed_socialEvents){
       $this->money_bold[] = 'name';
-      $budgetP['name'] .= x("span font-style:italic'",'<br/><br/>&nbsp;'.$socialEvents);
+      $budgetP['name'] .= x("span font-style:italic'",'<br><hr>&nbsp;'.$socialEvents);
       $word_socialEvents = 'Social events';
       $header['name'] = '';
       //      $this->set_colorCodes($k,$budgetP[$k]);
@@ -783,7 +783,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
 	}
 	$result = ob_get_contents();
 	ob_end_clean();
-	if (!empty($result)) $budgetP[$header_element] .= '<br><br>N. tenants'.$result;
+	if (!empty($result)) $budgetP[$header_element] .= '<br><hr>N. tenants'.$result;
       }    
     }
 
@@ -799,7 +799,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
 								       'zone'=>$zone));
 	
 	$t->close();
-	$budgetP[$k] .= '<br><br>N.trips'.ob_get_contents();
+	$budgetP[$k] .= '<br><hr>N.trips'.ob_get_contents();
 	ob_end_clean();
       }
     }
@@ -823,7 +823,10 @@ class bHolder_vm_Visitors extends bHolder_vm{
     $t->noSort = True;
     $t->showLineCounter = False;
     
-    foreach($header as $k=>$v) $t->class[$k] = array('highlightWhite'); 
+    foreach($header as $k=>$v){
+      $t->class[$k] = array(stripos($k,'space')===0 ? 'highlightShadow' : 'highlightWhite'); 
+      //      if (stripos($k,'space')===False) $separator[$k] = '<hr>';
+    }
     $t->prt($budgetP);
     
     if (is_object(VM::$e) && !is_object($this->av)){
@@ -888,7 +891,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
     if ($this->doing == 'myguests') $something_printed++;
     if (is_object(VM::$e) && !is_object($this->av) && !$something_printed++){
       if    (VM::$e->isArchived())      $this->t->pendingObject[] = bIcons()->get('b-archive');
-	elseif(VM::$e->isEventEndorsed()) $this->t->pendingObject[] = bIcons()->get('b-approved-vert');
+      elseif(VM::$e->isEventEndorsed()) $this->t->pendingObject[] = bIcons()->get('b-approved-vert');
     }
   }
     
@@ -1744,24 +1747,31 @@ class bHolder_vm_Visitors extends bHolder_vm{
 
   private function set_colorCodes($item,&$value){
     $c = array();
-    if (in_array($item,$this->money_bold))  $c[] = 'boldText';
-    if ($value < 0)                         $c[] = VM_color_budgetCredit;
-    elseif(in_array($item,$this->money_est))$c[] = VM_color_budgetEstimate;
+    if (stripos($item,'space') === 0){
+      $c[] = 'highlightShadow';
+    }else{
+      if (in_array($item,$this->money_bold))  $c[] = 'boldText';
+      if ($value < 0)                         $c[] = VM_color_budgetCredit;
+      elseif(in_array($item,$this->money_est))$c[] = VM_color_budgetEstimate;
       if (stripos($item,'total') !== False) $c[] = 'biggerText';
-    if (!empty($c)){
-      $value = x("span class='".join(' ',$c)."'",$value);
     }
+    if (!empty($c)) $value = x("span class='".join(' ',$c)."'",$value);
   }
-
+  
   private function set_colorCodesTH($header,&$th){
     foreach (array_keys($header) as $k){
-      $c = array('align_right');
-      if (in_array($k,$this->money_est))  $c[] = VM_color_budgetEstimate;
-      if (stripos($k,'total') !== False)  $c[] = 'biggerText';
+      if (stripos($k,'space') === 0){
+	$c = array('highlightShadow');
+      }else{
+	$c = array('align_right');
+	if (in_array($k,$this->money_est))  $c[] = VM_color_budgetEstimate;
+	if (stripos($k,'total') !== False)  $c[] = 'biggerText';
+      }
       $th[$k] = "class='".join(' ',$c)."'"; 
     }
+    b_debug::print_r($th,__METHOD__);
   }
-
+  
   /*
    *
    */

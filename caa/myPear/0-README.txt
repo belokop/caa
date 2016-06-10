@@ -1,5 +1,15 @@
 Changes log
 
+2016-06-10, Version 5.134, Make editable the soc.events FOR PROGRAMS
+M       myPear/css/myPear.css
+M       myPear/includes/bList/eaCV.inc
+M       myPear/includes/bList/eaEmpRecords.inc
+M       myPear/includes/bList/orgGroups.inc
+M       myPear/includes/bList/orgTrades.inc
+M       myPear/includes/bList.inc
+M       myPear/includes/b_table.inc
+M       myPear/includes/myPear.inc
+
 2016-06-05, Version 5.133, preprints-rc1
 M       myPear/includes/APIaccess.inc
 M       myPear/includes/bForm/Organization.inc

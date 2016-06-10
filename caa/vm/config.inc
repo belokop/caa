@@ -2,7 +2,7 @@
 /**
  * Visitors Manager (VM) configuration file
  */
-$releaseDate = '2016-05-30';
+$releaseDate = '2016-06-10';
 define('VM_MODULE'   , 'vm');
 define('VM_VERSION','5.78');
 
@@ -999,7 +999,10 @@ function VM_cotenants()     { return bList::getListInstance(myOrg_ID,'bList_vm_c
 
 function VM_agendaEvents()  { return bList::getListInstance(myOrg_ID,'bList_vm_agendaEvents'); }
 
-function VM_socialEventRates($id) { return bList::getListInstance($id,'bList_vm_socialEventRates'); }
+function VM_socialEventRates($id) { 
+  if (is_object($id)) return bList::getListInstance($id->ID,'bList_vm_socialEventRates'); 
+  else                return bList::getListInstance($id,'bList_vm_socialEventRates'); 
+}
 
 
 /*

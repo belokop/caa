@@ -723,7 +723,7 @@ class APImenu_vm extends APImenu_ea{
       
     case 'tab_vm_adm_se_setup':
     case  tab_vm_adm_se_setup:
-      bList::getListInstance(myOrg_ID,'bList_vm_socialEventRates')->getForm();
+      VM_socialEventRates(myOrg_ID)->getForm();
       break;
 
     case 'tab_vm_ogz_se_setup':

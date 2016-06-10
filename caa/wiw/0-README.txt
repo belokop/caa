@@ -1,5 +1,8 @@
 Changes log
 
+2016-06-10, Version 5.12.rc, Make editable the soc.events FOR PROGRAMS
+M       wiw/includes/bList_wiw_tripTypes.inc
+
 2016-01-17, Version 5.12.rc, test
 A       wiw
 A       wiw/_drupal-6

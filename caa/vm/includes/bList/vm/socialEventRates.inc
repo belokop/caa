@@ -132,7 +132,7 @@ class bList_vm_socialEventRates extends bList_vm{
   }
 
   /*
-   * Get the list of all prices in the format usable by the "select menu"
+   * Get the list of all soc. event names
    */
   function get_ser_names($name,$selected){
     $s = array();
@@ -164,12 +164,12 @@ class bList_vm_socialEventRates extends bList_vm{
    *
    */
   protected function isMemberDeletable(){
-    $reply = ($this->parent_ID == myOrg_ID
-	      ? !self::_is_used($this->r['lm_id'])
-	      : (count(array_keys($this->e->socialEvents()->getMembers(array('lm_key'=>$this->r['lm_id'])))) == 0));
+    $reply = !$this->isCompulsory($this->r['lm_id']) && ($this->parent_ID == myOrg_ID
+							 ? !self::_is_used($this->r['lm_id'])
+							 : (count(array_keys($this->e->socialEvents()->getMembers(array('lm_key'=>$this->r['lm_id'])))) == 0));
     return $reply;
   }
-
+  
   static function _is_used($lm_key){
     static $usage = array();
     if (@$usage[$lm_key] === Null){
@@ -205,12 +205,18 @@ class bList_vm_socialEventRates extends bList_vm{
   /*
    * Get the printable price for the event
    */
-  function getPriceWithModel($lm_id){
+  function getPriceWithModel($lm_id,$special_price,$as_array=False){
     $p_model = $this->getMemberValue($lm_id,'p_model');
-    $reply = sprintf("%s %s", 
-		     b_fmt::money($this->getMemberValue($lm_id,'lm_value')),
+    $p_price = (empty($special_price)
+		? $this->getMemberValue($lm_id,'lm_value')
+		: $special_price);
+    if ($as_array){
+      $reply = array($p_price,
 		     $this->p_models[$p_model]);
-    if ($p_model == 'pppf') $reply .= sprintf(" %s ",b_fmt::money($this->getMemberValue($lm_id,'p_floor')));
+    }else{
+      $reply = sprintf("%s %s",$p_price,$this->p_models[$p_model]);
+      if ($p_model == 'pppf') $reply .= sprintf(" %s ",b_fmt::money($this->getMemberValue($lm_id,'p_floor')));
+    }
     $this->dbg($reply,cnf_dev);
     return $reply;
   }
@@ -219,15 +225,18 @@ class bList_vm_socialEventRates extends bList_vm{
    * Get estimation of a social event budget
    * @param - $N - number of persons
    */
-  function get_ser_price($lm_id,$N=0){
-    $m = $this->getMemberValue($lm_id,'p_model');
-    switch($m){
+  function get_ser_price($lm_id,$special_price,$N=0){
+    $p_model = $this->getMemberValue($lm_id,'p_model');
+    $p_price = (empty($special_price)
+		? $this->getMemberValue($lm_id,'lm_value')
+		: $special_price);
+    switch($p_model){
     case 'pppd':
-    case 'ppp':  $reply = $N * $this->getMemberValue($lm_id,'lm_value'); break;
+    case 'ppp':  $reply = $N * $p_price; break;
     case 'ppd':
-    case 'ppe':  $reply =      $this->getMemberValue($lm_id,'lm_value'); break;
-    case 'pppf': $reply = $N * $this->getMemberValue($lm_id,'lm_value') + $this->getMemberValue($lm_id,'p_floor'); break;
-    default:     $reply =  "unknown p_model '$m' ???"; 
+    case 'ppe':  $reply =      $p_price; break;
+    case 'pppf': $reply = $N * $p_price + $this->getMemberValue($lm_id,'p_floor'); break;
+    default:     $reply =  "unknown p_model '$p_model' ???"; 
     }
     $this->dbg($reply,!(int)$reply||$this->debug);
     return $reply;
@@ -324,7 +333,7 @@ class bList_vm_socialEventRates extends bList_vm{
     return $reply;
   }
 
-  protected function getFormAdd(){
+  function getFormAdd(){
     $this->bForm($this->list_quering,$inversed=True);
     if (empty($this->f->formDB['p_model'])) $this->f->formDB['p_model'] = 'ppp';
     $this->f->isMONEY['lm_value']= True;

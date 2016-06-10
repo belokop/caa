@@ -109,7 +109,7 @@ class bList_eaCV extends bList{
   /*
    *
    */
-  protected function getFormAdd(){
+  function getFormAdd(){
 
     $lm_id = $this->getValue('lm_id');
     if ($this->MODE == 'RW'){

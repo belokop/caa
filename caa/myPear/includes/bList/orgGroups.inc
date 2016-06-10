@@ -85,7 +85,7 @@ class bList_orgGroups extends bList{
   /*
    * Input form
    */
-  protected function getFormAdd(){
+  function getFormAdd(){
     myPear::H1('Updating groups/departments');
 
     // Create the record if it is empty

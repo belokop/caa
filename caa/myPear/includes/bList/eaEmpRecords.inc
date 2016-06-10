@@ -387,7 +387,7 @@ class bList_eaEmpRecords extends bList{
   /*
    * Input form
    */
-  protected function getFormAdd(){
+  function getFormAdd(){
     // Create the record if it is empty
     if (empty($this->member_ID)){
       $this->logIt();

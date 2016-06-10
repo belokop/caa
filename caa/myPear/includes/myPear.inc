@@ -825,8 +825,6 @@ class myPear{
     if (trim(strip_tags(trim($text)))){
       $css_class = $id;
       switch($css_class){
-      case 'SICK': 
-	$css_class = 'debug';
       case 'TBD':
 	$caller = b_debug::__(3,$class);
 	$text   = b_fmt::redText("<em>$id: $caller</em> $text");
@@ -836,6 +834,8 @@ class myPear{
       case 'error':  
 	myPear_logs()->syslog(strip_tags($text));
 	break;
+      case 'SICK': 
+	$css_class = 'debug';
       case 'debug':
 	if (is_object($class)){
 	  $caller = b_debug::__(3,$class);

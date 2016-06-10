@@ -4,9 +4,10 @@ locateAndInclude('bList_vm');
 class bList_vm_socialEvents extends bList_vm{
 
   var $debug=True;
+  protected $packed_items = array('s_price');
   var $list_quering = array('lm_key'   =>'what',  // link to the "social events setup" record
 			    'lm_value' =>'when',  // social event date
-			    '_p_price' =>'price');
+			    );
   var $list_showing = array('_when'    =>'',
 			    '_what'    =>'',
 			    '_n'       =>'number of<br/>participants',
@@ -32,8 +33,8 @@ class bList_vm_socialEvents extends bList_vm{
 
     // Reset also the rates also the social events are wiped out
     if ((@$_GET['drop_list_once'] !== Null) && (@$_GET['drop_list_once'] == $this->ID)){
-      bList::deleteList($this->e->socialEventRates()->ID,True);
-      if($this->budgetSource_exists()) $this->e->socialEventRates()->setDefaults();
+      bList::deleteList(VM_socialEventRates($this->e)->ID,True);
+      if($this->budgetSource_exists()) VM_socialEventRates($this->e)->setDefaults();
     }
     
     // Initialize the list if requested,
@@ -61,7 +62,7 @@ class bList_vm_socialEvents extends bList_vm{
    */
   protected function message_deleteMember($args){
     foreach($this->getMembers($args) as $lm_id=>$r){
-      $ser = $this->e->socialEventRates()->getMember(array('lm_id'=>$r['lm_key']));
+      $ser = VM_socialEventRates($this->e)->getMember(array('lm_id'=>$r['lm_key']));
       $id  = (empty($r['lm_value']) && empty($ser['lm_key'])
 	     ? 'empty record'
 	     : "record ".x('em',"\"$r[lm_value] - $ser[lm_key]\""));
@@ -91,15 +92,17 @@ class bList_vm_socialEvents extends bList_vm{
       if (!empty($lm_id) || !$this->isReady()){
 	$includeDay1 = True;
 	$this->dbg($this->e->__toString());
-	foreach($this->e->socialEventRates()->getCompulsoryServices($lm_id) as $ser_array){
+	foreach(VM_socialEventRates($this->e)->getCompulsoryServices($lm_id) as $ser_array){
 	  list($lm_id_comp,$ser_name,$ser_price,$x) = $ser_array;
+	  var_dump($ser_array);
 	  for($date =$this->e->getValue('e_start')+($includeDay1 ? 0 : 24*3600); 
 	      $date<=$this->e->getValue('e_end');
 	      $date+=24*3600){
 	    $ev_date = date('Y-m-d',$date);
 	    if (!b_time::isRedDay($date)){
-	      if (!$this->getMember($args=array('lm_value'=>$ev_date,
-						'lm_key'  =>$lm_id_comp))){
+	      if (!($r=$this->getMember($args=array('lm_value'=>$ev_date,
+						    'lm_key'  =>$lm_id_comp)))){
+		$args['s_price'] = $ser_price;
 		$this->dbg("$ev_date $ser_name");
 		$this->addMember($args);
 	      }
@@ -154,7 +157,7 @@ class bList_vm_socialEvents extends bList_vm{
    */
   protected function isMemberDeletable(){
     $reply = VM_administrator_here || (($this->e->isOrganizer() || VM::hasRightTo('endorse_event')) && 
-				       !$this->e->socialEventRates()->isCompulsory($this->r['lm_key']));
+				       !VM_socialEventRates($this->e)->isCompulsory($this->r['lm_key']));
     $this->dbg($reply);
     return $reply;
   }
@@ -164,7 +167,7 @@ class bList_vm_socialEvents extends bList_vm{
    */
   protected function isMemberEditable(){
     $reply = VM_administrator_here || (parent::isMemberEditable() && 
-				       !$this->e->socialEventRates()->isCompulsory($this->r['lm_key']));
+				       !VM_socialEventRates($this->e)->isCompulsory($this->r['lm_key']));
     $this->dbg($reply);
     return $reply;
   }
@@ -223,45 +226,66 @@ class bList_vm_socialEvents extends bList_vm{
     }
   }
 
+  function isCompulsory($lm_id){
+    return False;
+    return VM_socialEventRates($this->e->ID)->isCompulsory($lm_id);
+  }
+  
+  
   /*
    * "Add social event" dialog
    */
-  protected function getFormAdd(){
+  function getFormAdd(){
+
     $this->show_gv=cnf_dev;
 
     $lm_id = $this->getValue('lm_id');
     if (empty($lm_id))  $lm_id = $this->createRecord();
 
-    // Build the dialog
-    $ser_names = $this->e->socialEventRates()->get_ser_names('lm_key',$this->getMemberValue($lm_id,'lm_key'));
-    b_debug::print_r($ser_names,'ser_names');
+    $lm_key = $this->getMemberValue($lm_id,'lm_key'); 
 
+    // Get the event special price (or the default one) 
+    $s_price= $this->getMemberValue($lm_id,'s_price'); 
+    
+    // Build the dialog
     $this->bForm($this->list_quering,$inversed=True);
-    $this->f->defineVariable(array('_what'=>$this->list_quering['lm_key']),True);
     $this->f->show_gv = $this->show_gv;
     $this->f->formDB['lm_id']  = $lm_id; 
-    $this->f->formDB['lm_key'] = ($lm_key=$this->getMemberValue($lm_id,'lm_key'));
-    $this->f->formDB['_what']= $ser_names[$lm_key];
+    $this->f->formDB['lm_key'] = $lm_key;
+
 
     $this->f->isRO['_what'] = True;
+    $this->f->formDB['_what']= VM_socialEventRates($this->e)->getMemberValue($lm_key,'lm_key');
+    $this->f->defineVariable(array('_what'=>$this->list_quering['lm_key']),True);
     $this->f->textField('_what');
-    $this->f->textHidden('lm_key');
-    $this->f->textHidden('lm_id');
+
+    $this->f->textHidden('lm_key',$lm_key);
+    $this->f->textHidden('lm_id', $lm_id);
     
     // Set the price && dates if the SE is chowsen
-    $lm_key = $this->getMemberValue($lm_id,'lm_key');
     if (!empty($lm_key)){
-      if ($this->e->socialEventRates()->isCompulsory($lm_key)) $this->f->isRO['lm_value'] = True;
+      // Date
+      if (VM_socialEventRates($this->e)->isCompulsory($lm_key)) $this->f->isRO['lm_value'] = True;
       // Price
-      $this->f->isRO['_p_price'] = True;
-      $this->f->formDB['_p_price'] = $this->e->socialEventRates()->getPriceWithModel($this->getMemberValue($lm_id,'lm_key'));
-      $this->f->textField('_p_price');  
-      $this->f->textHidden('_p_price');
+      list($s_price,$p_model) = VM_socialEventRates($this->e)->getPriceWithModel($lm_key,$s_price,True);
+      $this->f->formDB['s_price'] = $s_price;
+      $this->f->isRO['s_price']   = !$this->isWritable();
+      if ($this->f->isWritable()){
+	$this->list_quering['s_price'] = 'price';
+	$this->f->defineVariable(array('s_price'=>'price '.$p_model),True);
+	$this->f->textField('s_price');  
+      }else{
+	$this->list_quering['_s_price'] = 'price';
+	$this->f->formDB['_s_price'] = VM_socialEventRates($this->e)->getPriceWithModel($lm_key,$s_price);
+	$this->f->textField('_s_price');  
+	$this->f->textHidden('s_price');
+      }
+
       // Set the date to the "half way" if it is not defined yet
       if (empty($this->f->formDB['lm_value']) || (b_time::txt2unix($this->f->formDB['lm_value']) < b_time::noon('1997'))){
 	$this->f->formDB['lm_value'] = date('Y-m-d',(int)($this->e->getValue('e_end')/2 + $this->e->getValue('e_start')/2));
-	if ($this->e->socialEventRates()->isDailyPossible($lm_id)){
-	  $what = $this->e->socialEventRates()->getMemberValue($lm_key,'lm_key');
+	if (VM_socialEventRates($this->e)->isDailyPossible($lm_id)){
+	  $what = VM_socialEventRates($this->e)->getMemberValue($lm_key,'lm_key');
 	  $this->f->submitOnChange['p_isDD'] = True;
 	  $this->f->isMBE['p_isDD']= True;
 	  $this->f->vars['p_isDD'] = "Check if $what should be every day";
@@ -298,8 +322,8 @@ class bList_vm_socialEvents extends bList_vm{
       b_debug::print_r($this->r,'empty lm_key OR lm_value');
     }else{
       $n_attenders = count($this->e->attendersToday(b_time::txt2unix($this->r['lm_value'])));
-      $price = $this->e->socialEventRates()->get_ser_price($this->r['lm_key'],$n_attenders);
-      $what  = $this->e->socialEventRates()->getMemberValue($this->r['lm_key'],'lm_key');
+      $price = VM_socialEventRates($this->e)->get_ser_price($this->r['lm_key'],@$this->r['s_price'],$n_attenders);
+      $what  = VM_socialEventRates($this->e)->getMemberValue($this->r['lm_key'],'lm_key');
       if ($n_attenders > 0 && (empty($price) || empty($what))){
 	myPear::WARNING_T("??? price='$price' what=''$what'");
 	if (cnf_dev) b_debug::print_r($this->r,"??? price='$price' what=''$what'");
@@ -317,7 +341,7 @@ class bList_vm_socialEvents extends bList_vm{
 	$this->get_budget($what,$price);
 	
 	// highlight the non-compulsory spending
-	if (!$this->e->socialEventRates()->isCompulsory($this->r['lm_key'])) $this->r['_what'] = x('strong',$this->r['_what']);
+	if (!VM_socialEventRates($this->e)->isCompulsory($this->r['lm_key'])) $this->r['_what'] = x('strong',$this->r['_what']);
 	
 	array_unshift($this->t->extraTD,
 		      bIcons()->getButton(array('d'=>'Get list of participants',
@@ -341,11 +365,11 @@ class bList_vm_socialEvents extends bList_vm{
       $this->summary = array();
       $this->total = 0;
       foreach($this->getMembers() as $lm_id=>$r){
-	// $ser_record=$this->e->socialEventRates()->getMember(array('lm_id'=>$r['lm_key']),True);
+	// $ser_record=VM_socialEventRates($this->e)->getMember(array('lm_id'=>$r['lm_key']),True);
 	$n_attenders = count($this->e->attendersToday(b_time::txt2unix($r['lm_value'])));
 	$this->get_budget(//  $ser_record['lm_key'],    
-			  $this->e->socialEventRates()->getMemberValue($r['lm_key'],'lm_key'),
-			  $this->e->socialEventRates()->get_ser_price($r['lm_key'],$n_attenders));
+			  VM_socialEventRates($this->e)->getMemberValue($r['lm_key'],'lm_key'),
+			  VM_socialEventRates($this->e)->get_ser_price($r['lm_key'],@$r['s_price'],$n_attenders));
       }
       b_debug::print_r($this->summary[$what],"total=".$this->total);
     }
@@ -360,12 +384,12 @@ class bList_vm_socialEvents extends bList_vm{
     if ($this->isWritable()){
       if ($this->e->attenders(True)){
 	if ($this->budgetSource_exists()){
-	  if ($this->isReady()){
-	    $reply[] = b_btn::submit('add new social event',b_url::same("?function_form=VM_socialEventRates&arg_once=".$this->parent_ID));
-	  }else{
-	    $reply[] = b_btn::submit('initialize social events',b_url::same("?init_list_once=yes&resetcache_once=1"));
-	  }
-	  if (VM_manager_here && $this->isReady()) $reply[] = b_btn::submit('wipe all social events',b_url::same("?drop_list_once=".$this->ID));
+	  $reply[] = ($this->isReady()
+		      ? b_btn::submit('add new social event',b_url::same("?function_form=VM_socialEventRates&arg_once=".$this->parent_ID))
+		      : b_btn::submit('initialize social events',b_url::same("?init_list_once=yes&resetcache_once=1")));
+	  if (VM_administrator_here && $this->isReady()) $reply[] = b_btn::submit('wipe all social events',
+										  b_url::same("?drop_list_once=".$this->ID),
+										  $confirm=True);
 	}else{
 	  print x('i',"There is no budget for social events");
 	}

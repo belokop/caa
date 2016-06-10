@@ -325,6 +325,9 @@ class b_table_zebra extends b_table {
     $this->td++; 
   }
   
+  /*
+   *
+   */
   function getHeader($forced=False,$txt='') {  
     if (!$this->headerPrinted || $forced){
       $this->headerPrinted = True;
@@ -336,14 +339,15 @@ class b_table_zebra extends b_table {
 	  print "<tr><th></th>\n";
 	  foreach($h2 as $item) { 
 	    list($span,$text) = explode(':',$item,2);
-	    print "<th colspan='$span' ".($text?"style='border-bottom:1px solid;'":'')." class='align_right'>$text</th>\n";
+	    $style = ($text ? 'border-bottom:1px solid;':'');
+	    $space = ($item === '1:' ? ' highlightShadow' : '');
+	    printf("<th colspan='%d' style='%s' class='align_right %s'>%s</th>\n",$span,$style,$space,$text);
+	    //print "<th colspan='$span' ".($text?"style='border-bottom:1px solid;'":'')." class='align_right'>$text</th>\n";
 	  }
 	  print "</tr>\n";
 	}
 	
-	/*
-	 * Optionally reorder columns 
-	 */
+	// Optionally reorder columns 
 	if (!$this->noSort && ($c = $this->repetValuesCol1only)) {
 	  if ($h[$c] = @$this->header[$c]){ // be sure that the field is in the header
 	    foreach ($this->header as $k=>$v) if ($k != $c) $h[$k] = $v; 
@@ -363,7 +367,8 @@ class b_table_zebra extends b_table {
 	}
 	
 	print "<tr><th></th>\n";	 
-	foreach ($this->header as $k=>$v) print "<th ".@$this->th_attr[$k].">".$this->sortlink($v,$k)."</th>";
+	foreach ($this->header as $k=>$v) printf("<th %s>%s</th>",@$this->th_attr[$k],$this->sortlink($v,$k));
+      //foreach ($this->header as $k=>$v) print "<th ".@$this->th_attr[$k].">".$this->sortlink($v,$k)."</th>";
 	print "</tr>\n"; 
 	
 	$this->thead_c();
@@ -375,9 +380,10 @@ class b_table_zebra extends b_table {
     }
   }
   
-  // produce a "gray zebra" listing
+  /*
+   * produce a "gray zebra" listing
+   */
   private $CLI_buffer = array();
-
   function prt($row,$highlight='') { 
     if (empty($row)) return;
     bTiming()->cpu('b_table');

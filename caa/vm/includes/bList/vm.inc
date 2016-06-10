@@ -75,7 +75,8 @@ class bList_vm extends bList{
                                                                                                                   $e->isArchived() ||
                                                                                                                   $e->isEventEndorsed()))),
                                                                  True => array('mngr'    => VM_manager_here && !cnf_inside_fb,
-                                                                               'orgnzer' => (is_object($e)  && $e->isOrganizer())),
+                                                                               'admin'   => VM_administrator_here && !cnf_inside_fb,
+									       'orgnzer' => (is_object($e)  && $e->isOrganizer())),
                                                                  'default'=> parent::isWritable()),
                                                            $this,
                                                            cnf_dev);

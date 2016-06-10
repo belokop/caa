@@ -335,7 +335,7 @@ class bList_vm_reimbursementRates extends bList_vm{
     return $reply;
   }
   
-  protected function getFormAdd(){
+  function getFormAdd(){
     //
     //    self::process_updates();
 

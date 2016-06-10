@@ -145,18 +145,6 @@ class bForm_vm_Event extends bForm_vm {
   /*
    *
    */
-  private $socialEventRates = Null;
-  function socialEventRates(){
-    if ($this->socialEventRates === Null){
-      locateAndInclude('bList_vm_socialEventRates');
-      $this->socialEventRates = new bList_vm_socialEventRates($this);
-    }
-    return $this->socialEventRates;
-  }
-
-  /*
-   *
-   */
   private $reimbursementRates = Null;
   function reimbursementRates(){
     if ($this->reimbursementRates === Null){

@@ -109,7 +109,7 @@ class bList_vm_projects extends bList_vm{
     return $reply;
   }
 
-  protected function getFormAdd(){
+  function getFormAdd(){
     $this->bForm(array('active project?'=>'lm_option',
 		       'project name'   =>'lm_key',
 		       $this->memberTitle()=>'lm_value'));
