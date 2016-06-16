@@ -40,17 +40,19 @@ class bHolder_Avatar extends bHolder {
   /*
    *
    */
-  function query($only_my_avatars=True) {
+  protected $only_my_avatars = Null;
+  function query($only_my_avatars=False) {
+    $this->only_my_avatars = $only_my_avatars;
     if ($this->av) $this->where[] = "av_id = ".$this->av->ID;
     if (empty($this->where)) $this->where = array(1);
-    $q = myPear_db()->query("SELECT *, av_lastname AS name, av_email AS email ".
+    $q = myPear_db()->qquery("SELECT *, av_lastname AS name, av_email AS email ".
 			    " FROM zzz_avatars ".
 			    " LEFT JOIN zzz_unit_members    ON um_avid = av_id ".
 			    " LEFT JOIN zzz_units           ON um_uid = u_id ".
 			    join(" ",$this->left_join).
 			    " WHERE ".
 			    join(' AND ',$this->where).
-			    myPear_db()->orderBy('av_lastname'));
+			     myPear_db()->orderBy('av_lastname'),cnf_dev);
     return $q;
   }
 
@@ -62,9 +64,9 @@ class bHolder_Avatar extends bHolder {
       if (cnf_dev) b_debug::traceBack('empty($this->rec[av_id])');
       return True;
     }
-    if (@$this->dejaVu[$this->rec['av_id']]++)                return True;
-    if ( $this->av && ($this->rec['av_id'] != $this->av->ID)) return True;
-    return False;
+    elseif (@$this->dejaVu[$this->rec['av_id']]++)                return True;
+    elseif ( $this->av && ($this->rec['av_id'] != $this->av->ID)) return True;
+    else   return False;
   }
 
   /*

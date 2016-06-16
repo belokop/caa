@@ -309,11 +309,12 @@ class bForm_Avatar_Search extends bForm {
     $this->dbg(sprintf("search_for_merge='%b' global_search='%b' show_log_widgets='%b'",$this->search_for_merge,$this->global_search,$this->show_log_widgets),cnf_dev||$this->debug);
 
     if ($this->holder === Null){
-      $holder_ext = ((!superUser_here && $this->search_for_merge) || $this->global_search  || !bAuth::authenticated()
+      $holder_ext = (!bAuth::authenticated() || $this->search_for_merge || $this->global_search 
 		     ? array('')
 		     : array('_'.b_reg::$current_module, ''));
       foreach($holder_ext as $ext){
-	if(locateAndInclude($holder='bHolder_Avatar'.$ext)){
+	$holder = 'bHolder_Avatar'.$ext;
+	if(locateAndInclude($holder)){
 	  $this->holder = new $holder;
 	  $this->dbg('module='.b_reg::$current_module.', holder='.$this->holder,cnf_dev);
 	  $this->holder->debug = $this->debug;
@@ -321,6 +322,8 @@ class bForm_Avatar_Search extends bForm {
 	  $this->holder->report_emptySelection = False;
 	  $this->holder->noSort = True;
 	  break;
+	}else{
+	  $this->dbg("Unknown holder $holder",cnf_dev);
 	}
       }
       if (empty($this->holder)) b_debug::internalError("can't find any holder to show search results");

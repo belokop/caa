@@ -8,15 +8,15 @@ class bHolder_Avatar_vm extends bHolder_Avatar{
   /*
    *
    */
-  function query($only_VM_avatars=True){
-    if ($only_VM_avatars && empty($this->av)){
+  function query($only_my_avatars=True){
+    if ($only_my_avatars && empty($this->av)){
       $w = array("v_id > 0");
       if (!empty(b_reg_bUnit::$_bUnits[VM_MODULE])){
 	foreach(array_keys(b_reg_bUnit::$_bUnits[VM_MODULE]) as $rank) { $w[] = "u_rank = $rank"; }
       }
       $this->where[] = ' ( ' . implode(' OR ',$w) . ' ) ';
     }
-    return parent::query($only_VM_avatars);
+    return parent::query($only_my_avatars);
   }
   
   /*

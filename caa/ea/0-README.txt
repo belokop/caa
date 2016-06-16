@@ -1,5 +1,8 @@
 Changes log
 
+2016-06-16, Version 5.20, Minor fixes
+M       ea/includes/bHolder/Avatar/ea.inc
+
 2016-05-30, Version 5.19, prp
 M       ea/includes/bForm/ea/Office.inc
 

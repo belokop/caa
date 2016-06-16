@@ -6,8 +6,8 @@
 if (file_exists($f='../myPear/config.inc'))  require_once $f;
 
 // register the module in myPear registry
-$releaseDate = '2016-05-30';
-define('EA_VERSION','5.19');
+$releaseDate = '2016-06-16';
+define('EA_VERSION','5.20');
 
 b_reg::add_module(EA_MODULE,array('v' =>EA_VERSION,
 				  'r' =>$releaseDate,

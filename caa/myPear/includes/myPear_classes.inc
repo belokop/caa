@@ -3307,6 +3307,7 @@ class b_cms{
       if (!empty($f) && self::themeExists($f)){
 	$flavor = $f;
 	if ($flavor === b_cnf::get('flavor')){
+	  if(cnf_dev) b_debug::xxx("'$flavor' already is the desired theme");
 	  return;
 	}else{
 	  b_cnf::set('flavor',$flavor);
@@ -3324,7 +3325,7 @@ class b_cms{
     }
     
     // Impose the theme 
-    if(cnf_dev) b_debug::xxx("Trying to change theme to '$flavor'...");
+    b_debug::xxx("Trying to change theme to '$flavor'...",cnf_dev);
     switch(HOSTED_BY_CMS){
     case 'drupal':	
       
@@ -3339,6 +3340,7 @@ class b_cms{
 	  drupal_load('module', 'system');
 	}
 	if (!empty($current_flavor)) myPear::WARNING("Fail (don't know how to do it) to change theme to '$current_flavor --> $flavor'");
+	variable_set('theme_default', $flavor);
 	break;
       case 6:
 	// If $theme is already set, try to reset it

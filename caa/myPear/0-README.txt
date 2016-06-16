@@ -1,5 +1,11 @@
 Changes log
 
+2016-06-16, Version 5.135, Minor fixes
+M       myPear/includes/bForm/Avatar/Search.inc
+M       myPear/includes/bHolder/Avatar.inc
+M       myPear/includes/bIcal/matrix.inc
+M       myPear/includes/myPear_classes.inc
+
 2016-06-10, Version 5.134, Make editable the soc.events FOR PROGRAMS
 M       myPear/css/myPear.css
 M       myPear/includes/bList/eaCV.inc

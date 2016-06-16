@@ -10,8 +10,8 @@ class bHolder_Avatar_jam extends bHolder_Avatar{
   /*
    *
    */
-  function query($only_JAM_avatars=True){
-    if ($only_JAM_avatars){
+  function query($only_my_avatars=True){
+    if ($only_my_avatars){
       $w = array("ap_id  > 0",
 		 "rec_id > 0");
       foreach(array_keys(b_reg_bUnit::$_bUnits[JAM_MODULE]) as $role){
@@ -19,7 +19,7 @@ class bHolder_Avatar_jam extends bHolder_Avatar{
       }
       $this->where[] = ' ( ' . implode(' OR ',$w) . ' ) ';
     }
-    return parent::query($only_JAM_avatars);
+    return parent::query($only_my_avatars);
   }
 
   /*

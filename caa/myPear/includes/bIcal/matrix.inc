@@ -30,7 +30,7 @@ class bIcal_matrix extends bIcal {
   public    $showLegend    = True;
   public    $hideCheckBox  = False;
 
-  public    $allowCollapse = True;
+  public    $allowCollapse = False;
   public    $collapseDate  = 0;
   public    $collapseCounter = 0; // number of lines in the collapsed picture
   public    $t               = Null; // table class
