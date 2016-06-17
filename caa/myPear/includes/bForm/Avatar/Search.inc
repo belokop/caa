@@ -355,12 +355,11 @@ class bForm_Avatar_Search extends bForm {
 	$w_from_post[] = "av_id = $arg";
       }elseif(SSN::valid($arg,'check_only')){
 	$w_from_post[] = "av_ssn = '$arg'";
-      }elseif(posix_getpwnam($arg)){
-	$w_from_post[] = 'av_identity REGEXP \'[[:<:]]'.$arg.'[[:>:]]\'';
       }else{
 	foreach(explode(' ',$arg) as $v){
 	  $v  = trim($v);	    if (empty($v)) continue;
 	  $ww = array();
+	  if(posix_getpwnam($arg)) $ww[] = 'av_identity REGEXP \'[[:<:]]'.$arg.'[[:>:]]\'';
 	  foreach (array_merge($this->vars,array('email2'=>'')) as $f=>$descr) {
 	    $fav = $this->fav($f);
 	    if (myPear_db()->columnExists($fav,$table)) $ww[] = myPear_db()->quote($v,'RR',$fav); 
