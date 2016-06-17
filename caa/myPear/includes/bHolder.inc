@@ -30,8 +30,8 @@ class bHolder {
    *
    */
   public function loadWidgets_array($href,$args=array()){
-    static $saved_icons, $_GETsv;
-    $this->dbg();
+    static $saved_icons, $_GETsv, $counter=0;
+    $this->dbg(++$counter);
     switch($href){
     case 'open': // ----------------------------------- open
       
@@ -51,7 +51,6 @@ class bHolder {
       }
       $widget = ob_get_contents();
       ob_end_clean();
-      return $widget;
       break;
 
     case 'close': // ----------------------------------- close
@@ -63,7 +62,6 @@ class bHolder {
 
       bIcons()->toggleExplainIcons();
       bIcons()->reset($saved_icons);
-      return $widget;
       break;
       
     default:     // ----------------------------------- populate
@@ -76,8 +74,9 @@ class bHolder {
       $widget = ob_get_contents();
       ob_end_clean();
       $_GET = $_GETsv;
-      return $widget;
     }
+    b_debug::var_dump($widget,__FUNCTION__." exit");
+    return $widget;
   }
 
 

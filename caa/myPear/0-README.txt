@@ -1,5 +1,10 @@
 Changes log
 
+2016-06-17, Version 5.136, chaising bug in search
+M       myPear/includes/bDB.inc
+M       myPear/includes/bForm/Avatar/Search.inc
+M       myPear/includes/bHolder.inc
+
 2016-06-16, Version 5.135, Minor fixes
 M       myPear/includes/bForm/Avatar/Search.inc
 M       myPear/includes/bHolder/Avatar.inc

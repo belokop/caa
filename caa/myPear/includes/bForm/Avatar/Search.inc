@@ -394,9 +394,7 @@ class bForm_Avatar_Search extends bForm {
       $_GET['sBy']    = 'av_lastname';
       $_GET['sByDir'] = 'ASC';
       $this->holder->where[] = join(' AND ',$where);
-      myPear_db()->debug = $this->debug;
       $res = $this->holder->query($only_my_avatars=False);
-      myPear_db()->debug = False;
       
       // Walk thru the selected records, print them
       $n_dropped = 0;

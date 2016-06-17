@@ -46,7 +46,7 @@ class bDB extends mysqli{
 
       // Extract the true server name
       $this->Host = $host;
-      $q = $this->query("SHOW VARIABLES LIKE 'hostname'");
+      $q = $this->qquery("SHOW VARIABLES LIKE 'hostname'",cnf_dev||cnf_show_db);
       while($r = $this->next_record($q)){
 	if ($r['Variable_name'] == 'hostname') $this->Host = $r['Value'];
       }
