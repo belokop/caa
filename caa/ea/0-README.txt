@@ -1,5 +1,8 @@
 Changes log
 
+2016-06-17, Version 5.22, chaising bug in search
+M       ea/includes/bHolder/Avatar/ea.inc
+
 2016-06-17, Version 5.21, chaising bug in search
 M       ea/includes/bHolder/Avatar/ea.inc
 

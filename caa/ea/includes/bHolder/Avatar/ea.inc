@@ -34,7 +34,7 @@ class bHolder_Avatar_ea extends bHolder_Avatar{
    * @param $only_my_avatars - if True, select only EA-related avatars, otherwise select all
    */
   function query($only_my_avatars=False) {
-    b_debug::xxx(sprintf('av_ids=%s where=%s',join(',',$this->av_ids),join(',',$this->where)));
+    b_debug::xxx();
     $where = $this->where;
     if(!empty($this->av_ids)){
       foreach($this->av_ids as $av_id) $w[] = "av_id = '$av_id'";
