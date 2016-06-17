@@ -1,5 +1,8 @@
 Changes log
 
+2016-06-17, Version 5.138, chaising bug in search
+M       myPear/includes/myPear_classes.inc
+
 2016-06-17, Version 5.137, chaising bug in search
 M       myPear/includes/bHolder.inc
 

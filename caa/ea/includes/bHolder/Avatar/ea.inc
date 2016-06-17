@@ -34,7 +34,7 @@ class bHolder_Avatar_ea extends bHolder_Avatar{
    * @param $only_my_avatars - if True, select only EA-related avatars, otherwise select all
    */
   function query($only_my_avatars=False) {
-    b_debug::xxx(' ');
+    b_debug::xxx(sprintf('av_ids=%s where=%s',join(',',$this->av_ids),join(',',$this->where)));
     $where = $this->where;
     if(!empty($this->av_ids)){
       foreach($this->av_ids as $av_id) $w[] = "av_id = '$av_id'";
@@ -45,6 +45,7 @@ class bHolder_Avatar_ea extends bHolder_Avatar{
       if (!empty($w)) $where[] = ' ( ' . implode(' OR ',$w) . ' ) ';
     }
     
+    b_debug::xxx(sprintf('where=%s',join(',',$where)));
     $q = myPear_db()->qquery("SELECT av_photo,av_id,u_rank,av_institute,av_firstname,av_lastname,av_lastlogin,av_email,av_lastname AS name,av_email AS email ".
 			     " FROM zzz_avatars ".
 			     " LEFT JOIN zzz_unit_members    ON um_avid = av_id".

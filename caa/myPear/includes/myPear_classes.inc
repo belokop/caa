@@ -1840,7 +1840,7 @@ class b_debug{
     var_dump($var);
     $txt = ob_get_contents();
     ob_end_clean();
-    $reply = "<pre>$id$txt</pre>";
+    $reply = "<pre>$id\n$txt</pre>";
     if ($return)        return $reply;
     else         myPear::DEBUG($reply);
   }
