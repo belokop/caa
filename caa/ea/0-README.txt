@@ -1,5 +1,9 @@
 Changes log
 
+2016-06-19, Version 5.23, EA fixes
+M       ea/includes/bIcal_matrix_ea.inc
+M       ea/includes/ea_updates.inc
+
 2016-06-17, Version 5.22, chaising bug in search
 M       ea/includes/bHolder/Avatar/ea.inc
 

@@ -1,7 +1,7 @@
 <?php
 // myPear module 
-$releaseDate = '2016-06-17';
-define('myPear_VERSION','5.139');
+$releaseDate = '2016-06-19';
+define('myPear_VERSION','5.140');
 define('myPear_MODULE', 'myPear');
 define('myPear_DATE',    $releaseDate);
 
@@ -119,6 +119,7 @@ define('b_crypt_no' ,'nocrypt_once');
 //
 define('starting','Ну, тронули...');   // Means "Let's go..."
 define('exiting', 'Готово, барин...'); // Means "Ready, Sir..."
+define('missing_value', 'missing value');
 
 $_GET['showe'] = 1; define('cnf_show_e',True);
 // $_GET['debug'] = $_GET['nodrupal'] = $_GET['showl'] = 1; define('cnf_show_l',True);

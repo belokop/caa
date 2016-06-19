@@ -346,7 +346,7 @@ function myPear_cronjob(){
  * Holder of the Organization class(es)
  */
 function myOrg($org_id=Null){
-  
+
   if (!myPear::$isReady){
     myPear_startup_queue(__FUNCTION__,array(),True);
     return;

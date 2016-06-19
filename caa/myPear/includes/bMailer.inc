@@ -346,7 +346,6 @@ if (locateAndInclude(array('Mail',
 	static $debug_counter=0; $this->_dbg("---------------------------------------------------------$sendmail_once ".(++$debug_counter));
 	return Null;
       }
-      $this->dbg(exiting);
     }
 
     /*

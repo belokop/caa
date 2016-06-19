@@ -138,6 +138,8 @@ class SSN{
 locateAndInclude('bForm');
 class bForm_Avatar extends bForm {
 
+  var $show_gv = True;
+
   // Valid types for the portrait photo
   public static $validMimeTypes = array('jpg','jpeg','png','gif');
 
@@ -1362,19 +1364,23 @@ class bForm_Avatar extends bForm {
     if ($this->askHomeAddress()){
       foreach(array('values','methods') as $item){
 	$$item = array();
-	foreach(array('av_address'     =>'textArea',
+	foreach(array('av_residentship'=>'textFieldCountry',
 		      'av_zip'         =>'textField',
 		      'av_city'        =>'textField',
-		      'av_residentship'=>'textFieldCountry') as $name=>$method){
+		      'av_address'     =>'textArea',
+		      ) as $name=>$method){
 	  if ($item == 'methods'){
 	    $methods[$name] = array($method);
-	  }elseif ($v = $this->getValue($name,True)){
+	    $methods[$name] = $method;
+	  }else{
+	    $v = $this->getValue($name,True);
 	    switch($name){
-	    case 'av_city':         break;
-	    case 'av_residentship': $values[] = b_cc::getName($v); break;
-	    case 'av_zip':          $values[] = $v .' '.$this->getValue('av_city',True); break;
-	    default:	            $values[] = $v;
+	    case 'av_residentship': $v = b_cc::getName($v); break;
+	    case 'av_zip':          $v = trim($v .' '.$this->getValue('av_city',True)); break;
+	    case 'av_city':         $v = Null; break;
+	    default:	
 	    }
+	    if (!empty($v)) $values[] = $v;
 	  }
 	}
       }
@@ -1861,7 +1867,7 @@ class bForm_Avatar extends bForm {
   
   function formOKspecific() {
     $this->dbg('');
-    $this->formDB_modified['av_pwd'] = $this->getPWD();
+    $this->getValue_reset('av_pwd',$this->getPWD());
     if ($this->myPost_bForm() && $this->errorless())      $this->setEmail();
   }
 

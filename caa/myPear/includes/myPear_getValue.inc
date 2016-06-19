@@ -4,7 +4,6 @@
  */
 
 define('b_rawData','raw');
-define('missing_value', 'missing value');
 
 class myPear_getValue{
 
@@ -158,7 +157,8 @@ class myPear_getValue{
 	$this->show_gv = $debug_sv;
 	return $value;
       }      
-      $this->dbg("???? not found $name",cnf_dev);
+      $this->dbg($msg="???? not found '$name'",cnf_dev);
+      b_debug::traceBack($msg);
       return Null;
     }      
 
@@ -221,7 +221,7 @@ class myPear_getValue{
 	  $this->getValue_reset($name,$value);
 	}
 	// Save value from the _POST to formDB_modified for the future update
-	$value = $this->formDB_modified[$name] = $value;
+	$this->formDB_modified[$name] = $value;
 
 	//
 	// 2. Check $_FILES

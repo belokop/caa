@@ -12,7 +12,7 @@ class bList_eaEmpRecords extends bList{
   
   protected $isReady  = True;
   public $tips_byMode = array('RW'=>array('lm_period' => "If you don't know the future end date of the period, type '2099-01-01'",
-					  'emp_period'=> "If you don't know the future end date of the period, type '2099-01-01'",
+					  '_emp_period'=> "If you don't know the future end date of the period, type '2099-01-01'",
 					  ));
   var $e_type_menu = array();
   var $e_type_menuD= array('separator00'=> '',
@@ -34,28 +34,23 @@ class bList_eaEmpRecords extends bList{
 			   );
   
   // this information is packed into the lm_option field
-  protected $packed_items = array('e_cc',
-				  'e_gid',
-				  'e_inst',
-				  'e_off',
-				  'e_org',
-				  'e_rate',
-				  'e_type',
-				  );
+  protected $packed_items = array('e_org', 'e_cc',  'e_gid', 'e_inst', 'e_off', 'e_rate','e_type');
 
   var $list_quering= array('e_type'     =>'Type of entry',
 			   'e_inst'     =>'Institute',
 			   'e_cc'       =>'Country',
 			   'lm_value'   =>'Position',
+			   'e_rate'     =>'Employee Type',
 			   'lm_key'     =>'Start of position',
-			   'lm_status'  =>'End of position');
+			   'lm_status'  =>'End of position',
+			   );
 
   var $isMBE       = array('e_inst'     =>'Institute',
 			   'e_cc'       =>'Country',
 			   'lm_status'  =>'End of position');
  
   var $list_showing= array('favicon'    => ' ',
-			   'emp_period' => ' ',
+			   '_emp_period' => ' ',
 			   'lm_value'   => ' ',
 			   'e_inst'     => ' ',
 			   'e_cc'       => ' ');
@@ -85,9 +80,9 @@ class bList_eaEmpRecords extends bList{
 		     "l_parent=$av_id");
       if ($org_id) $where[] = "lm_option REGEXP '[[:<:]]e_org[[:>:]].*[[:<:]]".$org_id."[[:>:]]'";
       $q = myPear_db()->qquery("SELECT l_parent FROM zzz_lists ".
-				 " LEFT JOIN zzz_avatars ON l_parent = av_id ".
-				 ($org_id ? " LEFT JOIN zzz_list_members ON l_id = lm_lid " : "").
-				 " WHERE ".join(' AND ',$where));
+			       " LEFT JOIN zzz_avatars ON l_parent = av_id ".
+			       ($org_id ? " LEFT JOIN zzz_list_members ON l_id = lm_lid " : "").
+			       " WHERE ".join(' AND ',$where));
       $reply[$av_id] = (myPear_db()->num_rows($q) > 0);
     }
     return $reply[$av_id];
@@ -371,6 +366,8 @@ class bList_eaEmpRecords extends bList{
     if ($this->getMemberValue(0,'e_org')){
       unset($this->list_quering['e_cc']);
       unset($this->list_quering['e_inst']);
+    }else{
+      unset($this->list_quering['e_rate']);
     }
     if ($was !== $this->list_quering) b_debug::xxx($this->list_quering);
   }
@@ -421,7 +418,7 @@ class bList_eaEmpRecords extends bList{
       $this->f->defineVariable('Period of stay','lm_period'); 
       //      $this->f->displayErrors_NO = True;
       $this->f->submitOnChange['e_type'] = True;
-      $this->f->isRO['e_rate'] = True;
+      //$this->f->isRO['e_rate'] = True;
       $this->f->isRO['lm_id'] = True;
       $this->f->formDB = $this->formDB_member;
       
@@ -444,6 +441,9 @@ class bList_eaEmpRecords extends bList{
 	if (empty($e_type) && $item != 'e_type') continue;
 	$ask_for_period = (!empty($this->list_quering['lm_status']) && ($e_type != '10_cp'));
 	switch($item){
+	case 'e_rate':
+	  if ($trades=myOrg()->orgTrades()->get_trades()) $this->f->selectMenu('e_rate',$trades);
+	  break;
 	case 'e_type':
 	  if (in_array($e_type,array('20_mp'))){
 	    $this->f->selectMenu('e_type',array('20_mp' => $this->e_type_menu['20_mp'],
@@ -755,7 +755,7 @@ class bList_eaEmpRecords extends bList{
     // Unpack the packed data, massage a bit the record 
     switch($this->r['e_type']){
     case '0_b':
-      $this->r['emp_period'] = $this->r['lm_key'];
+      $this->r['_emp_period'] = $this->r['lm_key'];
       break;
     case '50_ah':
       $this->t->colspan['lm_value'] = 2;
@@ -764,29 +764,29 @@ class bList_eaEmpRecords extends bList{
 	$this->r['favicon'] = bIcons()->get('i-nobel');
       }
     case '30_h':
-      $this->r['emp_period'] = date('M Y',b_time::txt2unix($this->r['lm_key']));
+      $this->r['_emp_period'] = date('M Y',b_time::txt2unix($this->r['lm_key']));
     case '34_phd': 
     case '38_ms':
       if (@$this->r['lm_key'] == CONST_year_not_considered) { 
 	$this->r = array();
 	return; 
       }
-      if (!isset($this->r['emp_period']) && isset($this->r['lm_key']))$this->r['emp_period'] = $this->r['lm_key']; 
+      if (!isset($this->r['_emp_period']) && isset($this->r['lm_key']))$this->r['_emp_period'] = $this->r['lm_key']; 
       if  (empty($this->r['favicon'])) if (!$this->highestDegree++)   $this->r['favicon'] = bIcons()->get('i-oxford');
       break;
 
     default:
       if ($this->r['lm_key'] > date('Y-m-d',time())){
-	$this->r['emp_period'] = 'from '.date('M Y',b_time::txt2unix($this->r['lm_key']));
+	$this->r['_emp_period'] = 'from '.date('M Y',b_time::txt2unix($this->r['lm_key']));
       }elseif ($this->r['lm_status'] > date('Y-m-d',time())){
-	$this->r['emp_period'] = date('M Y',b_time::txt2unix($this->r['lm_key'])).' -> present'; 
+	$this->r['_emp_period'] = date('M Y',b_time::txt2unix($this->r['lm_key'])).' -> present'; 
       }else{
-	$this->r['emp_period'] = b_time::period(b_time::txt2unix($this->r['lm_key']), 
+	$this->r['_emp_period'] = b_time::period(b_time::txt2unix($this->r['lm_key']), 
 						b_time::txt2unix($this->r['lm_status']),True);
       }
     }
-    if (cnf_show_dp && !empty($this->r['emp_period'])){
-      b_debug::xxx($this->r['lm_key'].', '.$this->r['lm_status'].' ===>>  '.$this->r['emp_period']);
+    if (cnf_show_dp && !empty($this->r['_emp_period'])){
+      b_debug::xxx($this->r['lm_key'].', '.$this->r['lm_status'].' ===>>  '.$this->r['_emp_period']);
     }
 
     // format the fields

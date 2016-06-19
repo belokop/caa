@@ -761,7 +761,7 @@ class myPear{
   static public function TBD($text='.',$class=Null)  { self::MESSAGE($text, $class, 'TBD'); }
   
   static public function ERROR    ($text,$class=Null){
-    if (stripos($text,'missing value for')!==False)  self::mail_diagnostics(Null,strip_tags($text));
+    if (stripos($text,'missing value')!==False)  self::mail_diagnostics(Null,strip_tags($text));
     self::MESSAGE($text, $class, 'error', 'ERROR'); 
   }
 

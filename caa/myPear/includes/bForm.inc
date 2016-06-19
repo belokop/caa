@@ -210,6 +210,7 @@ class bForm extends myPear_getValue{
    * Read the database record for the class and copy it to $this->formDB
    */
   function readDefRecord(){
+
     $this->formDB = array();
     if ($this->SQL_backend) {
       $q = myPear_db()->qquery("SELECT * FROM $this->TABLE WHERE $this->TABLEID = '$this->ID'",$this->debug);
@@ -217,6 +218,7 @@ class bForm extends myPear_getValue{
     }else{
       if ($s = @$_SESSION['DB_'.get_class($this)]) $this->formDB = $s;
     }
+    if (@$this->formDB['av_lastname'] == 'Luther')    b_debug::print_r($this->formDB,$this->__toString());
   }
   
   /*
@@ -412,7 +414,7 @@ class bForm extends myPear_getValue{
    * Open the form
    */
   public function getFormOpen(){
-    $this->dbg(starting);
+    b_debug::xxx(starting,array(2,'fuchsiaText',cnf_dev));
     locateAndInclude('b_table');
     bTiming()->cpu(get_class($this).'.doForm');
 
@@ -443,7 +445,7 @@ class bForm extends myPear_getValue{
     }else{
       $this->getFormOpen_execute();
     }
-    $this->dbg(exiting);
+    b_debug::xxx(starting,array(2,'fuchsiaText',cnf_dev));
   }
     
   /* 
@@ -824,13 +826,15 @@ class bForm extends myPear_getValue{
   private function displayErrors($no_filter=False){
     
     if (!b_btn::$confirm_waiting){
+
       // optionally clean and/or reformat the error messages
       $this->dbg((($n=count($this->errorsInTheForm))==0 ? 'No' : $n).' errors BEFORE displayErrors_preflight');
       $errors = $this->displayErrors_preflight();
       $this->dbg((($n=count($errors))==0 ? 'No' : $n).' errors AFTER displayErrors_preflight');
+
+      // Sanity
+      $this->clean_outOfScopeMissingValues($errors);
       
-      // Display them as an error message
-      $display = array();
       // Ouu, shit... This happens for the "embedded" forms.
       // getvalue checks only for myPost arrays, so it does not see other forms...  
       // workaround...
@@ -847,6 +851,8 @@ class bForm extends myPear_getValue{
 	}
       }
 
+      // Display them as an error message
+      $display = array();
       foreach ($errors as $key=>$err){
 	if (is_int($key)){
 	  $display[] = $err;
@@ -862,9 +868,7 @@ class bForm extends myPear_getValue{
 			Null,
 			'error',
 			$this->displayErrors_heading);
-	if (cnf_dev) {
-	  b_debug::print_r($this->errorsInTheForm,$this.'->errorsInTheForm');
-	}
+	if (cnf_dev) b_debug::print_r($this->errorsInTheForm,$this.'->errorsInTheForm');
       }
     }
   }
@@ -1139,13 +1143,13 @@ class bForm extends myPear_getValue{
   /*
    * Export data to the database
    */
-  private $updateDB_rec = 0;
+  private $updateDB_recursion = 0;
   function updateDB($data=array()){
-    static $ignoreFields = array('button_x','button_y','MAX_FILE_SIZE');
-    
-    if ($this->updateDB_rec++){
+    static $ignoreFields = array('button_x','button_y','MAX_FILE_SIZE'), $call_counter = 0;
+
+    if ($this->updateDB_recursion++){
       static $caseN = 0;
-      $this->dbg($m=sprintf("Recursion depth %s, case %s",$this->updateDB_rec,(++$caseN)),cnf_dev);
+      $this->dbg($m=sprintf("Recursion depth %s, case %s",$this->updateDB_recursion,(++$caseN)),cnf_dev);
       if (cnf_dev) b_debug::traceBack($m);
       return $this->ID;
     }
@@ -1154,12 +1158,13 @@ class bForm extends myPear_getValue{
     if (empty($data) ||
 	$this->aceptAsIs_DoNotSave ||    /* search mode - the form should not be saved */
        !$this->updateDB_preflight($data)){
-      $this->updateDB_rec--;
+      $this->updateDB_recursion--;
       return; 
     }
     
+    $this->dbg(starting);
     bTiming()->cpu(get_class($this).'.'.__FUNCTION__);
-    if ($this->debug) b_debug::print_r($data,$this.'[updateDB] input:');
+    if ($this->debug||cnf_dev) b_debug::print_r($data,$this.'[updateDB] input:');
 
     $pars = array();
     foreach ($data as $k=>$v) {
@@ -1220,8 +1225,9 @@ class bForm extends myPear_getValue{
       $this->formDB_modified[$this->TABLEID] = $this->ID = 1;
       $_SESSION['DB_'.get_class($this)]     = $this->formDB_modified;
     }
-    $this->updateDB_rec = 0;
+    $this->updateDB_recursion = 0;
     bTiming()->cpu();
+    $this->dbg(exiting);
     return $this->ID;
   }
   
@@ -1268,6 +1274,7 @@ class bForm extends myPear_getValue{
       $reply = False;
     }else{
       $this->check_formDB(False);
+      $this->clean_outOfScopeMissingValues();
       $reply = empty($this->errorsInTheForm);
     }
     $this->inside_errorless--;
@@ -1277,12 +1284,34 @@ class bForm extends myPear_getValue{
   }
 
   /*
+   * Cancel errors for the values which we NOT in the dialog
+   */
+  protected function clean_outOfScopeMissingValues(&$errors_list=Null){
+    // Check that the missing values were asked, skip if not
+    if (!empty($_POST) && !$this->myPost_bForm()) return;
+    
+    if (!empty($errors_list)) $args['errors_list'] = $errors_list;
+    $args['$this->errorsInTheForm'] = $this->errorsInTheForm;
+    
+    foreach($args as $type=>$arg){
+      foreach($arg as $field=>$msg){
+	//	if ($msg != missing_value) continue;
+	if (!in_array($field,array_keys($_POST))){
+	  if (cnf_dev) myPear::DEBUG(sprintf("%s - Cancel error '%s' for %s[%s]",__FUNCTION__,$msg,$type,$field));
+	  if ($type == 'errorsInTheForm') unset($this->errorsInTheForm[$field]);
+	  else                            unset($errors_list[$field]);
+	}
+      }
+    }
+  }
+
+  /*
    * Loop thru the vital field, check that there no one missing.
    * @params return (array) missing fields 
    */
   protected function vitalFieldMissing($updates=array()){
 
-    // In principal the values should be in the cache already, but just in case (superstition)...
+    // In principal the values should be in the cache already, but check again - just in case (superstition)...
     if ($this->myPost_bForm()){
       foreach($_POST  as $name=>$x)            $v=$this->getValue($name,True,True);
       foreach($_FILES as $name=>$x)            $v=$this->getValue($name,True,True);
@@ -1301,17 +1330,19 @@ class bForm extends myPear_getValue{
       if (@$this->formDB[$field] !== $this->getValue($field,True)) $this->errorsInTheForm = array();
     }
 
+    // Sanity
+    $this->clean_outOfScopeMissingValues();
 
     $reply = array();
     foreach ($this->isVITAL as $vf=>$isVITAL){
-      if ((bool)$isVITAL && !myPear::is_empty($msg = @$this->errorsInTheForm[$vf])){
+      if ((bool)$isVITAL && !myPear::is_empty(@$this->errorsInTheForm[$vf])){
 	$reply[] = $vf;
       }
     }
     
     // Sanity
-    if ($reply) $this->dbg(($reply ? join(', ',$reply) : False),(bool)($this->debug));
-    elseif($this->errorsInTheForm) $this->dbg("errorsInTheForm: ".b_fmt::joinX(',',$this->errorsInTheForm),(bool)($this->debug));
+    $this->dbg(($reply ? join(', ',$reply) : False),(bool)($this->debug || cnf_dev));
+    if($this->errorsInTheForm) $this->dbg("errorsInTheForm: ".b_fmt::joinX(',',$this->errorsInTheForm),(bool)($this->debug));
     return $reply;
   }
   

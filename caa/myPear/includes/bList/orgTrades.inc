@@ -164,7 +164,7 @@ class bList_orgTrades extends bList{
 	$EmpRec_class = new bList_eaEmpRecords($av_id);
 	$not_defined = True;
 	foreach($EmpRec_class->getMembers() as $er_id=>$er){
-	  if (!isset($er['e_rate']) && isset($er['emp_rate'])) $er['e_rate'] = $er['emp_rate'];
+	  //if (!isset($er['e_rate']) && isset($er['_e_rate'])) $er['e_rate'] = $er['_e_rate'];
 	  if (!isset($er['e_rate']))  continue;
 	  if (in_array($er['e_rate'],array_keys($this->_trades))){
 	    $this->tradeMembers[$er['e_rate']][] = $av_id;

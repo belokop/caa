@@ -75,7 +75,7 @@ class bHolder {
       ob_end_clean();
       $_GET = $_GETsv;
     }
-    b_debug::var_dump($widget,b_fmt::escape(sprintf("%s(%s,%s) exíting...",__FUNCTION__,$href,join(',',$args))));
+    if (0) b_debug::var_dump($widget,b_fmt::escape(sprintf("%s(%s,%s) exíting...",__FUNCTION__,$href,join(',',$args))));
     return $widget;
   }
 

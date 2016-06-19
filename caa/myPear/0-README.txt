@@ -1,5 +1,18 @@
 Changes log
 
+2016-06-19, Version 5.140, EA fixes
+M       myPear/includes/bForm/Avatar/ea.inc
+M       myPear/includes/bForm/Avatar.inc
+M       myPear/includes/bForm.inc
+M       myPear/includes/bHolder.inc
+M       myPear/includes/bList/eaEmpRecords.inc
+M       myPear/includes/bList/orgTrades.inc
+M       myPear/includes/bMailer.inc
+M       myPear/includes/b_updates.inc
+M       myPear/includes/myPear.inc
+M       myPear/includes/myPear_functions.inc
+M       myPear/includes/myPear_getValue.inc
+
 2016-06-17, Version 5.139, chaising bug in search
 M       myPear/includes/bForm/Avatar/Search.inc
 

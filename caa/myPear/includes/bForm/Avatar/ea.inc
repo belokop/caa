@@ -94,18 +94,18 @@ class bForm_Avatar_ea extends bForm_Avatar{
    * For the complete definition of the employee records see bList_eaEmpRecords class,
    * this table gives mapping  bList_eaEmpRecords -> bForm_Avatar_ea
    */
-  private static $av2er = array('emp_rate'       =>array('k'=>'e_rate',    'c'=>'orgTrades'), // The description comes from 'c', i.e. bList_orgTrades
+  private static $av2er = array('e_rate'         =>array('k'=>'e_rate',    'c'=>'orgTrades'), // The description comes from 'c', i.e. bList_orgTrades
 				'e_gid'          =>array('k'=>'e_gid',     'c'=>'orgGroups'),
-				'av_institute'   =>array('k'=>'e_inst',    'd'=>'Institute'),
-				'av_residentship'=>array('k'=>'e_cc',      'd'=>'Residentship'),
-				'av_position'    =>array('k'=>'lm_value',  'd'=>'Position'),
 				'e_off'          =>array('k'=>'e_off',     'd'=>'Office'),
 				'e_type'         =>array('k'=>'e_type',    'd'=>''),
 				'e_org'          =>array('k'=>'e_org',     'd'=>''),
 				'e_start'        =>array('k'=>'lm_key',    'd'=>''), // start of the employment period
 				'e_end'          =>array('k'=>'lm_status', 'd'=>''), // end of the employment period
 				'lm_id'          =>array('k'=>'lm_id',     'd'=>''),
-				'emp_period'     =>array('k'=>CONST_noname,'d'=>'Employment period'),
+				'av_position'    =>array('k'=>'lm_value',  'd'=>'Position'),
+				'av_institute'   =>array('k'=>'e_inst',    'd'=>'Institute'),
+				// 'av_residentship'=>array('k'=>'e_cc',      'd'=>'Residentship'), // e_cc this is Institite location, not private residentship
+				'_emp_period'     =>array('k'=>CONST_noname,'d'=>'Employment period'),
 				);
 
   /*
@@ -154,7 +154,7 @@ class bForm_Avatar_ea extends bForm_Avatar{
     if ((@$_GET['av_id'] == $this->ID) || (@$_GET['id'] == $this->ID)) $this->adjust_status();
 
     // Fill the description for orgTrades & orgGroups
-    if (myPear_db()->isReady() && empty(self::$av2er['emp_rate']['d'])){
+    if (myPear_db()->isReady() && empty(self::$av2er['e_rate']['d'])){
       foreach(self::$av2er as $key=>$data){
 	if (!empty($data['c'])){
 	  self::$av2er[$key]['d'] = myOrg()->org_bList($data['c'])->getValue('l_member_title');
@@ -176,6 +176,7 @@ class bForm_Avatar_ea extends bForm_Avatar{
    * Update the 'av_position' & 'av_institute' field in the avatar record from the current EA record(s)
    */
   function update_AVpos_AVinst($what){
+    $this->dbg(starting);
     if ($this->isEA() && !empty(self::$av2er[$what])){
       $this->hook_employment();
       $this->isMBE['av_birthdate']    = !$this->isE();
@@ -210,6 +211,7 @@ class bForm_Avatar_ea extends bForm_Avatar{
 	myPear::MESSAGE_add($this->name()." - set current ".self::$av2er[$what]['d']." '$ea_value'");
       }
     }
+    $this->dbg(exiting);
   }
 
   /*
@@ -516,7 +518,7 @@ class bForm_Avatar_ea extends bForm_Avatar{
       case 'e_off':
       case 'e_gid':
       case 'e_rate':
-      case 'emp_rate':
+      case 'e_rate':
 	if (!$this->isE()) $err_msg = '';
 	break;
 
@@ -580,6 +582,24 @@ class bForm_Avatar_ea extends bForm_Avatar{
         }
 
       case 'RW':
+	if (preg_match('/'.myOrg_name.' employment/',@$_REQUEST['action_once']) && ($ea = $this->hook_employment())){
+	  $records = $ea->get_currentEmploementRecords(array('e_org'=>myOrg_ID),999,$this->getValue('av_ddate',True));
+	  foreach($records as $r){
+	    $lm_id = $r['lm_id'];
+	    break; // take just the first record if there are many
+	  }
+	  b_url::header(b_url::same(array('act_once'  =>1,
+					  'act_id'    =>$ea->ID,
+					  'act_code'  =>'edit',
+					  'act_parent'=> $this->ID,
+					  'arg1_once' => $this->ID,
+					  'act_lmid'  => $lm_id,
+					    'lm_id'     => $lm_id,
+					  'ed_bList'  =>'bList_eaEmpRecords',
+					  'resetcache_once'=>1,
+					  )));
+	  }
+	
         //
         // show the Avatar dialog
         //
@@ -719,6 +739,7 @@ class bForm_Avatar_ea extends bForm_Avatar{
       foreach(self::$av2er as $av=>$er){
 	$this->formDB_modified[$av] = @$r[$er['k']];
       }
+      break;
     }
     
     foreach(self::$av2er as $av=>$er){
@@ -734,12 +755,12 @@ class bForm_Avatar_ea extends bForm_Avatar{
     // Contract dates
     //
     $e_end = min(CONST_eternity,$this->getValue('e_end',1,1));
-    $this->formDB_modified['emp_period'] = b_time::short_date($this->getValue('e_start')). ' -> ' .b_time::short_date($e_end);
+    $this->formDB_modified['_emp_period'] = b_time::short_date($this->getValue('e_start')). ' -> ' .b_time::short_date($e_end);
     
     $dialog = array('_virt_emp_record'=> array('textHidden'),
-		    'emp_period'      => array('datePickerField2','e_start','e_end'),
+		    '_emp_period'     => array('datePickerField2','e_start','e_end'),
 		    'av_position'     => array('textField'));
-    if ($trades=myOrg()->orgTrades()->get_trades()) $dialog['emp_rate'] = array('selectMenu',$trades);
+    if ($trades=myOrg()->orgTrades()->get_trades()) $dialog['e_rate'] = array('selectMenu',$trades);
     $this->formBlock('office_contract',
 		     myOrg_name.' employment',
 		     $dialog,
@@ -778,22 +799,24 @@ class bForm_Avatar_ea extends bForm_Avatar{
     $this->defineVariable('Country','av_residentship');
     if (!$this->getValue('e_type')) $this->formDB_modified['e_type'] = '20_mp';
     
-    $dialog = array('av_position'     => array('textField'),
-		    'av_institute'    => array('textField'),
-		    'av_city'         => array('textField'),
-		    'av_residentship' => array('textFieldCountry'),
-		    'emp_period'      => array('datePickerField2','e_start','e_end'),
-		    '_virt_emp_record'=> array('textHidden'),
-		    'e_type'          => array('textHidden'),
-		    );
-    // All the fields are optional
-    foreach($dialog as $k=>$v)       $this->isMBE[$k] = True;
-
-    $this->formBlock('recent_emp',
-		     'Recent employment',
-		     $dialog,
-		     array('i'=>'i-building',
-			   'l'=>$this->sameURL_but('RW')));
+    if (!$this->getValue('av_ddate',True,True)){
+      $dialog = array('av_position'     => array('textField'),
+		      'av_institute'    => array('textField'),
+		      'av_city'         => array('textField'),
+		      'av_residentship' => array('textFieldCountry'),
+		      '_emp_period'     => array('datePickerField2','e_start','e_end'),
+		      '_virt_emp_record'=> array('textHidden'),
+		      'e_type'          => array('textHidden'),
+		      );
+      // All the fields are optional
+      foreach($dialog as $k=>$v)       $this->isMBE[$k] = True;
+      
+      $this->formBlock('recent_emp',
+		       'Recent employment',
+		       $dialog,
+		       array('i'=>'i-building',
+			     'l'=>$this->sameURL_but('RW')));
+    }
   }
   
   /*

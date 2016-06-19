@@ -52,7 +52,7 @@ class bIcal_matrix_ea extends bIcal_matrix{
       $av      = new bForm_Avatar_ea($av_id);
       $name_Lf = $av->fmtName('Lf');
       $name_sfl= $av->fmtName('sfl');
-      $clas    = $this->av_rate($r['lm_value'],@$r['e_rate']); // emploeers "rate"
+      $clas    = $this->av_rate($r['lm_value'],@$r['e_rate']); // employers "rate"
       $a2 = True ? $clas : $name_Lf;
       
       $photo = myPear_photos.$r['av_photo'];

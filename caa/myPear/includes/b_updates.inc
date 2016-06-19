@@ -249,6 +249,7 @@ function myPear_update_DBdefaults($args,$null='NOT NULL'){
 	if (stripos($type_to_be,'int') !== False) myPear_db()->qquery("UPDATE `$table` SET $f=0 WHERE $f=''",True);
 	myPear_db()->qquery("ALTER TABLE `$table` CHANGE `$f` `$f` $type_to_be $null $default",True);
 	if (stripos($type_to_be,'int') !== False) myPear_db()->qquery("UPDATE `$table` SET $f=$default_to_be WHERE ($f='' OR $f IS NULL OR $f='0' OR $f=0)",True);
+	if ($set_to_null) myPear_db()->qquery("UPDATE `$table` SET $f=NULL WHERE $f=''",True);
       }
     }
   }
