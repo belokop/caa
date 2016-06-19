@@ -52,7 +52,7 @@ function ea_update15(){
 		  '421029-2491',
 		  '420222-2341',
 		  '431124-2184',
-		  '',
+		  '401214-2177',
 		  ) as $wrong_ssn){
       $n = explode('-',$wrong_ssn,2);
       myPear_db()->qquery("UPDATE zzz_avatars SET av_ssn = '".$n[0]."-P123' WHERE av_ssn = '$wrong_ssn'",True);

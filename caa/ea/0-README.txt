@@ -1,5 +1,8 @@
 Changes log
 
+2016-06-19, Version 5.24, EA fixes
+M       ea/includes/ea_updates.inc
+
 2016-06-19, Version 5.23, EA fixes
 M       ea/includes/bIcal_matrix_ea.inc
 M       ea/includes/ea_updates.inc
