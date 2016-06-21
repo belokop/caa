@@ -1687,16 +1687,16 @@ class bForm extends myPear_getValue{
       $include_notConsidered = False;
       switch($column_name){
       case 'av_ms_year':
+	if ($this->getValue($column_name,True) == CONST_year_not_considered) unset($date);
 	$descr = ($this->MODE == 'RW' ? 'Date of award' : ' ');  
-     // $include_notConsidered = !in_array($valid['av_birthdate'],array(0,1));
 	$include_notConsidered = True;
 	list($from,$to) = ($av_birthdate // MS at the age of 15 years 
 			   ? array($av_birthdate  + 15*365*24*3600, max_date($av_birthdate,$av_ddate,+5))
 			   : array(time() - 15*365*24*3600,         max_date($av_birthdate,$av_ddate,+5)));
 	break;
       case 'av_phd_year':
+	if ($this->getValue($column_name,True) == CONST_year_not_considered) unset($date);
  	$descr = ($this->MODE == 'RW' ? 'Date of award' : ' ');  
-     // $include_notConsidered = !in_array($valid['av_birthdate'],array(0,1));
 	$include_notConsidered = True;
 	list($from,$to) = ($av_birthdate // PhD at the age of 20 years 
 			   ? array($av_birthdate + 20*365*24*3600, max_date($av_birthdate,$av_ddate,+5))

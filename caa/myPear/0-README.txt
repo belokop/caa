@@ -1,5 +1,9 @@
 Changes log
 
+2016-06-21, Version 5.142, Fix EA employment records
+M       myPear/includes/bForm.inc
+M       myPear/includes/bList/eaEmpRecords.inc
+
 2016-06-21, Version 5.141, Fix EA employment records
 M       myPear/includes/bForm/Avatar/ea.inc
 M       myPear/includes/bForm/Avatar.inc

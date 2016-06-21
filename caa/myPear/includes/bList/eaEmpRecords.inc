@@ -646,6 +646,9 @@ class bList_eaEmpRecords extends bList{
 			'ms' =>'38_ms');
     $r = array();
     if (!empty($a2e[$av_type])){
+
+      if ($this->av->getValue("av_${av_type}_year",True) == CONST_year_not_considered) return array();
+
       if ($i=$this->av->year2date("av_${av_type}_year","M Y"))     $r['lm_key'] = $i;
       if ($i=$this->av->getValue("av_${av_type}_country",True,1))  $r['e_cc']   = $i;
       if ($i=$this->av->getValue("av_${av_type}_institute",True,1))$r['e_inst'] = $i;
