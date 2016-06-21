@@ -11,7 +11,7 @@ define('emp_other'     , 'Other Activity');
 class bList_eaEmpRecords extends bList{
   
   protected $isReady  = True;
-  public $tips_byMode = array('RW'=>array('lm_period' => "If you don't know the future end date of the period, type '2099-01-01'",
+  public $tips_byMode = array('RW'=>array('lm_period'  => "If you don't know the future end date of the period, type '2099-01-01'",
 					  '_emp_period'=> "If you don't know the future end date of the period, type '2099-01-01'",
 					  ));
   var $e_type_menu = array();
@@ -91,6 +91,7 @@ class bList_eaEmpRecords extends bList{
   /*
    * The parent is an Avatar, the list name is
    */
+  private $e_org = Null;
   function __construct($parent_ID){
     
     // Hook the parent Avatar
@@ -101,32 +102,35 @@ class bList_eaEmpRecords extends bList{
       $this->av = new bForm_Avatar_ea($parent_ID);
     }
     
+    // Complete the class
+    parent::__construct($this->av->ID);
+    $this->dbg($this->av->name());
+
+    // Adjust the pop-up menu to the organization name
+    foreach ($this->e_type_menuD as $k=>$v) $this->e_type_menu[$k] = str_replace('ORG',myOrg_name,$v);
+    
     // Replace the virtual employment type by the real one
     switch(@$_POST['e_type']){
     case '20_mp_org':
     case '22_op_org':
     case '40_va_org':
       // "Position within organization" = "Major position" + "Organization number" 
-      $this->getValue_reset('e_type',str_replace('_org','',$_POST['e_type']));
-      $this->getValue_reset('e_org', myOrg_ID);
+      $this->e_org = myOrg_ID;
+      $this->reset_POST('e_type',str_replace('_org','',$_POST['e_type']));
+      $this->reset_POST('e_org',$this->e_org);
       break;
     case '10_cp':
       // "Current position" is an endless "Major position"
-      $this->getValue_reset('e_type','20_mp');
-      $this->getValue_reset('lm_status',CONST_eternity);
-      //      $_POST['e_type'] = '20_mp';
-      //      $_POST['lm_status'] = CONST_eternity;
+      $this->reset_POST('e_type','20_mp');
+      $this->reset_POST('lm_status',CONST_eternity);
       break;
     default:
     }
+  }
 
-    
-    // Adjust the pop-up menu to the organization name
-    foreach ($this->e_type_menuD as $k=>$v) $this->e_type_menu[$k] = str_replace('ORG',myOrg_name,$v);
-    
-    // Complete the class
-    parent::__construct($this->av->ID);
-    $this->dbg($this->av->name());
+  private function reset_POST($name,$value){
+    $this->getValue_reset($name,$value);
+    //    if (isset($_POST[$name])) $_REQUEST[$name] = $_POST[$name] = $value;
   }
   
   /*
@@ -336,7 +340,7 @@ class bList_eaEmpRecords extends bList{
    *
    */
   protected function logIt(){
-    if (!myPear_db()->num_rows(myPear_db()->qquery("SELECT lm_id FROM $this->TABLE_member ".$this->hookJOIN()." WHERE ".$this->hookParent(),$this->debug))){
+    if (!myPear_db()->num_rows(myPear_db()->qquery("SELECT lm_id FROM $this->TABLE_member ".$this->hookJOIN()." WHERE ".$this->hookParent(),$this->debug||cnf_dev))){
       myPear::INFO("Start ".$this->av->name()."'s employment history");
       myPear_logs()->add('ea',$this->av->ID);
     }
@@ -347,6 +351,7 @@ class bList_eaEmpRecords extends bList{
    * setup list_quering
    */
   private function adjust_list_quering(){
+    $this->dbg(starting);
     $was = $this->list_quering;
     switch($this->getMemberValue(0,'e_type')){
     case '50_ah':
@@ -355,6 +360,9 @@ class bList_eaEmpRecords extends bList{
     case '30_h':
     case '34_phd':
     case '38_ms':
+      if (isset($this->list_quering['e_inst'])){
+	// Cosmetical - remove "add education" if it is already there
+      }
       unset($this->list_quering['lm_status']);
       $this->list_quering['lm_key'] = 'Awarded';
       break;
@@ -370,6 +378,7 @@ class bList_eaEmpRecords extends bList{
       unset($this->list_quering['e_rate']);
     }
     if ($was !== $this->list_quering) b_debug::xxx($this->list_quering);
+    $this->dbg(exiting);
   }
 
   function getFormAdd_OK(){
@@ -384,113 +393,112 @@ class bList_eaEmpRecords extends bList{
   /*
    * Input form
    */
-  function getFormAdd(){
+  protected function getFormAdd(){
     // Create the record if it is empty
-    if (empty($this->member_ID)){
+    $this->dbg("member_ID=".$this->member_ID,cnf_dev);
+    if (!myPear::is_int($this->member_ID)){
       $this->logIt();
       $this->updateMember();
     }
 
+    //
+    // Jump to the avatar's "study dialog" for PhD / MS 
+    // since those 2 blocks are stored in the zzz_avatars, and not in zzz_list_members
     $lm_id = $this->getValue('lm_id');
-
-    $this->adjust_list_quering();
-    
-    switch($e_type= $this->getMemberValue($lm_id,'e_type')){
-
-      /*
-       * Jump to the avatar study dialog for PhD / MS 
-       * since those 2 blocks are stored in the zzz_avatars, and not in zzz_list_members
-       */
-    case '34_phd':  
-    case '38_ms':
-      $this->deleteMember($_POST['lm_id']);
-
+    $e_type = $this->getMemberValue($lm_id,'e_type');
+    $this->dbg("lm_id=".var_export($lm_id,True).", e_type=".var_export($e_type,True),cnf_dev);
+    if (!empty($e_type)){
       list($x,$degree) = explode('_',$e_type);
-      // Break the processing and go directly to editing the Avatar class
-      b_url::header(b_url::same("?form=Avatar_ea&id=".$this->av->ID."&mode=RW&block_once=edu_$degree"));
-      break;
-      
-      /*
-       * Rise standard bForm_List dialog for the other items
-       */
-    default:
-      $this->bForm($this->list_quering,$inversed=True);
-      $this->f->defineVariable('Period of stay','lm_period'); 
-      //      $this->f->displayErrors_NO = True;
-      $this->f->submitOnChange['e_type'] = True;
-      //$this->f->isRO['e_rate'] = True;
-      $this->f->isRO['lm_id'] = True;
-      $this->f->formDB = $this->formDB_member;
-      
-      // Do not(?) check the country for the EA, the Institute name is supposed to "say everything"
-      if ($e_org = $this->getMemberValue($lm_id,'e_org')){
-	$e_inst_virtual = myOrg($e_org)->name();
-	foreach ($this->e_type_menuD as $k=>$v){
-	  if (strpos($k,'_org')!==False){
-	    $this->e_type_menu[$k]                        = str_replace('ORG',$e_inst_virtual,$v);
-	    $this->e_type_menu[str_replace('_org','',$k)] = str_replace('ORG',$e_inst_virtual,$v);
-	  }
-	}
-	$this->f->formDB['e_inst_virtual'] = $e_inst_virtual;
-	$this->f->isRO['e_inst'] = True;
-	$this->f->isRO['e_inst_virtual'] = True;
-	$this->f->textHidden('e_org',$e_org);
+      if (in_array($degree,array('phd','ms'))){
+	if (!empty($lm_id)) $this->deleteMember($lm_id);
+	// Break the processing and go directly to edit the Avatar class
+	b_url::header(b_url::same("?form=Avatar_ea&id=".$this->av->ID."&mode=RW&block_once=edu_$degree"));
       }
-      
-      foreach(array_keys($this->list_quering) as $item){
-	if (empty($e_type) && $item != 'e_type') continue;
-	$ask_for_period = (!empty($this->list_quering['lm_status']) && ($e_type != '10_cp'));
-	switch($item){
-	case 'e_rate':
-	  if ($trades=myOrg()->orgTrades()->get_trades()) $this->f->selectMenu('e_rate',$trades);
-	  break;
-	case 'e_type':
-	  if (in_array($e_type,array('20_mp'))){
-	    $this->f->selectMenu('e_type',array('20_mp' => $this->e_type_menu['20_mp'],
-						'40_va' => $this->e_type_menu['40_va'],
-						'22_op' => $this->e_type_menu['22_op']));
-	  }else{
-	    if (!($this->f->isRO['e_type'] = !empty($e_type)))  $this->f->keepRW[] = 'e_type';
-	    $this->f->selectMenu('e_type',$this->e_type_menu); 
-	  }
-	  break;  
-	  
-	case 'lm_value':       
-	  if (in_array($e_type,$this->emp_groups[emp_education])) $this->f->textHidden($item,$this->code2text($e_type));
-	  else                                                    $this->f->textField($item); 
-	  break;
-	  
-	case 'e_cc':       
-	  if (empty($e_org))       $this->f->textFieldCountry($item);   
-	  break; 
-	  
-	case 'lm_key':    
-	  if ($ask_for_period)     $this->f->datePickerField2('lm_period','lm_key','lm_status');
-	  else                     $this->f->datePickerField($item); 
-	  break;
-	  
-	case 'lm_status': 
-	  if(!$ask_for_period)     $this->f->datePickerField($item); 
-	  break;
-	  
-	case 'e_inst':
-	  $this->f->isRO['e_inst_virtual'] = True;
-	  if (empty($e_org))       $this->f->textField('e_inst');
-	  else                     $this->f->textField('e_inst_virtual');
-	  break;
-	
-	default:  
-	  $this->f->textField($item);
+    }      
+
+    //
+    // Rise standard bForm_List dialog for the other items
+    $this->adjust_list_quering();
+    $this->bForm($this->list_quering,$inversed=True);
+    $this->f->debug=True;
+    $this->f->defineVariable('Period of stay','lm_period'); 
+    $this->f->submitOnChange['e_type'] = True;
+    $this->f->isRO['lm_id'] = True;
+    $this->f->formDB = $this->formDB_member;
+    
+    // Do not(?) check the country for the EA, the Institute name is supposed to "say everything"
+    if (!empty($lm_id)) $e_org = $this->getMemberValue($lm_id,'e_org');
+    if (!empty($e_org)) $this->e_org = $e_org;
+    if ($this->e_org){
+      $e_inst_virtual = myOrg($this->e_org)->name();
+      foreach ($this->e_type_menuD as $k=>$v){
+	if (strpos($k,'_org')!==False){
+	  $this->e_type_menu[$k]                        = str_replace('ORG',$e_inst_virtual,$v);
+	  $this->e_type_menu[str_replace('_org','',$k)] = str_replace('ORG',$e_inst_virtual,$v);
 	}
-      }	
-      if (cnf_dev){
-	$this->f->isRO['memberID'] = True;
-	$this->f->formDB['memberID'] = $this->member_ID;
-	$this->f->textField('memberID');
       }
-      $this->f->closeForm();
-      $this->MODE = $this->f->MODE;
+      $this->f->formDB['e_inst_virtual'] = $e_inst_virtual;
+      $this->f->isRO['e_inst'] = True;
+      $this->f->isRO['e_inst_virtual'] = True;
+      $this->f->textHidden('e_org',$this->e_org);
     }
+    
+    // Build the form  
+    foreach(array_keys($this->list_quering) as $item){
+      if (empty($e_type) && $item != 'e_type') continue;
+      $ask_for_period = (!empty($this->list_quering['lm_status']) && ($e_type != '10_cp'));
+      switch($item){
+
+      case 'e_rate':
+	if ($trades=myOrg()->orgTrades()->get_trades()) $this->f->selectMenu('e_rate',$trades);
+	break;
+	
+      case 'e_type':
+	if (in_array($e_type,array('20_mp'))){
+	  $this->f->selectMenu('e_type',array('20_mp' => $this->e_type_menu['20_mp'],
+					      '40_va' => $this->e_type_menu['40_va'],
+					      '22_op' => $this->e_type_menu['22_op']));
+	}else{
+	  if (!($this->f->isRO['e_type'] = !empty($e_type)))  $this->f->keepRW[] = 'e_type';
+	  $this->f->selectMenu('e_type',$this->e_type_menu); 
+	}
+	break;  
+	
+      case 'lm_value':       
+	if (in_array($e_type,$this->emp_groups[emp_education])) $this->f->textHidden($item,$this->code2text($e_type));
+	else                                                    $this->f->textField($item); 
+	break;
+	
+      case 'e_cc':       
+	if (empty($this->e_org))       $this->f->textFieldCountry($item);   
+	break; 
+	
+      case 'lm_key':    
+	if ($ask_for_period)     $this->f->datePickerField2('lm_period','lm_key','lm_status');
+	else                     $this->f->datePickerField($item); 
+	break;
+	
+      case 'lm_status': 
+	if(!$ask_for_period)     $this->f->datePickerField($item); 
+	break;
+	
+      case 'e_inst':
+	$this->f->isRO['e_inst_virtual'] = True;
+	if (empty($this->e_org)) $this->f->textField('e_inst');
+	else                     $this->f->textField('e_inst_virtual');
+	break;
+	
+      default:  
+	$this->f->textField($item);
+      }
+    }	
+    if (cnf_dev){
+      $this->f->isRO['memberID'] = True;
+      $this->f->formDB['memberID'] = $this->member_ID;
+      $this->f->textField('memberID');
+    }
+    $this->f->closeForm();
+    $this->MODE = $this->f->MODE;
   }
 
   /*

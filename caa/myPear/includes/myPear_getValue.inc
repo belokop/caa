@@ -92,6 +92,7 @@ class myPear_getValue{
 
     // Monitor the change of a variable 
     /*
+    if (stripos(get_class($this),'bList') !== False)    b_debug::watchDog(@$this->TABLEID,$this);
     if (0) b_debug::watchDog(@$this->isMBE['av_citizenship'],$this,True);
     if (0) b_debug::watchDog(@$this->isRO['av_birthdate'],$this,True);
     if (0) b_debug::watchDog($this->MODE,$this,(stripos(get_class($this),'Lease')));
@@ -150,16 +151,24 @@ class myPear_getValue{
       foreach($look_here as $hint=>$value){
 	if (empty($value)) continue;
 	$this->dbg("get '$value' from '$hint', don't cache in getValue cache",cnf_dev);
-	$debug_sv = $this->show_gv; if (cnf_dev || $this->debug) $this->show_gv = True;
 	//??? why	$this->getValue_reset($name);
 	$this->list_memberID[$name] = $value;
-	$this->getValue_return($hint,$value);
-	$this->show_gv = $debug_sv;
-	return $value;
+	return $this->getValue_return($hint,$value);
       }      
-      $this->dbg($msg="???? not found '$name'",cnf_dev);
-      b_debug::traceBack($msg);
-      return Null;
+      
+      // Not found...
+      if (    ($name == 'lm_id') && (@$_GET['act_code'] == 'add')){
+	$this->dbg("Adding new object, no '$name'",cnf_dev);
+	$hint = 'adding object';
+      }elseif(($name == 'lm_id') && empty($_POST)){
+	$this->dbg("No \$_POST, hence no '$name'",cnf_dev);
+	$hint = 'empty _POST';
+      }else{
+	$this->dbg($msg="???? not found '$name'",cnf_dev);
+	$hint = '???';
+	//	b_debug::traceBack($msg);
+      }
+      return $this->getValue_return($hint,Null);
     }      
 
     bTiming()->cpu(__FUNCTION__);
@@ -319,13 +328,13 @@ class myPear_getValue{
    * Helper function for getValue.
    * Returns the input value, optionally printing it first
    */
-  protected function getValue_return($hint,$value,$debug=False){
+  protected function getValue_return($hint,$value,$debug=False,$level=3){
     if ($this->show_gv || $debug){
       $hint = (empty($hint) ? "" : " ($hint)");
       b_debug::xxx(($value===Null
 		    ? '&lt;NOT SET&gt;' 
 		    : b_fmt::escape(b_fmt::_($value)) . $hint),
-		   array(3,$this,'blueText',True));
+		   array($level,$this,'blueText',True));
     }
     return $value;
   }

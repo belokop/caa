@@ -1684,17 +1684,20 @@ class bForm extends myPear_getValue{
       }
 
       // set description and the year limits
+      $include_notConsidered = False;
       switch($column_name){
       case 'av_ms_year':
 	$descr = ($this->MODE == 'RW' ? 'Date of award' : ' ');  
-	$include_notConsidered = !in_array($valid['av_birthdate'],array(0,1));
+     // $include_notConsidered = !in_array($valid['av_birthdate'],array(0,1));
+	$include_notConsidered = True;
 	list($from,$to) = ($av_birthdate // MS at the age of 15 years 
 			   ? array($av_birthdate  + 15*365*24*3600, max_date($av_birthdate,$av_ddate,+5))
 			   : array(time() - 15*365*24*3600,         max_date($av_birthdate,$av_ddate,+5)));
 	break;
       case 'av_phd_year':
  	$descr = ($this->MODE == 'RW' ? 'Date of award' : ' ');  
-	$include_notConsidered = !in_array($valid['av_birthdate'],array(0,1));
+     // $include_notConsidered = !in_array($valid['av_birthdate'],array(0,1));
+	$include_notConsidered = True;
 	list($from,$to) = ($av_birthdate // PhD at the age of 20 years 
 			   ? array($av_birthdate + 20*365*24*3600, max_date($av_birthdate,$av_ddate,+5))
 			   : array(time() - 20*365*24*3600,        max_date($av_birthdate,$av_ddate,+5)));
@@ -1703,7 +1706,6 @@ class bForm extends myPear_getValue{
 	$descr = 'Death date';
       case 'av_birthdate':
 	if (!isset($descr)) 	$descr = 'Birth date';
-	$include_notConsidered = False;
 	list($from,$to) = array(time()-100*365*24*3600,time());  // from 0 to <max_age> years old....
       }
       list($from,$to) = array(date('Y',$from),date('Y',$to));
@@ -1722,7 +1724,7 @@ class bForm extends myPear_getValue{
       }
       if (!empty($descr)) $this->defineVariable($descr,$column_name);
       
-      if (cnf_dev) b_debug::xxx("av_birthdate='$av_birthdate' from='$from' to='$to' descr='$descr' add_NC='".$include_notConsidered."'");
+      if (cnf_dev) b_debug::xxx("av_birthdate='$av_birthdate' from='$from' to='$to' descr='$descr' add_NC='".var_export($include_notConsidered,True)."'");
       $reply = ($mode == 'dialog2'
 		? array($column_name => $dialog)
 		: $dialog);
@@ -1769,7 +1771,7 @@ class bForm extends myPear_getValue{
       }
     }
 
-    // $this->dbg("$reply (date=$date)",True);
+    $this->dbg($reply,True);
     // if (!isset($reply)) b_debug::traceBack();
     return $reply;
   }
@@ -2391,13 +2393,14 @@ class bForm extends myPear_getValue{
         if ($this->_visible($field)) {
           // if (!$something_shown++ && !empty($extraTD)) $this->t->extraTD[] = $extraTD;
           if (is_array($method)){
-            switch(count($method)){
-            case 1: call_user_func(array($this, $method[0]), $field);      break;
+            switch($n=count($method)){
+	    case 1: call_user_func(array($this, $method[0]), $field);      break;
             case 2: call_user_func(array($this, $method[0]), $field, $method[1]);      break;
             case 3: call_user_func(array($this, $method[0]), $field, $method[1], $method[2]);      break;
             case 4: call_user_func(array($this, $method[0]), $field, $method[1], $method[2], $method[3]);     break;
             case 5: call_user_func(array($this, $method[0]), $field, $method[1], $method[2], $method[3],$method[4]); break;
-            default: b_debug::internalError("add another case",$this);
+            case 6: call_user_func(array($this, $method[0]), $field, $method[1], $method[2], $method[3],$method[4],$method[5]); break;
+            default: b_debug::internalError("add another case with n_args=$n");
             }
             $method=$method[0]; 
           }elseif(!empty($method) && method_exists($this,$method)){

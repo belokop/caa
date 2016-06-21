@@ -235,7 +235,7 @@ class bList_vm_socialEvents extends bList_vm{
   /*
    * "Add social event" dialog
    */
-  function getFormAdd(){
+  protected function getFormAdd(){
 
     $this->show_gv=cnf_dev;
 

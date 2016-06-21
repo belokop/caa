@@ -39,7 +39,7 @@ class bList_wiw_tripTypes extends bList{
   /*
    *
    */
-  function getFormAdd(){
+  protected function getFormAdd(){
     $this->dbg('',cnf_dev);
     $this->f->show_gv = cnf_dev;
     $this->f->getValue_reset('lm_key',  $this->getMemberValue($_GET['lm_id'],'lm_key'));

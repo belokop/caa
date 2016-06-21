@@ -553,13 +553,14 @@ function start_myPear(){
   // Save the "clean" (i.e. without <xxx>_once) query string in a cache.
   // We will need it to build the forms' action URL  
   ///
-  $unsets = explode(',',@$_REQUEST['clean_once']);
-  foreach(array_intersect(array('v_avid','mode','tab'),$unsets) as $why){
-    $unsets = array_diff($unsets,array($why));
-    if (cnf_dev) myPear::WARNING_T("?????????????? clean_once $why");
-    if (cnf_dev) myPear::WARNING("?????????????? clean_once $why");
+  $unsets = (empty($_REQUEST['clean_once'])
+	     ? array()
+	     : array_diff(explode(',',$_REQUEST['clean_once']),array('x','y')));
+  foreach(array_intersect(array('v_avid','mode','tab'),$unsets) as $should_stay){
+    $unsets = array_diff($unsets,array($should_stay));
+    if (cnf_dev) myPear::WARNING_T("?????????????? clean_once $should_stay");
+    if (cnf_dev) myPear::WARNING  ("?????????????? clean_once $should_stay");
   }
-  $unsets = array_diff($unsets,array('x','y'));  // ????????????????????????????????????????????????????? why
   b_cnf::_unset($unsets);
   
   // Save the query string

@@ -2,7 +2,7 @@
 /**
  * Visitors Manager (VM) configuration file
  */
-$releaseDate = '2016-06-16';
+$releaseDate = '2016-06-21';
 define('VM_MODULE'   , 'vm');
 define('VM_VERSION','5.78');
 

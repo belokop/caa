@@ -4152,17 +4152,18 @@ class b_cnf{
       if (!empty($key)){
 	$keyL  = strToLower($key);
 	if (($v=@$_POST[$key]) || 
-	    ($v=@$_GET[$key]) || 
-	    ($v=@$_GET[$keyL]) || 
+	    ($v=@$_POST[$keyL]) || 
+	    ($v= @$_GET[$key]) || 
+	    ($v= @$_GET[$keyL]) || 
 	    ($v=@$_SESSION[CONST_cnfOptions][$keyL])) $dbg[$key] = $v;
-	unset($_GET[$key]);
-	unset($_GET[$keyL]);
-	unset($_POST[$key]);
-	unset($_POST[$keyL]);
-	unset($_REQUEST[$key]);
-	unset($_REQUEST[$keyL]);
-	unset($_SESSION[CONST_cnfOptions][$key]);
-	unset($_SESSION[CONST_cnfOptions][$keyL]);
+	unset($_GET[$key],
+	      $_GET[$keyL],
+	      $_POST[$key],
+	      $_POST[$keyL],
+	      $_REQUEST[$key],
+	      $_REQUEST[$keyL],
+	      $_SESSION[CONST_cnfOptions][$key],
+	      $_SESSION[CONST_cnfOptions][$keyL]);
       }
     }
     if (defined('cnf_dev')){

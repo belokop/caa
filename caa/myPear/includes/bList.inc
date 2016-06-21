@@ -251,10 +251,11 @@ class bList extends myPear_getValue{
    */
   public function __construct($parent_ID,$rank=Null){
 
-    parent::__construct();
-    $this->dbg("----------------------------------------------------------------");
     $this->TABLEID   = $this->keys['id'];
     $this->parent_ID = $parent_ID;
+
+    parent::__construct();
+    $this->dbg("----------------------------------------------------------------");
     
     // "Rank" is zero for bLists, check that it is as expected    
     $this->rank = (int)$rank;
@@ -725,7 +726,6 @@ class bList extends myPear_getValue{
     $w = array_merge($this->getMembers_where,
 		     self::args2select($args,array($this->TABLE,$this->TABLE_member),$this->serialized));
     $this->getMembers_where = array();
-
     // To get a unique cache when called from getMember
     if ($reply_as_one_record) $w[] = 1;
     
@@ -951,15 +951,17 @@ class bList extends myPear_getValue{
    * Hook the list / unit root record
    */
   protected function hookParent($associated=False){
+    if (!is_numeric($this->ID)) b_debug::internalError("??? \$this->ID = ".var_export($this->ID,True)); 
     if ($associated) return array($this->TABLEID_member_p  => $this->ID);
-    else             return       $this->TABLEID_member_p." = $this->ID";
+    else             return       $this->TABLEID_member_p."=".$this->ID;
   }
   
   /*
    * hook the table with the root record
    */
   protected function hookJOIN(){
-    return " LEFT JOIN zzz_lists ON $this->TABLEID = $this->TABLEID_member_p" ;
+    $reply = sprintf(" LEFT JOIN zzz_lists ON %s = %s",$this->TABLEID,$this->TABLEID_member_p);
+    return $reply;
   }
 
   /*
@@ -1112,8 +1114,14 @@ class bList extends myPear_getValue{
 		   );
     switch($code){
     case  'add':
-      unset($reply['lm_id']);
-      unset($reply['act_lmid']);
+      if (False){
+	$reply['lm_id'] = 'new';
+	$reply['act_lmid'] = 'new';
+      }else{
+	$reply['clean_once'] = 'lm_id,act_lmid';
+	unset($reply['lm_id']);
+	unset($reply['act_lmid']);
+      }
       break;
 
     case 'debug':
@@ -1441,7 +1449,7 @@ class bList extends myPear_getValue{
     $this->dbg('done');
   }
 
-  function getFormAdd(){
+  protected function getFormAdd(){
 
     $this->bForm(array('name'               =>'lm_key',
 		       $this->memberTitle() => 'lm_value'));

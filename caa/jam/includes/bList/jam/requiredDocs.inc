@@ -70,7 +70,7 @@ class bList_jam_requiredDocs extends bList_jam{
   /*
    *
    */
-  function getFormAdd(){
+  protected function getFormAdd(){
     if (!cnf_inside_fb)  myPear::MESSAGE("documents required by the position");
     $this->bForm($this->list_quering,True);
 

@@ -158,7 +158,7 @@ class bList_vm_budgetSource extends bList_vm{
     return $reply;
   }
 
-  function getFormAdd(){
+  protected function getFormAdd(){
     $this->bForm(array($this->memberTitle()=>'lm_key',
 		       'amount ('.trim(CONST_currency).')' =>'lm_value'));
     $this->f->textField('lm_key');

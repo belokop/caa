@@ -75,7 +75,7 @@ class bList_jam_subPositions extends bList_jam{
     return $reply;
   }
 
-  function getFormAdd(){
+  protected function getFormAdd(){
     myPear::MESSAGE("Research fields within the position");
     $this->bForm($this->list_quering,True);
     $this->f->textField('lm_key');

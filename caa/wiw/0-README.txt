@@ -1,5 +1,8 @@
 Changes log
 
+2016-06-21, Version 5.13.rc, Fix EA employment records
+M       wiw/includes/bList_wiw_tripTypes.inc
+
 2016-06-10, Version 5.12.rc, Make editable the soc.events FOR PROGRAMS
 M       wiw/includes/bList_wiw_tripTypes.inc
 

@@ -1,7 +1,7 @@
 <?php
 // myPear module 
-$releaseDate = '2016-06-19';
-define('myPear_VERSION','5.140');
+$releaseDate = '2016-06-21';
+define('myPear_VERSION','5.141');
 define('myPear_MODULE', 'myPear');
 define('myPear_DATE',    $releaseDate);
 
@@ -121,10 +121,11 @@ define('starting','Ну, тронули...');   // Means "Let's go..."
 define('exiting', 'Готово, барин...'); // Means "Ready, Sir..."
 define('missing_value', 'missing value');
 
-$_GET['showe'] = 1; define('cnf_show_e',True);
+if (!isset($_GET['showe'])) { $_REQUEST['showe'] = $_GET['showe'] = 1; define('cnf_show_e',True); }
+if (!isset($_GET['noCompactMessages'])) $_REQUEST['noCompactMessages'] = $_GET['noCompactMessages'] = (int)cnf_localhost;
+
 // $_GET['debug'] = $_GET['nodrupal'] = $_GET['showl'] = 1; define('cnf_show_l',True);
 // $_GET['authdebug'] = $_GET['warnings'] = $_GET['debug'] = $_GET['showi'] = $_GET['nodrupal'] = $_GET['YBhere'] = $_GET['dev'] = 0;
-// $_GET['noCompactMessages'] = cnf_localhost;
 if (cnf_localhost && !cnf_myPear_taskManager){
   error_reporting(E_ALL); 
   if (!cnf_CLI) foreach(array(
@@ -135,8 +136,7 @@ if (cnf_localhost && !cnf_myPear_taskManager){
 			      // 'showv', // visibility
 			      // 'authdebug','showa',
 			      // 'debug',
-			      // 'nodrupal',                  
-			      // 'noCompactMessages',
+			      // 'nodrupal',        
 			      ) as $d)  $_GET[$d] = 1;
 }
 
@@ -210,7 +210,7 @@ define('CONST_eternity' , CONST_eternity_year.'-01-01');
 define('CONST_eternity_t',mktime(12,0,0,1,1,CONST_eternity_year));
 
 /* As is  */
-define('CONST_year_not_considered' , -9999999999);
+define('CONST_year_not_considered' , -2147483648);
 
 define('CONST_noname', 'none');
 define('CONST_go_back','go back');

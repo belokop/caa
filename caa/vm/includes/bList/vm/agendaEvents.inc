@@ -233,7 +233,7 @@ class bList_vm_agendaEvents extends bList_vm{
   /*
    *
    */
-  function getFormAdd(){
+  protected function getFormAdd(){
     $this->bForm(array('event type' => 'lm_key',
 		       'event code' => 'lm_value',
 		       'process by VM?-SKIP-<br/>'.

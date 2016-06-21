@@ -582,23 +582,23 @@ class bForm_Avatar_ea extends bForm_Avatar{
         }
 
       case 'RW':
-	if (preg_match('/'.myOrg_name.' employment/',@$_REQUEST['action_once']) && ($ea = $this->hook_employment())){
+	if (!empty($_REQUEST['action_once']) && preg_match('/'.myOrg_name.' employment/',$_REQUEST['action_once']) && ($ea = $this->hook_employment())){
 	  $records = $ea->get_currentEmploementRecords(array('e_org'=>myOrg_ID),999,$this->getValue('av_ddate',True));
 	  foreach($records as $r){
 	    $lm_id = $r['lm_id'];
 	    break; // take just the first record if there are many
 	  }
-	  b_url::header(b_url::same(array('act_once'  =>1,
-					  'act_id'    =>$ea->ID,
-					  'act_code'  =>'edit',
-					  'act_parent'=> $this->ID,
-					  'arg1_once' => $this->ID,
-					  'act_lmid'  => $lm_id,
-					    'lm_id'     => $lm_id,
-					  'ed_bList'  =>'bList_eaEmpRecords',
-					  'resetcache_once'=>1,
-					  )));
-	  }
+	  if (!empty($lm_id)) b_url::header(b_url::same(array('act_once'  =>1,
+							      'act_id'    =>$ea->ID,
+							      'act_code'  =>'edit',
+							      'act_parent'=> $this->ID,
+							      'arg1_once' => $this->ID,
+							      'act_lmid'  => $lm_id,
+							      'lm_id'     => $lm_id,
+							      'ed_bList'  =>'bList_eaEmpRecords',
+							      'resetcache_once'=>1,
+							      )));
+	}
 	
         //
         // show the Avatar dialog

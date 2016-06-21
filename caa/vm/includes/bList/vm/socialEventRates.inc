@@ -333,7 +333,7 @@ class bList_vm_socialEventRates extends bList_vm{
     return $reply;
   }
 
-  function getFormAdd(){
+  protected function getFormAdd(){
     $this->bForm($this->list_quering,$inversed=True);
     if (empty($this->f->formDB['p_model'])) $this->f->formDB['p_model'] = 'ppp';
     $this->f->isMONEY['lm_value']= True;

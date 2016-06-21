@@ -138,8 +138,6 @@ class SSN{
 locateAndInclude('bForm');
 class bForm_Avatar extends bForm {
 
-  var $show_gv = True;
-
   // Valid types for the portrait photo
   public static $validMimeTypes = array('jpg','jpeg','png','gif');
 
@@ -1720,8 +1718,8 @@ class bForm_Avatar extends bForm {
 		    'm'=>'forced', 
 		    'l'=>$this->sameURL_but('RW'));
     
-    if ($this->askPhD() && $this->MS_completed()){
-      if (!$this->getValue('av_phd_year',True)) $this->formDB['av_phd_year'] = CONST_year_not_considered;
+    $askPhD = $this->askPhD() && (($this->getValue('av_phd_year',True) != CONST_year_not_considered) || $this->MODE == 'RW');
+    if ($askPhD){
       $dialog = $this->year2date('av_phd_year','dialog2');
       if (((int)$this->getValue('av_phd_year') > 1900) || $this->getValue('av_phd_institute',1) || $this->getValue('av_phd_country',1)){
 	$dialog['av_phd_institute']= array('textField');
@@ -1729,13 +1727,12 @@ class bForm_Avatar extends bForm {
       }else{
 	$this->submitOnChange['av_phd_year'] = True;
       }
-
       foreach($dialog as $k=>$v) $this->isRO[$k] = False;
       $this->formBlock('edu_phd','Doctoral studies',$dialog,$oxford);
     }
     
-    if ($this->askMS()){
-      if (!$this->getValue('av_ms_year',True)) $this->formDB['av_ms_year'] = CONST_year_not_considered;
+    $askMS = $this->askMS() && (($this->getValue('av_ms_year',True) != CONST_year_not_considered) || $this->MODE == 'RW');
+    if ($askMS){
       $dialog = $this->year2date('av_ms_year','dialog2');
       if (((int)$this->getValue('av_ms_year') > 1900) || $this->getValue('av_ms_institute',1) || $this->getValue('av_ms_country',1)){
 	$dialog['av_ms_institute'] = array('textField');
