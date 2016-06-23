@@ -146,7 +146,6 @@ class bMailer_vm extends bMailer{
   private $info = array();
   public function cronjob_remind_organizers(){
     $verbose = cnf_dev || VM_observer_here;    
-    $this->dbg(starting); 
    
     // Do it ones per session...
     if (!@$_SESSION[__METHOD__]++){
@@ -191,7 +190,6 @@ class bMailer_vm extends bMailer{
 	if ($verbose) myPear::INFO($info_body,$info_title);
       }
     }
-    $this->dbg(exiting); 
   }
   
   /*
@@ -202,7 +200,6 @@ class bMailer_vm extends bMailer{
    * - 'reg' invitation to register for the event
    */
   public function remind_organizer($av_id,$e,$mode='pwd',$no_preview=True){
-    $this->dbg(starting); 
 
     // Parse the arguments
     if ($av_id instanceof bForm_Avatar_vm){
@@ -251,7 +248,7 @@ class bMailer_vm extends bMailer{
     
     // Is it already done?
     if (!empty($policy) && ($v->getPolicy($policy) || $v->getPolicy($policyQ))){
-      $this->_dbg("$mode already done... ".exiting);
+      $this->_dbg("$mode already done... ");
       return;
     }
     
@@ -354,7 +351,6 @@ Remember to save this mail or book-mark the web page to facilitate later access 
       }
     }
     $this->dbg("Mail to '$email' is ".($ok ? 'OK' : 'NOT sent ...'),cnf_dev);
-    $this->dbg(exiting); 
     return $ok;
   }
   
@@ -705,7 +701,9 @@ Organizing committee for \"<event/>\"."));
      * Accommodation block (not for the local people)
      */
     $blabla = array();
-    if (include_accommodation_in_welcomeMail && !empty($hut_id) && $this->visit->hut_codes($without_BI=True)){
+    $include_accommodation_in_welcomeMail = (include_accommodation_in_welcomeMail && !empty($hut_id) && $this->visit->hut_codes($without_BI=True));
+    $this->dbg("include_accommodation_in_welcomeMail=".var_export($include_accommodation_in_welcomeMail,True),cnf_dev);
+    if ($include_accommodation_in_welcomeMail){
       $hut = myPear::getInstance_new('bForm_vm_Hut',$hut_id,array('strict','fatal'));
       if (!($hut instanceof bForm_vm_Hut)){
 	// Sanity... 
@@ -755,8 +753,10 @@ Please read carefully the cancellation policy. The violation of the cancellation
     $VM_V_payTrip    = $this->visit->getPolicy(VM_V_payTrip);
     $VM_V_payPerdiem = $this->visit->getPolicy(VM_V_payPerdiem);
     
+    $include_payForms_in_welcomeMail = (include_payForms_in_welcomeMail && ($VM_V_payTrip || $VM_V_payPerdiem));
+    $this->dbg("include_payForms_in_welcomeMail=".var_export($include_payForms_in_welcomeMail,True),cnf_dev);
     $this->attachments = array();
-    if (include_payForms_in_welcomeMail && ($VM_V_payTrip || $VM_V_payPerdiem)){
+    if ($include_payForms_in_welcomeMail){
       $this->cc[] = reimbursement_email;
       foreach(VM::$forms2send as $pdf_tpl){
 	$this->attachments[] = $exp->pdfReceipt($pdf_tpl,sys_get_temp_dir() . "/${pdf_tpl}_" . $this->visit->ID . '.pdf');
@@ -764,11 +764,13 @@ Please read carefully the cancellation policy. The violation of the cancellation
     }
     
     $pd = array();
+    $this->dbg("VM_V_payTrip=".var_export($VM_V_payTrip,True),cnf_dev);
     if ($VM_V_payTrip){
       $trip  = $exp->getValue('exp_travel_est', True);
       $pay[] = 'contribute up to '.b_fmt::money($trip).' Swedish Crowns towards the cost of your return travel to '.myOrg_name;
     }
     
+    $this->dbg("VM_V_payPerdiem=".var_export($VM_V_payPerdiem,True),cnf_dev);
     if ($VM_V_payPerdiem){
       $perdiem = $exp->getValue('exp_perdiem_est',True);
       $pay[] = 'provide a '.VM_wordPerdiem.' of '.b_fmt::money($perdiem).' Swedish Crowns towards local expenses';
@@ -796,6 +798,7 @@ Bring the forms together with copies of your tickets to the Nordita administrati
     //
     // personal web site
     //
+    $this->dbg("include_personalPage_in_welcomeMail=".var_export(include_personalPage_in_welcomeMail,True),cnf_dev);
     if (include_personalPage_in_welcomeMail){
       if (!$this->visit->av->isE(True)) $blabla[] = '
 PERSONAL WEB PAGE

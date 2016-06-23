@@ -1,0 +1,8 @@
+name: Employees & Alumni
+type: module
+description: myPear module for managing employees & alumni
+package: myPear
+core: 8.x
+version: 1.4.3
+dependencies
+ - myPear:myPear

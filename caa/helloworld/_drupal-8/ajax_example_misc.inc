@@ -1,0 +1,1 @@
+../_drupal-6/ajax_example_misc.inc

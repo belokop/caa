@@ -5,6 +5,9 @@ define('myPear_VERSION','5.142');
 define('myPear_MODULE', 'myPear');
 define('myPear_DATE',    $releaseDate);
 
+// Tentative... Drupal8
+require_once dirname(__FILE__).'/includes/drupal8_compat.inc';
+
 define('cnf_dev_email','yb@nordita.org');
 define('cnf_test_email','test@nordita.org');
 
@@ -430,8 +433,8 @@ function locateAndInclude($objects,$flag=''){
   elseif(!is_array($objects)) $objects = array($objects);
   foreach($objects as $o) if (!class_exists($o)) $something_missing[] = $o;
   if (empty($something_missing)) return True;
-  elseif(($something_missing !== $objects) && class_exists('b_debug',0)) b_debug::print_r($something_missing,
-											  __FUNCTION__.'('.join(',',$objects).'), looking for:');
+  //elseif(($something_missing !== $objects) && class_exists('b_debug',0)) b_debug::print_r($something_missing,__FUNCTION__.'('.join(',',$objects).'), looking for:');
+
   // Switch on timing, if needed
   if ($bTiming = function_exists('bTiming')) bTiming()->cpu(__FUNCTION__);
   

@@ -1,0 +1,6 @@
+name: myPear
+type: module
+description: myPear core 
+package: myPear
+version: 3.9.8
+core: 8.x
