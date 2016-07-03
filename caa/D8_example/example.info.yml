@@ -1,0 +1,6 @@
+name: Example Menu Link
+type: module
+description: 'Drupal 8 Example Menu Link.'
+package: Custom
+version: 1.0
+core: 8.x

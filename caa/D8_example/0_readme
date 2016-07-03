@@ -1,0 +1,4 @@
+This example creates two extra links in the Main Menu, 'Saturn' and 'Jupiter', 
+for a fictitious travel agency that organises holidays to these exotic destinations. 
+
+To see it in action create a folder /modules/custom/example in your Drupal root and copy those files

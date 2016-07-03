@@ -1,0 +1,42 @@
+<?php
+
+/**
+ * @file
+ * Contains \Drupal\example\Controller\ExampleMenuController.
+ */
+
+namespace Drupal\example\Controller;
+
+/**
+ * Displays content for our menu links.
+ */
+class ExampleMenuController {
+
+  /**
+   * Constructs our object.
+   * The route_parameters from links.menu.yml will be in the querystring
+   */
+  public function __construct() {
+    $this->destination = \Drupal::request()->query->get('destination');
+    $this->transport = \Drupal::request()->query->get('transport');
+  }
+  
+  /**
+   * Generate the dynamic page title for our page.
+   */
+  public function getTitle() {
+    return  t('So you want to visit @destination?', array('@destination' => $this->destination));
+  }
+  
+  /**
+   * Generate the page content.
+   */
+  public function getContent() {
+    $markup = '<p>' . t('Let\'s go to @destination via our luxury @transport!', array('@destination' => $this->destination, '@transport' => $this->transport)) . '</p>';
+    return array(
+		 '#type' => 'markup',
+		 '#markup' => $markup,
+		 );
+  }
+}
+
