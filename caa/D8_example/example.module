@@ -2,15 +2,16 @@
 
 /**
  * @file
- * Contains \Drupal\example\Controller\ExampleMenuController.
+ * Contains \Drupal\example\Controller\ExampleController.
  */
 
 namespace Drupal\example\Controller;
+use Drupal\Core\Access\AccessResult;
 
 /**
  * Displays content for our menu links.
  */
-class ExampleMenuController {
+class ExampleController {
 
   /**
    * Constructs our object.
@@ -25,13 +26,27 @@ class ExampleMenuController {
    * Generate the dynamic page title for our page.
    */
   public function getTitle() {
+    drupal_set_message(__METHOD__,'status');
     return  t('So you want to visit @destination?', array('@destination' => $this->destination));
+  }
+  
+  /**
+   * Access control
+   */
+  public function getAccess() {
+    $reply = AccessResult::forbidden();
+    $reply = AccessResult::neutral();
+    $reply = AccessResult::allowed();
+    $msg = sprintf("%s(%s/%s) <em>%s</em>",__FUNCTION__,$this->destination,$this->transport,	var_export($reply,True));
+    drupal_set_message($msg,'status');
+    return $reply;
   }
   
   /**
    * Generate the page content.
    */
   public function getContent() {
+    drupal_set_message(__METHOD__,'status');
     $markup = '<p>' . t('Let\'s go to @destination via our luxury @transport!', array('@destination' => $this->destination, '@transport' => $this->transport)) . '</p>';
     return array(
 		 '#type' => 'markup',

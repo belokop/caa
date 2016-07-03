@@ -17,7 +17,7 @@
 example.saturn:
   title: 'Saturn'
   description: 'Holiday packages to Saturn.'
-  route_name: example.destination_saturn
+  route_name: example.saturn
   route_parameters:
     destination: Saturn
     transport: spaceship
@@ -27,7 +27,7 @@ example.saturn:
 example.jupiter:
   title: 'Jupiter'
   description: 'Holiday packages to Jupiter.'
-  route_name: example.destination_jupiter
+  route_name: example.jupiter
   route_parameters:
     destination: Jupiter
     transport: teleporter
