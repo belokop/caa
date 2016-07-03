@@ -567,14 +567,14 @@ class APImenu{
    * Called from <hook>_menu
    * The function is written for drupal in mind, but might be used for any environment
    */
-  public function build_menuTree($page_callback) {
+  public function build_menuTree($page_callback,$access_callback='') {
     global $bred;    if (empty($bred)) $bred = 13;
     bTiming()->cpu(get_class($this).'.'.__FUNCTION__);
 
     // Reset the cache since the menu will be rebuild
     unset($_SESSION[myPear_cache]);
 
-    if (HOSTED_BY_CMS != 'drupal'){
+    if (!defined('MENU_CALLBACK')){
       define('MENU_CALLBACK',          'MENU_CALLBACK');
       define('MENU_NORMAL_ITEM',       'MENU_NORMAL_ITEM');
       define('MENU_DEFAULT_LOCAL_TASK','MENU_DEFAULT_TAB');
@@ -585,7 +585,7 @@ class APImenu{
     $this->build_dynamic_menuTree();
     
     // Sanity check
-    $this->access_callback = '_'.$this->q.'_access_callback';
+    $this->access_callback = (empty($access_callback) ? '_'.$this->q.'_access_callback' : $access_callback);;
     $this->title_callback  = '_'.$this->q.'_title_callback';
     if (!function_exists($this->access_callback)) b_debug::internalError("missing $this->access_callback");
     if (!function_exists($this->title_callback))  $this->title_callback = 'APImenu_title_callback';
@@ -593,9 +593,6 @@ class APImenu{
     // Navigation item
 
     $menu = array();
-    $type = MENU_DEFAULT_LOCAL_TASK;
-    $type = MENU_LOCAL_TASK;
-    $type = MENU_CALLBACK; 
     $type = MENU_NORMAL_ITEM; 
 
     $r = b_reg::get($this->q);

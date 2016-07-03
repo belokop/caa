@@ -1,5 +1,0 @@
-name = Drupal helloworld
-description = Hello World module
-package = myPear
-core = 8.x
-version = 1.0

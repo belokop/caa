@@ -69,7 +69,7 @@ function jam_user($type, $array, $account, $category){
   bAuth::drupal_hook_user($account);
 }
 
-function jam_user_login(&$edit, $account) {
+function jam_user_login($edit, $account) {
   jam_init();
   locateAndInclude('bAuth');
   bAuth::drupal_hook_user($account);

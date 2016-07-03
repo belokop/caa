@@ -8,7 +8,7 @@ function myPear_init() {
   require_once drupal_get_path('module','myPear').'/config.inc';
   if (!$dejaVu++){
     // 
-    // Load the essential classes - translation, authentication, common library.
+    // Load the essential classes - translation, authentication, etc.
     // The other required files will be autoloaded by the applications only if needed.
     //
     $path = drupal_get_path('module','myPear');
@@ -27,6 +27,29 @@ function myPear_init() {
     if (!myPear_db()->isReady()){
       if (!function_exists('myPear_install')) require_once str_replace('myPear.module', 'myPear.install', __FILE__);
       myPear_install();
+    }
+  }
+}
+
+function myPear_page_attachments(array &$page) {
+  static $counter = 0;
+  global $myPear_page_attachments;
+  if (empty($myPear_page_attachments)) $myPear_page_attachments = array();
+  ksort($myPear_page_attachments);
+
+  // Library
+  $page['#attached']['library'][] = 'myPear/myPear';
+
+  // css & js
+  foreach($myPear_page_attachments as $tag=>$items){
+    foreach($items as $item){
+      $page['#attached']['html_head'][] = [[
+					    '#type' => 'html_tag',
+					    '#tag'  => $tag,
+					    '#value'=> $item,
+					    ],
+					   'myPear_attachment'.(++$counter),
+					   ];
     }
   }
 }

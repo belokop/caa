@@ -1672,7 +1672,7 @@ class b_debug{
 	}
       }
     }
-    die("INTERNAL ERROR: $txt");
+    die("INTERNAL ERROR: $txt\n");
   }
   
   static function mail_diagnostics($diagnostics=Null,$subject='BUG REPORT'){
@@ -1751,25 +1751,10 @@ class b_debug{
 		  '_FILES'=>$_FILES,
 		  //'_SESSION' =>array_keys($_SESSION),
 		  ) as $req=>$a){
-      if (empty($a)) continue;
-      if(0)    // this creates a strange endless loop, tbd better    
-	if ($req == '_GET'){  
-	  if (!empty($a['q']) && locateAndInclude('APImenu')){
-	    // human readable drupal URL
-	    $get = explode('/',$a['q']);
-	    $q_decoded = array(array_shift($get));
-	    locateAndInclude('APImenu_'.$q_decoded[0]);
-	    foreach($get as $coded) $q_decoded[] = APItabs::code2text($coded);
-	    if (count($q_decoded > 1)) $a['q'] .= ' '.x('(',join('/',$q_decoded)); 
-	  }
-	  // Human readable tab names ( btabs class )
-	  for($tab=1;$tab<3;$tab++){
-	    if (empty($a["cnf_btabs$tab"]) || !locateAndInclude('b_tabs')) continue;
-	    $a["cnf_btabs$tab"] .= ' ('.b_tabs::code2tab($a["cnf_btabs$tab"]).')';
-	  }
-	}
-      ksort($a);
-      $l[] = x('td',self::print_r($a, "$req", $doNotPrint=True));
+      if (!empty($a)){
+	ksort($a);
+	$l[] = x('td',self::print_r($a, "$req", $doNotPrint=True));
+      }
     }
     myPear::DEBUG(str_replace(array('[',']'),'',x("table class='align_left b_table'",x('tr',join('',$l)))));
   }
@@ -2695,6 +2680,12 @@ class b_crypt{
    * Only for the apache server
    */
   static function decodeURL(){
+    // Stick to the old standards
+    if (empty($_GET['q']) && (HOSTED_BY_CMS == 'drupal') && (HOSTED_BY_CMS_vrsn == 8)){
+      $_GET['q'] = $_REQUEST['q'] = $_SERVER['REDIRECT_URL'];
+      if (empty($_GET['QUERY_STRING'])) $_GET['QUERY_STRING'] = '';
+      $_GET['QUERY_STRING'] = $_REQUEST['QUERY_STRING'] = implode('&',array_merge(explode('&',$_GET['QUERY_STRING']),array('q='.$_GET['q'])));
+    }
     $qs = @$_SERVER["QUERY_STRING"];
     if ((strpos($qs,'?'.b_crypt_key.'=') !== False) ||
 	(strpos($qs,'&'.b_crypt_key.'=') !== False)){
@@ -3332,6 +3323,9 @@ class b_cms{
       global $theme, $theme_key;
 
       switch(HOSTED_BY_CMS_vrsn){
+      case 8:
+	break;
+
       case 7:
 	// Ensure that system.module is loaded.
 	if (!function_exists('_system_rebuild_theme_data')) {
@@ -3520,7 +3514,7 @@ class b_url{
     $url = trim(preg_replace('/^location:/i','',trim($url)));
     if (is_string($url)){
       if (preg_match('#https?:/#',$url)) return $url;
-      if (strpos($url,'?') === 0) $url = $_SERVER['PHP_SELF'] . $url;
+      if (strpos($url,'?') === 0) $url = str_replace('/index.php','',$_SERVER['PHP_SELF'] . $url);
       $_url = b_crypt::parse_query_string($url);
       $_prf = b_crypt::$parse_query_string_arg0;
     }elseif(is_array($url)){
@@ -3610,7 +3604,9 @@ class b_url{
 	}
       }
     }
-    return self::repack('?',$_myGET,$_myDrop);
+    $reply = self::repack('?',$_myGET,$_myDrop);
+    //    b_debug::xxx($reply);
+    return $reply; 
   }
   
 
@@ -4010,7 +4006,7 @@ class b_cnf{
   /*
    * Basic settings
    */
-  private static $never_cache = array(); //  'q'
+  private static $never_cache = array(); 
   //
   // Those _GET variables are always kept across the session, 
   // they define the global myPear context 

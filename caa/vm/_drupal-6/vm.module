@@ -75,7 +75,7 @@ function vm_user($type, $array, $account, $category){
   bAuth::drupal_hook_user($account);
 }
 
-function vm_user_login(&$edit, $account) {
+function vm_user_login($edit, $account) {
   vm_init();
   bAuth::drupal_hook_user($account);
 }

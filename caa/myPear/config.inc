@@ -233,21 +233,20 @@ define('employment_record','Employment record');
  */
 
 if (cnf_CLI){
-    $HOSTED_BY_CMS ='CLI';
-}elseif (defined('DRUPAL_ROOT')){
-    $HOSTED_BY_CMS = 'drupal';
-    if (defined('VERSION')) list($HOSTED_BY_CMS_vrsn,) = explode('.',VERSION,2);
-    else                         $HOSTED_BY_CMS_vrsn   = 6;
-}elseif (defined('DRUPAL_BOOTSTRAP_FULL')){
-    $HOSTED_BY_CMS = 'drupal';
-    if (defined('VERSION')) list($HOSTED_BY_CMS_vrsn,) = explode('.',VERSION,2);
-    else                         $HOSTED_BY_CMS_vrsn   = 6;
+  $HOSTED_BY_CMS ='CLI';
+}elseif (defined('DRUPAL_CORE_COMPATIBILITY')){
+  $HOSTED_BY_CMS = 'drupal';
+  list($HOSTED_BY_CMS_vrsn,) = explode('.',DRUPAL_CORE_COMPATIBILITY,2);
+}elseif (class_exists('Drupal',False)){
+  $HOSTED_BY_CMS = 'drupal';
+  if (defined('CORE_COMPATIBILITY')) list($HOSTED_BY_CMS_vrsn,) = explode('.',CORE_COMPATIBILITY,2);
+  else                                    $HOSTED_BY_CMS_vrsn = 8;
 }elseif (defined('_JEXEC')){
-    $HOSTED_BY_CMS = 'joomla';
+  $HOSTED_BY_CMS = 'joomla';
 }elseif (False){
-    $HOSTED_BY_CMS = 'wp';
+  $HOSTED_BY_CMS = 'wp';
 }else{
-    $HOSTED_BY_CMS = False;
+  $HOSTED_BY_CMS = False;
 }
 if (empty($HOSTED_BY_CMS_vrsn)) $HOSTED_BY_CMS_vrsn = 1;
 define('HOSTED_BY_CMS', $HOSTED_BY_CMS);

@@ -1,7 +1,7 @@
 <?php
 
 function wiw_install(){
-  module_invoke('myPear', 'init');
+  if (function_exists('module_invoke')) module_invoke('myPear', 'init');
   
   if (!function_exists('_myPear_install_bDB')){
     require_once './'.drupal_get_path('module','myPear').'/myPear.install';

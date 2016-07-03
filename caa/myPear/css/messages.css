@@ -15,7 +15,7 @@ div.messages{
   width: auto;
 }
 
-div.debug{
+.messages--debug, div.debug{
    font-size:75%;
    border-color:blue ! important;
    border-style:solid;

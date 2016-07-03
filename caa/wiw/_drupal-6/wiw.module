@@ -34,6 +34,7 @@ function _wiw_access_callback($tab){
 function wiw_menu(){
   wiw_init();
   $menu = WIW::_MENU()->build_menuTree('_wiw_output');
+  print_r($menu);
   return $menu; 
 }
 
@@ -66,7 +67,7 @@ function wiw_user($type, $array, $account, $category){
   bAuth::drupal_hook_user($account);
 }
 
-function wiw_user_login(&$edit, $account) {
+function wiw_user_login($edit, $account) {
   wiw_init();
   bAuth::drupal_hook_user($account);
 }

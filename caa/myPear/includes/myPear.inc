@@ -79,15 +79,20 @@ class myPear{
   public static function myPear_enabled_theme(){
     static $reply = Null;
     static $theme_default = '?';
-    if ($reply == Null){
+    if ($reply === Null){
       if (function_exists('drupal_get_path')){
-	$theme_path = drupal_get_path('theme', ($theme_default=variable_get('theme_default', NULL)));
-	if     (file_exists($c="$theme_path/config.inc")) require_once $c;
-	elseif (file_exists($c="$theme_path/config.inc")) require_once $c;
+	$theme_default = variable_get('theme_default', NULL);
+	if (!empty($theme_default)){
+	  $theme_path = drupal_get_path('theme', ($theme_default=variable_get('theme_default', NULL)));
+	  if     (file_exists($c="$theme_path/config.inc")) require_once $c;
+	  elseif (file_exists($c="$theme_path/config.inc")) require_once $c;
+	}
+	$reply = defined('myPear_enabled_theme');
       }
-      $reply = defined('myPear_enabled_theme');
       if (cnf_show_acl) b_debug::xxx(($reply ? 'YES' : 'NO').", theme_default=$theme_default");
     }
+$reply = True;
+    b_debug::xxx($reply);
     return $reply;
   }
   

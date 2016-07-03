@@ -66,7 +66,7 @@ function prp_user($type, $array, $account, $category){
   bAuth::drupal_hook_user($account);
 }
 
-function prp_user_login(&$edit, $account) {
+function prp_user_login($edit, $account) {
   prp_init();
   bAuth::drupal_hook_user($account);
 }

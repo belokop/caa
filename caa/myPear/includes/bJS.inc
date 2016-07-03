@@ -28,8 +28,8 @@ class bJS{
   
   /**
    * For the "our pages" (i.e. URLs pointing to myPear widgets)
-   * add a flag "we are inside the fancybox". This flag triggers
-   * the widget to be shown without the header/footer.
+   * add a flag "we are inside the fancybox". 
+   * This flag triggers the widget to be shown without the theme header/footer.
    *
    * How to cut off the trigger/footer is a separate problem...
    * One way to do it (thanks to HvZM) is to use css, see noHeader.css
@@ -149,8 +149,12 @@ $(document).ready(function() {
 	  drupal_set_html_head(x("style type='text/css' media='all'",$text));
 	  break;
 	case 7:
-	case 8:
 	  drupal_add_css($text,array('type'=>'inline','scope'=>'header'));
+	  break;
+	case 8:
+	  global $myPear_page_attachments;
+	  //	  $myPear_page_attachments['style'][] = x("style media='all' type='text/css'",$text);
+	  $myPear_page_attachments['style'][] = $text;
 	  break;
 	default:
 	  myPear::ERROR(b_debug::__().' is not ready for drupal-'.HOSTED_BY_CMS_vrsn);
@@ -281,15 +285,26 @@ $(document).ready(function() {
 	  drupal_add_js($js_code, 'inline', 'footer');
 	  break;
 	case 7:
-	case 8:
 	  drupal_add_js($js_code, array('type'=>'inline','scope'=>'footer')); 
 	  break;
-	default: myPear::ERROR(b_debug::__().' is not ready for drupal-'.HOSTED_BY_CMS_vrsn);
+	case 8:
+	  global $myPear_page_attachments;
+	  //$myPear_page_attachments[] = x("script media='screen' type='text/javaScript'",$js_code);
+	  $myPear_page_attachments['script'][] = $js_code;
+	  if (cnf_dev){
+	    $fn = b_crypt::hash($js_code);
+	    $file = fopen("/tmp/$fn.js","w");
+	    fwrite($file,$js_code);
+	    fclose($file);
+	  }
+	  break;
+	default:
+	  myPear::ERROR(b_debug::__().' is not ready for drupal-'.HOSTED_BY_CMS_vrsn);
 	}
 	break;
 	
       default:
-	self::$cacheJS['code'][] = x("script type='text/javaScript'",$js_code);
+	self::$cacheJS['code'][] = x("script media='screen' type='text/javaScript'",$js_code);
       }
     }
   }

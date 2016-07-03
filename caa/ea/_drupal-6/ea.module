@@ -73,7 +73,7 @@ function ea_user($type, $array, $account, $category){
   bAuth::drupal_hook_user($account);
 }
 
-function ea_user_login(&$edit, $account) {
+function ea_user_login($edit, $account) {
   ea_init();
   locateAndInclude('bAuth');
   bAuth::drupal_hook_user($account);
