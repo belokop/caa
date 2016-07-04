@@ -11,18 +11,30 @@
 #   _access: access is either granted (TRUE) or not (FALSE)
 #   _custom_access: access is determined by a method in our class
 
-example.saturn:
-  path: /saturn
+example.destination:
+  path: /destination
   defaults:
-    _content: Drupal\example\Controller\ExampleController::getContent
-    _title_callback: Drupal\example\Controller\ExampleController::getTitle
+    _title_callback: Drupal\example\ExampleController::getTitle
+    _controller:     Drupal\example\ExampleController::getContent
   requirements:
-    _custom_access:  Drupal\example\Controller\ExampleController::getAccess
+    _access: 'TRUE'
+#  options:
+#    parameters:
+#      entity:
+#        type: entity:{entity_type}
 
-example.jupiter:
-  path: /jupiter
+example.dest_saturn:
+  path: /destination/saturn
   defaults:
-    _content: Drupal\example\Controller\ExampleController::getContent
-    _title_callback: Drupal\example\Controller\ExampleController::getTitle
+    _controller:     Drupal\example\ExampleController::getContent
+    _title_callback: Drupal\example\ExampleController::getTitle
   requirements:
-    _custom_access:  Drupal\example\Controller\ExampleController::getAccess
+    _custom_access:  Drupal\example\ExampleController::getAccess
+
+example.dest_jupiter:
+  path: /destination/jupiter
+  defaults:
+    _controller:     Drupal\example\ExampleController::getContent
+    _title_callback: Drupal\example\ExampleController::getTitle
+  requirements:
+    _custom_access:  Drupal\example\ExampleController::getAccess
