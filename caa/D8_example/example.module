@@ -15,50 +15,29 @@ use Drupal\Core\Controller\ControllerBase;
  */
 class ExampleController extends ControllerBase{
 
-  /**
-   * Constructs our object.
-   * The route_parameters from links.menu.yml will be in the querystring
-   */
   public function __construct() {
     //    parent::__construct();
     $this->destination = \Drupal::request()->query->get('destination');
     $this->transport = \Drupal::request()->query->get('transport');
   }
   
-  /**
-   * Generate the dynamic page title for our page.
-   */
   public function getTitle() {
-    drupal_set_message(__FUNCTION__.'()','status');
-    return  t('So you want to visit @destination?', array('@destination' => $this->destination));
+    $reply = t('So you want to visit @destination?', array('@destination' => $this->destination));
+    e_debug(__FUNCTION__,func_get_args(),$reply);
+    return $reply;
   }
   
-  /**
-   * Access control
-   */
   public function getAccess() {
-    $reply = ('Saturn' != $this->destination);
     $reply = True;
-    $msg = sprintf("%s(%s/%s) <em>%s</em>",__FUNCTION__,$this->destination,$this->transport,	var_export($reply,True));
-    drupal_set_message($msg,'status');
-    var_dump(func_get_args());
+    e_debug(__FUNCTION__,func_get_args(),$reply);
     return ($reply 
 	    ? AccessResult::allowed() 
 	    : AccessResult::forbidden());   // AccessResult::neutral();
    return $reply;
   }
   
-  /**
-   * Generate the page content.
-   */
   public function getContent($name='not set') {
-    print"<pre>";
-    //    debug_print_backtrace();
-    print"</pre>";
-    //    var_dump($this);
-    var_dump(func_get_args());
-
-    drupal_set_message(__FUNCTION__.'()','status');
+    e_debug(__FUNCTION__,func_get_args());
     $markup = '<p>' . t('Let\'s go to @destination via our luxury @transport!', array('@destination' => $this->destination, '@transport' => $this->transport)) . '</p>';
     return array(
 		 '#type' => 'markup',
@@ -67,3 +46,8 @@ class ExampleController extends ControllerBase{
   }
 }
 
+function e_debug($function,$func_get_args,$reply=''){
+  $msg = sprintf('%s(%s): <em>%s</em>',$function,var_export($func_get_args,True),var_export($reply,True),'status');
+  if (class_exists('myPear',False)) myPear::WARNING($msg);
+  else           drupal_set_message($msg,'warning');
+}

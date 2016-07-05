@@ -1,29 +1,39 @@
 <?php
-if (cnf_dev) b_debug::xxx(__FILE__,'L');
-locateAndInclude('APIaccess');
-locateAndInclude('bList');
-locateAndInclude('bUnit');
+if (function_exists('locateAndInclude')){
+  locateAndInclude('APIaccess');
+  locateAndInclude('bList');
+  locateAndInclude('bUnit');
+}
 
 /*
  * Define tabs of "a general interest"
  */
-foreach(array('tab__empty'    =>'emptytab',
-	      'tab__bText'    =>'Dictionary',
-	      'tab__syslog'   =>'Syslog',
-	      'tab__tasks'    =>'Task Manager',
-	      'tab__login'    =>'Login',
-	      'tab__search'   =>'Search',
-	      'tab__update'   =>'Check for updates',
-	      'tab__templates'=>'Edit templates',
-	      'tab__descr'    =>'Edit forms',
-	      'tab__units'    =>'See All units',
-	      'tab__lists'    =>'See All lists',
-	      'tab__cleanup'  =>'Clean-up the database',
-	      'tab__configure'=>'Configure myPear',
-	      'tab__fixes'    =>'Fix database',
-	      'tab__mergeAV'  =>'Merge avatars',
-	      'tab__fixes_bList'=> 'bList(s)',
-	      ) as $code=>$text) APItabs::define_tab($code,$text);
+function APItabs_init(){
+  foreach(array('tab__empty'    =>'emptytab',
+		'tab__bText'    =>'Dictionary',
+		'tab__syslog'   =>'Syslog',
+		'tab__tasks'    =>'Task Manager',
+		'tab__login'    =>'Login',
+		'tab__search'   =>'Search',
+		'tab__update'   =>'Check for updates',
+		'tab__templates'=>'Edit templates',
+		'tab__descr'    =>'Edit forms',
+		'tab__units'    =>'See All units',
+		'tab__lists'    =>'See All lists',
+		'tab__cleanup'  =>'Clean-up the database',
+		'tab__configure'=>'Configure myPear',
+		'tab__fixes'    =>'Fix database',
+		'tab__mergeAV'  =>'Merge avatars',
+		'tab__fixes_bList'=> 'bList(s)',
+		) as $code=>$text) APItabs::define_tab($code,$text);
+}
+APItabs_init();
+
+// workaround "namespace problem"
+function APItabs_code2tab($code){
+  return APItabs::code2tab($code);
+}
+
 
 function _myPear_access_callback($menuItem){
   return myPear::_MENU()->access_callback($menuItem);
@@ -37,28 +47,35 @@ class APItabs{
   private static $tab2code  = array();
   
   public static function define_tab($tab,$text){
-    define($tab,$tab);
-    $code = APImenu::tab_code($tab);
-    self::$tab_definition[$tab] = $text;
-    self::$code2tab[$code]  = $tab;
-    self::$tab2code[$tab]   = $code;
-    self::$code2text[$code] = $text;
+    if (!defined($tab)){
+      define($tab,$tab);
+      $code = APImenu::tab_code($tab);
+      self::$tab_definition[$tab] = $text;
+      self::$code2tab[$code]  = $tab;
+      self::$tab2code[$tab]   = $code;
+      self::$code2text[$code] = $text;
+    }
   }
   
   public static function get_tab($tab){
+    APItabs_init();
     return @self::$tab_definition[$tab];
   }
 
   public static function code2text($code){
-    return @self::$code2text[$code];
+    APItabs_init();
+    print "<pre>"; debug_print_backtrace();print "</pre>";
+    //    if (empty(self::$code2text[$code])) {print "<pre>"; debug_print_backtrace();print "</pre>";}
+    return self::$code2text[$code];
   }
 
   public static function code2tab($code){
-    if (!empty($code) && !isset(self::$code2tab[$code])) myPear::WARNING_T("undefined code2tab($code)");
+    APItabs_init();
     return @self::$code2tab[$code];
   }
-
+  
   public static function tab2code($tab){
+    APItabs_init();
     return @self::$tab2code[$tab];
   }
 }
@@ -670,7 +687,7 @@ class APImenu{
   
 
   public static function tab_code($path){
-    $reply = b_crypt::hash($path);
+    $reply = sprintf("%u",crc32($path));
     return $reply;
   }
   

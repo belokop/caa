@@ -71,3 +71,5 @@ function wiw_user_login($edit, $account) {
   wiw_init();
   bAuth::drupal_hook_user($account);
 }
+
+if (class_exists('Drupal',False)) require_once dirname(__FILE__).'/wiwController.php';

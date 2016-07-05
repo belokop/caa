@@ -316,9 +316,11 @@ class APImenu_ea extends APImenu{
   }
 }
 
-function _ea_title_callback($tab, $dTab=Null){
+function _ea_title_callback($tab, $dTab=Null,$returnText=False){
   if ($dTab){
-    $menuItem = t($tab);
+    $menuItem = ($returnText
+		 ? $tab
+		 : t($tab));
   }else{
     switch($tab){
     case EA_MODULE:
@@ -342,8 +344,10 @@ function _ea_title_callback($tab, $dTab=Null){
       $tab = 'Administer '.myOrg_nameS;
     }
     if(isset(APItabs::$tab_definition[$tab]))  $tab = APItabs::$tab_definition[$tab];
-    $menuItem = t(bText::_(array('key' => "MENU_$tab",
-				 'item'=> $tab)));
+    $menuItem = ($returnText
+		 ? $tab
+		 : t(bText::_(array('key' => "MENU_$tab",
+				    'item'=> $tab))));
   }
   return $menuItem;
 }

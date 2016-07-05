@@ -242,12 +242,12 @@ function myPear_sessionStart(){
   static $dejaVu = 0;
   
   if (!isset($_SESSION)){
+    // Start the session
+    if (function_exists('drupal_session_start'))   drupal_session_start();
+    else                                           session_start();
+    
     // Rewrite the default session lifetime
     if (!$dejaVu++ && defined('myPear_autoLogoutTime')) ini_set('session.gc_maxlifetime',myPear_autoLogoutTime);
-    
-    // Start the session
-    if (function_exists('drupal_session_start'))              drupal_session_start();
-    else                                                      session_start();
   }
 }
 

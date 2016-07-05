@@ -1,7 +1,6 @@
 
 ea.ea:
-  title: 'Employees & Alumni'
-  description: 'Holiday packages to Saturn.'
+  title: Employees & Alumni
   route_name: ea.ea
   route_parameters:
    - q: ea
@@ -10,8 +9,7 @@ ea.ea:
   menu_name: main
 
 ea.ea_356353008:
-  title: 'Home'
-  description: 'Holiday packages to Saturn.'
+  title: Home
   route_name: ea.ea_356353008
   route_parameters:
    - q: ea/356353008
@@ -21,8 +19,7 @@ ea.ea_356353008:
   parent: ea.ea
 
 ea.ea_3666903923:
-  title: 'Staff members'
-  description: 'Holiday packages to Saturn.'
+  title: Staff members
   route_name: ea.ea_3666903923
   route_parameters:
    - q: ea/3666903923
@@ -32,8 +29,7 @@ ea.ea_3666903923:
   parent: ea.ea
 
 ea.ea_3666903923_3558149342:
-  title: 'Groups'
-  description: 'Holiday packages to Saturn.'
+  title: Groups
   route_name: ea.ea_3666903923_3558149342
   route_parameters:
    - q: ea/3666903923/3558149342
@@ -43,8 +39,7 @@ ea.ea_3666903923_3558149342:
   parent: ea.ea_3666903923
 
 ea.ea_3666903923_3640775405:
-  title: 'CV's'
-  description: 'Holiday packages to Saturn.'
+  title: CV's
   route_name: ea.ea_3666903923_3640775405
   route_parameters:
    - q: ea/3666903923/3640775405
@@ -54,8 +49,7 @@ ea.ea_3666903923_3640775405:
   parent: ea.ea_3666903923
 
 ea.ea_3666903923_1410577895:
-  title: 'Print door labels'
-  description: 'Holiday packages to Saturn.'
+  title: Print door labels
   route_name: ea.ea_3666903923_1410577895
   route_parameters:
    - q: ea/3666903923/1410577895
@@ -65,8 +59,7 @@ ea.ea_3666903923_1410577895:
   parent: ea.ea_3666903923
 
 ea.ea_3666903923_954465053:
-  title: 'Who sits where List'
-  description: 'Holiday packages to Saturn.'
+  title: Who sits where List
   route_name: ea.ea_3666903923_954465053
   route_parameters:
    - q: ea/3666903923/954465053
@@ -76,8 +69,7 @@ ea.ea_3666903923_954465053:
   parent: ea.ea_3666903923
 
 ea.ea_3724363626:
-  title: 'Alumni'
-  description: 'Holiday packages to Saturn.'
+  title: Alumni
   route_name: ea.ea_3724363626
   route_parameters:
    - q: ea/3724363626
@@ -87,8 +79,7 @@ ea.ea_3724363626:
   parent: ea.ea
 
 ea.ea_3724363626_2614215831:
-  title: 'As the years pass...'
-  description: 'Holiday packages to Saturn.'
+  title: As the years pass...
   route_name: ea.ea_3724363626_2614215831
   route_parameters:
    - q: ea/3724363626/2614215831
@@ -98,8 +89,7 @@ ea.ea_3724363626_2614215831:
   parent: ea.ea_3724363626
 
 ea.ea_3003434545:
-  title: 'Administer Nordita'
-  description: 'Holiday packages to Saturn.'
+  title: Administer Nordita
   route_name: ea.ea_3003434545
   route_parameters:
    - q: ea/3003434545
@@ -109,8 +99,7 @@ ea.ea_3003434545:
   parent: ea.ea
 
 ea.ea_3003434545_2347876875:
-  title: 'Merge avatars'
-  description: 'Holiday packages to Saturn.'
+  title: Merge avatars
   route_name: ea.ea_3003434545_2347876875
   route_parameters:
    - q: ea/3003434545/2347876875
@@ -120,8 +109,7 @@ ea.ea_3003434545_2347876875:
   parent: ea.ea_3003434545
 
 ea.ea_3003434545_336072095:
-  title: 'Find duplicate avatars'
-  description: 'Holiday packages to Saturn.'
+  title: Find duplicate avatars
   route_name: ea.ea_3003434545_336072095
   route_parameters:
    - q: ea/3003434545/336072095
@@ -131,8 +119,7 @@ ea.ea_3003434545_336072095:
   parent: ea.ea_3003434545
 
 ea.ea_3003434545_2574291034:
-  title: 'Rebuild EA'
-  description: 'Holiday packages to Saturn.'
+  title: Rebuild EA
   route_name: ea.ea_3003434545_2574291034
   route_parameters:
    - q: ea/3003434545/2574291034
@@ -142,8 +129,7 @@ ea.ea_3003434545_2574291034:
   parent: ea.ea_3003434545
 
 ea.ea_3003434545_3080357576:
-  title: 'Employee types&groups'
-  description: 'Holiday packages to Saturn.'
+  title: Employee types&groups
   route_name: ea.ea_3003434545_3080357576
   route_parameters:
    - q: ea/3003434545/3080357576
@@ -153,8 +139,7 @@ ea.ea_3003434545_3080357576:
   parent: ea.ea_3003434545
 
 ea.ea_3003434545_3570397566:
-  title: 'Organization structure'
-  description: 'Holiday packages to Saturn.'
+  title: Organization structure
   route_name: ea.ea_3003434545_3570397566
   route_parameters:
    - q: ea/3003434545/3570397566
@@ -164,8 +149,7 @@ ea.ea_3003434545_3570397566:
   parent: ea.ea_3003434545
 
 ea.ea_3003434545_2892455105:
-  title: 'All Organizations'
-  description: 'Holiday packages to Saturn.'
+  title: All Organizations
   route_name: ea.ea_3003434545_2892455105
   route_parameters:
    - q: ea/3003434545/2892455105
@@ -175,8 +159,7 @@ ea.ea_3003434545_2892455105:
   parent: ea.ea_3003434545
 
 ea.ea_3003434545_1087860145:
-  title: 'Syslog'
-  description: 'Holiday packages to Saturn.'
+  title: Syslog
   route_name: ea.ea_3003434545_1087860145
   route_parameters:
    - q: ea/3003434545/1087860145

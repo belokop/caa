@@ -18,10 +18,6 @@ example.destination:
     _controller:     Drupal\example\ExampleController::getContent
   requirements:
     _access: 'TRUE'
-#  options:
-#    parameters:
-#      entity:
-#        type: entity:{entity_type}
 
 example.dest_saturn:
   path: /destination/saturn

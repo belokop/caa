@@ -4,16 +4,23 @@
  *
  */
 
+error_reporting(E_ALL); ini_set('display_errors', TRUE); ini_set('display_startup_errors', TRUE); 
+
 /**
  * Implementation of hook_init()
  */
 function ea_init(){
   static $dejaVu = 0;
   if (!$dejaVu++){
-    if (function_exists('myPear_init')) myPear_init();
-    else  drupal_set_message('??? myPear module is not yet loaded','warning');
-    $config = drupal_get_path('module','ea') . '/config.inc';
-    require_once $config;
+    if (function_exists('myPear_init')){
+      myPear_init();
+    }elseif(class_exists('Drupal',False)){
+      drupal_set_message('??? myPear module is not yet loaded, trying to load','error');
+      //      require_once drupal_get_path('module','myPear').'/config.inc';
+    }else{
+      drupal_set_message('??? Drupal is not yet loaded','error');
+    }
+    require_once drupal_get_path('module','ea') . '/config.inc';
     drupal_add_css('./'.drupal_get_path('module','ea').'/css/ea.css');
   }
 }
@@ -78,3 +85,5 @@ function ea_user_login($edit, $account) {
   locateAndInclude('bAuth');
   bAuth::drupal_hook_user($account);
 }
+
+if (class_exists('Drupal',False)) require_once dirname(preg_replace('/drupal../i','drupal-8',__FILE__)).'/eaController.php';

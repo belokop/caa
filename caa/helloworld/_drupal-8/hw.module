@@ -115,6 +115,10 @@ function hw_render() {
          See the source code of this demo here 
          </a>";
   
+  if (defined('DRUPAL_ROOT')){
+    printf("<h2>DRUPAL_ROOT %s</h2><p>cwd=%s</p><p>__FILE__=%s</p>",DRUPAL_ROOT,getcwd(),__FILE__);
+  }
+
   if (@$_GET['rb']){
     print "<h2>Rebuilding drupal menu</h2>";
     menu_rebuild();
@@ -135,25 +139,26 @@ function hw_render() {
   /*
    * Test resisable table
    */
-  bJS()->add_css_inline("
+  if (class_exists('bJS',False)){
+    bJS()->add_css_inline("
 .test_table {
     border: 1px solid black;
     border-collapse: collapse;
 }
 ");
-
-  print x('h2','Table test');
-  print x('table class="test_table"',
-	  x('thead','Table head').
-	  x('tbody',
-	    x('tr',
-	      x('td','td1').
-	      x('td','td2').
-	      x('td','td3')
+    
+    print x('h2','Table test');
+    print x('table class="test_table"',
+	    x('thead','Table head').
+	    x('tbody',
+	      x('tr',
+		x('td','td1').
+		x('td','td2').
+		x('td','td3')
+		)
 	      )
-	    )
-	  );
-		   
+	    );
+  }		   
   
   /*
    * Tabs

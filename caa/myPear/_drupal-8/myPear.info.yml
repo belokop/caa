@@ -1,6 +1,7 @@
 name: myPear core
 type: module
 description: myPear core classes & functions
-package: myPear
+package: YB
+project: myPear
 version: 3.9.8
 core: 8.x

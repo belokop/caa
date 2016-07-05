@@ -16,11 +16,9 @@
 
 example.destination:
   title: Desired destination
-  menu_name: main
   route_name: example.destination
   expanded: 'TRUE'
-#  options:
-#    - option1: {1,2}   
+  menu_name: main
 
 example.dest_saturn:
   parent: example.destination

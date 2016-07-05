@@ -153,9 +153,9 @@ $(document).ready(function() {
 	  break;
 	case 8:
 	  global $myPear_page_attachments;
-	  //	  $myPear_page_attachments['style'][] = x("style media='all' type='text/css'",$text);
 	  $myPear_page_attachments['style'][] = $text;
 	  break;
+	case 9:
 	default:
 	  myPear::ERROR(b_debug::__().' is not ready for drupal-'.HOSTED_BY_CMS_vrsn);
 	}
@@ -178,13 +178,12 @@ $(document).ready(function() {
    */
   function add_css_file($objectP, $root=myPear_css, $media='all'){
     static $dejaVu = array();
-    $object = "$root/$objectP"; 
+    $object = str_replace('//','/',"$root/$objectP");
     if (!@$dejaVu[$object]++){
       b_cache_file::CMS(__METHOD__,array($objectP,$root,$media));
       foreach(array('min','pack') as $p){
 	if (file_exists($f = str_replace(".css",".$p.css",$object))){
 	  $object = $f;
-	  // myPear::WARNING_T("Use $object");
 	  break;
 	}
       }
@@ -197,8 +196,15 @@ $(document).ready(function() {
 	  drupal_add_css($object,'theme');
 	  break;
 	case 7:
-	case 8:
 	  drupal_add_css($object,array('type'=>'file','scope'=>'header'));
+	  break;
+	case 8:
+	  myPear::DEBUG("$object<br>check myPear.libraries.yml");
+	  break;
+	case 9:
+	default:
+	  myPear::ERROR($object);
+	  myPear::ERROR(b_debug::__().' is not ready for drupal-'.HOSTED_BY_CMS_vrsn);
 	}
 	break;
 	
@@ -214,12 +220,11 @@ $(document).ready(function() {
    */
   function add_js_file($objectP, $root=myPear_js){
     static $dejaVu = array();
-    $object = "$root/$objectP";
+    $object = str_replace('//','/',"$root/$objectP");
     if (!@$dejaVu[$object]++){
       foreach(array('min','pack') as $p){
 	if (file_exists($f = str_replace(".js",".$p.js",$object))){
 	  $object = $f;
-	  // myPear::WARNING_T("Use $object");
 	  break;
 	}
       }
@@ -229,15 +234,19 @@ $(document).ready(function() {
       case 'drupal':
 	switch(HOSTED_BY_CMS_vrsn){
 	case 6: 
-	  $type = 'core';
+	  drupal_add_js($object,'core');
 	  break;
 	case 7:
-	case 8:
-	  $type = 'file'; 
+	  drupal_add_js($object,'file');
 	  break;
-	default: myPear::ERROR(b_debug::__().' is not ready for drupal-'.HOSTED_BY_CMS_vrsn);
+	case 8:
+	  myPear::DEBUG("$object<br>check myPear.libraries.yml");
+	  break;
+	case 9:
+	default: 
+	  myPear::ERROR($object);
+	  myPear::ERROR(b_debug::__().' is not ready for drupal-'.HOSTED_BY_CMS_vrsn);
 	}
-	drupal_add_js($object,$type);
 	break;
 	
       case 'joomla':
@@ -289,7 +298,6 @@ $(document).ready(function() {
 	  break;
 	case 8:
 	  global $myPear_page_attachments;
-	  //$myPear_page_attachments[] = x("script media='screen' type='text/javaScript'",$js_code);
 	  $myPear_page_attachments['script'][] = $js_code;
 	  if (cnf_dev){
 	    $fn = b_crypt::hash($js_code);
@@ -298,6 +306,7 @@ $(document).ready(function() {
 	    fclose($file);
 	  }
 	  break;
+	case 9:
 	default:
 	  myPear::ERROR(b_debug::__().' is not ready for drupal-'.HOSTED_BY_CMS_vrsn);
 	}

@@ -14,33 +14,85 @@ use Drupal\Core\Controller\ControllerBase;
  */
 class eaController extends ControllerBase{
 
-  private $q;
-  private $tab;
+  private $q = Null;
+  private $tab = Null;
 
+  static $invocation = 0;  
   public function __construct() {
-    $this->q = \Drupal::request()->query->get('q');
-    $this->tab = \Drupal::request()->query->get('tab');
+    self::$invocation++;
+
+    $cmt = '';
+    if (empty($this->q)){
+      $this->q = \Drupal::request()->query->get('q');
+      $cmt = "Drupal::request()->query->get() = ".$this->q;
+    }
+    if (empty($this->q)){
+      $this->q = $_SERVER['REQUEST_URI'];
+      $cmt = ' _SERVER["REQUEST_URI"] = '.$this->q;
+    }
+    
+    // Tidy up 'q', remove double&leading slashes
+    $q = array();
+    foreach(explode('/',$this->q) as $i) if (!empty($i)) $q[] = $i;
+    $this->q = implode('/',$q);
+
+    $this->extract_tab();
+    $this->debug_controller(__FUNCTION__,$cmt);
+  }
+
+  private function extract_tab(){
+    // Parce 'q', extract the tab
+    if (empty($this->tab)){
+      require_once drupal_get_path('module','myPear').'/includes/APImenu.inc';
+    
+      $q = explode('/',$this->q);
+      $module  = array_shift($q);
+      $tab_code= array_pop($q);
+      $this->tab = (empty($tab_code) 
+		    ? $module 
+		    : APItabs_code2tab($tab_code)); //call_user_func('APItabs::code2tab',$tab_code));
+      $this->debug_controller(__FUNCTION__,"tab_code=$tab_code");
+    }
   }
   
   public function getTitle() {
-    drupal_set_message(__FUNCTION__.'()','status');
-    return  t('So you want to visit @q?', array('@q' => $this->q));
+    ea_init();
+    $this->extract_tab();
+    $reply = _ea_title_callback($this->tab,Null,True);
+    $this->debug_controller(__FUNCTION__,$reply);
+    return  t($reply);
   }
   
   public function getAccess() {
-    $reply = _ea_access_callback($this->tab);
+    ea_init();
+    $this->extract_tab();
+    $reply = (bool)(empty($this->tab) || ($this->tab == 'ea')
+		    ? True
+		    : _ea_access_callback($this->tab));
+    $this->debug_controller(__FUNCTION__,$reply);
     return ($reply 
 	    ? AccessResult::allowed() 
 	    : AccessResult::forbidden());   // AccessResult::neutral();
-   return $reply;
   }
   
   public function getContent() {
-    drupal_set_message(__FUNCTION__."($this->tab)",'status');
+    ea_init();
+    $this->debug_controller(__FUNCTION__);
+    $this->extract_tab();
     return array(
 		 '#type' => 'markup',
 		 '#markup' => _ea_output($this->tab),
 		 );
   }
+  
+  private function debug_controller($__FUNCTION__,$reply=''){
+    drupal_set_message(sprintf("%s%d->%s(%s,%s): <em>%s</em>",
+			       __CLASS__,
+			       self::$invocation,
+			       $__FUNCTION__,
+			       $this->q,
+			       (empty($this->tab) ? "???" : $this->tab),
+			       (empty($reply) ? '' : var_export($reply,True)),
+			       'info'));    
+		       }
 }
-

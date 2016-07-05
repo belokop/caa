@@ -1,6 +1,7 @@
 name: myPear helloworld
 type: module
 description: myPear Hello World module
-package: myPear
+package: YB
+project: myPear
 core: 8.x
 version: 1.0
