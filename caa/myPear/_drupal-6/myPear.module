@@ -37,7 +37,7 @@ function myPear_page_attachments(array &$page) {
   if (empty($myPear_page_attachments)) $myPear_page_attachments = array();
   ksort($myPear_page_attachments);
 
-  // Library
+  // library
   $page['#attached']['library'][] = 'myPear/myPear';
 
   // css & js
