@@ -21,64 +21,63 @@ class eaController extends ControllerBase{
   public function __construct() {
     self::$invocation++;
 
-    $cmt = '';
-    if (empty($this->q)){
-      $this->q = \Drupal::request()->query->get('q');
-      $cmt = "Drupal::request()->query->get() = ".$this->q;
-    }
-    if (empty($this->q)){
-      $this->q = $_SERVER['REQUEST_URI'];
-      $cmt = ' _SERVER["REQUEST_URI"] = '.$this->q;
-    }
-    
-    // Tidy up 'q', remove double&leading slashes
-    $q = array();
-    foreach(explode('/',$this->q) as $i) if (!empty($i)) $q[] = $i;
-    $this->q = implode('/',$q);
-
+    require_once drupal_get_path('module','myPear').'/includes/drupal8_compat.inc';
+    $this->q = $_REQUEST['q'];
     $this->extract_tab();
-    $this->debug_controller(__FUNCTION__,$cmt);
   }
-
+  
   private function extract_tab(){
     // Parce 'q', extract the tab
     if (empty($this->tab)){
+      ea_init();
       require_once drupal_get_path('module','myPear').'/includes/APImenu.inc';
+      require_once drupal_get_path('module','ea').'/config.tabs.inc';
     
       $q = explode('/',$this->q);
       $module  = array_shift($q);
-      $tab_code= array_pop($q);
+      $tab_code= (int)array_pop($q);
       $this->tab = (empty($tab_code) 
 		    ? $module 
-		    : APItabs_code2tab($tab_code)); //call_user_func('APItabs::code2tab',$tab_code));
-      $this->debug_controller(__FUNCTION__,"tab_code=$tab_code");
+		    : APItabs_code2tab($tab_code)); 
+      // $this->debug_controller(__FUNCTION__,"tab_code=$tab_code");
     }
   }
   
-  public function getTitle() {
-    ea_init();
+  public function getMenuTitle() {
+    global $myPear_custom_title;
+
     $this->extract_tab();
-    $reply = _ea_title_callback($this->tab,Null,True);
-    $this->debug_controller(__FUNCTION__,$reply);
+
+    EA_MENU();
+    $_ea_title_callback = trim(_ea_title_callback($this->tab,Null,True));
+    $reply = (empty($myPear_custom_title)  // || (trim(strip_tags($myPear_custom_title)) != trim($myPear_custom_title))
+	      ? $_ea_title_callback
+	      : $myPear_custom_title);
+    $debug[] = htmlspecialchars($reply);
+    if ($reply == $myPear_custom_title) $debug[] = "(_ea_title_callback gives \"".htmlspecialchars($_ea_title_callback)."\")";
+    $this->debug_controller(__FUNCTION__,join(' ',$debug));
     return  t($reply);
   }
   
   public function getAccess() {
-    ea_init();
     $this->extract_tab();
-    $reply = (bool)(empty($this->tab) || ($this->tab == 'ea')
-		    ? True
-		    : _ea_access_callback($this->tab));
-    $this->debug_controller(__FUNCTION__,$reply);
+
+    EA_MENU();
+    $reply = (empty($this->tab) || ($this->tab == 'ea')
+	      ? True
+	      : _ea_access_callback($this->tab));
+    $this->debug_controller(__FUNCTION__,(bool)$reply);
     return ($reply 
 	    ? AccessResult::allowed() 
 	    : AccessResult::forbidden());   // AccessResult::neutral();
   }
   
-  public function getContent() {
-    ea_init();
-    $this->debug_controller(__FUNCTION__);
+  public function getPageContent() {
+
+    //    $this->debug_controller(__FUNCTION__);
     $this->extract_tab();
+
+    EA_MENU();
     return array(
 		 '#type' => 'markup',
 		 '#markup' => _ea_output($this->tab),
@@ -86,13 +85,13 @@ class eaController extends ControllerBase{
   }
   
   private function debug_controller($__FUNCTION__,$reply=''){
-    drupal_set_message(sprintf("%s%d->%s(%s,%s): <em>%s</em>",
+    drupal_set_message(sprintf("%s->%s(%s,%s): <em>%s</em>",
 			       __CLASS__,
-			       self::$invocation,
 			       $__FUNCTION__,
 			       $this->q,
 			       (empty($this->tab) ? "???" : $this->tab),
-			       (empty($reply) ? '' : var_export($reply,True)),
+			       (($reply !== False) && empty($reply) ? '' : var_export($reply,True)),
 			       'info'));    
-		       }
+  }
 }
+

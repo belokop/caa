@@ -1,136 +1,145 @@
+d8_demo.d8_demo_access_check:
+  path: 'd8-demo/access-check'
+  defaults:
+    _controller: '\Drupal\d8_demo\Controller\d8DemoController::d8DemoRenderContent'
+  requirements:
+    _access_check_token: 'TRUE'
 
-ea.ea:
+#############################################################
+
+
+ea.main_menu:
   path: /ea
   defaults:
-    _controller:     Drupal\ea\eaController::getContent
-    _title_callback: Drupal\ea\eaController::getTitle
+    _controller:     Drupal\ea\eaController::getPageContent
+    _title_callback: Drupal\ea\eaController::getMenuTitle
   requirements:
     _custom_access:  Drupal\ea\eaController::getAccess
 
-ea.ea_356353008:
+ea.356353008:
   path: /ea/356353008
   defaults:
-    _controller:     Drupal\ea\eaController::getContent
-    _title_callback: Drupal\ea\eaController::getTitle
+    _controller:     Drupal\ea\eaController::getPageContent
+    _title_callback: Drupal\ea\eaController::getMenuTitle
   requirements:
     _custom_access:  Drupal\ea\eaController::getAccess
 
-ea.ea_3666903923:
+ea.3666903923:
   path: /ea/3666903923
   defaults:
-    _controller:     Drupal\ea\eaController::getContent
-    _title_callback: Drupal\ea\eaController::getTitle
+    _controller:     Drupal\ea\eaController::getPageContent
+    _title_callback: Drupal\ea\eaController::getMenuTitle
   requirements:
     _custom_access:  Drupal\ea\eaController::getAccess
 
-ea.ea_3666903923_3558149342:
+ea.3666903923_3558149342:
   path: /ea/3666903923/3558149342
   defaults:
-    _controller:     Drupal\ea\eaController::getContent
-    _title_callback: Drupal\ea\eaController::getTitle
+    _controller:     Drupal\ea\eaController::getPageContent
+    _title_callback: Drupal\ea\eaController::getMenuTitle
   requirements:
     _custom_access:  Drupal\ea\eaController::getAccess
 
-ea.ea_3666903923_3640775405:
+ea.3666903923_3640775405:
   path: /ea/3666903923/3640775405
   defaults:
-    _controller:     Drupal\ea\eaController::getContent
-    _title_callback: Drupal\ea\eaController::getTitle
+    _controller:     Drupal\ea\eaController::getPageContent
+    _title_callback: Drupal\ea\eaController::getMenuTitle
   requirements:
     _custom_access:  Drupal\ea\eaController::getAccess
 
-ea.ea_3666903923_1410577895:
+ea.3666903923_1410577895:
   path: /ea/3666903923/1410577895
   defaults:
-    _controller:     Drupal\ea\eaController::getContent
-    _title_callback: Drupal\ea\eaController::getTitle
+    _controller:     Drupal\ea\eaController::getPageContent
+    _title_callback: Drupal\ea\eaController::getMenuTitle
   requirements:
     _custom_access:  Drupal\ea\eaController::getAccess
 
-ea.ea_3666903923_954465053:
+ea.3666903923_954465053:
   path: /ea/3666903923/954465053
   defaults:
-    _controller:     Drupal\ea\eaController::getContent
-    _title_callback: Drupal\ea\eaController::getTitle
+    _controller:     Drupal\ea\eaController::getPageContent
+    _title_callback: Drupal\ea\eaController::getMenuTitle
   requirements:
     _custom_access:  Drupal\ea\eaController::getAccess
 
-ea.ea_3724363626:
+ea.3724363626:
   path: /ea/3724363626
   defaults:
-    _controller:     Drupal\ea\eaController::getContent
-    _title_callback: Drupal\ea\eaController::getTitle
+    _controller:     Drupal\ea\eaController::getPageContent
+    _title_callback: Drupal\ea\eaController::getMenuTitle
   requirements:
     _custom_access:  Drupal\ea\eaController::getAccess
 
-ea.ea_3724363626_2614215831:
+ea.3724363626_2614215831:
   path: /ea/3724363626/2614215831
   defaults:
-    _controller:     Drupal\ea\eaController::getContent
-    _title_callback: Drupal\ea\eaController::getTitle
+    _controller:     Drupal\ea\eaController::getPageContent
+    _title_callback: Drupal\ea\eaController::getMenuTitle
   requirements:
     _custom_access:  Drupal\ea\eaController::getAccess
 
-ea.ea_3003434545:
+ea.3003434545:
   path: /ea/3003434545
   defaults:
-    _controller:     Drupal\ea\eaController::getContent
-    _title_callback: Drupal\ea\eaController::getTitle
+    _controller:     Drupal\ea\eaController::getPageContent
+    _title_callback: Drupal\ea\eaController::getMenuTitle
   requirements:
     _custom_access:  Drupal\ea\eaController::getAccess
 
-ea.ea_3003434545_2347876875:
+ea.3003434545_2347876875:
   path: /ea/3003434545/2347876875
   defaults:
-    _controller:     Drupal\ea\eaController::getContent
-    _title_callback: Drupal\ea\eaController::getTitle
+    _controller:     Drupal\ea\eaController::getPageContent
+    _title_callback: Drupal\ea\eaController::getMenuTitle
   requirements:
     _custom_access:  Drupal\ea\eaController::getAccess
 
-ea.ea_3003434545_336072095:
+ea.3003434545_336072095:
   path: /ea/3003434545/336072095
   defaults:
-    _controller:     Drupal\ea\eaController::getContent
-    _title_callback: Drupal\ea\eaController::getTitle
+    _controller:     Drupal\ea\eaController::getPageContent
+    _title_callback: Drupal\ea\eaController::getMenuTitle
   requirements:
     _custom_access:  Drupal\ea\eaController::getAccess
 
-ea.ea_3003434545_2574291034:
+ea.3003434545_2574291034:
   path: /ea/3003434545/2574291034
   defaults:
-    _controller:     Drupal\ea\eaController::getContent
-    _title_callback: Drupal\ea\eaController::getTitle
+    _controller:     Drupal\ea\eaController::getPageContent
+    _title_callback: Drupal\ea\eaController::getMenuTitle
   requirements:
     _custom_access:  Drupal\ea\eaController::getAccess
 
-ea.ea_3003434545_3080357576:
+ea.3003434545_3080357576:
   path: /ea/3003434545/3080357576
   defaults:
-    _controller:     Drupal\ea\eaController::getContent
-    _title_callback: Drupal\ea\eaController::getTitle
+    _controller:     Drupal\ea\eaController::getPageContent
+    _title_callback: Drupal\ea\eaController::getMenuTitle
   requirements:
     _custom_access:  Drupal\ea\eaController::getAccess
 
-ea.ea_3003434545_3570397566:
+ea.3003434545_3570397566:
   path: /ea/3003434545/3570397566
   defaults:
-    _controller:     Drupal\ea\eaController::getContent
-    _title_callback: Drupal\ea\eaController::getTitle
+    _controller:     Drupal\ea\eaController::getPageContent
+    _title_callback: Drupal\ea\eaController::getMenuTitle
   requirements:
     _custom_access:  Drupal\ea\eaController::getAccess
 
-ea.ea_3003434545_2892455105:
+ea.3003434545_2892455105:
   path: /ea/3003434545/2892455105
   defaults:
-    _controller:     Drupal\ea\eaController::getContent
-    _title_callback: Drupal\ea\eaController::getTitle
+    _controller:     Drupal\ea\eaController::getPageContent
+    _title_callback: Drupal\ea\eaController::getMenuTitle
   requirements:
     _custom_access:  Drupal\ea\eaController::getAccess
 
-ea.ea_3003434545_1087860145:
+ea.3003434545_1087860145:
   path: /ea/3003434545/1087860145
   defaults:
-    _controller:     Drupal\ea\eaController::getContent
-    _title_callback: Drupal\ea\eaController::getTitle
+    _controller:     Drupal\ea\eaController::getPageContent
+    _title_callback: Drupal\ea\eaController::getMenuTitle
   requirements:
     _custom_access:  Drupal\ea\eaController::getAccess
