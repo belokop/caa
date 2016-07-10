@@ -1,4 +1,5 @@
 <?php
+session_start();
 
 if (!function_exists('t')){
   function t($text){
@@ -9,50 +10,86 @@ if (!function_exists('t')){
 $root = dirname(__FILE__);
 $cwd = explode('/',str_replace("$root/",'',getcwd()));
 $module = array_shift($cwd);
-$_access_callback = $module . '_access_callback';
-require_once "$root/myPear/config.inc";
-require_once "$root/$module/config.inc";
-require_once "$root/$module/includes/APImenu_${module}.inc";
+
+$_GET['q'] = $_REQUEST['q'] = $module;
+print "... Build for module '$module'\n";
+
+foreach(array("$root/myPear/config.inc",
+	      "$root/myPear/includes/APImenu.inc",
+	      "$root/$module/config.inc",
+	      "$root/$module/config.tabs.inc",
+	      ) as $f){
+  print "... loading $f\n";
+  require_once $f;
+}
 
 switch($module){
 case 'ea':  $menu =  EA::_MENU(); break;
 case 'vm':  $menu =  VM::_MENU(); break;
 case 'wiw': $menu = WIW::_MENU(); break;
-default: die("??? $module\n");
+case 'lic': $menu = LIC::_MENU(); break;
+default: 
+  die("??? unknown case '$module'\n");
 }
 
 system("rm -rf /tmp/*.yml");
-foreach(array('links','routing') as $yml){
-  $fn = sprintf("/tmp/%s.%s.yml",$module,$yml);
-  system("touch $fn");
-  $file[$yml] = fopen($fn,'a');
+foreach(array('links.menu','routing') as $yml){
+  $fn[$yml] = sprintf("/tmp/%s.%s.yml",$module,$yml);
+  system("touch ".$fn[$yml]);
+  $file[$yml] = fopen($fn[$yml],'a');
 }
+
+$_title_callback = "_".$module."_title_callback";
+if (!function_exists($_title_callback)) die("Where is $_title_callback???");
 
 $menu_tree = $menu->build_menuTree('dummy_page_callback','dummy_access_callback');
 
 $ids = array();
 foreach($menu_tree as $path=>$item){
   
-  if (count(explode('/',$path)) == 1){
-    $title  = $item['title'];
-    $tab = $module;
-    $parent = '';
-  }else{
-    $path_parent = explode('/',$path);
-    $tab = APItabs::code2tab(array_pop($path_parent));
-    $title = call_user_func("_".$module."_title_callback",$tab);
-    $parent = implode('_',$path_parent);
-  }
-      
-  $weight = (int)$item['weight'];
-  $route_name = str_replace('/','_',$path);
+  $path_e = explode('/',$path);
+  $top_of_the_tree = (count($path_e) == 1);
   
-  build_routing_yml();
-  build_links_yml();  
+  if ($top_of_the_tree){
+    // Build "horizontal menu"
+    $title = $item['title'];
+    $tab = $module;
+    $weight = 0;
+    $menu_name  = 'main';
+    $route_name = 'main_menu';
+    $parent = '';
+    $access = 'all';
+    $expanded = False;
+    build_routing_yml($file['routing']);
+    build_links_menu_yml($file['links.menu']);  
+  }
+
+  // Build "left menu"
+  foreach(array('access','title','page') as $a){
+    $tab = $item["$a arguments"][0];
+    if (!empty($tab)) break;
+  }
+
+  $access = 'custom';
+  $expanded = $top_of_the_tree;
+  $expanded = True; // well... otherwise it always collapses
+  $route_name = implode('_',$path_e);
+  array_pop($path_e);
+  $parent = implode('_',$path_e);
+  $weight = (int)$item['weight'];
+  $menu_name = 'tools';
+
+  if (!$top_of_the_tree) $title = call_user_func($_title_callback,$tab,'',True);
+  if ((strpos($title,$tab)!==False) && ($tab != $module)){
+    die("??? $_title_callback($tab) --> $title\n");
+  }
+  
+  build_routing_yml($file['routing']);
+  build_links_menu_yml($file['links.menu']);  
 }  
 
-foreach(array('links','routing') as $yml)  fclose($file[$yml]);
-system("ls -lrt /tmp/*yml");
+foreach(array('links.menu','routing') as $yml)  fclose($file[$yml]);
+// system("ls -lrt /tmp/*yml");
 system("grep -E '<.*>' /tmp/*yml");
 
 exit;
@@ -61,8 +98,7 @@ exit;
  * title: (required) The untranslated title of the menu link.
  * description: The untranslated description of the link.
  * route_parameters: (optional) The route parameters to build the path. An array.
- * route_name: (optional) The route name to be used to build the path. Either a
- *   route_name or a link_path must be provided.
+ * route_name: (optional) The route name to be used to build the path. Either a route_name or a link_path must be provided.
  * link_path: (optional) If you have an external link use link_path instead of providing a route_name.
  * parent: (optional) The machine name of the link that is this link's menu parent.
  * weight: (optional, defaults to 0) An integer that determines the relative position of items
@@ -74,19 +110,22 @@ exit;
  *   expanded, equivalent to its 'always expanded' checkbox being set in the UI.
  * options: (optional) An array of options to be passed to l() when generating a link from this menu item.
  */
-function build_links_yml(){
-  global $file,$parent;
+function build_links_menu_yml(){
+  global $file;
 
-  fwrite($file['links'],process_template("
+  fwrite($file['links.menu'],process_template("
 <module>.<route_name>:
   title: <title>
   route_name: <module>.<route_name>
-  route_parameters:
-   - q: <path>
-   - tab: <tab>
   weight: <weight>
-  menu_name: main
-" . (empty($parent) ? "" : "  parent: <module>.<parent>\n")));
+  menu_name: <menu_name>
+# route_parameters:
+#  - q: <path>
+#  - tab: <tab>
+# options:
+" 
+					      . (empty($GLOBALS['parent']) ? ""   : "  parent: <module>.<parent>\n")
+					      . (empty($GLOBALS['expanded']) ? "" : "  expanded: 'TRUE'\n")));
 }
 
 /*
@@ -103,17 +142,17 @@ function build_links_yml(){
  *   _access: access is either granted (TRUE) or not (FALSE)
  *   _custom_access: access is determined by a method in our class
  */
-function build_routing_yml(){
-  global $file;
-
-  fwrite($file['routing'],process_template("
+function build_routing_yml($file){
+  fwrite($file,process_template("
 <module>.<route_name>:
   path: /<path>
   defaults:
-    _controller:     Drupal\\<module>\\<module>Controller::getContent
-    _title_callback: Drupal\\<module>\\<module>Controller::getTitle
+    _controller:     Drupal\\myPear\\Controller::getPageContent
+    _title_callback: Drupal\\myPear\\Controller::getPageTitle
   requirements:
-    _custom_access:  Drupal\\<module>\\<module>Controller::getAccess
+    ".
+				//($GLOBALS['access'] == 'all' ? "_access: 'TRUE'" : "requirements: _access_check_token: 'TRUE'")."
+				($GLOBALS['access'] == 'all' ? "_access: 'TRUE'" : "_custom_access:  Drupal\\myPear\\Controller::getPageAccess")."
 "));
 }
 
@@ -121,25 +160,20 @@ function build_routing_yml(){
  *
  */
 function process_template($template){
-  global $module, $path, $route_name, $parent, $weight, $title, $tab;
-  
-  return str_replace(array('<module>',
-			   '<path>',
-			   '<route_name>',
-			   '<weight>',
-			   '<title>',
-			   '<tab>',
-			   '<parent>',
-			   ),
-		     array($module,
-			   $path,
-			   $route_name,
-			   $weight,
-			   $title,
-			   $tab,
-			   $parent,
-			   ),
-		     $template);
+  $template = implode("\n",preg_grep('/^#/',explode("\n",$template),PREG_GREP_INVERT));
+  foreach(array('module',
+		'path',
+		'route_name',
+		'weight',
+		'title',
+		'tab',
+		'parent',
+		'expanded',
+		'menu_name',
+		) as $item){
+    $template = str_replace("<$item>",$GLOBALS[$item],$template);
+  }
+  return $template;
 }
 
 function dummy_page_callback(){
