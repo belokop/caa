@@ -1,0 +1,14 @@
+<?php
+
+/**
+ * @file
+ * Allows to attach page_load_progress assets to all pages.
+ */
+
+/**
+ * Implements hook_page_attachments().
+ */
+function page_load_progress_page_attachments(array &$attachments) {
+  // Unconditionally attach assets to the page.
+  $attachments['#attached']['library'][] = 'page_load_progress/page_load_progress';
+}

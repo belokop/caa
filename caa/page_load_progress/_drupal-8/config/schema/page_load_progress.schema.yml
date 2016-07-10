@@ -1,0 +1,12 @@
+# Schema for the configuration file of the Page Load Progress module.
+
+page_load_progress.settings:
+  type: config_entity
+  label: 'Page Load Progress settings'
+  mapping:
+    page_load_progress_time:
+      type: integer
+      label: '10'
+    page_load_progress_elements:
+      type: text
+      label: '.form-submit'
