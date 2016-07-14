@@ -1,0 +1,117 @@
+
+jam.main_menu:
+  title: 
+  route_name: jam.main_menu
+  weight: 0
+  menu_name: main
+
+jam.jam:
+  title: 
+  route_name: jam.jam
+  weight: 0
+  menu_name: tools
+  expanded: 'TRUE'
+
+jam.jam_3205786341:
+  title: Configure myPear
+  route_name: jam.jam_3205786341
+  weight: 0
+  menu_name: tools
+  parent: jam.jam
+  expanded: 'TRUE'
+
+jam.jam_2347876875:
+  title: Merge avatars
+  route_name: jam.jam_2347876875
+  weight: 0
+  menu_name: tools
+  parent: jam.jam
+  expanded: 'TRUE'
+
+jam.jam_3031740161:
+  title: Dictionary
+  route_name: jam.jam_3031740161
+  weight: 0
+  menu_name: tools
+  parent: jam.jam
+  expanded: 'TRUE'
+
+jam.jam_895833281:
+  title: Search
+  route_name: jam.jam_895833281
+  weight: 0
+  menu_name: tools
+  parent: jam.jam
+  expanded: 'TRUE'
+
+jam.jam_431012382:
+  title: Check for updates
+  route_name: jam.jam_431012382
+  weight: 999
+  menu_name: tools
+  parent: jam.jam
+  expanded: 'TRUE'
+
+jam.jam_731739144:
+  title: Edit forms
+  route_name: jam.jam_731739144
+  weight: 0
+  menu_name: tools
+  parent: jam.jam
+  expanded: 'TRUE'
+
+jam.jam_3257524125:
+  title: See All units
+  route_name: jam.jam_3257524125
+  weight: 0
+  menu_name: tools
+  parent: jam.jam
+  expanded: 'TRUE'
+
+jam.jam_599733361:
+  title: See All lists
+  route_name: jam.jam_599733361
+  weight: 0
+  menu_name: tools
+  parent: jam.jam
+  expanded: 'TRUE'
+
+jam.jam_1087860145:
+  title: Syslog
+  route_name: jam.jam_1087860145
+  weight: 0
+  menu_name: tools
+  parent: jam.jam
+  expanded: 'TRUE'
+
+jam.jam_2076298819:
+  title: Task Manager
+  route_name: jam.jam_2076298819
+  weight: 0
+  menu_name: tools
+  parent: jam.jam
+  expanded: 'TRUE'
+
+jam.jam_914612257:
+  title: Fix database
+  route_name: jam.jam_914612257
+  weight: 0
+  menu_name: tools
+  parent: jam.jam
+  expanded: 'TRUE'
+
+jam.jam_914612257_1366828589:
+  title: bList(s)
+  route_name: jam.jam_914612257_1366828589
+  weight: 0
+  menu_name: tools
+  parent: jam.jam_914612257
+  expanded: 'TRUE'
+
+jam.jam_914612257_1847092539:
+  title: Clean-up the database
+  route_name: jam.jam_914612257_1847092539
+  weight: 0
+  menu_name: tools
+  parent: jam.jam_914612257
+  expanded: 'TRUE'

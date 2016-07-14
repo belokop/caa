@@ -1,0 +1,423 @@
+<?php
+
+/**
+ * @file
+ * Contains \Drupal\myPear\Controller.
+ */
+
+namespace Drupal\myPear;
+
+use Drupal\Core\Access\AccessResult;
+use Drupal\Core\Session\AccountInterface;
+use Drupal\Core\Controller\ControllerBase;
+use Drupal\Core\Routing\Access\AccessInterface;
+use Drupal\Core\Routing\RouteSubscriberBase;
+use Symfony\Component\Routing\Route;
+use Symfony\Component\Routing\RouteCollection;
+use Symfony\Component\HttpFoundation\Request;
+
+/**
+ * Displays content for our menu links.
+ */
+class Controller extends ControllerBase{
+  
+  public function __construct($EntityManager) {
+    $this->dbg();
+    if (!empty($EntityManager)) $this->dbg($EntityManager->getBundleInfo('menu_link_content'));
+    static $ccc = 10;    if (!($ccc++)){
+      $menu_name = 'tools';
+      $menu_tree = \Drupal::menuTree();
+      $parameters = $menu_tree->getCurrentRouteMenuTreeParameters($menu_name);
+      $tree = $menu_tree->load($menu_name, $parameters);
+      $manipulators = array(array('callable' => 'menu.default_tree_manipulators:checkAccess'),
+			    array('callable' => 'menu.default_tree_manipulators:generateIndexAndSort'),
+			    );
+      $tree = $menu_tree->transform($tree, $manipulators);
+      
+      $menu = $menu_tree->build($tree);
+      
+      $menu_html = drupal_render($menu);
+      var_dump($menu_html);
+      $this->dbg(get_class($menu_tree));
+    }
+  }
+  
+  public function getPageTitle() {
+    global $myPear_custom_title;
+    $this->dbg();
+    
+    if (empty($GLOBALS['myPear_current_module'])) return t('?');
+
+    // Be sure that the init is done
+    \myPear_init();
+    call_user_func($GLOBALS['myPear_current_module'] . '_init');
+
+    // Get the page title from the module APImenu class
+    $_module_title_callback = sprintf('_%s_title_callback',$GLOBALS['myPear_current_module']);
+    if (!function_exists($_module_title_callback)) die("??? where is $_module_title_callback");
+    $_module_title_callback_reply = call_user_func($_module_title_callback,$GLOBALS['myPear_current_tab'],Null,True);
+    $reply = (empty($myPear_custom_title) 
+              ? $_module_title_callback_reply
+              : $myPear_custom_title);
+    $debug[] = htmlspecialchars($reply);
+    if ($reply == $myPear_custom_title) $debug[] = "($_module_title_callback gives \"".htmlspecialchars($_module_title_callback_reply)."\")";
+    //    $this->dbg(join(' ',$debug));
+    return  t($reply);
+  }
+  
+  /*
+   *
+   */
+  public function getPageContent() {
+    $this->dbg();
+    return array(
+                 '#type' => 'markup',
+                 '#markup' => call_user_func(sprintf('_%s_output',$GLOBALS['myPear_current_module']),$GLOBALS['myPear_current_tab']),
+                 );
+  }
+
+  private function dbg($text=''){
+    \d8_debug::x($text,$this,3);
+  }
+}  
+
+
+/*
+ *
+ */
+class AccessController implements AccessInterface{ 
+
+  // Symfony\Component\Routing\Route;
+  public $route = Null;
+
+  public function __construct($EntityManager) {
+    if (!empty($EntityManager)){
+      $this->dbg($EntityManager->getBundleInfo('menu_link_content'));
+    }
+    $this->dbg(array('module'=>$GLOBALS['myPear_current_module'],
+		     'tab'   =>$GLOBALS['myPear_current_tab']));
+  }
+  
+
+  /*
+   * Return "Access allowed"
+   */
+  public function true(Route $route){
+    $this->dbg(True);
+    return AccessResult::allowed();
+  }
+
+  /*
+   * Returns the PAGE access permission
+   */
+  public function getPageAccess() {
+    
+    if ($reply = !empty($GLOBALS['myPear_current_tab'])){    
+      $reply = self::_access_exec();
+    }
+    $this->dbg($reply);
+    return ($reply ? AccessResult::allowed() : AccessResult::forbidden()); 
+  }
+  
+  /*
+   *  public function access(Route $route, Request $request, AccountInterface $account) {
+   */
+  public function access(Route $route){
+
+    if ($reply = !empty($GLOBALS['myPear_current_tab'])){    
+      $this->route = $route;
+      $reply = self::_access_exec($route->getPath());
+      menuHandler::_toggle_enabled(self::$menu_route,$reply);
+    }
+    $this->dbg(array('path' => $route->getPath(),
+		     'reply'=>var_export($reply,True)));
+
+    return ($reply ? AccessResult::allowed() : AccessResult::forbidden()); 
+  }
+  
+  /*
+   *
+   */
+  public function checkAccess(){
+    $reply = self::_access_exec();
+    $this->dbg($reply);
+    return ($reply ? AccessResult::allowed() : AccessResult::forbidden()); 
+  }
+  
+  /*
+   * Check access to the tab, the current tab is a default
+   */
+  private static $menu_route = Null;
+  public static function _access_exec($menu_route=''){
+
+    if (!function_exists('myPear_init')) return Null;
+    
+    // Strip out the leading slash and add the module name to get the D8 route name from D8 path
+    if (strpos($menu_route,'/') === 0){
+      $q = explode('/',substr($menu_route,1));;
+      $menu_route = $q[0] . '.' . join('_',$q);
+      //      \d8_debug::x($menu_route);
+    }
+    self::$menu_route = $menu_route;
+    
+    \myPear_init();
+    bAuth();
+    if (empty($GLOBALS['myPear_current_module'])){
+      
+      $reply = True;
+      
+    }else{
+      if ($normal_call = empty($menu_route)){
+	call_user_func($GLOBALS['myPear_current_module'] . '_init');
+	call_user_func(strToUpper($GLOBALS['myPear_current_module'] . '_menu'));
+	
+	$q_exploded = explode('/',$_REQUEST['q']);
+	$module = $GLOBALS['myPear_current_module'];
+	$tab    = $GLOBALS['myPear_current_tab'];
+	if (file_exists($f=drupal_get_path('module',$module) . '/config.tabs.inc')) require_once $f;
+      }else{
+	list($_module,$route) = explode('.',$menu_route,2);
+	$q_exploded = explode('_',$route);
+	$module = array_shift($q_exploded);
+	if (file_exists($f=drupal_get_path('module',$module) . '/config.tabs.inc')) require_once $f;
+	if (empty($q_exploded)) $q_exploded = array($module);
+	$tab_code = array_pop($q_exploded);
+	$tab = APItabs_code2tab($tab_code);
+	if ($_module != $module) print "disaster !!!!";
+      }
+      
+      if ($module == $GLOBALS['myPear_current_module']){
+	if (empty($tab)) $tab = $module;
+	$_module_access_callback = sprintf('_%s_access_callback',$GLOBALS['myPear_current_module']);
+	$reply = (bool)call_user_func($_module_access_callback,$tab);
+      }else{
+	$reply = False;
+      }
+    }
+    //    if ($reply)    \d8_debug::x(array('reply'=>$reply));
+    return $reply;
+  }
+  
+  private function dbg($text=''){
+    \d8_debug::x($text,$this,3);
+  }
+}
+
+
+
+/**
+ * Listens to the dynamic route events.
+ */
+class RouteSubscriber extends RouteSubscriberBase {
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function alterRoutes(RouteCollection $collection) {
+
+    $this->dbg();
+    
+    /*
+    // As nodes are the primary type of content, the node listing should be
+    // easily available. In order to do that, override admin/content to show
+    // a node listing instead of the path's child links.
+    $route = $collection->get('system.admin_content');
+    */
+
+    $route = $collection->get('ea.ea');
+    if ($route) {
+      $this->dbg(array('path'=>$route->getPath(),
+		       ));
+      /*
+      $route->setDefaults(array(
+				'_title' => 'Content',
+				'_entity_list' => 'node',
+				));
+      $route->setRequirements(array('_permission' => 'access content overview',
+				    ));
+      */
+    }
+  }
+
+  private function dbg($text=''){
+    \d8_debug::x($text,$this,3);
+  }
+}
+
+
+/*
+ * Doing the Drupal's work... ??????????????????????????????????????????????????
+ */
+class menuHandler{
+  
+  public static $menu_name = 'tools';
+  public static $menu_deph = 999;
+  
+  /*
+   * On the fly disable the links which are not provided by the current myPear module,
+   * and enable those which are accessible.
+   * Apparently Drupal8 does not do this.
+   * There are maybe other ways to to it, but let's try a simple approach...
+   */
+  function __construct(){
+    self::_toggle_menu_items(\b_reg::get_modules());
+  }
+  
+  public static function _toggle_menu_items($module_list){
+    // No reason to bother...
+    if (empty($GLOBALS['myPear_current_module'])) return;
+    //    \d8_debug::x("SKIP ".__FUNCTION__); return; ////////////////////////////////////////////////////////////////
+    
+    if (True){
+      // version 2
+      foreach($module_list as $module){
+	$enable = ($module === $GLOBALS['myPear_current_module']);
+	$message_printed = 0;
+	foreach(self::get_all_route_names($module) as $route_name){
+	  if (strpos($route_name,'_') === False){
+	    if (!$message_printed++) \d8_debug::x($enable
+						  ? "----------------------------------------------------------- $module - CURRENT module, checking access for the each menu item"
+						  : "----------------------------------------------------------- $module - Disabling all links");
+	    self::_toggle_enabled($route_name,$enable);
+	  }elseif (False && $enable){
+	    // Preprocess menu for the current module, enable/disable the relevant links 
+	    // according to the access callback value
+	    if (!$message_printed++) \d8_debug::x($enable
+						  ? "----------------------------------------------------------- $module - CURRENT module, checking access for the each menu item"
+						  : "----------------------------------------------------------- $module - Disabling all links");
+	    $access = AccessController::_access_exec($route_name); 
+	    \d8_debug::x(array('access'=>$access,'route'=>$route_name));
+	    if ($access !== Null) self::_toggle_enabled($route_name,$access);
+	  }
+	}
+      }
+      \d8_debug::x("-----------------------------------------------------------");
+      menuHandler::_toggle_enabled('clean cache');
+    }else{
+      // version 1
+      foreach($module_list as $module){
+	\d8_debug::x(($module === $GLOBALS['myPear_current_module']
+		      ? "----------------------------------------------------------- $module - CURRENT module, checking access for the each menu item"
+		      : "----------------------------------------------------------- $module - Disabling all links"));
+	foreach(self::get_all_route_names($module) as $route_name){
+	  if ($module == $GLOBALS['myPear_current_module']) {
+	    // Preprocess menu for the current module, enable/disable the relevant links 
+	    $access = ((self::$menu_deph <= 1)
+		       ? (strpos($route_name,'_') === False)     // accept only top level if requested 
+		       : AccessController::_access_exec($route_name)); // accept according the access callback value
+	    if ($access !== Null) self::_toggle_enabled($route_name,$access);
+	  }else{
+	    // Disable all the links for the module which is not current
+	    self::_toggle_enabled($route_name,False);
+	  }
+	  }
+      }
+      menuHandler::_toggle_enabled('clean cache','');
+    }
+  }
+  
+  /*
+   * Find the "route_name" corresponding to the tab,
+   * return it as a url (the legacy 'q')
+   */
+  public static function get_route_name($tab){
+    $rows = db_query('SELECT * FROM {menu_tree} WHERE menu_name = :menu_name AND route_name REGEXP :route_name',
+		     array(':menu_name' => self::$menu_name,
+			   ':route_name'=> $tab)
+		     )->fetchAll();
+    $reply = False;
+    foreach ($rows as $row) {
+      if (preg_match("/($tab)$/",$row->route_name,$match)){
+	$a = explode('.',$row->route_name);
+	$reply = array_pop($a);
+	break;
+      }
+    }
+    \d8_debug::x($reply);
+    return $reply;
+  }
+
+  /*
+   *
+   */
+  public static function get_all_route_names($module){
+    $rows = db_query('SELECT * FROM {menu_tree} WHERE menu_name = :menu_name AND route_name REGEXP :route_name',
+		     array(':menu_name' => self::$menu_name,
+			   ':route_name'=> "$module.$module")
+		     )->fetchAll();
+    foreach ($rows as $row) $reply[] = $row->route_name;
+    // \d8_debug::x($reply,$this);
+    return $reply;
+  }
+  
+  /*
+   * Enable/disable the menu item
+   */
+  static function _toggle_enabled($route_name,$enabled=False) {
+    static $counter = 0;
+
+    if ($route_name === 'clean cache'){
+      if ($counter || $enabled===True){
+	foreach(array('menu',
+		      'render',
+		      ) as $cache_name){
+	  $cache = \Drupal::cache($cache_name);
+	  $cache->deleteAll();
+	  \d8_debug::x($cache_name);
+	}
+      }
+      $counter = 0;
+    }else{
+      $rows = db_query('SELECT * FROM {menu_tree} WHERE menu_name = :menu_name AND route_name = :route_name',
+		       array(':menu_name' => self::$menu_name,
+			     ':route_name'=> $route_name)
+		       )->fetchAll();
+      foreach ($rows as $row) {
+	if (((bool)$row->enabled !== (bool)$enabled) || ((bool)$row->expanded !== (bool)$row->has_children)){
+	  db_query('UPDATE {menu_tree} SET enabled=:enabled, expanded=:expanded WHERE menu_name = :menu_name AND route_name = :route_name',
+		   array(':enabled'   => (empty($enabled) ? 0 : 1),
+			 ':expanded'  => (empty($row->has_children) ? 0 : 1),
+			 ':menu_name' => self::$menu_name,
+			 ':route_name'=> $route_name));
+	  $counter++;
+	  \d8_debug::x($enabled);
+	} 
+      }
+    }
+  }
+  
+  /*
+   *
+   */
+  private function dbg($reply=''){
+    \d8_debug::x((is_bool($reply) ? var_export($reply,True) : $reply));
+  }
+}
+
+function build_menu($menu_name){
+  $menu_tree = \Drupal::menuTree();
+  
+  // Build the typical default set of menu tree parameters.
+  $parameters = $menu_tree->getCurrentRouteMenuTreeParameters($menu_name);
+  
+  // Load the tree based on this set of parameters.
+  $tree = $menu_tree->load($menu_name, $parameters);
+  
+  // Transform the tree using the manipulators you want.
+  $manipulators = array(
+			// Only show links that are accessible for the current user.
+			array('callable' => 'menu.default_tree_manipulators:checkAccess'),
+			// Use the default sorting of menu links.
+			array('callable' => 'menu.default_tree_manipulators:generateIndexAndSort'),
+			);
+  $tree = $menu_tree->transform($tree, $manipulators);
+  
+  // Finally, build a renderable array from the transformed tree.
+  $menu = $menu_tree->build($tree);
+  
+  $menu_html = drupal_render($menu);
+  var_dump($menu_html);
+}
+
+require_once drupal_get_path('module','myPear').'/includes/drupal8_compat.inc';
+

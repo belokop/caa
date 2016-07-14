@@ -1,0 +1,10 @@
+name: wiw
+description: Who Is Where
+type: module
+package: myPear
+project: YB
+core: 8.x
+dependencies: 
+ - myPear
+ - ea
+version: 2.x-dev

@@ -1,142 +1,118 @@
 
-ea.main_menu:
-  path: /ea
+jam.main_menu:
+  path: /jam
   defaults:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
     _custom_access:  Drupal\myPear\AccessController::true
 
-ea.ea:
-  path: /ea
+jam.jam:
+  path: /jam
   defaults:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
     _access_check_token: 'TRUE'
 
-ea.ea_356353008:
-  path: /ea/356353008
+jam.jam_3205786341:
+  path: /jam/3205786341
   defaults:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
     _access_check_token: 'TRUE'
 
-ea.ea_3666903923:
-  path: /ea/3666903923
+jam.jam_2347876875:
+  path: /jam/2347876875
   defaults:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
     _access_check_token: 'TRUE'
 
-ea.ea_3666903923_3558149342:
-  path: /ea/3666903923/3558149342
+jam.jam_3031740161:
+  path: /jam/3031740161
   defaults:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
     _access_check_token: 'TRUE'
 
-ea.ea_3666903923_3640775405:
-  path: /ea/3666903923/3640775405
+jam.jam_895833281:
+  path: /jam/895833281
   defaults:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
     _access_check_token: 'TRUE'
 
-ea.ea_3666903923_1410577895:
-  path: /ea/3666903923/1410577895
+jam.jam_431012382:
+  path: /jam/431012382
   defaults:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
     _access_check_token: 'TRUE'
 
-ea.ea_3666903923_954465053:
-  path: /ea/3666903923/954465053
+jam.jam_731739144:
+  path: /jam/731739144
   defaults:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
     _access_check_token: 'TRUE'
 
-ea.ea_3724363626:
-  path: /ea/3724363626
+jam.jam_3257524125:
+  path: /jam/3257524125
   defaults:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
     _access_check_token: 'TRUE'
 
-ea.ea_3724363626_2614215831:
-  path: /ea/3724363626/2614215831
+jam.jam_599733361:
+  path: /jam/599733361
   defaults:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
     _access_check_token: 'TRUE'
 
-ea.ea_3003434545:
-  path: /ea/3003434545
+jam.jam_1087860145:
+  path: /jam/1087860145
   defaults:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
     _access_check_token: 'TRUE'
 
-ea.ea_3003434545_2347876875:
-  path: /ea/3003434545/2347876875
+jam.jam_2076298819:
+  path: /jam/2076298819
   defaults:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
     _access_check_token: 'TRUE'
 
-ea.ea_3003434545_336072095:
-  path: /ea/3003434545/336072095
+jam.jam_914612257:
+  path: /jam/914612257
   defaults:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
     _access_check_token: 'TRUE'
 
-ea.ea_3003434545_2574291034:
-  path: /ea/3003434545/2574291034
+jam.jam_914612257_1366828589:
+  path: /jam/914612257/1366828589
   defaults:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
     _access_check_token: 'TRUE'
 
-ea.ea_3003434545_3080357576:
-  path: /ea/3003434545/3080357576
-  defaults:
-    _controller:     Drupal\myPear\Controller::getPageContent
-    _title_callback: Drupal\myPear\Controller::getPageTitle
-  requirements:
-    _access_check_token: 'TRUE'
-
-ea.ea_3003434545_3570397566:
-  path: /ea/3003434545/3570397566
-  defaults:
-    _controller:     Drupal\myPear\Controller::getPageContent
-    _title_callback: Drupal\myPear\Controller::getPageTitle
-  requirements:
-    _access_check_token: 'TRUE'
-
-ea.ea_3003434545_2892455105:
-  path: /ea/3003434545/2892455105
-  defaults:
-    _controller:     Drupal\myPear\Controller::getPageContent
-    _title_callback: Drupal\myPear\Controller::getPageTitle
-  requirements:
-    _access_check_token: 'TRUE'
-
-ea.ea_3003434545_1087860145:
-  path: /ea/3003434545/1087860145
+jam.jam_914612257_1847092539:
+  path: /jam/914612257/1847092539
   defaults:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
