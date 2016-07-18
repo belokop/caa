@@ -1,0 +1,166 @@
+/*
+ * HvZM 2010-06-20 -- 2011-07-01
+ * To print address labels etc
+ */
+
+@page
+{
+  margin-top:    13mm ! important; /* top strip on badge sheet */
+  margin-right:  0 ! important;
+  margin-bottom: 0 ! important;
+  margin-left:   13mm ! important; /* left strip on badge sheet */
+}
+
+@media print,screen
+{
+
+body,
+p,
+div, span,
+q, blockquote,
+form, input, button, select,
+td, th,
+ol, ul, dl, li, dt, dd
+{
+  font-family:
+    "Candara",
+    "Corbel",
+    "Trebuchet MS",
+    "Verdana",
+    "Geneva",
+    "Arial",
+    "Helvetica",
+    sans-serif ! important;
+}
+
+  body
+  {
+	margin:  0 ! important;
+	padding: 0 ! important;
+	background-image: none ! important;
+  }
+
+  center
+  {
+	text-align: left ! important;
+  }
+
+  #container-scrolled,
+  #region-main,
+  #block-maincontent,
+  #div-main-content,
+  #outerColumn,
+  #innerColumn,
+  #soContainer,
+  #content,
+  .inside
+  {
+	position: absolute ! important;
+	top:  0 ! important;
+	left: 0 ! important;
+	width: 100% ! important;
+	height: 100% ! important;
+	margin:  0 ! important;
+	padding: 0 ! important;
+	border-width: 0 ! important;
+  }
+
+  /* hidden */
+  #container-fixed,
+  #container-head, /* legacy */
+  #block-colophon,
+  #region-colophon,
+  #content h2,
+  div[align]
+    {
+	display: none ! important;
+	position: absolute ! important;
+	visibility: hidden ! important;
+	width:  0;
+	height: 0;
+	top:    auto;
+	bottom: auto;
+	left:   auto;
+	right:  auto;
+	border-width: 0 ! important;
+  }
+
+  .badges
+  {
+	display: block;
+	position: relative ! important;
+	/* must not have 'top' set because of paged media */
+	left: 0 ! important; /* strange bugfix */
+	width: 680px ! important;
+	margin: 0 0 0 0 ! important; /* strange bugfix */
+	padding: 0 ! important;
+	border-spacing: 0 ! important;
+	background-color: transparent ! important;
+  }
+
+  .badges,
+  .badges td
+  {  
+	border-width: 1px ! important;
+	border-color: transparent ! important; /* strange bugfix */
+    border-style: solid;
+  }
+
+  .badges+.badges
+  {
+	page-break-before: always;
+  }
+
+  .badges b
+  {
+    display: inline-block;
+	font-size: 1.7em;
+	margin-bottom: 0.5em;
+  }
+
+  .badges tbody
+  {
+    border-top: 0 solid transparent ! important;
+    margin: 0 ! important;
+    padding: 0 ! important;
+  }
+
+  .badges td
+  {
+	overflow: hidden ! important;
+	padding: 5mm 0 0 10mm ! important;
+	white-space: normal ! important;
+	text-align: left ! important;
+	vertical-align: top;
+    background: white; /* strange bugfix */
+	background-repeat: no-repeat;
+  }
+  
+  /* -- THREE COLUMNS, XX ROWS -- */
+  /* UNDEBUGGED */
+
+  .badges.d70x45 td
+  {
+	width:  60mm ! important; /* 70 - padding 10 */
+	height: 47mm ! important; /* actual size */
+	background-image: url('./img/doorlabel-logo.png');
+	background-position: right;
+  }
+  .badges.d70x45 td+td+td
+  {
+	width:  50mm ! important;
+	border-width: 0 ! important;
+  }
+
+  /* -- TWO COLUMNS, FIVE ROWS -- */
+  /* top margin: 10mm; left margin: 15mm; */
+
+  .badges.d90x55 td
+  {
+	width:  80mm ! important; /* 90 - padding 10mm */
+	height: 49mm ! important; /* 55 - padding 5mm */
+	background-image: url('./img/badges_90x55_border.png');
+	background-position: -5px -10px;
+  }
+
+} /* @media */

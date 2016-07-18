@@ -1,0 +1,230 @@
+/* Thanks to HvZM */
+#bIcal1,
+#bIcal2,
+#bIcal3,
+#bIcal4,
+#bIcal5{
+  overflow-x: auto;
+}
+
+.bIcal * {
+ font-size:x-small;
+}
+
+.bIcal th * {
+ font-size:medium!important;
+}
+
+.bIcal_small th * {
+ font-size:x-small!important;
+}
+
+.bIcal {
+/* width: 100%; */
+ border-width:0;
+ border-collapse:separate!important;
+ border-spacing:1px 1px!important;
+}
+
+.bIcal td {
+ background-color:#ccc;
+ border:0 solid;
+ padding:1px;
+ border-color:#FFF;
+ text-align:left;
+ vertical-align:baseline;
+ white-space:nowrap;
+}
+
+.bIcal td.bIcal_inoutday {
+ background-color:#FF0;
+ font-weight:700;
+}
+
+.bIcal td.bIcal_name,td.bIcal_arrow_left,td.bIcal_arrow_right {
+ background-color:transparent!important;
+ font-weight:700;
+ white-space:nowrap;
+}
+
+.bIcal td.bIcal_travel {
+ background-color:#ae2;
+ text-align:center;
+}
+
+.bIcal tr> th:first-child,.bIcal tr> td:first-child {
+ background-color:transparent;
+ font-weight:700;
+ width:0;
+}
+
+.bIcal tr.bIcal_date td {
+ background-color:transparent;
+}
+
+/* .bIcal tr> th:first-child, */
+.bIcal td.bIcal_arrow_right {
+ text-align:left;
+ padding-right:1em;
+ vertical-align:bottom;
+}
+
+.bIcal td.bIcal_arrow_left {
+ text-align:right;
+ padding-left:1em;
+ vertical-align:bottom;
+}
+
+.bIcal th.bIcal_weekend,.bIcal tr.bIcal_date th.bIcal_weekend,.bIcal tr.bIcal_date td.bIcal_weekend,.bIcal tr.bIcal_date td.bIcal_weekend a {
+ color:#FF6347;
+ text-align:center;
+}
+
+.bIcal td.bIcal_weekend {
+ color:#aaa;
+ background-color:#ffe0d5;
+ font-size:12px;
+ text-align:center;
+}
+
+.bIcal td.bIcal_visit {
+ background-color:#2bda39;
+ text-align:center;
+ font-size:12px;
+}
+
+.bIcal tr.bIcal_date td.bIcal_weekend a {
+ font-weight:700;
+}
+
+/* perhaps not necessary */
+.bIcal a {
+ text-decoration:none;
+}
+
+.bIcal td.bIcal_empty {
+ /* there is no such date, iether before 1-st or after 31-st */
+ background:url(../images/pocketwatch-15x20.png) no-repeat scroll center center;
+ /*   color: transparent; */
+ font-size:12px;
+}
+
+/* this part is not that elegant... (another author - myself)   */
+.bIcal_border1 {
+ padding:3px 0 0;
+ margin:0;
+ border:1px solid;
+ background:#FFF;
+}
+
+td.bIcal_date {
+ background-color:#eee;
+ font-weight:400;
+ margin-bottom:0;
+ font-family:helvetica;
+ font-size:12px;
+ text-align:center;
+ vertical-align:middle!important;
+}
+
+td.bIcal_hdn {
+ background-color:red;
+ font-weight:400;
+ margin-bottom:0;
+ font-family:helvetica;
+ font-size:12px;
+ color:#FFF;
+}
+
+td.bIcal_wdn {
+ background-color:#036;
+ font-weight:400;
+ margin-bottom:0;
+ font-family:helvetica;
+ font-size:12px;
+ color:#FFF;
+}
+
+td.bIcal_dath {
+ background-color:#fff;
+ font-weight:400;
+ margin-bottom:0;
+ font-family:helvetica;
+ font-size:12px;
+ text-align:center;
+}
+
+td.bIcal_selected {
+ background-color:#f0f;
+ text-align:center;
+}
+
+td.bIcal_bgblue {
+ background-color:#036;
+}
+
+td.bIcal_bgred {
+ background-color:red!important;
+}
+
+td.bIcal_bg00 {
+ background-color:#d98;
+}
+
+td.bIcal_bg01 {
+ background-color:#2BDA39;
+}
+
+td.bIcal_bg02 {
+ background-color:#FDFA3D;
+}
+
+td.bIcal_bg03 {
+ background-color:#FDDAD9;
+}
+
+td.bIcal_bg04 {
+ background-color:orange;
+}
+
+td.bIcal_bg05 {
+ background-color:#26D4FE;
+}
+
+td.bIcal_bg06 {
+ background-color:#9EC633;
+}
+
+td.bIcal_bg07 {
+ background-color:#CCC;
+}
+
+td.bIcal_bggray {
+ background-color:#CCC;
+}
+
+.bIcal_nav {
+ font-size:10px;
+ font-family:helvetica,sans-serif;
+ font-weight:700;
+ margin-bottom:0;
+}
+
+a.bIcal_nav {
+ font-size:10px;
+ font-family:verdana,arial,sans-serif;
+ text-decoration:none;
+}
+
+a.bIcal_nav:visited {
+ font-size:10px;
+ font-family:verdana,arial,sans-serif;
+ text-decoration:none;
+}
+
+a.bIcal_nav:hover {
+ font-size:10px;
+ font-family:verdana,arial,sans-serif;
+ text-decoration:none;
+ color:#f0f;
+}

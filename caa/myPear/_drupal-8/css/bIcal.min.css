@@ -1,0 +1,39 @@
+.bIcal *{font-size:x-small}
+.bIcal th *{font-size:medium!important}
+.bIcal_small th *{font-size:x-small!important}
+.bIcal{border-width:0;border-collapse:separate!important;border-spacing:1px 1px!important}
+.bIcal td{background-color:#ccc;border:1px solid;padding:1px;border-color:white;text-align:left}
+.bIcal td.bIcal_inoutday{background-color:yellow;font-weight:bold}
+.bIcal td.bIcal_name,td.bIcal_arrow_left,td.bIcal_arrow_right{background-color:transparent!important;font-weight:bold;white-space:nowrap}
+.bIcal td.bIcal_travel{background-color:#ae2;text-align:center}
+.bIcal tr>th:first-child,.bIcal tr>td:first-child{background-color:transparent;font-weight:bold;width:0}
+.bIcal tr.bIcal_date td{background-color:transparent}
+.bIcal td.bIcal_arrow_right{text-align:left;padding-right:1em}
+.bIcal td.bIcal_arrow_left{text-align:right;padding-left:1em}
+.bIcal th.bIcal_weekend,.bIcal tr.bIcal_date th.bIcal_weekend,.bIcal tr.bIcal_date td.bIcal_weekend,.bIcal tr.bIcal_date td.bIcal_weekend a{color:tomato;text-align:center}
+.bIcal td.bIcal_weekend{color:#aaa;background-color:#ffe0d5;font-size:12px;text-align:center}
+.bIcal td.bIcal_visit{background-color:#2bda39;text-align:center;font-size:12px}
+.bIcal tr.bIcal_date td.bIcal_weekend a{font-weight:bold}
+.bIcal a{text-decoration:none}
+.bIcal td.bIcal_empty{background:url("../images/pocketwatch-15x20.png") no-repeat scroll center center;font-size:12px}
+.bIcal_border1{padding:3px 0 0 0;margin:0;border:1px solid;background:white}
+td.bIcal_date{background-color:#eee;font-weight:normal;margin-bottom:0;font-family:helvetica;font-size:12px;text-align:center;vertical-align:middle!important}
+td.bIcal_hdn{background-color:red;font-weight:normal;margin-bottom:0;font-family:helvetica;font-size:12px;color:white}
+td.bIcal_wdn{background-color:#036;font-weight:normal;margin-bottom:0;font-family:helvetica;font-size:12px;color:white}
+td.bIcal_dath{background-color:#fff;font-weight:normal;margin-bottom:0;font-family:helvetica;font-size:12px;text-align:center}
+td.bIcal_selected{background-color:#f0f;text-align:center}
+td.bIcal_bgblue{background-color:#036}
+td.bIcal_bgred{background-color:red!important}
+td.bIcal_bg00{background-color:#d98}
+td.bIcal_bg01{background-color:#2bda39}
+td.bIcal_bg02{background-color:#fdfa3d}
+td.bIcal_bg03{background-color:#fddad9}
+td.bIcal_bg04{background-color:orange}
+td.bIcal_bg05{background-color:#26d4fe}
+td.bIcal_bg06{background-color:#9ec633}
+td.bIcal_bg07{background-color:#ccc}
+td.bIcal_bggray{background-color:#ccc}
+.bIcal_nav{font-size:10px;font-family:helvetica,sans-serif;font-weight:bold;margin-bottom:0}
+a.bIcal_nav{font-size:10px;font-family:verdana,arial,sans-serif;text-decoration:none}
+a.bIcal_nav:visited{font-size:10px;font-family:verdana,arial,sans-serif;text-decoration:none}
+a.bIcal_nav:hover{font-size:10px;font-family:verdana,arial,sans-serif;text-decoration:none;color:#f0f}

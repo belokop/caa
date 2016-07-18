@@ -1,0 +1,104 @@
+/*
+ * HvZM 2010-06-20
+ */
+
+@page
+{
+  margin-top:   13mm ! important; /* top strip on badge sheet */
+  margin-right:  0mm ! important;
+  margin-bottom: 0mm ! important;
+  margin-left:   0mm ! important;
+}
+
+@media print,screen 
+{
+    body
+    {
+	margin:  0px ! important;
+	padding: 0px ! important;
+	background-image: none ! important;
+    }
+    
+    center
+    {
+	text-align: left ! important;
+    }
+    
+    #container-body,
+    #container-wide-body,
+    #block-main,
+    #div-main-content,
+    #outerColumn,
+    #innerColumn,
+    #soContainer,
+    #content,
+    .inside
+    {
+	position: absolute ! important;
+	top:  0px ! important;
+	left: 0px ! important;
+	width: 100% ! important;
+	height: 100% ! important;
+	margin:  0px ! important;
+	padding: 0px ! important;
+	border-width: 0px ! important;
+    }
+    
+    /* hidden */
+    #container-head,
+    #block-colophon,
+    #content h2,
+    div[align]
+    {
+	display: none ! important;
+	position: absolute ! important;
+	visibility: hidden ! important;
+	width:  0px;
+	height: 0px;
+	top:    auto;
+	bottom: auto;
+	left:   auto;
+	right:  auto;
+	border-width: 0px ! important;
+    }
+    
+    .badges
+    {
+	display: block;
+	position: relative ! important;
+	/* must not have 'top' set because of paged media */
+	left: 0px ! important; /* strange bugfix */
+	xwidth: 210mm ! important;
+	margin:  0mm 0px 0px 0px ! important;
+	padding: 0px ! important;
+	border-spacing: 0px ! important;
+	border-width: 0px ! important; 
+	border-color: transparent ! important; /* strange bugfix */
+	background-color: transparent ! important;
+}
+    
+    .badges+.badges
+    {
+	page-break-before: always;
+    }
+    
+    .badges td
+    {
+	background-image: url('./img/noHeader_background.png');
+        background-size: 70mm 47mm;
+	width:  70mm ! important; 
+	height: 47mm ! important;
+	overflow: hidden ! important;
+	padding: 3mm 3mm 3mm 3mm ! important;
+	border-width: 0px ! important;
+	white-space: normal ! important;
+	text-align: left ! important;
+    }
+    
+    .badges td+td+td
+    {
+	width:  50mm; 
+	border-width: 0px ! important;
+    }
+    
+} /* @media */
