@@ -66,6 +66,7 @@ class bIcal_matrix extends bIcal {
   /*
    * Show the matrix header (months & dates)
    */
+  static $iCal_conter = 0;
   function showHeader($onlyDates=False){
 
     if (!defined('DAY1')) define('DAY1' , $this->d1);
@@ -77,7 +78,10 @@ class bIcal_matrix extends bIcal {
 
     if (!$this->headerPrinted){
       $this->collapseCounter = 0;
-      if (!is_object($this->t)) $this->t = new b_table("class='bIcal'");
+      if (!is_object($this->t)){
+	printf("<div id='bIcal%d'>\n",(++self::$iCal_conter));
+	$this->t = new b_table("class='bIcal'");
+      }
       $this->t->highlightRows = False;
       $this->t->nCols = (int)(($this->day9 - $this->day1) / 86400 + 0.5);
       
@@ -187,6 +191,7 @@ class bIcal_matrix extends bIcal {
 
     if ($this->collapseDate)  $this->showHeader($onlyDates=True);
     $this->t->close(); 
+    print "</div>\n";
     unset($this->t); 
     
     if (!empty($this->footer)){

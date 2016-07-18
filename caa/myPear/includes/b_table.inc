@@ -22,6 +22,7 @@ class b_table{
   var $extraTD       = array();  
   var $tbodyID = '';
   var $highlightRows = True;
+  var $b_table_div= False;
   protected static $table_number = 0; 
   private $n_pendingObjects = 0;
   private $tableOpened = 0; 
@@ -48,14 +49,11 @@ class b_table{
       if (empty($attr)) $attr = $this->attr_table;
       $this->ID = "b_table".$this->tNumber;
       $this->line = array();
-      if (0) if ($this->tNumber == 2 || $this->tNumber == 3){
-	  ob_start();
-	  echo'<pre>';debug_print_backtrace(); echo'</pre>';
-	  $fp = ob_get_contents();
-	  ob_end_clean();
-	  myPear::DEBUG($fp);
-	}
-      $this->prt_tag("\n<table id='b_table$this->tNumber' ".$this->_parceAttr($attr,'b_table')."> <!-- open table $this->tNumber -->"); 
+      $this->prt_tag(sprintf("%s\n<table id='b_table%d' %s> <!-- open table %d -->\n",
+			     ($this->b_table_div ? "\n<div id='b_table_div".$this->tNumber."'>" : ""),
+			     $this->tNumber,
+			     $this->_parceAttr($attr,'b_table'),
+			     $this->tNumber)); 
     }
   }
   
@@ -157,7 +155,7 @@ class b_table{
       $this->w('TH',$this->th); 
       if ($this->n_pendingObjects) for ($n=$this->nRows; $n < $this->nRowsForPendingObject; $n++) $this->tr();
       $this->prt_tag("\n".($this->tbody_opened?"</tbody>\n":'').
-		  "</table> <!-- close table $this->tNumber -->\n",True); 
+		     "</table>".($this->b_table_div ? "\n</div>" : "")." <!-- close table $this->tNumber -->\n",True); 
       $this->getRollOver();
       if ($postfix) $this->prt_tag("$postfix\n");
     }

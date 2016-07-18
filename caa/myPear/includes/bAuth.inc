@@ -46,17 +46,19 @@ class bAuth{
   public function __construct(){
     if (self::$isReady) b_debug::internalError('second call',$this);
     if (b_cnf::get('authdebug')) self::$debugIsOn = True;
-
-    // To show or not to show?
-    if (isset($_GET['pwd_once'])) self::$showPasswordReminder = True;
-
-    if     (@$_GET['quit_once'] ==='yes')        $this->logout();
-    elseif (@$_GET['forgotpassword_once']=='yes')$this->loginPrompt();
-    elseif (@$_GET['login']=='check')            $this->loginPrompt();
-    else                                         $this->_autoLogout();
-    $this->authenticate();
+    
+    if (!cnf_CLI){
+      // To show or not to show?
+      if (isset($_GET['pwd_once'])) self::$showPasswordReminder = True;
+      
+      if     (@$_GET['quit_once'] ==='yes')        $this->logout();
+      elseif (@$_GET['forgotpassword_once']=='yes')$this->loginPrompt();
+      elseif (@$_GET['login']=='check')            $this->loginPrompt();
+      else                                         $this->_autoLogout();
+      $this->authenticate();
+    }
     self::$isReady = True;
- }
+  }
 
   /*
    * Implements drupal hook_user.
@@ -64,47 +66,57 @@ class bAuth{
    */
   public static function drupal_hook_user($userP=Null){
 
-    //    return;
-
-    // Bad idea...
-    // Мухи отдельно, котлеты отдельно...
-    //    if (HOSTED_BY_CMS_vrsn != 6 && HOSTED_BY_CMS != 'drupal') return; 
-
-    global  $user;
-
-    //    b_debug::traceBack();
     if (!self::$isReady) return;
 
-    if ($userP === Null) $userP = $user;
-    if (!empty($userP) && !empty($userP->uid) && 
-	(self::_authenticated() != $userP->mail)){
-      self::dbg(@$userP->mail,cnf_dev);
-      $user = $userP;
-      if (!($av=bForm_Avatar::hook($user->mail,'basic'))){
-	// Create Avatar (if missing) corresponding to the drupal account
-	$av = bForm_Avatar::hook(array('av_email' =>$user->mail,
-				       'av_email2'=>$user->init,
-				       'av_firstname'=> $user->name,
-				       'av_lastname' => 'Drupal User', 
-				       ),
-				 False);
-      }
-
-      if (is_object($av)){
-	/*
-	// Enforce the current user (supposed to be the one installed drupal) to become the superuser if there is no superusers yet
-	if (!myPear::_UNIT(RANK__superuser)->getMembers()){
-	  myPear::_UNIT(RANK__superuser)->add_unitMember($av->ID);
+    switch(HOSTED_BY_CMS_vrsn){
+    case 6:
+    case 7:
+      global  $user;
+      
+      if ($userP === Null) $userP = $user;
+      if (!empty($userP) && !empty($userP->uid) && (self::_authenticated() != $userP->mail)){
+	self::dbg(@$userP->mail,cnf_dev);
+	$user = $userP;
+	if (!($av=bForm_Avatar::hook($user->mail,'basic'))){
+	  // Create Avatar (if missing) corresponding to the drupal account
+	  $av = bForm_Avatar::hook(array('av_email' =>$user->mail,
+					 'av_email2'=>$user->init,
+					 'av_firstname'=> $user->name,
+					 'av_lastname' => 'Drupal User', 
+					 ),
+				   False);
 	}
-	if (!$av->getIdentity()) $av->setIdentity($user->name);
-	*/
-	if (empty(self::$av) || ($av->ID != self::$av->ID)){
-	  self::_authenticated(array('reset'=>'yes'));
-	  bAuth()->authenticate($user->name,'doneInDrupal');
-	}
-      }else{
-	b_debug::xxx("???");
       }
+      break;
+      
+    case 8:
+      /*
+      self::dbg($userP->getEmail(),cnf_dev);
+      $avs = bForm_Avatar::hookByEmail($userP->getEmail());
+      $av = array_shift($avs);
+      */
+      break;
+      
+    default:
+    }
+    
+    if (is_object($av)){
+      /*
+      // Enforce the current user (supposed to be the one installed drupal) to become the superuser if there is no superusers yet
+      if (!myPear::_UNIT(RANK__superuser)->getMembers()){
+      myPear::_UNIT(RANK__superuser)->add_unitMember($av->ID);
+      }
+      if (!$av->getIdentity()) $av->setIdentity($user->name);
+      */
+      if (empty(self::$av) || ($av->ID != self::$av->ID)){
+	self::_authenticated(array('reset'=>'yes'));
+	$identity = array_pop($av->getIdentity());
+	// $identity = $av->getEmail();
+	bAuth()->authenticate($identity,'doneInDrupal');
+	myPear::MESSAGE(sprintf("Accept drupal authentication for %s %s",self::$av,self::$av->fmtName()));
+      }
+    }else{
+      b_debug::xxx("???",cnf_dev);
     }
   }
   
@@ -112,10 +124,10 @@ class bAuth{
    * Save the current user Email address in _SESSION
    */
   public static function authenticated(){
-    if(!self::$isReady) return False;
-
     global $user;
     static $reply = Null;
+    if(!self::$isReady) return False;
+
     if ($reply === Null){
       $reply = (bool)self::_authenticated();
       self::dbg($reply);
@@ -145,9 +157,24 @@ class bAuth{
 	  $user = $account;
 	  $form = array('name' => $user->name,
 			'pass' => $user->pass);
-	  if    (function_exists('user_authenticate_finalize')) user_authenticate_finalize($form);
-	  elseif(function_exists('user_login_finalize'))        user_login_finalize($form);
-	  b_debug::xxx(sprintf("accepted as drupal name='%s' roles='%s'",$user->name,join(',',$user->roles)));
+	  switch(HOSTED_BY_CMS_vrsn){
+	  case 6:
+	  case 7:
+	    if    (function_exists('user_authenticate_finalize')) user_authenticate_finalize($form);
+	    elseif(function_exists('user_login_finalize'))        user_login_finalize($form);
+	    b_debug::xxx(sprintf("accepted as drupal name='%s' roles='%s'",$user->name,join(',',$user->roles)));
+	    break;
+
+	  case 8:
+	    $account = user_load_by_mail(self::$av->getEmail());
+	    user_login_finalize($account);
+	    //	    b_debug::xxx(sprintf("accepted as drupal name='%s' roles='%s'",$user->name,join(',',$user->roles)));
+	    b_debug::xxx(sprintf("accepted as drupal"));
+	    break;
+
+	  default:
+	    myPear::ERROR(b_debug::__().' is not ready for drupal-'.HOSTED_BY_CMS_vrsn);
+	  }
 	}
       }
     }
@@ -263,7 +290,7 @@ class bAuth{
    */
   private $password_ok  = False;
   public function authenticate($login='',$pwd=''){
-    
+    if (cnf_CLI)                return False;
     if (self::_authenticated()) return True;
     
     if (empty($login)){
@@ -396,10 +423,19 @@ class bAuth{
    */
   private function _setUser($type,$hook=array()){
 
-    if (!(self::$av instanceof bForm_Avatar)) self::$av = (is_object($hook)
+    if (!(self::$av instanceof bForm_Avatar)) self::$av = ($hook instanceof bForm_Avatar
 							   ? $hook
 							   : bForm_Avatar::hook($hook,'basic'));
     
+    // Give up if the Avatar can't be hooked
+    if (!(self::$av instanceof bForm_Avatar)){
+      if (is_array($hook)) $hook = b_fmt::joinX(',',$hook);
+      self::dbg($msg="Can't hook Avatar for type='$type' hook='$hook'");
+      myPear::ERROR($msg);
+      self::_unsetUser();
+      return False;
+    }
+
     // Process request "login as another user with my credentials"
     if (!empty($_REQUEST['login_as'])){
       $av_login_as = bForm_Avatar::hook($_REQUEST['login_as'],'basic');
@@ -416,15 +452,6 @@ class bAuth{
       }	
     }
 
-    // Give up if the Avatar can't be hooked
-    if (!(self::$av instanceof bForm_Avatar)){
-      if (is_array($hook)) $hook = b_fmt::joinX(',',$hook);
-      self::dbg($msg="Can't hook Avatar for type='$type' hook='$hook'");
-      myPear::ERROR($msg);
-      self::_unsetUser();
-      return False;
-    }
-
     // The user is logged in as himself, good...
     if (empty(self::$av_authenticated)) self::$av_authenticated = self::$av;
 
@@ -433,11 +460,10 @@ class bAuth{
     self::_authenticated(array('email_authenticated' => self::$av_authenticated->getValue('av_email'),
 			       'email_login_as'      => self::$av->getValue('av_email'), // SICK, not self::$av->getEmail() !
 			       'email_to_autologged' => @$_REQUEST['email_to_autologged']));
-
-    if (!self::_authenticated()) b_debug::internalError("_setUser without email");
+    if (!self::_authenticated()) b_debug::internalError("Can't authenticate...");
 
     if (self::$justLoggedIn){
-      self::dbg('---------------> login');
+      self::dbg('---------------> login',cnf_dev);
 
       // Reset the options cache, but keep some environment variables, like theme & organization
       $this->reset_options();
@@ -448,6 +474,8 @@ class bAuth{
       if (!(self::$av instanceof bForm_Avatar)) b_debug::internalError("'".self::$av."' is not Avatar");
       
       if (function_exists($f=b_reg::$current_module.'_callMeOnLogin')) call_user_func($f,self::$av->ID);
+    }else{
+      myPear::MESSAGE(self::$av->fmtName());
     }
     $this->password_ok  = True;
     return True;
@@ -518,10 +546,6 @@ class bAuth{
 	    break;
 
 	  case 8:
-	    if (!function_exists('user_authenticate')) require_once DRUPAL_ROOT . '/core/modules/user/user.module';
-	    if (user_authenticate($login,$pwd)) $user = user_load_by_name($login);
-	    break;
-
 	  default:
 	    myPear::ERROR(b_debug::__().' is not ready for drupal-'.HOSTED_BY_CMS_vrsn);
 	  }

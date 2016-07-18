@@ -224,7 +224,7 @@ class b_tabs_myPear {
     if (isset($this->body[$this->selected])) $this->body_content .= $this->body[$this->selected];
     $this->body = array();
 
-    // Print only the tab content, without the "tabs frame work" if there is only 1 tab
+    // Print only the tab content, without the "tabs frame-work" if there is only 1 tab
     if (count($this->tabs) > 1){
       // Set the left margin depending on the total size of the text
       $margin = 233;
@@ -240,21 +240,21 @@ class b_tabs_myPear {
 	$style = '';
       }
       
-      print join("\n",array('',
-			    x("div style='clear:both'",''),
-			    x("div id='b_tabs".(self::$myPearTabs_depth+1)."'",
-			      join("\n",array(x("div class='b_tabs_menu'",join("\n",array(x('ul class="form-submit page_load_progress" style="margin-bottom:0;"',join("\n",$li))))),
-					      x("div style='clear:both'",''),
-					      x("div class='b_tabs_body'",$this->body_content)))),
-			    x("div style='clear:both'",''),
-			    ''));
+      print implode("\n",array('',
+			       x("div style='clear:both'",''),
+			       x("div id='b_tabs".(self::$myPearTabs_depth+1)."'",
+				 join("\n",array(x("div class='b_tabs_menu'",join("\n",array(x('ul class="form-submit page_load_progress" style="margin-bottom:0;"',join("\n",$li))))),
+						 x("div style='clear:both'",''),
+						 x("div class='b_tabs_body'",$this->body_content)))),
+			       x("div style='clear:both'",''),
+			       ''));
     }else{
-      print join("\n",array('',
-			    x("div style='clear:both'",''),
-			    x("div id='b_tabs'",
-			      x("div class='b_tabs_body'",$this->body_content)),
-			    x("div style='clear:both'",''),
-			    ''));
+      print implode("\n",array('',
+			       x("div style='clear:both'",''),
+			       x("div id='b_tabs'",
+				 x("div class='b_tabs_body'",$this->body_content)),
+			       x("div style='clear:both'",''),
+			       ''));
     }
     // Finally set back the current tab
     b_cnf::set($this->cnf_bTabs,($_GET[$this->cnf_bTabs]=$this->_GET_b_tab)); 

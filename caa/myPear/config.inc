@@ -5,14 +5,14 @@ define('myPear_VERSION','5.142');
 define('myPear_MODULE', 'myPear');
 define('myPear_DATE',    $releaseDate);
 
-// Tentative... Drupal8
-require_once dirname(__FILE__).'/includes/drupal8_compat.inc';
+// Protection against attacks...
+if (isset($_GET['id'])) $_REQUEST['id'] = $_GET['id'] = (string)((int)$_GET['id']);
 
 define('cnf_dev_email','yb@nordita.org');
 define('cnf_test_email','test@nordita.org');
 
 // Getting strange problems with deadlocks...
-// Let's for a while not use "autocommit", i.e. cancel transactions. 
+// Let's for a while not use "auto-commit", i.e. cancel transactions. 
 define('DB_autocommit',False);
 
 ///
@@ -35,7 +35,7 @@ if (file_exists($config_file = dirname(__FILE__).'/config.priv.inc')){
   require $config_file;
   if (!empty($GLOBALS['bMailer_noreply'])) define('bMailer_noreply',$GLOBALS['bMailer_noreply']);
 }
-if (!defined('bMailer_noreply')) die ("<h3>Missing OR uncomplete configuration file <br/><code>$config_file</code>, <br/>please create it using as example <br/><code>".
+if (!defined('bMailer_noreply')) die ("<h3>Missing OR incomplete configuration file <br/><code>$config_file</code>, <br/>please create it using as example <br/><code>".
 				      str_replace('.inc','_example.inc',$config_file)."</code></h3>");
 
 
@@ -125,7 +125,7 @@ define('exiting', 'Готово, барин...'); // Means "Ready, Sir..."
 define('missing_value', 'missing value');
 
 if (!isset($_GET['showe'])) { $_REQUEST['showe'] = $_GET['showe'] = 1; define('cnf_show_e',True); }
-if (!isset($_GET['noCompactMessages'])) $_REQUEST['noCompactMessages'] = $_GET['noCompactMessages'] = (int)cnf_localhost;
+// if (!isset($_GET['noCompactMessages'])) $_REQUEST['noCompactMessages'] = $_GET['noCompactMessages'] = (int)cnf_localhost;
 
 // $_GET['debug'] = $_GET['nodrupal'] = $_GET['showl'] = 1; define('cnf_show_l',True);
 // $_GET['authdebug'] = $_GET['warnings'] = $_GET['debug'] = $_GET['showi'] = $_GET['nodrupal'] = $_GET['YBhere'] = $_GET['dev'] = 0;
@@ -257,12 +257,12 @@ define('HOSTED_BY_CMS_vrsn',$HOSTED_BY_CMS_vrsn);
  * are we inside the modal window? (fb == fancybox).
  * Note, the "myPear_taskManager" also prefers to run as a modal window, without the html header/footer
  *
- * Unfortunately i can't find a reliable way to detect that we are in the 'iframe' modal wibdow,                                                                                             
- * while for 'ajax' this is posible                                                                                                                                                          
+ * Unfortunately i can't find a reliable way to detect that we are in the 'iframe' modal window,                                                                                             
+ * while for 'ajax' this is possible                                                                                                                                                          
  */                                                                                                                                                                                          
 if (!defined('cnf_inside_fb')){
     define('cnf_inside_fb_ajax', isset($_SERVER['HTTP_X_REQUESTED_WITH']) &&
-           strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest');
+           strToLower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest');
     define('cnf_inside_fb_iframe',cnf_myPear_taskManager || (@$_GET['modal_once'] === 'iframe'));
     define('cnf_inside_fb',  cnf_inside_fb_iframe || cnf_inside_fb_ajax);
     if (cnf_inside_fb_iframe) $_GET['modal_once'] = 'iframe';
@@ -278,44 +278,44 @@ define('DOCUMENT_ROOT', getcwd().DIRECTORY_SEPARATOR);
 switch(HOSTED_BY_CMS){
 case False:
 case 'CLI':
-    if (!defined('myPear_root_files')) define('myPear_root_files', '/tmp/myPear_files');
-    if (!is_dir(myPear_root_files)) mkdir(myPear_root_files);
-    break;
-
+  if (!defined('myPear_root_files')) define('myPear_root_files', '/tmp/myPear_files');
+  if (!is_dir(myPear_root_files)) mkdir(myPear_root_files);
+  break;
+  
 case 'drupal': 
-    // Say "here is drupal" (DRUPAL_ROOT is not defined in some drupal versions)
-    if (!defined('DRUPAL_ROOT'))        define('DRUPAL_ROOT', DOCUMENT_ROOT);
-
-    // Hook myPear files to the standard drupal files area
-    if (!function_exists('my_drupal_get_path')){
-        function my_drupal_get_path($type,$name=''){
-            if ($name) $p = drupal_get_path($type,$name);
-            else       $p = $type;
-            if (substr($p,0,1) !== DIRECTORY_SEPARATOR) $p = DIRECTORY_SEPARATOR . $p;
-            if (!variable_get('clean_url','0')) $p = '.' . $p;
-            return $p;
-        }
-    }
-    define('myPear_root_files', my_drupal_get_path('/sites/default/files'));
-    
-    // Define the root directory for the myPear distribution
-    if (is_dir($d=my_drupal_get_path('module',myPear_MODULE))) define('myPear_root',"$d/");  
-    break;
-    
+  // Say "here is drupal" (DRUPAL_ROOT is not defined in some drupal versions)
+  if (!defined('DRUPAL_ROOT'))        define('DRUPAL_ROOT', DOCUMENT_ROOT);
+  
+  // Hook myPear files to the standard drupal files area
+  if (!function_exists('my_drupal_get_path')){
+    function my_drupal_get_path($type,$name=''){
+      if ($name) $p = drupal_get_path($type,$name);
+      else       $p = $type;
+      if (substr($p,0,1) !== DIRECTORY_SEPARATOR) $p = DIRECTORY_SEPARATOR . $p;
+      if (!variable_get('clean_url','0')) $p = '.' . $p;
+      return $p;
+      }
+  }
+  // Define the root directory for the myPear distribution
+  define('myPear_root',       my_drupal_get_path('module',myPear_MODULE)).'/';
+  define('myPear_root_files', my_drupal_get_path('/sites/default/files'));
+  
+  break;
+  
 case 'joomla':
-    define('myPear_root_files', 'files'); 
-    define('myPear_images','components/com_vm/myPear/images/');
-    
-    // suppress Joomla adverts (should be done in a better way)
-    if (class_exists('JFactory',False)){
-        $db = &JFactory::getDBO();
-        $db->setQuery("UPDATE #__modules SET published=0 WHERE position='right'");
-        $db->query();
-    }else{
-        print "Shit... JFactory";
-    }
-    break;
-
+  define('myPear_root_files', 'files'); 
+  define('myPear_images','components/com_vm/myPear/images/');
+  
+  // suppress Joomla adverts (should be done in a better way)
+  if (class_exists('JFactory',False)){
+    $db = &JFactory::getDBO();
+    $db->setQuery("UPDATE #__modules SET published=0 WHERE position='right'");
+    $db->query();
+  }else{
+    print "Shit... JFactory";
+  }
+  break;
+  
 case 'wp':
     break;
 }
@@ -347,7 +347,7 @@ require_once (dirname(__FILE__).DIRECTORY_SEPARATOR.'includes'.DIRECTORY_SEPARAT
  */
 myPear_sessionStart();
 myPear_setConstants();
-                             
+       
 /*
  * Define the myPear common roles.
  *  i     - role favicon
@@ -416,7 +416,6 @@ myPear_set_roles('affiliation',
  * Load the core libraries
  */
 myPear_register_config(__FILE__);
-
 start_myPear();
 
 /*
@@ -445,9 +444,7 @@ function locateAndInclude($objects,$flag=''){
   $n_msg_printed = 0;
   foreach($objects as $object){
     if (class_exists($object,False) || @$dejaVu[$object]) continue;
-    $extensions = (strpos('.',$object) === False ? array('.inc','.php') : array(''));
-    $extensions = array('.inc','.php','');
-    foreach($extensions as $ext){ 
+    foreach(array('.inc','.php','') as $ext){ 
       foreach ($path  as $d){
 	foreach(array($object,
 		      str_replace('_',DIRECTORY_SEPARATOR,$object)) as $o){                          
@@ -477,21 +474,19 @@ function locateAndInclude($objects,$flag=''){
   
   // Object not found, see the options
   if (!$reply){
-    switch($flag){
-    case 'fatal':
+    if ($flag === 'fatal'){
       var_dump($path);
-      if (!$reply && class_exists('b_debug',0)) b_debug::internalError("?????? Can't load the file \"$object\"");
+      if (class_exists('b_debug',0)) b_debug::internalError("?????? Can't load the file \"$object\"");
       debug_print_backtrace();
       die("?????? Can't locate \"$object\"");
-    case 'any':
+    }elseif($flag === 'any'){
       $reply = !empty($object_found);
-      break;
     }
   }
   $include_depth--;
   if ($n_msg_printed && defined('cnf_show_l') && cnf_show_l && class_exists('b_debug',0) && ($include_depth<0)){
-      if (!$reply) b_debug::xxx("&nbsp;?????? Can't locate \"$object\"",'L');
-      b_debug::xxx("end ".__FUNCTION__.x('(',join(',',$objects)),'L');
+    if (!$reply) b_debug::xxx("&nbsp;?????? Can't locate \"$object\"",'L');
+    b_debug::xxx("end ".__FUNCTION__.x('(',join(',',$objects)),'L');
   }
   if ($bTiming) bTiming()->cpu();
   return $reply;
@@ -522,14 +517,14 @@ function locateAndLoad($class,$ref_file=__FILE__){
 
 
 /*
- * Resolving clashes in the startup mess, when some modules need information which is not yet avalable.
+ * Resolving clashes in the startup mess, when some modules need information which is not yet available.
  */
 function myPear_startup_queue($function=Null,$args=array(),$condition=Null){
 
   if (!is_array($args)) $args = array($args);
   if (empty($args)) $args = array();
   if (empty($GLOBALS[__FUNCTION__])) $GLOBALS[__FUNCTION__] = array();
-  
+
   // Execution request    
   if (empty($function)){
     // Execute the collected functions, then empty the queue
@@ -541,17 +536,16 @@ function myPear_startup_queue($function=Null,$args=array(),$condition=Null){
     }
     unset($GLOBALS[__FUNCTION__]);
   }else{
-    // Check the queueing condition, execute immidiately if the condition is false
+    // Check the queuing condition, execute immediately if the condition is false
     if ($condition === Null) $condition = (!myPear::$isReady);
     if(!$condition){
-      b_debug::xxx("executing without queueing...");
+      b_debug::xxx("executing without queuing...");
       call_user_func_array($function,$args);
       return;
     }
-    
     // Otherwise put put the object to the queue
     $GLOBALS[__FUNCTION__][] = array($function => $args);
-    b_debug::xxx("adding to the startup queue");
+    if (class_exists('b_debug',False)) b_debug::xxx("adding to the startup queue");
   }
 }
 

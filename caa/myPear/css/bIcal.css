@@ -1,4 +1,12 @@
 /* Thanks to HvZM */
+#bIcal1,
+#bIcal2,
+#bIcal3,
+#bIcal4,
+#bIcal5{
+  overflow-x: auto;
+}
+
 .bIcal * {
  font-size:x-small;
 }

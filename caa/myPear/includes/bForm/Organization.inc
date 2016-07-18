@@ -568,7 +568,7 @@ class bForm_Organization extends bForm {
       list($reply,$error_message) = $this->saveFile('_virt_favicon');
       $this->dbg($error_message,cnf_dev);
     }
-    $this->dbg(b_fmt::escape($reply),cnf_dev);
+    $this->dbg(b_fmt::escape($reply));
     return $reply;
   }
 

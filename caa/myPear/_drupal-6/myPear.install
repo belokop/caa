@@ -3,8 +3,6 @@
  * @file
  * Installation functions for myPear
  */
-
-require_once dirname(__FILE__).'/includes/drupal8_compat.inc';
 			      
 /**
  * Implementation of hook_install().
@@ -93,3 +91,5 @@ function myPear_update_1() {
   //$ret[] = update_sql('UPDATE {variable} SET name="lightbox2_lite" WHERE name="lightbox2_plus";');
   return $ret;
 }
+
+if (is_file($f=drupal_get_path('module','myPear').'/includes/drupal8_compat.inc')) require_once $f;

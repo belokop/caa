@@ -4,6 +4,11 @@
  * @charset "utf-8";
  */
 
+#b_tabs, 
+#b_tabs1{
+   overflow-x:auto;
+}
+
 #b_tabs1{
     margin-top: 23px;
 }
@@ -38,10 +43,11 @@
     border-bottom: 1px solid #AFAFAF;
     float: left;
 /*  font-size: 85%; */
+/*  top: -23px; */
     height: 31px;
     line-height: 0.65em;
     position: relative;
-    top: -23px;
+    margin_top: 20px;
     width: 100%;
     z-index: 10;
 }

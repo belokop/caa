@@ -4,8 +4,6 @@
  */
 
 define('bList_use_membersCache',True);
-if (cnf_show_acl) myPear::DEBUG('bList_use_membersCache (new invention): '.(bList_use_membersCache ? 'YES' : 'NO'));
-
 locateAndInclude('myPear_getValue');
 
 class bList extends myPear_getValue{

@@ -171,36 +171,55 @@ $reply = True;
     return '';
   }
 
+  static function set_page_selector_a($input,$noPrint=False){
+    static $n = 0;
+
+    $td = array();
+    foreach($input as $label=>$selection){
+      $td[] = x("td style='text-align:right'",$label);
+      $td[] = x("td style='text-align:left'",
+		x(sprintf("form action='%s' method='post' enctype='multipart/form-data' class='only_online' name='%s%d'",
+			  b_url::same(),__FUNCTION__,++$n),
+		  $selection));
+    }
+    $reply = x("table id='mypear_selector'",x("tbody",x("tr",join("\n",$td))));
+    if ($noPrint)   return $reply;
+    else            print  $reply;
+  }
+      
   static function set_page_selector($input,$action=Null,$noPrint=False,$input2=array()){
     static $n = 0;
 
-    ob_start();
     if (empty($action)) $action = b_url::same();
-    print "<form action='$action' method='post' enctype='multipart/form-data' class='only_online' name='".__FUNCTION__.(++$n)."'>\n";
-    new b_table_simple((is_array($input) ? $input : array($input)),"id='mypear_selector'");
 
-    if (!empty($input2)){
-      new b_table_simple($input2,"id='input2' class='centralized' style='width:50%;'");
-      print '<br/>';
-    }
+    if (!is_array($input)) $input = array($input);
+    $input_td = '';
+    foreach($input as $i) $input_td .= x("td",$i)."\n";
 
-    print "</form>\n";
-    $txt = ob_get_contents();
-    ob_end_clean();
-    if ($noPrint)   return $txt;
-    else            print  $txt;
+    $form = x(sprintf("form action='$action' method='post' enctype='multipart/form-data' class='only_online' name='%s%d'",__FUNCTION__,++$n),
+	      x("table id='mypear_selector'",x("tbody",x("tr",$input_td))).
+	      (empty($input2)
+	       ? ""
+	       : x("table id='input2' class='centralized' style='width:50%;'",x("tbody",x("tr",x("td",$input2)))).'<br/>'));
+    if ($noPrint)   return $form;
+    else            print  $form;
   }
 
   /*
    *
    */
   static function setPageHeader($header,$strip_tags=True){
+    global $myPear_custom_title;
+
     b_cache_file::CMS(__METHOD__,array($header));
+    $myPear_custom_title = $header;
+
     if (function_exists('drupal_set_title')) { 
       // Drupal does not let html tags to be in the header
       if (($header_striped = strip_tags($header)) != $header){
 	$GLOBALS['custom_title'] = $header;
 	drupal_set_title($header_striped);
+	$myPear_custom_title = $header_striped;
       }else{
 	drupal_set_title($header);
       }
@@ -318,6 +337,9 @@ $reply = True;
       b_debug::xxx("getClassFromID($args) - $class",'I');
       bCount()->add(__FUNCTION__,'getClassFromID');
     }
+
+    // Workaround...
+    //    $class = str_replace('bForm_Avatar_myPear','bForm_Avatar_ea',$class);
 
     // Keep the instances in a local cache
     static $reply = array();
@@ -850,14 +872,17 @@ $reply = True;
 	break;
       default:
       }
-      if (b_cnf::get('noCompactMessages')) self::$MESSAGE_dejaVu = array();
-      $msg_id = b_crypt::hash($text . $id . (is_object($class)?@$class->ID:'x'));
-      if (self::$always_print || !@self::$MESSAGE_dejaVu[$msg_id]++){
-	if ($id=='message_bottom')  $_SESSION['message_bottom'][] = $text; 
-        elseif (function_exists('drupal_set_message') && !b_cnf::get('nodrupal')) drupal_set_message($text,$css_class);
-        elseif (cnf_CLI) b_fmt::printt($text);
-        else   print "<div class='messages $css_class'>$text</div>\n";
-      }
+
+      $msg_id = b_crypt::hash($x=trim(str_replace('&nbsp;','',strip_tags($text . $id . (is_object($class)?@$class->ID:'x')))));
+      static $zzz=array(); if (empty($zzz[$msg_id])) $zzz[$msg_id] = 0;
+      if (b_cnf::get('noCompactMessages')) { self::$MESSAGE_dejaVu = array(); } // $zzz = array($msg_id => 0); 
+
+      if (!$zzz[$msg_id]++) if (self::$always_print || !@self::$MESSAGE_dejaVu[$msg_id]++){
+	  if ($id=='message_bottom')  $_SESSION['message_bottom'][] = $text; 
+	  elseif (function_exists('drupal_set_message') && !b_cnf::get('nodrupal')) drupal_set_message($text,$css_class);
+	  elseif (cnf_CLI) b_fmt::printt($text);
+	  else   print "<div class='messages $css_class'>$text</div>\n";
+	}
     }
   }
   
@@ -879,11 +904,12 @@ $reply = True;
   }
   
   static public function MESSAGE_add($text,$add_counter=False,$noCompactMessages=True){
-    $noCompactMessages = b_cnf::set('noCompactMessages',$noCompactMessages);
+    $noCompactMessages_sv = b_cnf::get('noCompactMessages');
+    b_cnf::set('noCompactMessages',$noCompactMessages);
     if ($add_counter) $text = (++self::$MESSAGE_add_counter) . " - $text";
     if (empty($_SESSION['messages.cache']))  myPear::MESSAGE($text);
     elseif(!in_array($text,$_SESSION['messages.cache']) || b_cnf::get('noCompactMessages')) $_SESSION['messages.cache'][] = $text;
-    b_cnf::set('noCompactMessages',$noCompactMessages);
+    b_cnf::set('noCompactMessages',$noCompactMessages_sv);
   }
   
   static public function dbg($text,$forced=False){

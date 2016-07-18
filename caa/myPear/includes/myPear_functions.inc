@@ -355,31 +355,29 @@ function myOrg($org_id=Null){
   if (!defined('myOrg_dummy')) define('myOrg_dummy',-999);
   
   // Define the default organization
+  locateAndInclude('bForm_Organization');
   if (!defined('myOrg_ID') && empty($org_id)){
-    locateAndInclude('bForm_Organization');
     $org =  bForm_Organization::get_myOrg($org_id);
     if (is_object($org)){
       // The database is ready, get the "true" organization
-      if (!defined('myOrg_ID')){
-	define('myOrg_ID',      ($org_id = $org->ID));
-	define('myOrg_name',    $org->name());
-	define('myOrg_nameS',   $org->name(True));
-	define('myOrg_domain',  $org->domain());
-	define('myOrg_favicon', $org->getFavicon());
-	define('myOrg_code',    $org->getCode());
-	define('myOrg_theme',   $org->getTheme());
-      }
+      if (!defined('myOrg_ID'))       define('myOrg_ID',      ($org_id = $org->ID));
+      if (!defined('myOrg_name'))     define('myOrg_name',    $org->name());
+      if (!defined('myOrg_nameS'))    define('myOrg_nameS',   $org->name(True));
+      if (!defined('myOrg_domain'))   define('myOrg_domain',  $org->domain());
+      if (!defined('myOrg_favicon'))  define('myOrg_favicon', $org->getFavicon());
+      if (!defined('myOrg_code'))     define('myOrg_code',    $org->getCode());
+      if (!defined('myOrg_theme'))    define('myOrg_theme',   $org->getTheme());
     }else{
       // The database is not yet configured, get "a dummy" organization 
-      define('myOrg_ID',      ($org_id = myOrg_dummy));
-      define('myOrg_name',    'Example Organization');
-      define('myOrg_nameS',   'Organization');
-      define('myOrg_domain',  'example.com');
-      define('myOrg_favicon', 'example.ico');
-      define('myOrg_code',    'example');
-      define('myOrg_theme',   '');
+      if (!defined("myOrg_ID"))       define('myOrg_ID',      ($org_id = myOrg_dummy));
+      if (!defined("myOrg_name"))     define('myOrg_name',    'Example Organization');
+      if (!defined("myOrg_nameS"))    define('myOrg_nameS',   'Organization');
+      if (!defined("myOrg_domain"))   define('myOrg_domain',  'example.com');
+      if (!defined("myOrg_favicon"))  define('myOrg_favicon', 'example.ico');
+      if (!defined("myOrg_code"))     define('myOrg_code',    'example');
+      if (!defined("myOrg_theme"))    define('myOrg_theme',   '');
     }
-    
+
     if (cnf_debug){
       $dbg = array('');
       foreach(array('myOrg_favicon',
@@ -389,7 +387,7 @@ function myOrg($org_id=Null){
 		    'myOrg_domain',
 		    'myOrg_code',
 		    'myOrg_theme',  
-		    ) as $k ) $dbg[] = "$k = ".constant($k);
+		    ) as $k ) $dbg[] = sprintf("define('%s','%s');",$k,constant($k));
       b_debug::xxx(join('<br/>',$dbg));
     }
 
@@ -398,9 +396,9 @@ function myOrg($org_id=Null){
   }
   
   if(empty($org_id)) $org_id = myOrg_ID;
-  
-  if ($org_id == myOrg_dummy) return Null;
-  else                        return bForm_Organization::get_myOrg($org_id);
+  return ($org_id == myOrg_dummy
+	  ? Null
+	  : bForm_Organization::get_myOrg($org_id));
 }
 
 /*

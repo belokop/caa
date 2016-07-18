@@ -1749,6 +1749,7 @@ class b_debug{
     foreach(array('_GET'  =>$_GET,
 		  '_POST' =>$_POST,
 		  '_FILES'=>$_FILES,
+		  //'_SERVER'=>$_SERVER,
 		  //'_SESSION' =>array_keys($_SESSION),
 		  ) as $req=>$a){
       if (!empty($a)){
@@ -1819,13 +1820,13 @@ class b_debug{
     }
   }
 
-  static function var_dump($var,$id='var_dump',$return=False){
+  static function var_dump($var,$id='',$return=False){
     static $c = 0;
     ob_start();
     var_dump($var);
-    $txt = ob_get_contents();
+    $dump = ob_get_contents();
     ob_end_clean();
-    $reply = "<pre>$id\n$txt</pre>";
+    $reply = sprintf("<pre>%s(%s)\n%s</pre>",__METHOD__,$id,$dump);
     if ($return)        return $reply;
     else         myPear::DEBUG($reply);
   }
@@ -2680,12 +2681,6 @@ class b_crypt{
    * Only for the apache server
    */
   static function decodeURL(){
-    // Stick to the old standards
-    if (empty($_GET['q']) && (HOSTED_BY_CMS == 'drupal') && (HOSTED_BY_CMS_vrsn == 8)){
-      $_GET['q'] = $_REQUEST['q'] = $_SERVER['REDIRECT_URL'];
-      if (empty($_GET['QUERY_STRING'])) $_GET['QUERY_STRING'] = '';
-      $_GET['QUERY_STRING'] = $_REQUEST['QUERY_STRING'] = implode('&',array_merge(explode('&',$_GET['QUERY_STRING']),array('q='.$_GET['q'])));
-    }
     $qs = @$_SERVER["QUERY_STRING"];
     if ((strpos($qs,'?'.b_crypt_key.'=') !== False) ||
 	(strpos($qs,'&'.b_crypt_key.'=') !== False)){
@@ -3421,6 +3416,10 @@ class b_url{
    * Returns FALSE if the redirect was not succesful
    */
   static function header($query){
+
+    if (class_exists('Drupal')){
+      \d8_debug::x(sprintf("%s(%s) <em style='color:red;'>is NOT executed</em>",__METHOD__,$query));
+    }
     
     if (is_string($query)) $query = trim(str_ireplace('location:','',$query));
     $repack = self::_(is_array($query) || (is_string($query) && (strpos($query,'?') === 0))

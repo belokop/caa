@@ -87,7 +87,7 @@ tbody { border-top: 0 None; }
 /*
 .width0      { width: 1px ! important; padding: 0 ! important; }
 */
-.width0      { width: 1px;  padding-left: 1px ! important; padding-right: 1px ! important; white-space:nowrap ! important; }
+.width0      { width: auto;  padding-left: 1px ! important; padding-right: 1px ! important; white-space:nowrap ! important; }
 
 .width100    { width: 100% ! important; min-width: 400px; max-width: 800px; }
 
@@ -368,13 +368,21 @@ a:hover.Zm_text {color:#ff0000; text-decoration:none; font-size:small; }
  *
  */
 
+#b_table_div1,
+#b_table_div2,
+#b_table_div3,
+#b_table_div4,
+#b_table_div5{
+   overflow-x: auto;
+}
+
 tbody { border-top: 1px solid transparent; }
 
 .b_pending{ 
   background-color:transparent; 
   text-align:right; 
   vertical-align:top; 
-  width:1%;
+  width:auto;
 }
 
 tr, tr.odd, tr.even { background: none repeat scroll 0 0 transparent ! important; }

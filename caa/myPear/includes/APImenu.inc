@@ -30,7 +30,8 @@ function APItabs_init(){
 APItabs_init();
 
 // workaround "namespace problem"
-function APItabs_code2tab($code){
+function APItabs_code2tab($code,$module=''){
+  if (!empty($module) && function_exists('drupal_get_path')) require_once drupal_get_path('module',$module).'/config.tabs.inc';
   return APItabs::code2tab($code);
 }
 
@@ -42,41 +43,40 @@ function _myPear_access_callback($menuItem){
 class APItabs{
 
   public  static $tab_definition = array();
-  private static $code2text = array();
-  private static $code2tab  = array();
-  private static $tab2code  = array();
   
   public static function define_tab($tab,$text){
     if (!defined($tab)){
       define($tab,$tab);
-      $code = APImenu::tab_code($tab);
+      $code = (int)APImenu::tab_code($tab);
       self::$tab_definition[$tab] = $text;
-      self::$code2tab[$code]  = $tab;
-      self::$tab2code[$tab]   = $code;
-      self::$code2text[$code] = $text;
+      $GLOBALS["code2tab"][$code]  = $tab;
+      $GLOBALS["tab2code"][$tab]   = $code;
+      $GLOBALS["code2text"][$code] = $text;
     }
   }
   
   public static function get_tab($tab){
     APItabs_init();
-    return @self::$tab_definition[$tab];
+    return (empty(self::$tab_definition[$tab])
+	    ? "??? $tab"
+	    : self::$tab_definition[$tab]);
   }
 
   public static function code2text($code){
     APItabs_init();
     print "<pre>"; debug_print_backtrace();print "</pre>";
-    //    if (empty(self::$code2text[$code])) {print "<pre>"; debug_print_backtrace();print "</pre>";}
-    return self::$code2text[$code];
+    //    if (empty($GLOBALS["code2text"][$code])) {print "<pre>"; debug_print_backtrace();print "</pre>";}
+    return $GLOBALS["code2text"][$code];
   }
 
   public static function code2tab($code){
     APItabs_init();
-    return @self::$code2tab[$code];
+    return @$GLOBALS["code2tab"][$code];
   }
   
   public static function tab2code($tab){
     APItabs_init();
-    return @self::$tab2code[$tab];
+    return @$GLOBALS["tab2code"][$tab];
   }
 }
 
@@ -119,7 +119,9 @@ class APImenu{
   /*
    * Make sure that the proper Avatar class are used
    */
-  public static function set_context($module=Null){}
+  public static function set_context($module=Null){
+    bForm_Avatar::set_context(bAuth::$av,$module);
+  }
 
   /*
    * Check access to the common menu items, those like editing the 
@@ -709,13 +711,16 @@ class APImenu{
 /*
  * Channel the language translation 
  */
-function APImenu_title_callback($tab, $dTab=''){
+function APImenu_title_callback($tab, $dTab='',$returnText=False){
   if ($dTab){
-    $menuItem = t($tab);
+    $menuItem = ($returnText
+		 ? $tab
+		 : t($tab));
   }else{
-    if(isset(APItabs::$tab_definition[$tab]))  $tab = APItabs::$tab_definition[$tab];
-    $menuItem = t(bText::_(array('key' => "MENU_$tab",'item'=> $tab)));
+    $menuItem = APItabs::get_tab($tab);
+    $menuItem = ($returnText
+		 ? $menuItem
+		 : t(bText::_(array('key' => "MENU_$tab",'item'=> $menuItem))));
   }
-  if (empty($tab)) b_debug::traceBack();
   return $menuItem;
 }

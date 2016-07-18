@@ -1724,7 +1724,7 @@ class bForm extends myPear_getValue{
       }
       if (!empty($descr)) $this->defineVariable($descr,$column_name);
       
-      if (cnf_dev) b_debug::xxx("av_birthdate='$av_birthdate' from='$from' to='$to' descr='$descr' add_NC='".var_export($include_notConsidered,True)."'");
+      // if (cnf_dev) b_debug::xxx("av_birthdate='$av_birthdate' from='$from' to='$to' descr='$descr' add_NC='".var_export($include_notConsidered,True)."'");
       $reply = ($mode == 'dialog2'
 		? array($column_name => $dialog)
 		: $dialog);
@@ -1771,8 +1771,7 @@ class bForm extends myPear_getValue{
       }
     }
 
-    $this->dbg($reply,True);
-    // if (!isset($reply)) b_debug::traceBack();
+    $this->dbg($reply);
     return $reply;
   }
 
@@ -2478,7 +2477,7 @@ class bForm extends myPear_getValue{
 	}
 	$this->t = new b_table ("class='b_form'");
 	$this->t->highlightRows = ($this->MODE == 'RO');
-	$this->t->highlightRows = False;
+	$this->t->b_table_div = True;
       }
 
       // Optionally skip the text title

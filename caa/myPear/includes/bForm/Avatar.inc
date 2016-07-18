@@ -1766,14 +1766,7 @@ class bForm_Avatar extends bForm {
 
     // The photos are in a simple directory tree
     $repo_path = myPear_photos.substr(self::$photo_repo_file,0,1).DIRECTORY_SEPARATOR;
-
-    if ($exact_match){
-      return $repo_path.self::$photo_repo_file;
-    }else{
-      b_debug::internalError("no photos cache, too much memory consuming idea");
-      if($email=@$buffer['av_email'])  return myPear_photos.b_os::file_match(array($email),
-									     myPear_photos_path);
-    }
+     return $repo_path . self::$photo_repo_file;
   }
 
   /*
@@ -1836,6 +1829,7 @@ class bForm_Avatar extends bForm {
 			   $photoFile,
 			   $scale);
     if(is_file($url)) $this->getValue_reset_forced('av_photo',basename($url));
+    // $this->dbg(b_fmt::escape($url),cnf_dev);
     return $url;
   }
 

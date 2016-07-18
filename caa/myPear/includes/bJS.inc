@@ -84,7 +84,7 @@ $(document).ready(function() {
     $this->add_js_file( 'jquery.js'    ,myPear_js.'../jquery/');
     $this->add_js_file( 'jquery-ui.js' ,myPear_js.'../jquery/');
     $this->add_css_file('jquery-ui.css',myPear_js.'../jquery/');
-    if (cnf_inside_fb)        $this->add_css_file('badges.css');
+    if (cnf_inside_fb)        $this->add_css_file('badges.css',myPear_css,'content');
     
     $this->warning();
     $x=''; $this->modal_open($x); // passe by reference
@@ -199,7 +199,9 @@ $(document).ready(function() {
 	  drupal_add_css($object,array('type'=>'file','scope'=>'header'));
 	  break;
 	case 8:
-	  myPear::DEBUG("$object<br>check myPear.libraries.yml");
+	  // b_debug::xxx("not loaded, see myPear.libraries.yml");
+	  b_debug::var_dump($object,'object');
+	  if ($media == 'content') $this->add_css_inline(file_get_contents(drupal_get_path('module',$object)));
 	  break;
 	case 9:
 	default:
@@ -240,7 +242,7 @@ $(document).ready(function() {
 	  drupal_add_js($object,'file');
 	  break;
 	case 8:
-	  myPear::DEBUG("$object<br>check myPear.libraries.yml");
+	  // b_debug::xxx("not loaded, see myPear.libraries.yml");
 	  break;
 	case 9:
 	default: 
@@ -297,14 +299,16 @@ $(document).ready(function() {
 	  drupal_add_js($js_code, array('type'=>'inline','scope'=>'footer')); 
 	  break;
 	case 8:
+	  static $n_entry = 0;
+	  // Write the script into a file
+	  $fn = "/tmp/myPear.inline.js";
+	  if (!$n_entry++) system("rm -rf $fn && touch $fn");
+	  $file = fopen($fn,"a");
+	  fwrite($file,$js_code."\n\n");
+	  fclose($file);
+
 	  global $myPear_page_attachments;
-	  $myPear_page_attachments['script'][] = $js_code;
-	  if (cnf_dev){
-	    $fn = b_crypt::hash($js_code);
-	    $file = fopen("/tmp/$fn.js","w");
-	    fwrite($file,$js_code);
-	    fclose($file);
-	  }
+	  // $myPear_page_attachments['script'][] = $js_code;
 	  break;
 	case 9:
 	default:
