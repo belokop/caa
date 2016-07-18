@@ -1,0 +1,23 @@
+myPear:
+  version: 1.x
+  css:
+    base:
+      css/myPear.css: {}
+      css/b_tabs.css: {}
+      css/bIcal.css: {}
+      css/messages_classy.css: {}
+      jquery/jquery-ui.css: {}
+      jquery/jquery.fancybox/jquery.fancybox.css: {}
+  js:
+    myPear.drupalSettings.js: {}
+    js/myPear.js: {}
+    js/highlightRow.js: {}
+    jquery/jquery.js: {}
+    jquery/jquery-ui.js: {}
+    jquery/jquery.fancybox/jquery.fancybox.js: {}
+    # workaround...
+    myPear.inline.js: {}
+  dependencies:
+    - core/jquery
+    - core/drupal
+    - core/drupalSettings
