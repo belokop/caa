@@ -1,5 +1,5 @@
 services: 
-  theme.negotiator.example_themeswitcher:
+  theme.negotiator.theme_switcher:
     class: Drupal\theme_switcher\ThemeSwitcher
     tags:
       - { name: theme_negotiator, priority: 10 }

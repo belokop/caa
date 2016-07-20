@@ -11,30 +11,27 @@ use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\Core\Theme\ThemeNegotiatorInterface;
  
 class ThemeSwitcher implements ThemeNegotiatorInterface {
-   
+
+  public  static $themes = array('albanova.se' => 'an',
+				 'nordita.org' => 'nordita');
+  private static $theme = '';
+  
   public function applies(RouteMatchInterface $route_match) {
-    $applies = FALSE;
-    $section_menus = array('section1', 'section2', 'section3');
-    foreach ($section_menus as $menu_name) {
-      $link = \Drupal::service('menu.active_trail')->getActiveLink($menu_name);
-      if (!empty($link)) {
-        $applies = TRUE;
-      }
+
+    foreach(self::$themes as $url=>$theme){
+      if (
+	  ($_REQUEST['org'] == $theme) ||
+	  ($_REQUEST['flavor'] == $theme) ||
+	  (stripos($_SERVER['HTTP_HOST'],$url) !== False)
+	  )  self::$theme = $theme;
     }
-    // Use this theme negotiator.
-    return $applies;
+    return !empty(self::$theme);
   }
- 
+  
   /**
    * {@inheritdoc}
    */
   public function determineActiveTheme(RouteMatchInterface $route_match) {
-    $section_menus = array('section1', 'section2', 'section3');
-    foreach ($section_menus as $menu_name) {
-      $link = \Drupal::service('menu.active_trail')->getActiveLink($menu_name);
-      if (!empty($link)) {
-        return 'subtheme_' . $menu_name;
-      }
-    }
+    return self::$theme;
   }
 }

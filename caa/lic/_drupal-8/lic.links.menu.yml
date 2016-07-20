@@ -1,0 +1,93 @@
+
+lic.main_menu:
+  title: Licenses Monitor
+  route_name: lic.main_menu
+  weight: 0
+  menu_name: main
+
+lic.lic:
+  title: Licenses Monitor
+  route_name: lic.lic
+  weight: 0
+  menu_name: tools
+  expanded: 'TRUE'
+
+lic.lic_2914988887:
+  title: ALL
+  route_name: lic.lic_2914988887
+  weight: -999
+  menu_name: tools
+  parent: lic.lic
+  expanded: 'TRUE'
+
+lic.lic_1786656205:
+  title: fortran
+  route_name: lic.lic_1786656205
+  weight: 0
+  menu_name: tools
+  parent: lic.lic
+  expanded: 'TRUE'
+
+lic.lic_492478215:
+  title: comsol
+  route_name: lic.lic_492478215
+  weight: 0
+  menu_name: tools
+  parent: lic.lic
+  expanded: 'TRUE'
+
+lic.lic_498266590:
+  title: ideas
+  route_name: lic.lic_498266590
+  weight: 0
+  menu_name: tools
+  parent: lic.lic
+  expanded: 'TRUE'
+
+lic.lic_4258441837:
+  title: idl
+  route_name: lic.lic_4258441837
+  weight: 0
+  menu_name: tools
+  parent: lic.lic
+  expanded: 'TRUE'
+
+lic.lic_902182288:
+  title: idl_video_write
+  route_name: lic.lic_902182288
+  weight: 0
+  menu_name: tools
+  parent: lic.lic
+  expanded: 'TRUE'
+
+lic.lic_2222656939:
+  title: maple
+  route_name: lic.lic_2222656939
+  weight: 0
+  menu_name: tools
+  parent: lic.lic
+  expanded: 'TRUE'
+
+lic.lic_2116789183:
+  title: mathematica
+  route_name: lic.lic_2116789183
+  weight: 0
+  menu_name: tools
+  parent: lic.lic
+  expanded: 'TRUE'
+
+lic.lic_3677404359:
+  title: matlab
+  route_name: lic.lic_3677404359
+  weight: 0
+  menu_name: tools
+  parent: lic.lic
+  expanded: 'TRUE'
+
+lic.lic_13736742:
+  title: origin8
+  route_name: lic.lic_13736742
+  weight: 0
+  menu_name: tools
+  parent: lic.lic
+  expanded: 'TRUE'

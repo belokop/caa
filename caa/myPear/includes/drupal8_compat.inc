@@ -183,12 +183,10 @@ if (class_exists('Drupal',False)){
       $modules = \Drupal::moduleHandler()->getModuleList();
       return array_keys($modules);
     }
-  }
-
-  /*
-   * variable_get / variable_set / variable_del
-   */
-  if (!function_exists('variable_get')){
+    
+    /*
+     * variable_get / variable_set / variable_del
+     */
     function variable_get($var,$default=Null){
       return (\Drupal::state()->get($var) ?: $default);
     }
@@ -198,36 +196,30 @@ if (class_exists('Drupal',False)){
     function variable_del($var){
       \Drupal::state()->delete($var);
     }
-  }
-
-  /*
-   * Set the 'clean_url' flag
-   */
-  variable_set('clean_url',1);
-  
-  /*
-   * drupal_add_js / drupal_add_css
-   */
-  if (!function_exists('drupal_add_js')){
+    
+    /*
+     * drupal_add_js / drupal_add_css
+     */
     function drupal_add_js($arg1='',$arg2=''){
       //      \D8::dbg(sprintf("CALLING OBSOLETE %s(%s,%s)",__FUNCTION__,$arg1,$arg2));
     }
-  }
-  if (!function_exists('drupal_add_css')){
     function drupal_add_css($arg1='',$arg2=''){
       //      \D8::dbg(sprintf("CALLING OBSOLETE %s(%s,%s)",__FUNCTION__,$arg1,$arg2));
     }
   }
   
   /*
+   * Set the 'clean_url' flag
+   */
+  variable_set('clean_url',1);
+  
+  /*
    * Load the D8 Controller
    */
-  if (function_exists('drupal_get_path')){
-    require_once drupal_get_path('module','myPear') . '/Controller.inc';
-    require_once drupal_get_path('module','myPear') . '/includes/myPear_classes.inc';
-    foreach(module_list() as $m){
-      $f = drupal_get_path('module',$m) . "/${m}.custom_hooks.inc";
-      if (is_file($f)) require_once $f; 
-    }
+  require_once drupal_get_path('module','myPear') . '/Controller.inc';
+  require_once drupal_get_path('module','myPear') . '/includes/myPear_classes.inc';
+  foreach(module_list() as $m){
+    $f = drupal_get_path('module',$m) . "/${m}.custom_hooks.inc";
+    if (is_file($f)) require_once $f; 
   }
 }
