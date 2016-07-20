@@ -1,0 +1,40 @@
+<?php
+
+/**
+ * @file
+ * Contains \Drupal\theme_switcher
+ */
+ 
+namespace Drupal\theme_switcher;
+ 
+use Drupal\Core\Routing\RouteMatchInterface;
+use Drupal\Core\Theme\ThemeNegotiatorInterface;
+ 
+class ThemeSwitcher implements ThemeNegotiatorInterface {
+   
+  public function applies(RouteMatchInterface $route_match) {
+    $applies = FALSE;
+    $section_menus = array('section1', 'section2', 'section3');
+    foreach ($section_menus as $menu_name) {
+      $link = \Drupal::service('menu.active_trail')->getActiveLink($menu_name);
+      if (!empty($link)) {
+        $applies = TRUE;
+      }
+    }
+    // Use this theme negotiator.
+    return $applies;
+  }
+ 
+  /**
+   * {@inheritdoc}
+   */
+  public function determineActiveTheme(RouteMatchInterface $route_match) {
+    $section_menus = array('section1', 'section2', 'section3');
+    foreach ($section_menus as $menu_name) {
+      $link = \Drupal::service('menu.active_trail')->getActiveLink($menu_name);
+      if (!empty($link)) {
+        return 'subtheme_' . $menu_name;
+      }
+    }
+  }
+}

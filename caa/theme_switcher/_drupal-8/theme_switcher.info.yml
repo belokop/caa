@@ -1,0 +1,5 @@
+name: Simple themswitcher
+description: Switches the active theme based on the URL
+type: module
+core: 8.x
+version: 0.1
