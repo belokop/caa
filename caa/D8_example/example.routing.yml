@@ -11,10 +11,18 @@
 #   _access: access is either granted (TRUE) or not (FALSE)
 #   _custom_access: access is determined by a method in our class
 
+example.main_destination:
+  path: /destination
+  requirements:
+    _access: 'TRUE'
+  defaults:
+    _title: M Choose the destination
+    _controller:     Drupal\example\ExampleController::getContent
+
 example.destination:
   path: /destination
   defaults:
-    _title_callback: Drupal\example\ExampleController::getTitle
+    _title: Choose the destination
     _controller:     Drupal\example\ExampleController::getContent
   requirements:
     _access: 'TRUE'
@@ -25,7 +33,12 @@ example.dest_saturn:
     _controller:     Drupal\example\ExampleController::getContent
     _title_callback: Drupal\example\ExampleController::getTitle
   requirements:
+# ... not yet tested  
     _custom_access:  Drupal\example\ExampleController::getAccess
+# Hides not only the "proper" link, but also all the links below....
+#    _permission: 'zzz access example content'
+# menu item is shown
+#    _access: 'FALSE'   
 
 example.dest_jupiter:
   path: /destination/jupiter

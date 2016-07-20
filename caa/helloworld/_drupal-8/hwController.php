@@ -1,24 +1,24 @@
 <?php
 /**
  * @file
- * Contains \Drupal\hw\Controller\HwController
+ * Contains \Drupal\hw\hwController
  */
 
-namespace Drupal\hw\Controller;
+namespace Drupal\hw;
 
 use Drupal\Core\Controller\ControllerBase;
 
-class HwController extends ControllerBase {
+class hwController extends ControllerBase {
   public function content() {
     return array(
 		 '#type' => 'markup',
-		 '#markup' => $this->t(__METHOD__),
+		 '#markup' => \Drupal\Core\Render\Markup::create(hw_render()),
 		 );
   }
   public function render() {
     return array(
 		 '#type' => 'markup',
-		 '#markup' => $this->t(hw_render()),
+		 '#markup' => \Drupal\Core\Render\Markup::create(hw_render()),
 		 );
   }
 }

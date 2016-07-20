@@ -1,5 +1,5 @@
 <?php
-$releaseDate = '2016-06-21';
+$releaseDate = '2016-07-20';
 define('WIW_MODULE'   , 'wiw');
 define('WIW_VERSION','5.13.rc');
 
@@ -8,6 +8,9 @@ define('wiw_acl_protected','protected');
 
 define('RANK_wiw_admin', 11);
 define('RANK_wiw_manager', 12);
+
+require_once 'config.tabs.inc';
+if (function_exists('drupal_get_path') && is_file($f=drupal_get_path('module','myPear').'/includes/drupal8_compat.inc')) require_once $f;
 
 /*
  * Describe the WIW module
@@ -35,7 +38,6 @@ b_reg::add_module(WIW_MODULE,
 			'ranks' =>array(RANK_wiw_manager=>array('class'=>'bUnit',
 								'd' => 'WIW manager',
 								'i' => 'i-user1'))));
-
 
 myOrg()->setMyNetworks(array('130.242',      // KTH
 			     '130.237',      // SU
@@ -70,3 +72,4 @@ class WIW extends myPear{
     return $reply;
   }
 }
+if (class_exists('Drupal\myPear\menuHandler',False)) Drupal\myPear\menuHandler::_toggle_menu_items(\b_reg::get_modules());

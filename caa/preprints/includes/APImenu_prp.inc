@@ -1,13 +1,6 @@
 <?php
 
 locateAndInclude('APImenu');
-foreach(array('tab_prp_see'         => (myOrg_ID ? myOrg_nameS.' ' : '').'Preprints',
-              'tab_prp_mng'         => 'Register/Manage preprints',
-	      'tab_prp_pending'     => 'Manage pending preprints',
-              'tab_prp_update'      => 'Update preprints',
-              'tab_prp_new'         => 'Register new preprint',
-              'tab_prp_adm'         => 'Administer preprints',
-              ) as $name=>$descr) APItabs::define_tab($name,$descr);
 
 class APImenu_prp extends APImenu{
   var $q    = PRP_MODULE;
@@ -72,6 +65,10 @@ class APImenu_prp extends APImenu{
       
       switch ($tab){
 		
+      case PRP_MODULE:
+	$reply = (b_reg::$current_module === PRP_MODULE);
+	break;
+
       case tab_prp_update:
 	$reply = (PRP::_HOLDER()->count('my_all_preprints') > 0);
 	break;
@@ -193,12 +190,17 @@ class APImenu_prp extends APImenu{
   }
 }
 
-function _prp_title_callback($tab, $dTab=''){
+function _prp_title_callback($tab, $dTab='',$returnText=False){
+
   if ($dTab){
-    $menuItem = t($tab);
+    $menuItem = ($returnText
+		 ? $tab
+		 : t($tab));
   }else{
     if(isset(APItabs::$tab_definition[$tab]))  $tab = APItabs::$tab_definition[$tab];
-    $menuItem = t(bText::_(array('key' => "MENU_$tab",'item'=> $tab)));
+    $menuItem = ($returnText
+		 ? $tab
+		 : t(bText::_(array('key' => "MENU_$tab",'item'=> $tab))));
   }
   b_debug::xxx($menuItem,array('M',2));
   return $menuItem;

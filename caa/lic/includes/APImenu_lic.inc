@@ -1,16 +1,19 @@
 <?php
-locateAndInclude('APImenu');
+if (function_exists('locateAndInclude')) locateAndInclude('APImenu');
 
 class APImenu_lic extends APImenu{
-
-  var $q      = LIC_MODULE;
+  
+  var $q = LIC_MODULE;
 
   function __construct(){
     locateAndInclude('lic_updates.inc');
     parent::__construct();
     $this->static_menu = array('ALL'=>array());
-    $this->tabWeight['ALL'] = -999;
     foreach (lic_getCategories() as $tab)       $this->static_menu[$tab] = array();
+    $this->tabWeight['ALL'] = -999;
+    APItabs::define_tab('tab_lic','Licences usage');
+    APItabs::define_tab('ALL',    'ALL');
+    foreach(lic_getCategories() as $lic) APItabs::define_tab($lic,$lic);
   }
 
   public function access($arg1=Null,$arg2=Null){
@@ -25,10 +28,11 @@ class APImenu_lic extends APImenu{
   }
 }
 
-function _lic_title_callback($text,$arg=Null){
-  // do not translate software name 
+function _lic_title_callback($text,$arg=Null,$returnText=False){
+  return $text; 
+ // do not translate software name 
   switch($text){
-  case 'title':  return bText::_(array('key' =>"LIC_MENU_1",   'item'=>'FLEXlm statistics'));
+  case 'title':  return bText::_(array('key' =>"LIC_MENU_1",   'item'=>'FLEXlm usage'));
   case 'ALL':    return bText::_(array('key' =>"LIC_MENU_ALL", 'item'=>'ALL'));
   default:       return $text;
   }

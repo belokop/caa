@@ -2,25 +2,6 @@
 locateAndInclude('APImenu');
 locateAndInclude('b_tabs');
 
-foreach(array('tab_jam_administer'      =>  'Administer JAM',
-	      'tab_jam_applicants'      =>  'Applicants',
-	      'tab_jam_rate_referees'   =>  'See referees rating',
-	      'tab_jam_quickStatus'     =>  'Quick overview',
-	      'tab_jam_admins'          =>  'Position manager',
-	      'tab_jam_secretaries'     =>  'Position secretary',
-	      'tab_jam_home'            =>  'My contact info',
-	      'tab_jam_myRecLetters'    =>  'My letters of recommendation',
-	      'tab_jam_myApplications'  =>  'My applications',
-	      'tab_jam_search'          =>  'Search',
-	      'tab_jam_whoIsWho'        =>  'Who is who',
-	      'tab_jam_sc'              =>  'Search & Selection Committee',
-	      'tab_jam_positions'       =>  'Setup positions',
-	      'tab_jam_managers'        =>  'Position managers',
-	      'tab_jam_toolbox'         =>  'Administer JAM',
-	      'tab_rfields'             =>  'Setup Research fields',
-	      'tab_reqdocs'             =>  'Setup Required documents',
-	      ) as $name=>$descr) APItabs::define_tab($name,$descr);
-
 class APImenu_jam extends APImenu{
   var $q          = JAM_MODULE;
   var $static_menu=array(//tab_jam_administer   
@@ -116,6 +97,8 @@ class APImenu_jam extends APImenu{
   function access($tab,$dynamicTab='') {
     locateAndInclude('bAuth');   
     if (!start_JAM()) return False;
+
+    return True; //////////////////////////////////////////////////////////////////////////////////// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     if (($reply = $this->access_callback($tab))===Null){
       $rank = JAM_access()->getRank();
@@ -429,7 +412,7 @@ class APImenu_jam extends APImenu{
   }
 }
 
-function _jam_title_callback($tab, $dTab=''){
+function _jam_title_callback($tab, $dTab='',$returnText=False){
   if (!empty($dTab)){
     $items = unserialize($dTab);
     if (($pos_id=@$items['pos_id']) && ($rank=@$items['rank']) && ($rank<=RANK_jam_SC1) && ($rank>=RANK_jam_observer)){
@@ -437,13 +420,16 @@ function _jam_title_callback($tab, $dTab=''){
     }elseif($rf_id=@$items['rf_id']){
       $menuItem = JAM_RF($rf_id)->name();
     }else{
-      $menuItem = t($tab);
+      $menuItem = ($returnText
+		   ? $tab
+		   : t($tab));
     }
   }else{
     if(isset(APItabs::$tab_definition[$tab]))  $tab = APItabs::$tab_definition[$tab];
-    $menuItem = t(bText::_(array('key' => "MENU_$tab",'item'=> $tab)));
+    $menuItem = ($returnText
+		 ? $tab
+		 : t(bText::_(array('key' => "MENU_$tab",'item'=> $tab))));
   }
-  // b_debug::xxx($menuItem,array('oliveText',2,cnf_dev));
   return $menuItem;
 }
 

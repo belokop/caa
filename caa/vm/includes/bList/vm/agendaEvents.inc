@@ -226,8 +226,12 @@ class bList_vm_agendaEvents extends bList_vm{
    */
   static function eventOutOfScope($e_code){
     if (is_object($e_code)) $e_code = $e_code->getValue('e_code',1);
-    $rec  = VM_agendaEvents()->getMember(array('lm_key'=>'conf','lm_value'=>$e_code));
-    return !VM_agendaEvents()->is_ourEvent($rec);
+    if (is_object(VM_agendaEvents())){
+      $rec  = VM_agendaEvents()->getMember(array('lm_key'=>'conf','lm_value'=>$e_code));
+      return !VM_agendaEvents()->is_ourEvent($rec);
+    }else{
+      return False;
+    }
   }
 
   /*

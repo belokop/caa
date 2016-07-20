@@ -1,6 +1,6 @@
 <?php
 
-$releaseDate = '2016-06-05';
+$releaseDate = '2016-07-20';
 define('PRP_MODULE'   , 'prp');
 define('PRP_VERSION','5.9.rc2');
 
@@ -14,6 +14,9 @@ define('RANK_prp_censor' , 12);
 define('RANK_prp_manager', 14);
 
 define('PRP_remindingPeriod' , 604800); // a week = 7 * 24 * 3600
+
+// Load tabs definition
+require_once 'config.tabs.inc';
 
 // The SQL tables used by the preprints module
 // register the module in myPear registry
@@ -39,6 +42,8 @@ b_reg::add_module(PRP_MODULE,
 				       RANK_prp_submitter => array('class'=>'bUnit_prp_submitters',
 								'd'    =>'Preprints submitter', 
 								'i'    =>'bb-edit'))));
+
+if (function_exists('drupal_get_path') && is_file($f=drupal_get_path('module','myPear').'/includes/drupal8_compat.inc')) require_once $f;
 
 // The research fields change name with years...
 if ($year = b_cnf::get('_prp_year')){
@@ -102,3 +107,4 @@ function PRP_submitters(){
   return $unit;
 }
 
+if (class_exists('Drupal\myPear\menuHandler',False)) Drupal\myPear\menuHandler::_toggle_menu_items(\b_reg::get_modules());

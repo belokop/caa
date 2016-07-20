@@ -2,7 +2,8 @@ name: FLEXlm licenses usage monitor
 description: Monitoring the FlexNet Publisher (formerly known as FLEXlm) licenses usage
 package: myPear
 project: YB
-core = 8.x
-version = 2.0
+core: 8.x
+version: 8.x-5.8
 dependencies:
   - myPear
+type: module

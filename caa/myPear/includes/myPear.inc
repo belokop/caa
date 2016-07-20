@@ -174,6 +174,23 @@ $reply = True;
   static function set_page_selector_a($input,$noPrint=False){
     static $n = 0;
 
+    $li = array();
+    foreach($input as $label=>$selection){
+      $li[] = x("li role='label'",$label);
+      $li[] = x("li",
+		x(sprintf("form action='%s' method='post' enctype='multipart/form-data' class='only_online' name='%s%d'",
+			  b_url::same(),__FUNCTION__,++$n),
+		  $selection));
+    }
+    $reply = (x("div id='mypear_ul_selector'",x('ul',join("\n",$li))).
+	      x("div style='clear:both'",''));
+    if ($noPrint)   return $reply;
+    else            print  $reply;
+  }
+      
+  static function set_page_selector_a_TABLE($input,$noPrint=False){
+    static $n = 0;
+
     $td = array();
     foreach($input as $label=>$selection){
       $td[] = x("td style='text-align:right'",$label);

@@ -475,7 +475,7 @@ class bAuth{
       
       if (function_exists($f=b_reg::$current_module.'_callMeOnLogin')) call_user_func($f,self::$av->ID);
     }else{
-      myPear::MESSAGE(self::$av->fmtName());
+      // myPear::MESSAGE(self::$av->fmtName());
     }
     $this->password_ok  = True;
     return True;

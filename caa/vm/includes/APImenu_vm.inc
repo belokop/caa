@@ -3,77 +3,6 @@ require_once(dirname(__FILE__).'/vm_functions.inc');
 require_once(dirname(__FILE__).'/vm_updates.inc');
 
 /*
- * tabs used
- */
-locateAndInclude('APImenu_ea');
-$VM_menu=array('tab_vm_home'              => 'Home',
-	      
-	       'tab_vm_reg'               => 'My visit',
-	       
-	       'tab_vm_end'               => 'Events to endorse',
-	       'tab_vm_ogz'               => 'Events I organize',
-	       'tab_vm_end_vlist'         => 'A-Z applicant lists',
-	       'tab_vm_ogz_vlist'         => 'Approve & Accommodate applicants',
-	       'tab_vm_end_budget'        => 'See/Approve budget',
-	       'tab_vm_ogz_budget'        => 'Budget estimation',
-	       'tab_vm_end_mails'         => 'Mails exchange with applicants',
-	       'tab_vm_ogz_mails'         => 'Mails exchange with applicants',
-	       'tab_vm_end_vmatrix'       => 'Who arrives when',
-	       'tab_vm_ogz_vmatrix'       => 'Who arrives when',
-	       'tab_vm_vis_vmatrix'       => 'Who arrives when',
-	       'tab_vm_end_amatrix'       => 'Who lives where',
-	       'tab_vm_ogz_amatrix'       => 'Who lives where',
-	       'tab_vm_end_omatrix'       => 'Who sits where Matrix',
-	       'tab_vm_ogz_omatrix'       => 'Who sits where Matrix',
-	       'tab_vm_ogz_se_setup'      => 'Social events',
-	       'tab_vm_org_photos'        => 'Photos of attenders',
-	       'tab_vm_org_dup'           => 'Duplicate applications',
-	       
-	       'tab_vm_adm'               => 'Administer',
-	       'tab_vm_adm_projects'      => 'Financial projects',
-	       'tab_vm_adm_unitOrganizers'=> 'VM organizers',
-	       'tab_vm_adm_acl'           => 'ACL',
-	       'tab_vm_adm_agendaList'    => 'Edit agenda list',
-	       'tab_vm_adm_fixClashes'    => 'Fix clashes',
-	       'tab_vm_adm_sync'          => 'Agenda sync',
-	       'tab_vm_adm_dup'           => 'Duplicate avatars',
-	       'tab_vm_adm_se_setup'      => myOrg_name.' social events',
-	       'tab_vm_adm_sc_setup'      => myOrg_name.' reimbursement rates',
-	       
-	       'tab_vm_ap'                => 'Accommodation', 
-	       'tab_vm_ap_assign'         => 'Auto accommodate homeless',
-	       'tab_vm_ap_types'          => 'Accommodation options',
-	       'tab_vm_ap_add'            => 'Add apartment',
-	       'tab_vm_ap_aps'            => 'Rooms',
-	       'tab_vm_ap_huts'           => 'Buildings',
-	       'tab_vm_ap_sok'            => 'Search',
-	       'tab_vm_ap_usage'          => 'Apartments usage',
-
-	       'tab_vm_events'            => 'Events',
-	       'tab_vm_events_add'        => 'Add event',
-	       'tab_vm_events_see'        => 'Events',
-	       
-	       'tab_vm_vis'               => 'Visits within events',
-	       'tab_vm_vis_photos'        => 'Print photos',
-	       'tab_vm_vis_badges'        => 'Print badges',
-	       'tab_vm_vis_sok'           => 'Search',
-	       'tab_vm_vis_welcome'       => 'Welcome visitor',
-	       'tab_vm_vis_list'          => 'List of attenders',
-               'tab_vm_vis_budget'        => 'Budget estimation',
-	       'tab_vm_vis_mails'         => 'Mails exchange with attenders',
-	       'tab_vm_vis_export'        => 'Export tenants Excel files',
-	       
-	       'tab_vm_guests'            => 'Visits outside '.myOrg_nameS.' events',
-	       'tab_vm_guests_to_approve' => 'Resolve pending approvals',
-	       'tab_vm_guests_budget'     => 'People I invite',
-	       'tab_vm_guests_budgetBP'   => 'Visits budget summary (by projects)',
-	       'tab_vm_guests_addVisit'   => 'Register new guest',
-	       
-	       'tab_vm_vmatrix'           => 'Visits',
-	       );
-foreach($VM_menu as $name=>$descr)  APItabs::define_tab($name,$descr);
-
-/*
  * Check that the given person is related to VM module:
  * - has registered trips 
  * - is a future visitor
@@ -97,6 +26,7 @@ function vm_after_search_check($av_id,$_after_search=''){
 /*
  *
  */
+locateAndInclude('APImenu_ea');
 class APImenu_vm extends APImenu_ea{
   var $title  = 'Visits';
   var $q      = VM_MODULE;
@@ -191,6 +121,7 @@ class APImenu_vm extends APImenu_ea{
 			     );
   
   function __construct(){
+    APImenu::set_context(VM_MODULE);
     parent::__construct();
   }
 
@@ -260,16 +191,20 @@ class APImenu_vm extends APImenu_ea{
    *
    */
   function access($tab,$dynamicab='') {
-
+    
     $this->start();
-    if (@b_reg::$current_module != VM_MODULE) return False;
-
-    // Need authorization to see the levels deeper then 1
-    if (($_GET['q'] !== VM_MODULE) && !bAuth()->loginPrompt()) return False;
-
-    if (($reply = $this->access_callback($tab))===Null){
+    if (@b_reg::$current_module !== VM_MODULE){
+      $reply = False;
+    }elseif ((b_reg::$current_module === VM_MODULE) && ($_GET['q'] !== VM_MODULE) && !bAuth()->loginPrompt()){
+      // Need authorization to see the levels deeper then 1
+      $reply = False;
+    }elseif (($reply = $this->access_callback($tab))===Null){
       
       switch ($tab){
+
+      case VM_MODULE:
+	$reply = True;
+	break;
 	
       case tab__templates:
 	$reply = superUser_here;
@@ -353,7 +288,7 @@ class APImenu_vm extends APImenu_ea{
 	}
 	if (VM::e_ID() && VM::$e->getValue('e_end',1) < time()){
 	  $reply = False;
-	  return;
+	  return $reply;
 	}
       case tab_vm_end:
       case tab_vm_end_vlist:
@@ -375,7 +310,7 @@ class APImenu_vm extends APImenu_ea{
 	}
 	if (VM::e_ID() && VM::$e->getValue('e_end',1) < time()){
 	  $reply = False;
-	  return;
+	  return $reply;
 	}
 	$reply = VM_administrator_here && !VM::outOfScope();
 	break;
@@ -442,7 +377,7 @@ class APImenu_vm extends APImenu_ea{
 	
       case tab_vm_guests_budget:
 	if ($reply = VM::hasRightTo('request_visits')){
-	  $q = myPear_db()->query("SELECT * FROM abs_visits WHERE v_host_avid = ".bAuth::$av->ID);
+	  $q = myPear_db()->query("SELECT * FROM abs_visits WHERE v_host_avid = '".bAuth::$av->ID."'");
 	  $reply = (myPear_db()->num_rows($q) > 0);
 	}
 	break;
@@ -465,7 +400,8 @@ class APImenu_vm extends APImenu_ea{
 	$reply = False;
       }
     }
-    $this->dbg($reply,True);
+    //    $this->dbg($reply,True);
+    \D8::dbg($reply,$this);
     return $reply;
   }
   
@@ -474,6 +410,8 @@ class APImenu_vm extends APImenu_ea{
    */
   function process($tab,$dynamicTab=''){
     
+    vm_init();
+
     // There was an explicit request to send password. Do it
     if (isset($_GET['mo_once'])){
       $e = myPear::getInstance_new('bForm_vm_Event',$_GET['e_id'],array('strict','fatal'));
@@ -977,7 +915,7 @@ class APImenu_vm extends APImenu_ea{
     if (empty($events) && bAuth::authenticated()){
       
       // See which menu item was pressed and decide the action
-      switch(APItabs::code2tab($tab = b_cms::_(1))){
+      switch(APItabs::code2tab(b_cms::_(1))){
       case tab_vm_guests:	// Only "any event"
 	if (defined('vm_day1'))  $events[EVT_ANY] = 'All visits '.date('Y-m-d',vm_day1) .' - '. date('Y-m-d',vm_day9);
 	else                     $events[EVT_ANY] = 'All visits';      
@@ -1082,7 +1020,7 @@ class APImenu_vm extends APImenu_ea{
 							"class='shadow-box evHeader' onchange='this.form.submit()'",
 							$onlyRW=True));
       $selector[] = x('noscript','<input type="submit" value="confirm"/>');
-      $GLOBALS['custom_title'] = myPear::set_page_selector($selector,Null,True);
+      $GLOBALS['custom_title'] = myPear::set_page_selector_a($selector,True);
     }
     return $sse_id;
   }
@@ -1206,9 +1144,11 @@ class APImenu_vm extends APImenu_ea{
   }
 }
 
-function _vm_title_callback($tab, $dTab=Null){
+function _vm_title_callback($tab, $dTab=Null,$returnText=False){
   if ($dTab){
-    $menuItem = t($tab);
+    $menuItem = ($returnText
+		 ? $tab
+		 : t($tab));
   }else{
     if (is_object(bAuth::$av)){
       if (bAuth::$av->isOrganizer()) switch($tab){
@@ -1231,7 +1171,10 @@ function _vm_title_callback($tab, $dTab=Null){
       }
     }
     if(isset(APItabs::$tab_definition[$tab]))  $tab = APItabs::$tab_definition[$tab];
-    $menuItem = t(bText::_(array('key' => "MENU_$tab",'item'=> $tab)));
+    else printf("%s: ??? %s\n",$tab);
+    $menuItem = ($returnText
+		 ? $tab
+		 : t(bText::_(array('key' => "MENU_$tab",'item'=> $tab))));
   }
   return $menuItem;
 }

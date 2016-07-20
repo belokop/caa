@@ -28,15 +28,16 @@ class ExampleController extends ControllerBase{
   }
   
   public function getAccess() {
-    $reply = True;
+    static $case;
+    $reply = (bool)($this->destination == 'Saturn');
     e_debug(__FUNCTION__,func_get_args(),$reply);
     return ($reply 
 	    ? AccessResult::allowed() 
 	    : AccessResult::forbidden());   // AccessResult::neutral();
-   return $reply;
+    return $reply;
   }
   
-  public function getContent($name='not set') {
+  public function getContent() {
     e_debug(__FUNCTION__,func_get_args());
     $markup = '<p>' . t('Let\'s go to @destination via our luxury @transport!', array('@destination' => $this->destination, '@transport' => $this->transport)) . '</p>';
     return array(
@@ -48,6 +49,5 @@ class ExampleController extends ControllerBase{
 
 function e_debug($function,$func_get_args,$reply=''){
   $msg = sprintf('%s(%s): <em>%s</em>',$function,var_export($func_get_args,True),var_export($reply,True),'status');
-  if (class_exists('myPear',False)) myPear::WARNING($msg);
-  else           drupal_set_message($msg,'warning');
+  drupal_set_message($msg,'warning',True);
 }

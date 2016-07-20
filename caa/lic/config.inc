@@ -1,6 +1,6 @@
 <?php
 
-$releaseDate = '2016-04-15';
+$releaseDate = '2016-07-20';
 define('LIC_VERSION','5.8');
 define('LIC_MODULE'  , 'lic');
 
@@ -26,6 +26,7 @@ b_reg::add_module(LIC_MODULE,
 							   'i' =>'licu_id')))
 		  );
 
+/*
 function lic_getCategories(){
   global $regs;
   $tabs  = array('ALL');
@@ -38,6 +39,8 @@ function lic_getCategories(){
   }
   return array_unique($tabs);
 }
+*/
+
 
 function lic_tidySoft() {
   global $regs;
@@ -74,3 +77,4 @@ class LIC extends myPear{
 
 }
 
+if (class_exists('Drupal\myPear\menuHandler',False)) Drupal\myPear\menuHandler::_toggle_menu_items(\b_reg::get_modules());

@@ -58,15 +58,36 @@ function prp_page_alter(&$page) {
 				      '#markup' => prp_footer());
 }
 
-/*
- * Implements hook_user
- */
-function prp_user($type, $array, $account, $category){
-  prp_init();
-  bAuth::drupal_hook_user($account);
-}
 
-function prp_user_login($edit, $account) {
-  prp_init();
-  bAuth::drupal_hook_user($account);
+if (class_exists('Drupal',False)){
+  
+  function prp_user_login($account) {
+    prp_init();
+    // Reset static cache of default variables in template_preprocess() to reflect the new user.
+    drupal_static_reset('template_preprocess');
+    // Authenticate to myPear
+    locateAndInclude('bAuth');
+    bAuth::drupal_hook_user($account);
+  }
+  
+  function prp_user_logout($account) {
+    // Reset static cache of default variables in template_preprocess() to reflect the new user.
+    drupal_static_reset('template_preprocess');
+  }
+  
+}else{
+  /*
+   * Implements hook_user
+   */
+  function prp_user($type, $array, $account, $category){
+    prp_init();
+    locateAndInclude('bAuth');
+    bAuth::drupal_hook_user($account);
+  }
+
+  function prp_user_login($edit, $account) {
+    prp_init();
+    locateAndInclude('bAuth');
+    bAuth::drupal_hook_user($account);
+  }
 }

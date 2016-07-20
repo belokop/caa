@@ -9,8 +9,8 @@ function wiw_init(){
   if (!$dejaVu++) {
     myPear_init();
     if (function_exists('ea_init')) ea_init();
-    else die("??? ea_init is not yet loaded");
     require_once drupal_get_path('module','wiw') . "/config.inc";
+    locateAndInclude('APImenu_wiw');
   }
 }
 
@@ -24,7 +24,6 @@ function wiw_t($text){
 
 function _wiw_access_callback($tab){
   wiw_init();
-  locateAndInclude('APImenu_wiw');
   return WIW::_MENU()->access($tab);
 }
 
@@ -33,9 +32,7 @@ function _wiw_access_callback($tab){
  */
 function wiw_menu(){
   wiw_init();
-  $menu = WIW::_MENU()->build_menuTree('_wiw_output');
-  print_r($menu);
-  return $menu; 
+  return WIW::_MENU()->build_menuTree('_wiw_output');
 }
 
 function wiw_footer(){
@@ -46,8 +43,8 @@ function wiw_footer(){
 /*
  * Display output
  */
-function _wiw_output($arg='',$arg2='') {
-  myPear_init();
+function _wiw_output($arg=Null,$arg2=Null){
+  wiw_init();
   $file_cache = new b_cache_file();
   if ($file_cache->notYetReady())    WIW::_MENU()->process($arg,$arg2);
   return $file_cache->get();
@@ -59,17 +56,37 @@ function wiw_page_alter(&$page) {
 				      '#markup' => wiw_footer());
 }
 
-/*
- * Implements hook_user
- */
-function wiw_user($type, $array, $account, $category){
-  wiw_init();
-  bAuth::drupal_hook_user($account);
+if (class_exists('Drupal',False)){
+  
+  function wiw_user_login($account) {
+    wiw_init();
+    // Reset static cache of default variables in template_preprocess() to reflect the new user.
+    drupal_static_reset('template_preprocess');
+    // Authenticate to myPear
+    locateAndInclude('bAuth');
+    bAuth::drupal_hook_user($account);
+  }
+
+  function wiw_user_logout($account) {
+    // Reset static cache of default variables in template_preprocess() to reflect the new user.
+    drupal_static_reset('template_preprocess');
+  }
+
+}else{
+  /*
+   * Implements hook_user
+   */
+  function wiw_user($type, $array, $account, $category){
+    wiw_init();
+    locateAndInclude('bAuth');
+    bAuth::drupal_hook_user($account);
+  }
+
+  function wiw_user_login($edit, $account) {
+    wiw_init();
+    locateAndInclude('bAuth');
+    bAuth::drupal_hook_user($account);
+  }
 }
 
-function wiw_user_login($edit, $account) {
-  wiw_init();
-  bAuth::drupal_hook_user($account);
-}
-
-if (class_exists('Drupal',False)) require_once dirname(__FILE__).'/wiwController.php';
+if (is_file($f=drupal_get_path('module','myPear').'/includes/drupal8_compat.inc')) require_once $f;

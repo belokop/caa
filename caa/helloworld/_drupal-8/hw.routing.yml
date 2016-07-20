@@ -1,7 +1,7 @@
 hw.render:
   path: /hw
   defaults: 
-    _controller: '\Drupal\hw\Controller\HwController::render'
+    _controller: '\Drupal\hw\hwController::render'
     _title: 'Title hw.render'
   requirements:
     _permission: 'access content'

@@ -1,14 +1,19 @@
 <?php
+set_time_limit(0);
 /**
  * Visitors Manager (VM) configuration file
  */
-$releaseDate = '2016-06-21';
+$releaseDate = '2016-07-20';
 define('VM_MODULE'   , 'vm');
 define('VM_VERSION','5.78');
+
+// Tabs definition
+require_once 'config.tabs.inc';
 
 //
 // transition problems...
 //
+if (function_exists('drupal_get_path') && is_file($f=drupal_get_path('module','myPear').'/includes/drupal8_compat.inc')) require_once $f;
 define('modal_sendmail_dialog',cnf_dev||cnf_demo); // Doesn't want to work...
 define('include_payLunch_dinner',cnf_dev);
 
@@ -336,6 +341,7 @@ b_reg::add_module(VM_MODULE,
 								   'i'    =>'i-routard_gray'),
 				       RANK_vm_visitor    => array('d'    =>'VM visitor', 
 								   'i'    =>'i-traveler'))));
+
 /*
  * That is what VM knows about... 
  * It knows about other things as well, but this it shows to the humans, so 
@@ -1052,3 +1058,4 @@ function VM_unit($rank,$module=VM_MODULE,$org=myOrg_ID){
   default:  b_debug::internalError("Unexpected rank '$rank'");
   }
 }
+if (class_exists('Drupal\myPear\menuHandler',False)) Drupal\myPear\menuHandler::_toggle_menu_items(\b_reg::get_modules());

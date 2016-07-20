@@ -4,31 +4,6 @@
  */
 locateAndInclude('APImenu');
 
-foreach(array('tab_ea'              => 'People at '.myOrg_name,
-	      'tab_ea_home'         => 'Home',
-	      'tab_ea_home_contacts'=> 'My Contact Persons',
-              'tab_ea_a'            => 'Alumni',
-	      'tab_ea_a_years'      => 'As the years pass...',
-	      'tab_ea_e'            => 'Staff',
-	      'tab_ea_e_cv'         => 'CV\'s',
-	      'tab_ea_e_groups'     => 'Groups',
-	      'tab_ea_admin'        => 'Administer',
-              'tab_ea_admin_rb'     => 'Rebuild EA',
-              'tab_ea_admin_dup'    => 'Find duplicate avatars',
-	      'tab_ea_admin_org'    => 'Organization structure',
-	      'tab_ea_admin_org_mngr'=> 'Organization managers',
-	      'tab_ea_admin_org_structure'=> 'Employee types&groups',
-	      'tab_ea_admin_orgs'         => 'All Organizations',
-
-	      'tab_ea_off'               => 'Offices',
-	      'tab_ea_off_assign'        => 'Allocate offices',
-	      'tab_ea_off_wipe'          => 'Wipe allocations',
-	      'tab_ea_off_door_labels'   => 'Print door labels',
-	      'tab_ea_off_desk_labels'   => 'Print desk labels',
-	      'tab_ea_off_list'          => 'Who sits where List',
-	      'tab_ea_off_omatrix'       => 'Who sits where Matrix',
-               ) as $name=>$descr) APItabs::define_tab($name,$descr);
-
 class APImenu_ea extends APImenu{
   var $q    = EA_MODULE;
   var $title= 'Employees&Alumni';
@@ -75,6 +50,7 @@ class APImenu_ea extends APImenu{
   static function startup() {
     static $initDone = Null;
 
+    locateAndInclude('bForm_Avatar_ea');
     APImenu::set_context(EA_MODULE);
     if (is_null($initDone)) $initDone = (bool)((int)myOrg_ID);
     return $initDone;
@@ -89,10 +65,13 @@ class APImenu_ea extends APImenu{
     if ($ea_members === Null) $ea_members = (bAuth::authenticated()
 					     ? (bool)myOrg()->eaMembers()->isMember(bAuth::$av->ID)
 					     : False);
-    
     if (($reply = $this->access_callback($tab))===Null){
       $rank = EA_access()->getRank();
       switch($tab){
+
+      case EA_MODULE:
+	$reply = True;
+	break;
 
       case tab_ea_home:
 	$reply = is_object(bAuth::$av) && RANK__ea_member;
@@ -155,8 +134,9 @@ class APImenu_ea extends APImenu{
       default:
 	$reply = $ea_members;
       }
-      b_debug::xxx($reply,array(2,'A'));
+      //      b_debug::xxx($reply,array(2,'A'));
     }
+    if ($reply) b_debug::xxx($reply);
     return $reply;
   }
 
@@ -324,30 +304,30 @@ function _ea_title_callback($tab, $dTab=Null,$returnText=False){
   }else{
     switch($tab){
     case EA_MODULE:
-      $tab = myOrg_nameS .' '. EA::_MENU()->title_callback();
+      $menuItem = myOrg_nameS .' '. EA::_MENU()->title_callback();
       break;
     case tab_ea:
-      $tab = 'People at '.myOrg_nameS;
-      break;
-    case tab_ea_home:
-      if (0) $tab = (method_exists(bAuth::$av,'isA') && bAuth::$av->isA() 
-		     ? 'My alumnus page'
-		     : 'My employment page');
+      $menuItem = 'People at '.myOrg_nameS;
       break;
     case tab_ea_a: 
-      $tab = 'Alumni'; 
+      $menuItem = 'Alumni'; 
       break;
     case tab_ea_e: 
-      $tab = "Staff members";
+      $menuItem = "Staff members";
       break;
     case tab_ea_admin:
-      $tab = 'Administer '.myOrg_nameS;
+      $menuItem = 'Administer '.myOrg_nameS;
+    case tab_ea_home:
+      if (0) $menuItem = (method_exists(bAuth::$av,'isA') && bAuth::$av->isA() 
+			  ? 'My alumnus page'
+			  : 'My employment page');
+    default:
+      $menuItem = APItabs::get_tab($tab);
     }
-    if(isset(APItabs::$tab_definition[$tab]))  $tab = APItabs::$tab_definition[$tab];
     $menuItem = ($returnText
-		 ? $tab
+		 ? $menuItem
 		 : t(bText::_(array('key' => "MENU_$tab",
-				    'item'=> $tab))));
+				    'item'=> $menuItem))));
   }
   return $menuItem;
 }

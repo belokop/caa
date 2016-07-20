@@ -1749,8 +1749,8 @@ class b_debug{
     foreach(array('_GET'  =>$_GET,
 		  '_POST' =>$_POST,
 		  '_FILES'=>$_FILES,
-		  //'_SERVER'=>$_SERVER,
-		  //'_SESSION' =>array_keys($_SESSION),
+		  // '_SERVER'=>$_SERVER,
+		  // '_SESSION' =>array_keys($_SESSION),
 		  ) as $req=>$a){
       if (!empty($a)){
 	ksort($a);
@@ -3418,7 +3418,7 @@ class b_url{
   static function header($query){
 
     if (class_exists('Drupal')){
-      \d8_debug::x(sprintf("%s(%s) <em style='color:red;'>is NOT executed</em>",__METHOD__,$query));
+      //      \D8::dbg(sprintf("%s(%s) <em style='color:red;'>is NOT executed</em>",__METHOD__,$query));
     }
     
     if (is_string($query)) $query = trim(str_ireplace('location:','',$query));
@@ -3604,6 +3604,7 @@ class b_url{
       }
     }
     $reply = self::repack('?',$_myGET,$_myDrop);
+    if (HOSTED_BY_CMS_vrsn == 8) $reply = D8::compat($_GET['q']).$reply;
     //    b_debug::xxx($reply);
     return $reply; 
   }

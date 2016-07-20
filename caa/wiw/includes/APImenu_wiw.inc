@@ -1,19 +1,13 @@
 <?php
+
 locateAndInclude('APImenu');
 
-foreach(array(
-	      'tab_wiw'        => 'Who Is Where?',
-	      'tab_wiw_adm'    => 'Administer',
-	      'tab_wiw_admTT'  => 'Edit Trip Colors',
-	      'tab_wiw_myTrips'=> 'My Trips',
-              'tab_wiw_sok'    => 'Search Trips',
-              'tab_wiw_edit'   => 'Modify Trip',
-              'tab_wiw_reg'    => 'Register new trip',
-) as $k=>$d) define($k,$d);
-
-function _wiw_title_callback($tab, $dTab=Null){
+function _wiw_title_callback($tab, $dTab=Null,$returnText=False){
   if(isset(APItabs::$tab_definition[$tab]))  $tab = APItabs::$tab_definition[$tab];
-  $menuItem = t(bText::_(array('key' => "MENU_$tab",'item'=> $tab)));
+  if ($tab == WIW_MODULE) $tab = 'Who Is Where?';
+  $menuItem = ($returnText
+	       ? $tab
+	       : t(bText::_(array('key' => "MENU_$tab",'item'=> $tab))));
   return $menuItem;
 }
 
@@ -128,8 +122,12 @@ class APImenu_wiw extends APImenu{
     // Start the access mechanizm
     WIW_access();
 
-    if (is_null($access = $this->access_callback($tab))){
+    if (($access = $this->access_callback($tab))===Null){
       switch ($tab){
+
+      case WIW_MODULE:
+	$access = (b_reg::$current_module == WIW_MODULE);
+	break;
 
       case tab_wiw_sok:
 	$access = False;
@@ -160,8 +158,8 @@ class APImenu_wiw extends APImenu{
 	$access = !empty($tab) && bAuth::authenticated();
       }
     }
-    b_debug::xxx(($access = $access ? True :  False) , array('M',2));
-    return $access;
+    // b_debug::xxx((bool)$access , array('M',2,cnf_dev));
+    return (bool)$access;
   }
 }
 

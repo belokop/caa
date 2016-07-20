@@ -15,6 +15,23 @@ $module = str_replace(array('preprints'),array('prp'),$area);
 
 $_GET['q'] = $_REQUEST['q'] = $module;
 $_GET['org'] = 'nordita';
+if ($_GET['org'] == 'nordita'){
+  define('myOrg_ID',40090);
+  define('myOrg_favicon','Nordita ');
+  define('myOrg_name','Nordita');
+  define('myOrg_nameS','Nordita');
+  define('myOrg_domain','nordita.org');
+  define('myOrg_code','nordita');
+  define('myOrg_theme','nordita');
+}else{
+  define('myOrg_favicon','AlbaNova University Center ');
+  define('myOrg_ID',52603);
+  define('myOrg_name','AlbaNova University Center');
+  define('myOrg_nameS','AlbaNova');
+  define('myOrg_domain','albanova.se');
+  define('myOrg_code','an');
+  define('myOrg_theme','an');
+}
 
 print "... Build for module '$module'\n";
 
@@ -40,7 +57,6 @@ default:
   die("??? unknown case '$module'\n");
 }
 
-system("rm -rf /tmp/*.yml");
 foreach(array('links.menu','routing') as $yml){
   $fn[$yml] = sprintf("/tmp/%s.%s.yml",$module,$yml);
   system("touch ".$fn[$yml]);
@@ -89,7 +105,7 @@ foreach($menu_tree as $path=>$item){
 
   if (!$top_of_the_tree) $title = call_user_func($_title_callback,$tab,'',True);
   if ((strpos($title,$tab)!==False) && ($tab != $module)){
-    die("??? $_title_callback($tab) --> $title\n");
+    //    die("??? $_title_callback($tab) --> $title\n");
   }
   
   build_routing_yml($file['routing']);
@@ -158,12 +174,12 @@ function build_routing_yml($file){
     _controller:     Drupal\\myPear\\Controller::getPageContent
     _title_callback: Drupal\\myPear\\Controller::getPageTitle
   requirements:
-    ".
+".
 				//($GLOBALS['access'] == 'main_menu' ? "_access: 'TRUE'" : "requirements: _access_check_token: 'TRUE'")."
 				//: "_custom_access:  Drupal\\myPear\\Controller::getPageAccess")."
 				($GLOBALS['access'] == 'main_menu' 
-				 ? "_custom_access:  Drupal\\myPear\\Controller::true"
-				 : "requirements: _access_check_token: 'TRUE'")."
+				 ? "    _custom_access:  Drupal\\myPear\\AccessController::true"
+				 : "    _access_check_token: 'TRUE'")."
 "));
 }
 

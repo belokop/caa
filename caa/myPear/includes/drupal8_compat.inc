@@ -3,12 +3,68 @@
 /*
  * Tentative... Drupal8 wruppers
  */
-
-if (!class_exists('d8_debug',False)){
+if (!class_exists('D8',False)){
   
-  class d8_debug{
+  class D8{
     
-    public static function x($text='',$instance=Null,$level=2,$type='info'){
+  /*
+   * Extract current myPear menu tab
+   */
+    public static function current_tab(){
+      
+      require_once dirname(__FILE__).'/APImenu.inc';
+      
+      if (!empty($_REQUEST['q'])){  
+	$q = explode('/',$_REQUEST['q']);
+	$GLOBALS['myPear_current_module'] = array_shift($q);
+	$tab_code= (int)array_pop($q);
+	$GLOBALS['myPear_current_tab'] = (empty($tab_code)
+					  ? $GLOBALS['myPear_current_module']
+					  : APItabs_code2tab($tab_code,$GLOBALS['myPear_current_module']));
+      }
+    }
+    
+
+    public static function compat($q=''){
+      static $known_modules = array('prp','ea','vm','wiw','lic','jam','hw','legacy','myPear');
+      
+      if (!class_exists('Drupal',False)) return;
+      
+      // Tidy up the url, remove double&leading slashes
+      list($url,$QUERY_STRING) = explode('?',$_SERVER['REQUEST_URI']);
+      $u = array();
+      foreach(explode('/',$url) as $i) if (!empty($i)) $u[] = $i;
+      
+      if (empty($_REQUEST['q'])){
+	//
+	// build $_REQUEST['q'] (make wrupper compatibility with D6/D7) 
+	//
+	if (in_array($u[0],$known_modules)){
+	  $_REQUEST['q'] = $_GET['q'] = implode('/',$u);
+	  
+	  // Rebuild $_SERVER['QUERY_STRING'] by adding 'q'
+	  if (empty($QUERY_STRING)) $QUERY_STRING = '';
+	  $_SERVER['QUERY_STRING'] = $QUERY_STRING . '&q=' . $_GET['q'];
+	}
+      }elseif(empty($u)){
+	//
+	// Workaround for the old style URL.
+	// To be done in .htaccess 
+	//
+	return $q;
+	$url = sprintf('http%s://%s/%s?%s',
+		       ($_SERVER['SERVER_PORT'] == 80 ? '' : 's'),
+		       $_SERVER['HTTP_HOST'],
+		       $_GET['q'],
+		       $QUERY_STRING);
+	self::dbg($url);
+	if (class_exists('b_url'))b_url::header($url);
+	else D8::dbg('shit...');
+      }
+      return '';
+    }
+    
+    public static function dbg($text='',$instance=Null,$level=2,$type='info'){
       if (defined('cnf_dev') && cnf_dev)
 	drupal_set_message(
 			   preg_replace('/(Drupal|Symfony)[a-zA-Z\\\\]*\\\\/','',
@@ -83,7 +139,14 @@ if (!class_exists('d8_debug',False)){
       return $reply;
     }
   }
+
+  // Adjust the query string
+  D8::compat();
+  
+  D8::dbg(__FILE__);
+
 }
+
 
 function D8_joinX($array,$simple_output=True){
   if (empty($array)){
@@ -110,43 +173,8 @@ function D8_joinX($array,$simple_output=True){
   }
 }
 
-
+  
 if (class_exists('Drupal',False)){
-
-  $known_modules = array('prp','ea','vm','wiw','lic','jam','hw','legacy','myPear');
-
-  /*
-   * build $_REQUEST['q'] (make wrupper compatibility with D6/D7) 
-   */
-  if (empty($_REQUEST['q'])){
-    // Tidy up 'q', remove double&leading slashes
-    $q = array();
-    list($url,$QUERY_STRING) = explode('?',$_SERVER['REQUEST_URI']);
-    foreach(explode('/',$url) as $i) if (!empty($i)) $q[] = $i;
-    
-    if (in_array($q[0],$known_modules)){
-      $_REQUEST['q'] = $_GET['q'] = implode('/',$q);
-      
-      // Rebuild $_REQUEST['QUERY_STRING'] by adding 'q'
-      if (empty($QUERY_STRING)) $QUERY_STRING = '';
-      $_GET['QUERY_STRING'] = $_REQUEST['QUERY_STRING'] = $QUERY_STRING . '&q=' . $_GET['q'];
-    }
-  }
-  
-  /*
-   * Extract current myPear menu tab
-   */
-  require_once dirname(__FILE__).'/APImenu.inc';
-
-  if (!empty($_REQUEST['q'])){  
-    $q = explode('/',$_REQUEST['q']);
-    $GLOBALS['myPear_current_module'] = array_shift($q);
-    $tab_code= (int)array_pop($q);
-    $GLOBALS['myPear_current_tab'] = (empty($tab_code)
-				      ? $GLOBALS['myPear_current_module']
-				      : APItabs_code2tab($tab_code,$GLOBALS['myPear_current_module']));
-  }
-  
   /*
    * module_list 
    */
@@ -182,12 +210,12 @@ if (class_exists('Drupal',False)){
    */
   if (!function_exists('drupal_add_js')){
     function drupal_add_js($arg1='',$arg2=''){
-      //      \d8_debug::x(sprintf("CALLING OBSOLETE %s(%s,%s)",__FUNCTION__,$arg1,$arg2));
+      //      \D8::dbg(sprintf("CALLING OBSOLETE %s(%s,%s)",__FUNCTION__,$arg1,$arg2));
     }
   }
   if (!function_exists('drupal_add_css')){
     function drupal_add_css($arg1='',$arg2=''){
-      //      \d8_debug::x(sprintf("CALLING OBSOLETE %s(%s,%s)",__FUNCTION__,$arg1,$arg2));
+      //      \D8::dbg(sprintf("CALLING OBSOLETE %s(%s,%s)",__FUNCTION__,$arg1,$arg2));
     }
   }
   

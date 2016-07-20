@@ -14,30 +14,35 @@
 #   expanded, equivalent to its 'always expanded' checkbox being set in the UI.
 # options: (optional) An array of options to be passed to l() when generating a link from this menu item.
 
+example.main_destination:
+  title: M Desired destination
+  route_name: example.main_destination
+  menu_name: main
+
 example.destination:
   title: Desired destination
   route_name: example.destination
   expanded: 'TRUE'
-  menu_name: main
+  menu_name: tools
 
 example.dest_saturn:
+  description: 'Holiday packages to Saturn.'
   parent: example.destination
   title: 'Saturn'
-  description: 'Holiday packages to Saturn.'
   route_name: example.dest_saturn
   route_parameters:
     destination: Saturn
     transport: spaceship
   weight: 1
-  menu_name: main
+  menu_name: tools
 
 example.dest_jupiter:
+  description: 'Holiday packages to Jupiter.'
   parent: example.destination
   title: 'Jupiter'
-  description: 'Holiday packages to Jupiter.'
   route_name: example.dest_jupiter
   route_parameters:
     destination: Jupiter
     transport: teleporter
   weight: 2
-  menu_name: main
+  menu_name: tools

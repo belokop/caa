@@ -4,6 +4,8 @@
  * Contains a few examples of the myPear usage.
  */
 
+require_once 'hwController.php';
+
 /*
  * Implementation of hook_init()
  */
@@ -50,11 +52,11 @@ function hw_render() {
   }
 
   // Test is myPear loaded
-  if (!function_exists('module_list')) require_once '/Users/yb/w_kth.svn/trunk/caa/myPear/includes/drupal8_compat.inc';
-
   $modules = array_intersect(array('myPear','hw','wiw','ea','jam','vm',
 				   'legacy','lic','page_load_progress','prp'),module_list());
   if (in_array('myPear',$modules) && ($path=drupal_get_path('module','myPear'))){
+
+    if (!function_exists('module_list')) require_once "$path/includes/drupal8_compat.inc";
     if (!function_exists('_myPear_install_bDB')){
       require_once "./$path/myPear.install";
       myPear_install();

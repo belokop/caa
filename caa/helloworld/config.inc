@@ -1,6 +1,6 @@
 <?php
 define('HW_VERSION','1.6');
-$releaseDate = '2016-01-19';
+$releaseDate = '2016-07-20';
 
 if (class_exists('myPear',0)) b_reg::add_module('hw',
 						array('v'=>HW_VERSION,

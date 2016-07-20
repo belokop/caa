@@ -13,7 +13,7 @@ prp.prp:
   expanded: 'TRUE'
 
 prp.prp_1444014205:
-  title: myOrg_nameS Preprints
+  title: Nordita Preprints
   route_name: prp.prp_1444014205
   weight: 0
   menu_name: tools

@@ -5,7 +5,7 @@ vm.main_menu:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
-    _custom_access:  Drupal\myPear\Controller::true
+    _custom_access:  Drupal\myPear\AccessController::true
 
 vm.vm:
   path: /vm
@@ -13,7 +13,7 @@ vm.vm:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
-    _custom_access:  Drupal\myPear\Controller::getPageAccess
+    _access_check_token: 'TRUE'
 
 vm.vm_885638616:
   path: /vm/885638616
@@ -21,7 +21,7 @@ vm.vm_885638616:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
-    _custom_access:  Drupal\myPear\Controller::getPageAccess
+    _access_check_token: 'TRUE'
 
 vm.vm_2751296280:
   path: /vm/2751296280
@@ -29,7 +29,7 @@ vm.vm_2751296280:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
-    _custom_access:  Drupal\myPear\Controller::getPageAccess
+    _access_check_token: 'TRUE'
 
 vm.vm_3255233036:
   path: /vm/3255233036
@@ -37,7 +37,7 @@ vm.vm_3255233036:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
-    _custom_access:  Drupal\myPear\Controller::getPageAccess
+    _access_check_token: 'TRUE'
 
 vm.vm_1735395761:
   path: /vm/1735395761
@@ -45,7 +45,7 @@ vm.vm_1735395761:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
-    _custom_access:  Drupal\myPear\Controller::getPageAccess
+    _access_check_token: 'TRUE'
 
 vm.vm_1735395761_554956799:
   path: /vm/1735395761/554956799
@@ -53,7 +53,7 @@ vm.vm_1735395761_554956799:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
-    _custom_access:  Drupal\myPear\Controller::getPageAccess
+    _access_check_token: 'TRUE'
 
 vm.vm_1735395761_1181421194:
   path: /vm/1735395761/1181421194
@@ -61,7 +61,7 @@ vm.vm_1735395761_1181421194:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
-    _custom_access:  Drupal\myPear\Controller::getPageAccess
+    _access_check_token: 'TRUE'
 
 vm.vm_1735395761_1961830993:
   path: /vm/1735395761/1961830993
@@ -69,7 +69,7 @@ vm.vm_1735395761_1961830993:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
-    _custom_access:  Drupal\myPear\Controller::getPageAccess
+    _access_check_token: 'TRUE'
 
 vm.vm_1735395761_2431041440:
   path: /vm/1735395761/2431041440
@@ -77,7 +77,7 @@ vm.vm_1735395761_2431041440:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
-    _custom_access:  Drupal\myPear\Controller::getPageAccess
+    _access_check_token: 'TRUE'
 
 vm.vm_3228126876:
   path: /vm/3228126876
@@ -85,7 +85,7 @@ vm.vm_3228126876:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
-    _custom_access:  Drupal\myPear\Controller::getPageAccess
+    _access_check_token: 'TRUE'
 
 vm.vm_3228126876_3011957312:
   path: /vm/3228126876/3011957312
@@ -93,7 +93,7 @@ vm.vm_3228126876_3011957312:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
-    _custom_access:  Drupal\myPear\Controller::getPageAccess
+    _access_check_token: 'TRUE'
 
 vm.vm_3228126876_98711347:
   path: /vm/3228126876/98711347
@@ -101,7 +101,7 @@ vm.vm_3228126876_98711347:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
-    _custom_access:  Drupal\myPear\Controller::getPageAccess
+    _access_check_token: 'TRUE'
 
 vm.vm_3228126876_1972673686:
   path: /vm/3228126876/1972673686
@@ -109,7 +109,7 @@ vm.vm_3228126876_1972673686:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
-    _custom_access:  Drupal\myPear\Controller::getPageAccess
+    _access_check_token: 'TRUE'
 
 vm.vm_3228126876_2241340077:
   path: /vm/3228126876/2241340077
@@ -117,7 +117,7 @@ vm.vm_3228126876_2241340077:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
-    _custom_access:  Drupal\myPear\Controller::getPageAccess
+    _access_check_token: 'TRUE'
 
 vm.vm_3228126876_2011102128:
   path: /vm/3228126876/2011102128
@@ -125,7 +125,7 @@ vm.vm_3228126876_2011102128:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
-    _custom_access:  Drupal\myPear\Controller::getPageAccess
+    _access_check_token: 'TRUE'
 
 vm.vm_3228126876_669090029:
   path: /vm/3228126876/669090029
@@ -133,7 +133,7 @@ vm.vm_3228126876_669090029:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
-    _custom_access:  Drupal\myPear\Controller::getPageAccess
+    _access_check_token: 'TRUE'
 
 vm.vm_3862121824:
   path: /vm/3862121824
@@ -141,7 +141,7 @@ vm.vm_3862121824:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
-    _custom_access:  Drupal\myPear\Controller::getPageAccess
+    _access_check_token: 'TRUE'
 
 vm.vm_3862121824_235316326:
   path: /vm/3862121824/235316326
@@ -149,7 +149,7 @@ vm.vm_3862121824_235316326:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
-    _custom_access:  Drupal\myPear\Controller::getPageAccess
+    _access_check_token: 'TRUE'
 
 vm.vm_3862121824_3093446933:
   path: /vm/3862121824/3093446933
@@ -157,7 +157,7 @@ vm.vm_3862121824_3093446933:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
-    _custom_access:  Drupal\myPear\Controller::getPageAccess
+    _access_check_token: 'TRUE'
 
 vm.vm_3862121824_2804193565:
   path: /vm/3862121824/2804193565
@@ -165,7 +165,7 @@ vm.vm_3862121824_2804193565:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
-    _custom_access:  Drupal\myPear\Controller::getPageAccess
+    _access_check_token: 'TRUE'
 
 vm.vm_3862121824_4280338432:
   path: /vm/3862121824/4280338432
@@ -173,7 +173,7 @@ vm.vm_3862121824_4280338432:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
-    _custom_access:  Drupal\myPear\Controller::getPageAccess
+    _access_check_token: 'TRUE'
 
 vm.vm_3862121824_224792861:
   path: /vm/3862121824/224792861
@@ -181,7 +181,7 @@ vm.vm_3862121824_224792861:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
-    _custom_access:  Drupal\myPear\Controller::getPageAccess
+    _access_check_token: 'TRUE'
 
 vm.vm_3862121824_1566140992:
   path: /vm/3862121824/1566140992
@@ -189,7 +189,7 @@ vm.vm_3862121824_1566140992:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
-    _custom_access:  Drupal\myPear\Controller::getPageAccess
+    _access_check_token: 'TRUE'
 
 vm.vm_3862121824_2516207587:
   path: /vm/3862121824/2516207587
@@ -197,7 +197,7 @@ vm.vm_3862121824_2516207587:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
-    _custom_access:  Drupal\myPear\Controller::getPageAccess
+    _access_check_token: 'TRUE'
 
 vm.vm_3862121824_423192063:
   path: /vm/3862121824/423192063
@@ -205,7 +205,7 @@ vm.vm_3862121824_423192063:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
-    _custom_access:  Drupal\myPear\Controller::getPageAccess
+    _access_check_token: 'TRUE'
 
 vm.vm_3862121824_3712593275:
   path: /vm/3862121824/3712593275
@@ -213,7 +213,7 @@ vm.vm_3862121824_3712593275:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
-    _custom_access:  Drupal\myPear\Controller::getPageAccess
+    _access_check_token: 'TRUE'
 
 vm.vm_3862121824_3400815725:
   path: /vm/3862121824/3400815725
@@ -221,7 +221,7 @@ vm.vm_3862121824_3400815725:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
-    _custom_access:  Drupal\myPear\Controller::getPageAccess
+    _access_check_token: 'TRUE'
 
 vm.vm_1146336878:
   path: /vm/1146336878
@@ -229,7 +229,7 @@ vm.vm_1146336878:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
-    _custom_access:  Drupal\myPear\Controller::getPageAccess
+    _access_check_token: 'TRUE'
 
 vm.vm_1146336878_1889519746:
   path: /vm/1146336878/1889519746
@@ -237,7 +237,7 @@ vm.vm_1146336878_1889519746:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
-    _custom_access:  Drupal\myPear\Controller::getPageAccess
+    _access_check_token: 'TRUE'
 
 vm.vm_1146336878_3931660922:
   path: /vm/1146336878/3931660922
@@ -245,7 +245,7 @@ vm.vm_1146336878_3931660922:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
-    _custom_access:  Drupal\myPear\Controller::getPageAccess
+    _access_check_token: 'TRUE'
 
 vm.vm_1146336878_2516207587:
   path: /vm/1146336878/2516207587
@@ -253,7 +253,7 @@ vm.vm_1146336878_2516207587:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
-    _custom_access:  Drupal\myPear\Controller::getPageAccess
+    _access_check_token: 'TRUE'
 
 vm.vm_1146336878_1353707045:
   path: /vm/1146336878/1353707045
@@ -261,7 +261,7 @@ vm.vm_1146336878_1353707045:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
-    _custom_access:  Drupal\myPear\Controller::getPageAccess
+    _access_check_token: 'TRUE'
 
 vm.vm_1146336878_2347876875:
   path: /vm/1146336878/2347876875
@@ -269,7 +269,7 @@ vm.vm_1146336878_2347876875:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
-    _custom_access:  Drupal\myPear\Controller::getPageAccess
+    _access_check_token: 'TRUE'
 
 vm.vm_1146336878_520890834:
   path: /vm/1146336878/520890834
@@ -277,7 +277,7 @@ vm.vm_1146336878_520890834:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
-    _custom_access:  Drupal\myPear\Controller::getPageAccess
+    _access_check_token: 'TRUE'
 
 vm.vm_1146336878_2895661681:
   path: /vm/1146336878/2895661681
@@ -285,7 +285,7 @@ vm.vm_1146336878_2895661681:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
-    _custom_access:  Drupal\myPear\Controller::getPageAccess
+    _access_check_token: 'TRUE'
 
 vm.vm_1146336878_3477634891:
   path: /vm/1146336878/3477634891
@@ -293,7 +293,7 @@ vm.vm_1146336878_3477634891:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
-    _custom_access:  Drupal\myPear\Controller::getPageAccess
+    _access_check_token: 'TRUE'
 
 vm.vm_1146336878_1087860145:
   path: /vm/1146336878/1087860145
@@ -301,7 +301,7 @@ vm.vm_1146336878_1087860145:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
-    _custom_access:  Drupal\myPear\Controller::getPageAccess
+    _access_check_token: 'TRUE'
 
 vm.vm_1146336878_2076298819:
   path: /vm/1146336878/2076298819
@@ -309,7 +309,7 @@ vm.vm_1146336878_2076298819:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
-    _custom_access:  Drupal\myPear\Controller::getPageAccess
+    _access_check_token: 'TRUE'
 
 vm.vm_1146336878_95737367:
   path: /vm/1146336878/95737367
@@ -317,7 +317,7 @@ vm.vm_1146336878_95737367:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
-    _custom_access:  Drupal\myPear\Controller::getPageAccess
+    _access_check_token: 'TRUE'
 
 vm.vm_1146336878_3400815725:
   path: /vm/1146336878/3400815725
@@ -325,7 +325,7 @@ vm.vm_1146336878_3400815725:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
-    _custom_access:  Drupal\myPear\Controller::getPageAccess
+    _access_check_token: 'TRUE'
 
 vm.vm_1146336878_423192063:
   path: /vm/1146336878/423192063
@@ -333,7 +333,7 @@ vm.vm_1146336878_423192063:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
-    _custom_access:  Drupal\myPear\Controller::getPageAccess
+    _access_check_token: 'TRUE'
 
 vm.vm_1146336878_4280338432:
   path: /vm/1146336878/4280338432
@@ -341,7 +341,7 @@ vm.vm_1146336878_4280338432:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
-    _custom_access:  Drupal\myPear\Controller::getPageAccess
+    _access_check_token: 'TRUE'
 
 vm.vm_1146336878_224792861:
   path: /vm/1146336878/224792861
@@ -349,7 +349,7 @@ vm.vm_1146336878_224792861:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
-    _custom_access:  Drupal\myPear\Controller::getPageAccess
+    _access_check_token: 'TRUE'
 
 vm.vm_1146336878_1566140992:
   path: /vm/1146336878/1566140992
@@ -357,7 +357,7 @@ vm.vm_1146336878_1566140992:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
-    _custom_access:  Drupal\myPear\Controller::getPageAccess
+    _access_check_token: 'TRUE'
 
 vm.vm_1110161754:
   path: /vm/1110161754
@@ -365,7 +365,7 @@ vm.vm_1110161754:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
-    _custom_access:  Drupal\myPear\Controller::getPageAccess
+    _access_check_token: 'TRUE'
 
 vm.vm_1110161754_3061658821:
   path: /vm/1110161754/3061658821
@@ -373,7 +373,7 @@ vm.vm_1110161754_3061658821:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
-    _custom_access:  Drupal\myPear\Controller::getPageAccess
+    _access_check_token: 'TRUE'
 
 vm.vm_1110161754_2643578627:
   path: /vm/1110161754/2643578627
@@ -381,7 +381,7 @@ vm.vm_1110161754_2643578627:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
-    _custom_access:  Drupal\myPear\Controller::getPageAccess
+    _access_check_token: 'TRUE'
 
 vm.vm_1110161754_3055031512:
   path: /vm/1110161754/3055031512
@@ -389,7 +389,7 @@ vm.vm_1110161754_3055031512:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
-    _custom_access:  Drupal\myPear\Controller::getPageAccess
+    _access_check_token: 'TRUE'
 
 vm.vm_312164533:
   path: /vm/312164533
@@ -397,7 +397,7 @@ vm.vm_312164533:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
-    _custom_access:  Drupal\myPear\Controller::getPageAccess
+    _access_check_token: 'TRUE'
 
 vm.vm_312164533_2390165421:
   path: /vm/312164533/2390165421
@@ -405,7 +405,7 @@ vm.vm_312164533_2390165421:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
-    _custom_access:  Drupal\myPear\Controller::getPageAccess
+    _access_check_token: 'TRUE'
 
 vm.vm_312164533_2685818727:
   path: /vm/312164533/2685818727
@@ -413,7 +413,7 @@ vm.vm_312164533_2685818727:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
-    _custom_access:  Drupal\myPear\Controller::getPageAccess
+    _access_check_token: 'TRUE'
 
 vm.vm_312164533_3499549732:
   path: /vm/312164533/3499549732
@@ -421,7 +421,7 @@ vm.vm_312164533_3499549732:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
-    _custom_access:  Drupal\myPear\Controller::getPageAccess
+    _access_check_token: 'TRUE'
 
 vm.vm_312164533_3547099288:
   path: /vm/312164533/3547099288
@@ -429,7 +429,7 @@ vm.vm_312164533_3547099288:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
-    _custom_access:  Drupal\myPear\Controller::getPageAccess
+    _access_check_token: 'TRUE'
 
 vm.vm_312164533_4280338432:
   path: /vm/312164533/4280338432
@@ -437,7 +437,7 @@ vm.vm_312164533_4280338432:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
-    _custom_access:  Drupal\myPear\Controller::getPageAccess
+    _access_check_token: 'TRUE'
 
 vm.vm_312164533_224792861:
   path: /vm/312164533/224792861
@@ -445,7 +445,7 @@ vm.vm_312164533_224792861:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
-    _custom_access:  Drupal\myPear\Controller::getPageAccess
+    _access_check_token: 'TRUE'
 
 vm.vm_312164533_1566140992:
   path: /vm/312164533/1566140992
@@ -453,7 +453,7 @@ vm.vm_312164533_1566140992:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
-    _custom_access:  Drupal\myPear\Controller::getPageAccess
+    _access_check_token: 'TRUE'
 
 vm.vm_312164533_2590773865:
   path: /vm/312164533/2590773865
@@ -461,7 +461,7 @@ vm.vm_312164533_2590773865:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
-    _custom_access:  Drupal\myPear\Controller::getPageAccess
+    _access_check_token: 'TRUE'
 
 vm.vm_312164533_2870145926:
   path: /vm/312164533/2870145926
@@ -469,7 +469,7 @@ vm.vm_312164533_2870145926:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
-    _custom_access:  Drupal\myPear\Controller::getPageAccess
+    _access_check_token: 'TRUE'
 
 vm.vm_312164533_3400815725:
   path: /vm/312164533/3400815725
@@ -477,7 +477,7 @@ vm.vm_312164533_3400815725:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
-    _custom_access:  Drupal\myPear\Controller::getPageAccess
+    _access_check_token: 'TRUE'
 
 vm.vm_2879110490:
   path: /vm/2879110490
@@ -485,7 +485,7 @@ vm.vm_2879110490:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
-    _custom_access:  Drupal\myPear\Controller::getPageAccess
+    _access_check_token: 'TRUE'
 
 vm.vm_2879110490_2522640501:
   path: /vm/2879110490/2522640501
@@ -493,7 +493,7 @@ vm.vm_2879110490_2522640501:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
-    _custom_access:  Drupal\myPear\Controller::getPageAccess
+    _access_check_token: 'TRUE'
 
 vm.vm_2879110490_1781644875:
   path: /vm/2879110490/1781644875
@@ -501,7 +501,7 @@ vm.vm_2879110490_1781644875:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
-    _custom_access:  Drupal\myPear\Controller::getPageAccess
+    _access_check_token: 'TRUE'
 
 vm.vm_2879110490_674851594:
   path: /vm/2879110490/674851594
@@ -509,7 +509,7 @@ vm.vm_2879110490_674851594:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
-    _custom_access:  Drupal\myPear\Controller::getPageAccess
+    _access_check_token: 'TRUE'
 
 vm.vm_2879110490_4268120242:
   path: /vm/2879110490/4268120242
@@ -517,7 +517,7 @@ vm.vm_2879110490_4268120242:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
-    _custom_access:  Drupal\myPear\Controller::getPageAccess
+    _access_check_token: 'TRUE'
 
 vm.vm_2879110490_1410577895:
   path: /vm/2879110490/1410577895
@@ -525,7 +525,7 @@ vm.vm_2879110490_1410577895:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
-    _custom_access:  Drupal\myPear\Controller::getPageAccess
+    _access_check_token: 'TRUE'
 
 vm.vm_2879110490_954465053:
   path: /vm/2879110490/954465053
@@ -533,7 +533,7 @@ vm.vm_2879110490_954465053:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
-    _custom_access:  Drupal\myPear\Controller::getPageAccess
+    _access_check_token: 'TRUE'
 
 vm.vm_2045174345:
   path: /vm/2045174345
@@ -541,4 +541,4 @@ vm.vm_2045174345:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle
   requirements:
-    _custom_access:  Drupal\myPear\Controller::getPageAccess
+    _access_check_token: 'TRUE'

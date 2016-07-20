@@ -30,7 +30,8 @@ class Controller extends ControllerBase{
   public function getPageTitle() {
     global $myPear_custom_title;
     //    $this->dbg();
-    
+
+    \d8::current_tab();    
     if (empty($GLOBALS['myPear_current_module'])) return t('?');
 
     // Be sure that the init is done
@@ -55,6 +56,8 @@ class Controller extends ControllerBase{
    */
   public function getPageContent() {
     //    $this->dbg();
+
+    \d8::current_tab();    
     $callback = sprintf('_%s_output',$GLOBALS['myPear_current_module']);
     $content  = call_user_func($callback,$GLOBALS['myPear_current_tab']);
 
@@ -65,7 +68,7 @@ class Controller extends ControllerBase{
   }
 
   private function dbg($text=''){
-    \d8_debug::x($text,$this,3);
+    \D8::dbg($text,$this,3);
   }
 }  
 
@@ -79,6 +82,7 @@ class AccessController implements AccessInterface{
   public $route = Null;
 
   public function __construct($EntityManager) {
+    \d8::current_tab();    
     //    if (!empty($EntityManager))      $this->dbg($EntityManager->getBundleInfo('menu_link_content'));
     if (0) $this->dbg(array('module'=>$GLOBALS['myPear_current_module'],
 			    'tab'   =>$GLOBALS['myPear_current_tab']));
@@ -98,6 +102,7 @@ class AccessController implements AccessInterface{
    */
   public function getPageAccess() {
     
+    \d8::current_tab();    
     if ($reply = !empty($GLOBALS['myPear_current_tab'])){    
       $reply = self::_access_exec();
     }
@@ -110,6 +115,7 @@ class AccessController implements AccessInterface{
    */
   public function access(Route $route){
 
+    \d8::current_tab();    
     if ($reply = !empty($GLOBALS['myPear_current_tab'])){    
       $this->route = $route;
       $reply = self::_access_exec($route->getPath());
@@ -147,11 +153,12 @@ class AccessController implements AccessInterface{
     if (strpos($menu_route,'/') === 0){
       $q = explode('/',substr($menu_route,1));;
       $menu_route = $q[0] . '.' . join('_',$q);
-      //      \d8_debug::x($menu_route);
+      //      \D8::dbg($menu_route);
     }
     self::$menu_route = $menu_route;
     
     \myPear_init();
+    \d8::current_tab();    
     bAuth();
     if (empty($GLOBALS['myPear_current_module'])){
       
@@ -186,12 +193,12 @@ class AccessController implements AccessInterface{
       }
     }
     //    if ($reply) 
-   \d8_debug::x(array('tab'=>self::$tab,'reply'=>$reply));
+   \D8::dbg(array('tab'=>self::$tab,'reply'=>$reply));
     return $reply;
   }
   
   private function dbg($text=''){
-    \d8_debug::x($text,$this,3);
+    \D8::dbg($text,$this,3);
   }
 }
 
@@ -232,7 +239,7 @@ class RouteSubscriber extends RouteSubscriberBase {
   }
 
   private function dbg($text=''){
-    \d8_debug::x($text,$this,3);
+    \D8::dbg($text,$this,3);
   }
 }
 
@@ -257,8 +264,9 @@ class menuHandler{
   
   public static function _toggle_menu_items($module_list){
     // No reason to bother...
+    \d8::current_tab();    
     if (empty($GLOBALS['myPear_current_module'])) return;
-    //    \d8_debug::x("SKIP ".__FUNCTION__); return; ////////////////////////////////////////////////////////////////
+    //    \D8::dbg("SKIP ".__FUNCTION__); return; ////////////////////////////////////////////////////////////////
     
     if (True){
       // version 2
@@ -267,26 +275,26 @@ class menuHandler{
 	$message_printed = 0;
 	foreach(self::get_all_route_names($module) as $route_name){
 	  if (strpos($route_name,'_') === False){
-	    if (!$message_printed++) \d8_debug::x($enable
+	    if (!$message_printed++) \D8::dbg($enable
 						  ? "--------------------------------- $module - CURRENT module"
 						  : "--------------------------------- $module - Disabling the top link");
 	    self::_toggle_enabled($route_name,$enable,True);
 	  }elseif ($enable){
 	    // Preprocess menu for the current module, enable/disable the relevant links 
 	    // according to the access callback value
-	    if (!$message_printed++) \d8_debug::x("----------------------------------- $module - CURRENT module, checking access ");
+	    if (!$message_printed++) \D8::dbg("----------------------------------- $module - CURRENT module, checking access ");
 	    $access = AccessController::_access_exec($route_name,False); 
-	    // \d8_debug::x(array('access'=>$access,'route'=>$route_name));
+	    // \D8::dbg(array('access'=>$access,'route'=>$route_name));
 	    if ($access !== Null) self::_toggle_enabled($route_name,$access);
 	  }
 	}
       }
-      \d8_debug::x("-----------------------------------------------------------");
+      \D8::dbg("-----------------------------------------------------------");
       menuHandler::_toggle_enabled('clean cache');
     }else{
       // version 1
       foreach($module_list as $module){
-	\d8_debug::x(($module === $GLOBALS['myPear_current_module']
+	\D8::dbg(($module === $GLOBALS['myPear_current_module']
 		      ? "----------------------------------------------------------- $module - CURRENT module, checking access for the each menu item"
 		      : "----------------------------------------------------------- $module - Disabling all links"));
 	foreach(self::get_all_route_names($module) as $route_name){
@@ -302,7 +310,7 @@ class menuHandler{
 	  }
 	  }
       }
-      menuHandler::_toggle_enabled('clean cache','');
+      menuHandler::_toggle_enabled('clean cache');
     }
   }
   
@@ -323,7 +331,7 @@ class menuHandler{
 	break;
       }
     }
-    \d8_debug::x($reply);
+    \D8::dbg($reply);
     return $reply;
   }
 
@@ -336,27 +344,29 @@ class menuHandler{
 			   ':route_name'=> "$module.$module")
 		     )->fetchAll();
     foreach ($rows as $row) $reply[] = $row->route_name;
-    // \d8_debug::x($reply,$this);
+    // \D8::dbg($reply,$this);
     return $reply;
   }
   
   /*
    * Enable/disable the menu item
    */
+  private static $toggle_counter = 0;
+  private static $clean_counter = 0;
   static function _toggle_enabled($route_name,$enabled=False,$expanded=False) {
-    static $counter = 0;
-
+    
     if ($route_name === 'clean cache'){
-      if ($counter || $enabled===True){
+      if (self::$toggle_counter || $enabled===True){
+	self::$toggle_counter = 0;
+	self::$clean_counter++;
 	foreach(array('menu',
 		      'render',
 		      ) as $cache_name){
 	  $cache = \Drupal::cache($cache_name);
 	  $cache->deleteAll();
-	  \d8_debug::x("cleaning cache '$cache_name'");
+	  \D8::dbg("cleaning cache '$cache_name-".self::$clean_counter."'");
 	}
       }
-      $counter = 0;
     }else{
       $rows = db_query('SELECT * FROM {menu_tree} WHERE menu_name = :menu_name AND route_name = :route_name',
 		       array(':menu_name' => self::$menu_name,
@@ -370,10 +380,10 @@ class menuHandler{
 			 ':expanded'  => (empty($expanded) ? 0 : 1),
 			 ':menu_name' => self::$menu_name,
 			 ':route_name'=> $route_name));
-	  $counter++;
-	  \d8_debug::x(array('tab'     => AccessController::$tab,
-			     'enabled' =>var_export($enabled,True),
-			     'expanded'=>var_export($expanded,True)));
+	  self::$toggle_counter++;
+	  \D8::dbg(array('tab'     => AccessController::$tab,
+			 'enabled' =>var_export($enabled,True),
+			 'expanded'=>var_export($expanded,True)));
 	} 
       }
     }
@@ -383,7 +393,7 @@ class menuHandler{
    *
    */
   private function dbg($reply=''){
-    \d8_debug::x((is_bool($reply) ? var_export($reply,True) : $reply));
+    \D8::dbg((is_bool($reply) ? var_export($reply,True) : $reply));
   }
 }
 

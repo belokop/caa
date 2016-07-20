@@ -38,6 +38,15 @@ h4.ui-widget-header  .ui-state-default
   background: none ! important;
 }
 
+#mypear_ul_selector{
+  position: relative;
+}
+#mypear_ul_selector li{
+  float:left;
+  list-style-type: none;
+  margin: 0.2em;
+}
+
 /*
  * myPear general styles 
  */

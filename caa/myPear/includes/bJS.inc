@@ -84,7 +84,7 @@ $(document).ready(function() {
     $this->add_js_file( 'jquery.js'    ,myPear_js.'../jquery/');
     $this->add_js_file( 'jquery-ui.js' ,myPear_js.'../jquery/');
     $this->add_css_file('jquery-ui.css',myPear_js.'../jquery/');
-    if (cnf_inside_fb)        $this->add_css_file('badges.css',myPear_css,'content');
+    if (cnf_inside_fb)  $this->add_css_file('content-only.css',myPear_css,'content');
     
     $this->warning();
     $x=''; $this->modal_open($x); // passe by reference
@@ -199,9 +199,12 @@ $(document).ready(function() {
 	  drupal_add_css($object,array('type'=>'file','scope'=>'header'));
 	  break;
 	case 8:
-	  // b_debug::xxx("not loaded, see myPear.libraries.yml");
-	  b_debug::var_dump($object,'object');
-	  if ($media == 'content') $this->add_css_inline(file_get_contents(drupal_get_path('module',$object)));
+	  if ($media === 'content'){
+	    $content = file_get_contents('.'.$object);
+	    $this->add_css_inline(b_fmt::compact_html($content));
+	  }else{
+	    b_debug::xxx("not loaded by D8, must be in ".basename(dirname(realpath($f))).".libraries.yml");
+	  }
 	  break;
 	case 9:
 	default:
@@ -211,6 +214,7 @@ $(document).ready(function() {
 	break;
 	
       default:
+	if ($media === 'content') $media = 'all';
 	$link = "<link type='text/css' rel='stylesheet' media='$media' href='$object'>";
 	self::$cacheJS['link'][] = $link;
       }

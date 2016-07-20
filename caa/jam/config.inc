@@ -2,7 +2,10 @@
 
 define('JAM_MODULE'  , 'jam');
 define('JAM_VERSION','5.49.rc');
-$releaseDate = '2016-06-21';
+$releaseDate = '2016-07-20';
+
+require_once 'config.tabs.inc';
+if (function_exists('drupal_get_path') && is_file($f=drupal_get_path('module','myPear').'/includes/drupal8_compat.inc')) require_once $f;
 
 // Ranks and rights...
 define('RANK_jam_manager'    , 59); // same rights as superuser, but for JAM_MODULE only
@@ -378,3 +381,4 @@ function start_JAM(){
   return True;
 }
 
+if (class_exists('Drupal\myPear\menuHandler',False)) Drupal\myPear\menuHandler::_toggle_menu_items(\b_reg::get_modules());
