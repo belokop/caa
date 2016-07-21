@@ -33,17 +33,16 @@ class ThemeSwitcher implements ThemeNegotiatorInterface {
       }
     }
 
-    // Check then the host name
+    // Check then the http server name
     foreach($this->themes as $url=>$theme){
-      if (!in_array($theme,$themes)) continue;
-      if (stripos($_SERVER['HTTP_HOST'],$url) !== False){
-	if (empty($this->theme))	$this->theme = $theme;
+      if (in_array($theme,$themes) && (stripos($_SERVER['HTTP_HOST'],$url) !== False)){
+	if (empty($this->theme)) $this->theme = $theme;
+	foreach(['flavor','org'] as $arg){
+	  if (class_exists('b_cnf',False) && !b_cnf::get($arg)) b_cnf::set($arg,$theme);
+	}
       }
     }
-
-    //
-    $reply = !empty($this->theme);
-    return $reply;
+    return !empty($this->theme);
   }
   
   /**

@@ -62,7 +62,6 @@ class Controller extends ControllerBase{
     $content  = call_user_func($callback,$GLOBALS['myPear_current_tab']);
 
     return array('#type' => 'markup',
-		 //'#markup' => $content,
 		 '#markup' => \Drupal\Core\Render\Markup::create($content),
                  );
   }
