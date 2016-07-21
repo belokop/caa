@@ -11,27 +11,46 @@ use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\Core\Theme\ThemeNegotiatorInterface;
  
 class ThemeSwitcher implements ThemeNegotiatorInterface {
-
-  public  static $themes = array('albanova.se' => 'an',
-				 'nordita.org' => 'nordita');
-  private static $theme = '';
+  
+  public  $themes = array('albanova.se' => 'an',
+			  'nordita.org' => 'nordita');
+  private $theme = '';
   
   public function applies(RouteMatchInterface $route_match) {
 
-    foreach(self::$themes as $url=>$theme){
-      if (
-	  ($_REQUEST['org'] == $theme) ||
-	  ($_REQUEST['flavor'] == $theme) ||
-	  (stripos($_SERVER['HTTP_HOST'],$url) !== False)
-	  )  self::$theme = $theme;
+    
+    // list of available themes
+    $themes = array_keys(array_filter(\Drupal::service('theme_handler')->listInfo(), 
+				      function ($theme) {return $theme->status;}));
+    
+    // Check first 'org' & 'flavor' arguments, save the value in the session cache
+    foreach(array(@$_REQUEST['org'],
+		  @$_REQUEST['flavor'],
+		  @$_SESSION[__METHOD__]) as $theme){
+      if (in_array($theme,$themes)){
+	if (empty($this->theme))	$this->theme = $theme;
+	$_SESSION[__METHOD__] = $this->theme;
+      }
     }
-    return !empty(self::$theme);
+
+    // Check then the host name
+    foreach($this->themes as $url=>$theme){
+      if (!in_array($theme,$themes)) continue;
+      if (stripos($_SERVER['HTTP_HOST'],$url) !== False){
+	if (empty($this->theme))	$this->theme = $theme;
+      }
+    }
+
+    //
+    $reply = !empty($this->theme);
+    return $reply;
   }
   
   /**
    * {@inheritdoc}
    */
   public function determineActiveTheme(RouteMatchInterface $route_match) {
-    return self::$theme;
+    $reply = $this->theme;
+    return $reply;
   }
 }

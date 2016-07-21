@@ -1,6 +1,0 @@
-name: Example Menu 
-type: module
-description: 'Drupal 8 Example Menu'
-package: Custom
-version: 1.0
-core: 8.x

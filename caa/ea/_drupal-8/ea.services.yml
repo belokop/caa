@@ -1,0 +1,12 @@
+services:
+  ea.access_checker:
+    class: Drupal\myPear\AccessController
+    arguments: ['@entity.manager']
+    tags:
+      - { name: access_check, applies_to: _access_check_token }
+
+  ea.route_subscriber:	
+    class: Drupal\myPear\RouteSubscriber
+    arguments: ['@entity.manager']
+    tags:
+      - { name: event_subscriber }
