@@ -1,96 +1,96 @@
-
-lic.main_menu:
+lic.mainlic:
   path: /lic
   defaults:
-    _controller:     Drupal\myPear\Controller::getPageContent
-    _title_callback: Drupal\myPear\Controller::getPageTitle
+    _controller:     Drupal\myPear\components\PageController::getPageContent
+    _title_callback: Drupal\myPear\components\PageController::getPageTitle
   requirements:
-    _custom_access:  Drupal\myPear\AccessController::true
+    _access_check_token: 'TRUE'
 
 lic.lic:
   path: /lic
   defaults:
-    _controller:     Drupal\myPear\Controller::getPageContent
-    _title_callback: Drupal\myPear\Controller::getPageTitle
+    _controller:     Drupal\myPear\components\PageController::getPageContent
+    _title_callback: Drupal\myPear\components\PageController::getPageTitle
   requirements:
     _access_check_token: 'TRUE'
 
 lic.lic_2914988887:
   path: /lic/2914988887
   defaults:
-    _controller:     Drupal\myPear\Controller::getPageContent
-    _title_callback: Drupal\myPear\Controller::getPageTitle
+    _controller:     Drupal\myPear\components\PageController::getPageContent
+    _title_callback: Drupal\myPear\components\PageController::getPageTitle
   requirements:
     _access_check_token: 'TRUE'
 
 lic.lic_1786656205:
   path: /lic/1786656205
   defaults:
-    _controller:     Drupal\myPear\Controller::getPageContent
-    _title_callback: Drupal\myPear\Controller::getPageTitle
+    _controller:     Drupal\myPear\components\PageController::getPageContent
+    _title_callback: Drupal\myPear\components\PageController::getPageTitle
   requirements:
     _access_check_token: 'TRUE'
 
 lic.lic_492478215:
   path: /lic/492478215
   defaults:
-    _controller:     Drupal\myPear\Controller::getPageContent
-    _title_callback: Drupal\myPear\Controller::getPageTitle
+    _controller:     Drupal\myPear\components\PageController::getPageContent
+    _title_callback: Drupal\myPear\components\PageController::getPageTitle
   requirements:
     _access_check_token: 'TRUE'
 
 lic.lic_498266590:
   path: /lic/498266590
   defaults:
-    _controller:     Drupal\myPear\Controller::getPageContent
-    _title_callback: Drupal\myPear\Controller::getPageTitle
+    _controller:     Drupal\myPear\components\PageController::getPageContent
+    _title_callback: Drupal\myPear\components\PageController::getPageTitle
   requirements:
     _access_check_token: 'TRUE'
 
 lic.lic_4258441837:
   path: /lic/4258441837
   defaults:
-    _controller:     Drupal\myPear\Controller::getPageContent
-    _title_callback: Drupal\myPear\Controller::getPageTitle
+    _controller:     Drupal\myPear\components\PageController::getPageContent
+    _title_callback: Drupal\myPear\components\PageController::getPageTitle
   requirements:
     _access_check_token: 'TRUE'
 
 lic.lic_902182288:
   path: /lic/902182288
   defaults:
-    _controller:     Drupal\myPear\Controller::getPageContent
-    _title_callback: Drupal\myPear\Controller::getPageTitle
+    _controller:     Drupal\myPear\components\PageController::getPageContent
+    _title_callback: Drupal\myPear\components\PageController::getPageTitle
   requirements:
     _access_check_token: 'TRUE'
 
 lic.lic_2222656939:
   path: /lic/2222656939
   defaults:
-    _controller:     Drupal\myPear\Controller::getPageContent
-    _title_callback: Drupal\myPear\Controller::getPageTitle
+    _controller:     Drupal\myPear\components\PageController::getPageContent
+    _title_callback: Drupal\myPear\components\PageController::getPageTitle
   requirements:
     _access_check_token: 'TRUE'
 
 lic.lic_2116789183:
   path: /lic/2116789183
   defaults:
-    _controller:     Drupal\myPear\Controller::getPageContent
-    _title_callback: Drupal\myPear\Controller::getPageTitle
+    _controller:     Drupal\myPear\components\PageController::getPageContent
+    _title_callback: Drupal\myPear\components\PageController::getPageTitle
   requirements:
     _access_check_token: 'TRUE'
 
 lic.lic_3677404359:
   path: /lic/3677404359
   defaults:
-    _controller:     Drupal\myPear\Controller::getPageContent
-    _title_callback: Drupal\myPear\Controller::getPageTitle
+    _controller:     Drupal\myPear\components\PageController::getPageContent
+    _title_callback: Drupal\myPear\components\PageController::getPageTitle
   requirements:
     _access_check_token: 'TRUE'
 
 lic.lic_13736742:
   path: /lic/13736742
   defaults:
-    _controller:     Drupal\myPear\Controller::getPageContent
-    _title_callback: Drupal\myPear\Controller::getPageTitle
+    _controller:     Drupal\myPear\components\PageController::getPageContent
+    _title_callback: Drupal\myPear\components\PageController::getPageTitle
   requirements:
     _access_check_token: 'TRUE'
+

@@ -1,7 +1,6 @@
-
-vm.main_menu:
+vm.mainvm:
   title: Visitors Manager
-  route_name: vm.main_menu
+  route_name: vm.mainvm
   weight: 0
   menu_name: main
 
@@ -539,3 +538,4 @@ vm.vm_2045174345:
   menu_name: tools
   parent: vm.vm
   expanded: 'TRUE'
+

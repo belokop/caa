@@ -1,7 +1,6 @@
-
-lic.main_menu:
+lic.mainlic:
   title: Licenses Monitor
-  route_name: lic.main_menu
+  route_name: lic.mainlic
   weight: 0
   menu_name: main
 
@@ -91,3 +90,4 @@ lic.lic_13736742:
   menu_name: tools
   parent: lic.lic
   expanded: 'TRUE'
+

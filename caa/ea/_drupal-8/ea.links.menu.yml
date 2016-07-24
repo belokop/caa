@@ -1,7 +1,6 @@
-
-ea.main_menu:
+ea.mainea:
   title: Employees & Alumni
-  route_name: ea.main_menu
+  route_name: ea.mainea
   weight: 0
   menu_name: main
 
@@ -139,3 +138,4 @@ ea.ea_3003434545_1087860145:
   menu_name: tools
   parent: ea.ea_3003434545
   expanded: 'TRUE'
+

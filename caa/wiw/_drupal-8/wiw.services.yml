@@ -1,12 +1,12 @@
 services:
   wiw.access_checker:
-    class: Drupal\myPear\AccessController
+    class: Drupal\myPear\components\AccessController
     arguments: ['@entity.manager']
     tags:
       - { name: access_check, applies_to: _access_check_token }
 
   wiw.route_subscriber:	
-    class: Drupal\myPear\RouteSubscriber
+    class: Drupal\myPear\components\RouteSubscriber
     arguments: ['@entity.manager']
     tags:
       - { name: event_subscriber }

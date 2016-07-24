@@ -1,56 +1,56 @@
-
-wiw.main_menu:
+wiw.mainwiw:
   path: /wiw
   defaults:
-    _controller:     Drupal\myPear\Controller::getPageContent
-    _title_callback: Drupal\myPear\Controller::getPageTitle
+    _controller:     Drupal\myPear\components\PageController::getPageContent
+    _title_callback: Drupal\myPear\components\PageController::getPageTitle
   requirements:
-    _custom_access:  Drupal\myPear\AccessController::true
+    _access_check_token: 'TRUE'
 
 wiw.wiw:
   path: /wiw
   defaults:
-    _controller:     Drupal\myPear\Controller::getPageContent
-    _title_callback: Drupal\myPear\Controller::getPageTitle
+    _controller:     Drupal\myPear\components\PageController::getPageContent
+    _title_callback: Drupal\myPear\components\PageController::getPageTitle
   requirements:
     _access_check_token: 'TRUE'
 
 wiw.wiw_1088763606:
   path: /wiw/1088763606
   defaults:
-    _controller:     Drupal\myPear\Controller::getPageContent
-    _title_callback: Drupal\myPear\Controller::getPageTitle
+    _controller:     Drupal\myPear\components\PageController::getPageContent
+    _title_callback: Drupal\myPear\components\PageController::getPageTitle
   requirements:
     _access_check_token: 'TRUE'
 
 wiw.wiw_1088763606_3956320423:
   path: /wiw/1088763606/3956320423
   defaults:
-    _controller:     Drupal\myPear\Controller::getPageContent
-    _title_callback: Drupal\myPear\Controller::getPageTitle
+    _controller:     Drupal\myPear\components\PageController::getPageContent
+    _title_callback: Drupal\myPear\components\PageController::getPageTitle
   requirements:
     _access_check_token: 'TRUE'
 
 wiw.wiw_1439710518:
   path: /wiw/1439710518
   defaults:
-    _controller:     Drupal\myPear\Controller::getPageContent
-    _title_callback: Drupal\myPear\Controller::getPageTitle
+    _controller:     Drupal\myPear\components\PageController::getPageContent
+    _title_callback: Drupal\myPear\components\PageController::getPageTitle
   requirements:
     _access_check_token: 'TRUE'
 
 wiw.wiw_3818030668:
   path: /wiw/3818030668
   defaults:
-    _controller:     Drupal\myPear\Controller::getPageContent
-    _title_callback: Drupal\myPear\Controller::getPageTitle
+    _controller:     Drupal\myPear\components\PageController::getPageContent
+    _title_callback: Drupal\myPear\components\PageController::getPageTitle
   requirements:
     _access_check_token: 'TRUE'
 
 wiw.wiw_2806772640:
   path: /wiw/2806772640
   defaults:
-    _controller:     Drupal\myPear\Controller::getPageContent
-    _title_callback: Drupal\myPear\Controller::getPageTitle
+    _controller:     Drupal\myPear\components\PageController::getPageContent
+    _title_callback: Drupal\myPear\components\PageController::getPageTitle
   requirements:
     _access_check_token: 'TRUE'
+

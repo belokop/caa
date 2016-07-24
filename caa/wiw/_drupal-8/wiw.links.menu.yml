@@ -1,7 +1,6 @@
-
-wiw.main_menu:
+wiw.mainwiw:
   title: Who Is Where?
-  route_name: wiw.main_menu
+  route_name: wiw.mainwiw
   weight: 0
   menu_name: main
 
@@ -51,3 +50,4 @@ wiw.wiw_2806772640:
   menu_name: tools
   parent: wiw.wiw
   expanded: 'TRUE'
+

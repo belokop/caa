@@ -1,7 +1,6 @@
-
-prp.main_menu:
+prp.mainprp:
   title: Preprints database
-  route_name: prp.main_menu
+  route_name: prp.mainprp
   weight: 0
   menu_name: main
 
@@ -59,3 +58,4 @@ prp.prp_1584604688_2347876875:
   menu_name: tools
   parent: prp.prp_1584604688
   expanded: 'TRUE'
+
