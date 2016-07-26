@@ -1,6 +1,6 @@
 <?php
 
-$releaseDate = '2016-07-20';
+$releaseDate = '2016-07-26';
 define('PRP_MODULE'   , 'prp');
 define('PRP_VERSION','5.9.rc2');
 
@@ -105,6 +105,10 @@ function PRP_submitters(){
     $unit = new bUnit_prp_submitters();
   }
   return $unit;
+}
+
+function prp_used_by_myOrg(){
+  return array('nordita');
 }
 
 if (class_exists('Drupal\myPear\menuHandler',False)) Drupal\myPear\menuHandler::_toggle_menu_items(\b_reg::get_modules());

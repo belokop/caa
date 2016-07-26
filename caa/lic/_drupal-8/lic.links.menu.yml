@@ -1,6 +1,6 @@
-lic.mainlic:
+lic.main_menu:
   title: Licenses Monitor
-  route_name: lic.mainlic
+  route_name: lic.main_menu
   weight: 0
   menu_name: main
 

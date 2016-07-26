@@ -1,6 +1,6 @@
-ea.mainea:
+ea.main_menu:
   title: Employees & Alumni
-  route_name: ea.mainea
+  route_name: ea.main_menu
   weight: 0
   menu_name: main
 

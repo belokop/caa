@@ -58,14 +58,14 @@ class APImenu_ea extends APImenu{
 
   function access($tab) {
     static $ea_members = Null;
-
-    locateAndInclude('ea_updates.inc');
-    if (!self::startup()) return False;
-
     if ($ea_members === Null) $ea_members = (bAuth::authenticated()
 					     ? (bool)myOrg()->eaMembers()->isMember(bAuth::$av->ID)
 					     : False);
-    if (($reply = $this->access_callback($tab))===Null){
+
+    locateAndInclude('ea_updates.inc');
+    if (!self::startup()){
+      $reply = False;
+    }elseif (($reply = $this->access_callback($tab))===Null){
       $rank = EA_access()->getRank();
       switch($tab){
 
@@ -134,9 +134,8 @@ class APImenu_ea extends APImenu{
       default:
 	$reply = $ea_members;
       }
-      //      b_debug::xxx($reply,array(2,'A'));
     }
-    if ($reply) b_debug::xxx($reply);
+    // if ($reply) b_debug::xxx($reply);
     return $reply;
   }
 

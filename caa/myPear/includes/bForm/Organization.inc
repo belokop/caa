@@ -113,7 +113,7 @@ class bForm_Organization extends bForm {
     if (!self::is_orgID_valid($org_id)) $org_id = Null;
 
     if (empty($org_id) && ($o=b_cnf::get('org')) && self::is_orgID_valid($o)) $org_id = $o;
-    if (empty($org_id) && function_exists($f=b_reg::$current_module.'_select_organization')) $org_id = $f();
+    if (empty($org_id) && function_exists($f=b_reg::$current_module.'_used_by_myOrg')) $org_id = array_pop($f());
     if (empty($org_id) && !empty($default)) $org_id = $default;
 
     if (!empty($org_id)){

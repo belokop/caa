@@ -124,6 +124,25 @@ class APImenu{
   }
 
   /*
+   * Check is the module to be used by a specific organization only
+   */
+  public static function _used_by_myOrg($module){
+    $reply = True;
+    foreach(explode('.',$module) as $m){
+      if (in_array($m,module_list())){
+	myOrg();
+	call_user_func("${module}_init");
+	$f = "${module}_used_by_myOrg";
+	if (function_exists($f) && 
+	    (!in_array(    myOrg_code,call_user_func($f)) ||
+	      in_array('-'.myOrg_code,call_user_func($f)))) $reply = False;
+      }
+    }
+    if (!$reply) b_debug::xxx($reply);
+    return $reply;
+  }
+
+  /*
    * Check access to the common menu items, those like editing the 
    * language translation dictionary, etc.
    */
@@ -134,7 +153,8 @@ class APImenu{
 
     if (@$_GET['login']==='yes') return False;
     if (empty($menuItem))        return False;
-    //if (($cm=@b_reg::$current_module) && ($this->q !== $cm)) return False;
+
+    if (!$this->_used_by_myOrg($menuItem)) return False;
 
     myPear_logs()->add_access();
 

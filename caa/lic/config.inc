@@ -1,6 +1,6 @@
 <?php
 
-$releaseDate = '2016-07-20';
+$releaseDate = '2016-07-26';
 define('LIC_VERSION','5.8');
 define('LIC_MODULE'  , 'lic');
 
@@ -41,6 +41,9 @@ function lic_getCategories(){
 }
 */
 
+function lic_used_by_myOrg(){
+  return array('nordita','fysikum');
+}
 
 function lic_tidySoft() {
   global $regs;

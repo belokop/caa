@@ -1,6 +1,6 @@
-wiw.mainwiw:
+wiw.main_menu:
   title: Who Is Where?
-  route_name: wiw.mainwiw
+  route_name: wiw.main_menu
   weight: 0
   menu_name: main
 

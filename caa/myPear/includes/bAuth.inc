@@ -64,6 +64,7 @@ class bAuth{
    * Implements drupal hook_user.
    * The drupal authentication takes precedence over the myPear.
    */
+  /*
   public static function drupal_hook_user($userP=Null){
 
     if (!self::$isReady) return;
@@ -90,24 +91,22 @@ class bAuth{
       break;
       
     case 8:
-      /*
       self::dbg($userP->getEmail(),cnf_dev);
       $avs = bForm_Avatar::hookByEmail($userP->getEmail());
       $av = array_shift($avs);
-      */
       break;
       
     default:
     }
     
     if (is_object($av)){
-      /*
+
       // Enforce the current user (supposed to be the one installed drupal) to become the superuser if there is no superusers yet
-      if (!myPear::_UNIT(RANK__superuser)->getMembers()){
-      myPear::_UNIT(RANK__superuser)->add_unitMember($av->ID);
-      }
-      if (!$av->getIdentity()) $av->setIdentity($user->name);
-      */
+      // if (!myPear::_UNIT(RANK__superuser)->getMembers()){
+      // myPear::_UNIT(RANK__superuser)->add_unitMember($av->ID);
+      // }
+      // if (!$av->getIdentity()) $av->setIdentity($user->name);
+
       if (empty(self::$av) || ($av->ID != self::$av->ID)){
 	self::_authenticated(array('reset'=>'yes'));
 	$identity = array_pop($av->getIdentity());
@@ -119,6 +118,8 @@ class bAuth{
       b_debug::xxx("???",cnf_dev);
     }
   }
+  */
+
   
   /*
    * Save the current user Email address in _SESSION
@@ -137,6 +138,7 @@ class bAuth{
       unset($_SESSION['authenticated_localUser']);
       
       // Authenticate to drupal if the user is known to the CMS
+      /*
       if(!@$user->uid && $reply && 
 	 (function_exists('user_authenticate_finalize') || 
 	  function_exists('user_login_finalize'))){
@@ -164,7 +166,7 @@ class bAuth{
 	    elseif(function_exists('user_login_finalize'))        user_login_finalize($form);
 	    b_debug::xxx(sprintf("accepted as drupal name='%s' roles='%s'",$user->name,join(',',$user->roles)));
 	    break;
-
+	    
 	  case 8:
 	    $account = user_load_by_mail(self::$av->getEmail());
 	    user_login_finalize($account);
@@ -177,6 +179,7 @@ class bAuth{
 	  }
 	}
       }
+      */
     }
 
     // Sanity
@@ -321,7 +324,7 @@ class bAuth{
       
       $this->authApplication($login, $pwd);
       $this->authPAM($login, $pwd);
-      $this->authCMS($login,$pwd);
+      //      $this->authCMS($login,$pwd);  // obsolete...
       $this->authMySQL($login,$pwd);
       $this->authGmail($login,$pwd);
       $this->authIMAP($login, $pwd);
@@ -351,6 +354,7 @@ class bAuth{
       }
       
       // Sign out for an eventual parent CMS
+      /*
       if (function_exists('drupal_anonymous_user') && function_exists('user_module_invoke')){
 	global $user;
 	if(is_object($user) && (@$user->uid > 0)){
@@ -360,8 +364,9 @@ class bAuth{
 	  drupal_anonymous_user();
 	}
       }
-      
+
       if (isset($drupal_user)) myPear::MESSAGE("logout '$drupal_user'");
+      */      
       self::dbg("logout ",cnf_dev);
       
       // Optionally empty the session, keeping the theme & organization

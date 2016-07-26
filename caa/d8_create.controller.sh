@@ -42,15 +42,18 @@ function editIt(){
 #editIt ea.module
 editIt ea.services.yml
 
-php -n `dirname $0`/d8_create.yml.php || { echo; echo ... error exit >&2; exit 1; }
+php -n `dirname $0`/d8_create.yml.php $1 || { echo; echo ... error exit >&2; exit 1; }
 
-d8=`echo $pwd | sed s,/caa/.*,/caa/$area/_drupal-8/,`
-echo 
-ls -l /tmp/$module*yml
-ls -l /tmp/$module*module 2>/dev/null
-echo
-ls -1 /tmp/$module*yml    | awk -F/ "{ print \"[ -s $d8/\"\$3\" ] || cp -pvf /tmp/\"\$3\" $d8/\" }" > /tmp/t; . /tmp/t
-ls -1 /tmp/$module*yml    | awk "{ print \"sdiff -sbB -w200 \"\$1\"   $d8\" }"
-ls -1 /tmp/$module*module 2>/dev/null | awk "{ print \"sdiff -sbB -w200 \"\$1\"   $d8\" }"
-echo
-# ls -1 /tmp/$module* | awk "{ print \"cp -pfv \"\$1\"   $d8\" }"
+if [ "$1" != "silent" ]; then
+    
+    d8=`echo $pwd | sed s,/caa/.*,/caa/$area/_drupal-8/,`
+    echo 
+    ls -l /tmp/$module*yml
+    ls -l /tmp/$module*module 2>/dev/null
+    echo
+    ls -1 /tmp/$module*yml    | awk -F/ "{ print \"[ -s $d8/\"\$3\" ] || cp -pvf /tmp/\"\$3\" $d8/\" }" > /tmp/t; . /tmp/t
+    ls -1 /tmp/$module*yml    | awk "{ print \"sdiff -sbB -w200 \"\$1\"   $d8\" }"
+    ls -1 /tmp/$module*module 2>/dev/null | awk "{ print \"sdiff -sbB -w200 \"\$1\"   $d8\" }"
+    echo
+    # ls -1 /tmp/$module* | awk "{ print \"cp -pfv \"\$1\"   $d8\" }"
+fi

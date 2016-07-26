@@ -1,6 +1,6 @@
-vm.mainvm:
+vm.main_menu:
   title: Visitors Manager
-  route_name: vm.mainvm
+  route_name: vm.main_menu
   weight: 0
   menu_name: main
 

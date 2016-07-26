@@ -130,4 +130,18 @@ function ZZZ_myPear_admin_settings($arg1,$arg2,$arg3=Null) {
   return system_settings_form($menu);
 }
 
+/*
+ * testing hook_theme
+ */
+function myPear_theme($existing, $type, $theme, $path) {
+  if (class_exists('D8',False)) \D8::dbg();
+  return array(
+	       'nordita' => array(
+				  'variables' => array('test_var' => NULL),
+				  ),
+	       );
+}
+
+
 if (is_file($f='includes/drupal8_compat.inc')) require_once $f;
+if (is_file($f=drupal_get_path('module','myPear').'/src/nordita/TestTwigController.php')) require_once $f;

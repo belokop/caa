@@ -1,4 +1,4 @@
-ea.mainea:
+ea.main_menu:
   path: /ea
   defaults:
     _controller:     Drupal\myPear\components\PageController::getPageContent

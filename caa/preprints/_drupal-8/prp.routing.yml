@@ -1,4 +1,4 @@
-prp.mainprp:
+prp.main_menu:
   path: /prp
   defaults:
     _controller:     Drupal\myPear\components\PageController::getPageContent

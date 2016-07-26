@@ -1,0 +1,8 @@
+services:
+  mypear.twig_extension:
+    class: Drupal\myPear\components\myTwigExtension
+    argument: 
+     _type: service
+     _id: another.service
+    tags: 
+      - { name: twig.extension }

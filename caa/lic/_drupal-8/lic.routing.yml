@@ -1,4 +1,4 @@
-lic.mainlic:
+lic.main_menu:
   path: /lic
   defaults:
     _controller:     Drupal\myPear\components\PageController::getPageContent

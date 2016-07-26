@@ -1,4 +1,4 @@
-wiw.mainwiw:
+wiw.main_menu:
   path: /wiw
   defaults:
     _controller:     Drupal\myPear\components\PageController::getPageContent

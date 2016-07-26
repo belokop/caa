@@ -42,9 +42,9 @@ foreach(array(
 	      "$root/$area/config.inc",
 	      "$root/$area/config.tabs.inc",
 	      ) as $f){
-  print "... loading $f";
+  if (empty($argv[1])) print "... loading $f";
   require_once $f;
-  print "           ...............OK\n";
+  if (empty($argv[1])) print "           ...............OK\n";
 }
 
 switch($module){
@@ -53,6 +53,7 @@ case 'vm':  $menu =  VM::_MENU(); break;
 case 'wiw': $menu = WIW::_MENU(); break;
 case 'lic': $menu = LIC::_MENU(); break;
 case 'prp': $menu = PRP::_MENU(); break;
+case 'jam': $menu = JAM::_MENU(); break;
 default: 
   die("??? unknown case '$module'\n");
 }
@@ -79,8 +80,9 @@ foreach($menu_tree as $path=>$item){
     $title = $item['title'];
     $tab = $module;
     $weight = 0;
-    $menu_name  = 'main';
-    $route_name = 'main_menu';
+    $menu_name = 'main';
+    $route_name = "${module}.${menu_name}${module}";
+    $route_name = "${module}.${menu_name}_menu";
     $parent = '';
     $access = 'main_menu';
     $expanded = False;
@@ -97,7 +99,7 @@ foreach($menu_tree as $path=>$item){
   $access = 'custom';
   $expanded = $top_of_the_tree;
   $expanded = True; // well... otherwise it always collapses
-  $route_name = implode('_',$path_e);
+  $route_name = "${module}.".implode('_',$path_e);
   array_pop($path_e);
   $parent = implode('_',$path_e);
   $weight = (int)$item['weight'];
@@ -137,10 +139,10 @@ exit;
 function build_links_menu_yml(){
   global $file;
 
-  fwrite($file['links.menu'],process_template("
-<module>.<route_name>:
+  fwrite($file['links.menu'],process_template(
+"<route_name>:
   title: <title>
-  route_name: <module>.<route_name>
+  route_name: <route_name>
   weight: <weight>
   menu_name: <menu_name>
 # route_parameters:
@@ -148,11 +150,13 @@ function build_links_menu_yml(){
 #  - tab: <tab>
 # options:
 " 
-					      . (empty($GLOBALS['parent']) ? ""   : "  parent: <module>.<parent>\n")
-					      . (empty($GLOBALS['expanded']) ? "" : "  expanded: 'TRUE'\n")));
+. (empty($GLOBALS['parent']) ? ""   : "  parent: <module>.<parent>\n")
+. (empty($GLOBALS['expanded']) ? "" : "  expanded: 'TRUE'\n")
+. "
+"));
 }
-
-/*
+	 
+	 /*
  * path:
  *   The path for this route
  * defaults:
@@ -167,19 +171,15 @@ function build_links_menu_yml(){
  *   _custom_access: access is determined by a method in our class
  */
 function build_routing_yml($file){
-  fwrite($file,process_template("
-<module>.<route_name>:
+  fwrite($file,process_template(
+"<route_name>:
   path: /<path>
   defaults:
-    _controller:     Drupal\\myPear\\Controller::getPageContent
-    _title_callback: Drupal\\myPear\\Controller::getPageTitle
+    _controller:     Drupal\\myPear\\components\\PageController::getPageContent
+    _title_callback: Drupal\\myPear\\components\\PageController::getPageTitle
   requirements:
-".
-				//($GLOBALS['access'] == 'main_menu' ? "_access: 'TRUE'" : "requirements: _access_check_token: 'TRUE'")."
-				//: "_custom_access:  Drupal\\myPear\\Controller::getPageAccess")."
-				($GLOBALS['access'] == 'main_menu' 
-				 ? "    _custom_access:  Drupal\\myPear\\AccessController::true"
-				 : "    _access_check_token: 'TRUE'")."
+    _access_check_token: 'TRUE'
+
 "));
 }
 

@@ -193,7 +193,9 @@ class APImenu_vm extends APImenu_ea{
   function access($tab,$dynamicab='') {
     
     $this->start();
-    if (@b_reg::$current_module !== VM_MODULE){
+
+    if (!$this->_used_by_myOrg(VM_MODULE)){
+      // Organization restrictions
       $reply = False;
     }elseif ((b_reg::$current_module === VM_MODULE) && ($_GET['q'] !== VM_MODULE) && !bAuth()->loginPrompt()){
       // Need authorization to see the levels deeper then 1

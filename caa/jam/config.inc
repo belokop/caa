@@ -2,7 +2,7 @@
 
 define('JAM_MODULE'  , 'jam');
 define('JAM_VERSION','5.49.rc');
-$releaseDate = '2016-07-20';
+$releaseDate = '2016-07-26';
 
 require_once 'config.tabs.inc';
 if (function_exists('drupal_get_path') && is_file($f=drupal_get_path('module','myPear').'/includes/drupal8_compat.inc')) require_once $f;
@@ -238,6 +238,15 @@ class JAM extends myPear{
   static public function j_MENU()                { return myPear::_fromCache('APImenu_jam'); } 
 
 }
+
+/*
+ * Not used by organization 'an'
+ */
+function jam_used_by_myOrg(){
+  $reply = array('-an');
+  return $reply;
+}
+
 
 /*
  *

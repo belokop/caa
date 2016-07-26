@@ -1625,15 +1625,11 @@ class b_debug{
       default:    $dbgString = sprintf("%s %s", $caller, $text);
       }
 
-      $dbgString = ((self::$s_e_depth > 0
-		     ? str_repeat('&nbsp;',5*self::$s_e_depth)
-		     : '') . 
-		    "<span class='$color'>$dbgString</span>");
+      $dbgString = self::s_e_depth() . "<span class='$color'>$dbgString</span>";
       if ($starting_exiting || !@self::$xxx_cache[b_crypt::hash($dbgString)]++){
 	if (isset($class) && is_object($class) && (bool)@$class->nodrupal){
 	  print "<br/>$dbgString";
 	}else{
-	  // if ($starting_exiting) printf("\n???????????? %s %s <br>\n",$s_e_text,b_debug::__(3));;
 	  $s_e_depth = self::$s_e_depth;	  $always_print = myPear::$always_print;
 	  self::$s_e_depth = 0;	          myPear::$always_print = True;
 	  myPear::DEBUG($dbgString);
@@ -1643,6 +1639,10 @@ class b_debug{
     }
     if ($starting_exiting && $s_e_s) self::$s_e_depth++;
   }
+
+  public static function s_e_depth(){
+    return (self::$s_e_depth > 0 ? str_repeat('&nbsp;',5*self::$s_e_depth) : ''); 
+  } 
   
   /*
    * Unrecoverable error, stop the processing

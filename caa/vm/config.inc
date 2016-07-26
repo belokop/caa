@@ -3,7 +3,7 @@ set_time_limit(0);
 /**
  * Visitors Manager (VM) configuration file
  */
-$releaseDate = '2016-07-21';
+$releaseDate = '2016-07-26';
 define('VM_MODULE'   , 'vm');
 define('VM_VERSION','5.78');
 
@@ -1032,9 +1032,8 @@ function vm_b_cache_file(){
 /*
  * The VM module is specific for Nordita (see http://www.nordita.org), for the time being we don't see other customers...
  */
-function vm_select_organization(){
-  $reply = 'nordita';
-  b_debug::xxx($reply);
+function vm_used_by_myOrg(){
+  $reply = ['nordita'];
   return $reply;
 }
 

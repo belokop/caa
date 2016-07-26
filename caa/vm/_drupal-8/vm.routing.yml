@@ -1,4 +1,4 @@
-vm.mainvm:
+vm.main_menu:
   path: /vm
   defaults:
     _controller:     Drupal\myPear\components\PageController::getPageContent

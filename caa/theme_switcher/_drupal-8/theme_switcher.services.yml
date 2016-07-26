@@ -1,6 +1,6 @@
 services: 
   theme.negotiator.theme_switcher:
     class: Drupal\theme_switcher\components\ThemeSwitcher
-#     arguments: ['@current_user'], ['@config.factory'], ['@entity.manager'], ['@router.admin_context']
+#    arguments: ['@current_user'], ['@config.factory'], ['@entity.manager'], ['@router.admin_context']
     tags:
       - { name: theme_negotiator, priority: 10 }

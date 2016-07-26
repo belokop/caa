@@ -64,21 +64,36 @@ if (!class_exists('D8',False)){
       return '';
     }
     
-    public static function dbg($text='',$instance=Null,$level=2,$type='info'){
-      if (defined('cnf_dev') && cnf_dev)
+    public static function var_dump($variable,$comment='',$type='debug'){
+      if (defined('cnf_dev') && cnf_dev){
+	ob_start();
+	var_dump($variable);
+	$dump = ob_get_contents();
+	ob_end_clean();
+	drupal_set_message(sprintf("<pre>%s(%s)\n%s</pre>",__METHOD__,$comment,$dump),
+			   $type,
+			   $keep_duplications=False);
+      }
+    }
+
+    public static function dbg($text='',$instance=Null,$level=2,$type='debug',$color='red'){
+      if (defined('cnf_dev') && cnf_dev){
 	drupal_set_message(
 			   preg_replace('/(Drupal|Symfony)[a-zA-Z\\\\]*\\\\/','',
-					sprintf("%s: <em>%s</em>",
+					sprintf("%s<span style='color:%s;'>%s: <em>%s</em></span>",
+						(class_exists('b_debug',False) ? b_debug::s_e_depth() : ''),
+						$color,
 						self::__($level, $instance),
 						(is_bool($text) 
 						 ? var_export($text,True) 
 						 : (is_array($text)
-						  ? D8_joinX($text,False)
+						    ? D8_joinX($text,False)
 						    : (is_object($text)
 						       ? 'object('.get_class($text).')'
 						       : $text))))),
 			   $type,
 			   $keep_duplications=False);
+      }
     }
     
     public static function __($flags=array(),$class=Null){
@@ -151,16 +166,17 @@ if (!class_exists('D8',False)){
 function D8_joinX($array,$simple_output=True){
   if (empty($array)){
     $a = array();
+    $simple_output = True;
   }else{ 
     $a_keys = array_keys($array);
-    $is_asso = !($a_keys[0] === 0 &&
-		 $a_keys[count($a_keys)-1] === count($a_keys)-1);
-    $a = ($is_asso
+    $is_associative = !($a_keys[0] === 0 &&
+			$a_keys[count($a_keys)-1] === count($a_keys)-1);
+    $a = ($is_associative
 	  ? array_keys($array)
 	  : $array);
   }
-  if ($simple_output || !$is_asso){
-    return 'array('.join(',',$a).')';
+  if ($simple_output || !$is_associative){
+    return '['.join(', ',$a).']';
   }else{
     $reply = array();
     foreach($array as $k=>$v){
@@ -216,7 +232,7 @@ if (class_exists('Drupal',False)){
   /*
    * Load the D8 Controller
    */
-  require_once drupal_get_path('module','myPear') . '/Controller.inc';
+  //  require_once drupal_get_path('module','myPear') . '/Controller.inc';
   require_once drupal_get_path('module','myPear') . '/includes/myPear_classes.inc';
   foreach(module_list() as $m){
     $f = drupal_get_path('module',$m) . "/${m}.custom_hooks.inc";
