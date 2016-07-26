@@ -1,2 +1,2 @@
-page_load_progress_time: 3000
+page_load_progress_time: 10
 page_load_progress_elements: '.page_load_progress'

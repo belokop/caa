@@ -9,6 +9,16 @@
  * Implements hook_page_attachments().
  */
 function page_load_progress_page_attachments(array &$attachments) {
-  // Unconditionally attach assets to the page.
-  $attachments['#attached']['library'][] = 'page_load_progress/page_load_progress';
+  if (\Drupal::currentUser()->hasPermission('use page load progress')) {
+    // Unconditionally attach assets to the page.
+    $attachments['#attached']['library'][] = 'page_load_progress/page_load_progress';
+
+    // Attach config settings.
+    $config = \Drupal::config('page_load_progress.settings');
+
+    $attachments['#attached']['drupalSettings']['page_load_progress'] = [
+      'delay' => $config->get('page_load_progress_time'),
+      'elements' => $config->get('page_load_progress_elements'),
+    ];
+  }
 }
