@@ -48,9 +48,11 @@ class b_cache_file{
     $this->cacheArea = (is_object(bAuth::$av)
 			? self::$cacheArea_auth
 			: self::$cacheArea_anonym);
-
     if (!empty($fileName)) $this->file = $this->cacheArea . $fileName;
+
+    // On Windows it does not work... Not yet tested on Drupal8.
     if (b_os::type() == 'win')  self::$cachePosible = False;
+    if (class_exists('Drupal',False))  $_GET['resetcache_once'] = 1;
     
     // Optionally wipe the cache
     if (self::$cachePosible){

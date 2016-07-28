@@ -18,9 +18,10 @@ class APImenu_lic extends APImenu{
 
   public function access($arg1=Null,$arg2=Null){
     switch($arg1){
-    case 'bred':  $reply = False;              break;
+    case 'bred':  $reply = False;          break;
     case 'ideas': $reply = superUser_here; break;
     default:      $reply = bAuth::authenticated();
+      $reply = True;
     }
     if (b_reg::$current_module !== LIC_MODULE)  $reply = False;
     b_debug::xxx($reply,array('A'));

@@ -64,18 +64,3 @@ function lic_page_alter(&$page) {
   lic_init();
   $page['page_bottom']['devel']=array('#type'=>'markup','#markup'=>lic_footer());
 }
-
-/*
- * Implements hook_user
- */
-/*
-function lic_user($type, $array, $account, $category){
-  lic_init();
-  bAuth::drupal_hook_user($account);
-}
-
-function lic_user_login($edit, $account) {
-  lic_init();
-  bAuth::drupal_hook_user($account);
-}
-*/

@@ -49,7 +49,7 @@ class AccessController implements AccessInterface{
     
     // Update on the fly the menu database.
     // However, to my understanding that should be done by the Drupal core...
-    MH()->toggle_enabled($this->menu_route,$reply);
+    MH()->toggle_enabled($this->menu_route,$reply); // ,($reply ? True : 'any'));
     MH()->toggle_enabled('clean cache');
  
     return ($reply ? AccessResult::allowed() : AccessResult::forbidden()); 

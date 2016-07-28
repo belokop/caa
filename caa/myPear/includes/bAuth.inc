@@ -53,7 +53,7 @@ class bAuth{
       
       if     (@$_GET['quit_once'] ==='yes')        $this->logout();
       elseif (@$_GET['forgotpassword_once']=='yes')$this->loginPrompt();
-      elseif (@$_GET['login']=='check')            $this->loginPrompt();
+      elseif (@$_GET['login']==='check')           $this->loginPrompt();
       else                                         $this->_autoLogout();
       $this->authenticate();
     }
@@ -842,8 +842,7 @@ The request came from the web interface from computer '".gethostbyaddr($_SERVER[
   /*
    *
    */
-  public static function login_widget($mode='login',$message='',$error_message='',$userLabel,$pwdLabel='password',
-				      $submitLabel='login',$post_action='login',$flagToAutoCheck='NO'){
+  public static function login_widget($mode='login',$message='',$error_message='',$userLabel,$pwdLabel='password',$submitLabel='login',$post_action='login',$flagToAutoCheck='NO'){
 
     ob_start();
     $t = new b_table('','<div class="login_prompt centralized">'.
