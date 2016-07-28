@@ -18,6 +18,10 @@ class myTwigExtension extends \Twig_Extension{
   /*
    *
    */  
+  public function mypear_is_fp(){
+    return empty($GLOBALS['myPear_current_module']);
+  }
+
   public function mypear_fp_content(){
     myPear_init();
     \b_reg::load_module();
@@ -93,7 +97,7 @@ class myTwigExtension extends \Twig_Extension{
    *
    */
   public function getFunctions(){
-    foreach (array('module','date','login','fp_title','fp_content') as $ext){
+    foreach (array('module','date','login','is_fp','fp_title','fp_content') as $ext){
       $functions["mypear_$ext"] = new \Twig_Function_Method($this, "mypear_$ext");
     }
     return $functions;

@@ -49,7 +49,7 @@ class AccessController implements AccessInterface{
     
     // Update on the fly the menu database.
     // However, to my understanding that should be done by the Drupal core...
-    MH()->toggle_enabled($this->menu_route,$reply,$reply);
+    MH()->toggle_enabled($this->menu_route,$reply);
     MH()->toggle_enabled('clean cache');
  
     return ($reply ? AccessResult::allowed() : AccessResult::forbidden()); 
@@ -148,44 +148,33 @@ class menuHandler{
   }
 
   /*
-   *
+   * The main menu dosn't show modules which are not used by the current organization,
+   * and the tools menu shows only the tree for the current module tree
    */
   public  function toggle_menu_items($module_list){
     static $dejaVu = 0;    if ($dejaVu++) return;
-
-    $menus_to_preprocess = array('main','tools');
-    $menus_to_preprocess = array('main');
-    $modules_to_preprocess = array_intersect(module_list(),$module_list);
-    $this->dbg(['modules'=>$modules_to_preprocess,'menus'=>$menus_to_preprocess]);
+    
+    $modules_to_preprocess = array_intersect(module_list(),$module_list); sort($modules_to_preprocess);
+    $this->dbg(['modules'=>$modules_to_preprocess]);
     
     bAuth();
     myOrg();
     
-    foreach(array_intersect(module_list(),$module_list) as $module){
-      foreach($menus_to_preprocess as $menu_name){
-        $this->_toggle_menu_items_exec($module,$menu_name);
+    $APImenu = new \APImenu();
+    foreach(['main','tools'] as $menu_name){
+      foreach($modules_to_preprocess as $module){
+	$enabled = ($APImenu->_used_by_myOrg($module) &&
+		    (($menu_name == 'main') || ($module === $GLOBALS['myPear_current_module'])));
+	$route_name = $this->get_all_route_names($module,$menu_name,True);
+	// $this->dbg(['route'=>$route_name,'access'=>(bool)$enabled]);;
+	AC()->tab = $module;
+	$this->toggle_enabled($route_name,$enabled,'any');
       }
     }
     $this->toggle_enabled('clean cache');
   }
-
-  /*
-   *
-   */
-  private function _toggle_menu_items_exec($module,$menu_name){
-    
-    static $APImenu = Null;  
-    if (empty($APImenu))  $APImenu = new \APImenu();
-    
-    // The main menu does shows modules which are not used by the current organization
-    $enabled = ($APImenu->_used_by_myOrg($module) &&
-                (($menu_name == 'main') || ($module === $GLOBALS['myPear_current_module'])));
-    foreach($this->get_all_route_names($module,$menu_name) as $route_name){
-      AC()->tab = $module;
-      $this->toggle_enabled($route_name,$enabled,'any');
-      break;
-    }
-    
+  
+  /*    
     // Preprocess 'tools' menu for the current module, enable/disable the relevant links 
     // according to the access callback value
     if ($enabled && ($menu_name != 'main')){
@@ -194,29 +183,29 @@ class menuHandler{
 	$this->toggle_enabled($route_name,$access,'any');
       }
     }
-  }
+  */
   
   /*
    * Get all route names for the module. The module might be in several menus
    */
-  function get_all_route_names($module,$menu_name){
+  function get_all_route_names($module,$menu_name,$only_the_root=False){
     $search_for = ($menu_name == 'main'
 		   ? "${module}.${menu_name}"
 		   : "${module}.${module}");
     $reply = preg_grep("/$search_for/",array_keys($this->menu_link_manager()->getDefinitions()));
     sort($reply); // to kill the association...
+
     //    $this->dbg(['search_for'=>$search_for,'reply'=>$reply]);
-    return $reply;
+    return ($only_the_root
+	    ? array_shift($reply)
+	    : $reply);
   }
   
   /*
    * Enable/disable the menu item
    */
   private static $toggle_counter = 0;
-  public function toggle_enabled($route_name,$enabled=False,$expanded=False){
-
-      $expanded = 'any'; ///////////////////////////////////////////////////////////////////////// <================================================================
-
+  public function toggle_enabled($route_name,$enabled=False,$expanded='any'){
 
     if (empty($route_name)){
       $this->dbg('???? empty route_name');
