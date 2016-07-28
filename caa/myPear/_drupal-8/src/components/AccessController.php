@@ -177,11 +177,9 @@ class menuHandler{
     // The main menu does shows modules which are not used by the current organization
     $enabled = ($APImenu->_used_by_myOrg($module) &&
                 (($menu_name == 'main') || ($module === $GLOBALS['myPear_current_module'])));
-    // $this->dbg("$module/$menu_name  =============================== ".var_export($enabled,True));
-    
-    AC()->tab = $module;
     foreach($this->get_all_route_names($module,$menu_name) as $route_name){
-      $this->toggle_enabled($route_name,$enabled,True);
+      AC()->tab = $module;
+      $this->toggle_enabled($route_name,$enabled,'any');
       break;
     }
     
@@ -213,6 +211,9 @@ class menuHandler{
    */
   private static $toggle_counter = 0;
   public function toggle_enabled($route_name,$enabled=False,$expanded=False){
+
+      $expanded = 'any'; ///////////////////////////////////////////////////////////////////////// <================================================================
+
 
     if (empty($route_name)){
       $this->dbg('???? empty route_name');

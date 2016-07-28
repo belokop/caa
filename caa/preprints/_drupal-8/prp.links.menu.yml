@@ -9,7 +9,6 @@ prp.prp:
   route_name: prp.prp
   weight: 0
   menu_name: tools
-  expanded: 'TRUE'
 
 prp.prp_1444014205:
   title: Nordita Preprints
@@ -17,7 +16,6 @@ prp.prp_1444014205:
   weight: 0
   menu_name: tools
   parent: prp.prp
-  expanded: 'TRUE'
 
 prp.prp_1407449137:
   title: Manage pending preprints
@@ -25,7 +23,6 @@ prp.prp_1407449137:
   weight: 14
   menu_name: tools
   parent: prp.prp
-  expanded: 'TRUE'
 
 prp.prp_2975246614:
   title: Register new preprint
@@ -33,7 +30,6 @@ prp.prp_2975246614:
   weight: 10
   menu_name: tools
   parent: prp.prp
-  expanded: 'TRUE'
 
 prp.prp_2785308649:
   title: Update preprints
@@ -41,7 +37,6 @@ prp.prp_2785308649:
   weight: 16
   menu_name: tools
   parent: prp.prp
-  expanded: 'TRUE'
 
 prp.prp_1584604688:
   title: Administer preprints
@@ -49,7 +44,6 @@ prp.prp_1584604688:
   weight: 20
   menu_name: tools
   parent: prp.prp
-  expanded: 'TRUE'
 
 prp.prp_1584604688_2347876875:
   title: Merge avatars
@@ -57,5 +51,4 @@ prp.prp_1584604688_2347876875:
   weight: 30
   menu_name: tools
   parent: prp.prp_1584604688
-  expanded: 'TRUE'
 

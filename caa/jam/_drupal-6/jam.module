@@ -63,6 +63,7 @@ function _jam_output($arg=Null,$arg2=Null){
 /*
  * Implements hook_user
  */
+/*
 function jam_user($type, $array, $account, $category){
   jam_init();
   locateAndInclude('bAuth');
@@ -74,3 +75,4 @@ function jam_user_login($edit, $account) {
   locateAndInclude('bAuth');
   bAuth::drupal_hook_user($account);
 }
+*/

@@ -3,7 +3,10 @@ locateAndInclude('APIaccess');
 
 function WIW_access(){
   static $_ACCESS = Null;
-  if ($_ACCESS === Null) $_ACCESS = new APIaccess_wiw();
+  if ($_ACCESS === Null){
+    wiw_init();
+    $_ACCESS = new APIaccess_wiw();
+  }
   return $_ACCESS;
 }
 

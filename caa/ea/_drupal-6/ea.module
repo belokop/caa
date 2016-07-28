@@ -70,7 +70,7 @@ function ea_page_alter(&$page) {
 }
 
 if (class_exists('Drupal',False)){
-  
+  /*
   function ea_user_login($account) {
     ea_init();
     // Reset static cache of default variables in template_preprocess() to reflect the new user.
@@ -84,11 +84,12 @@ if (class_exists('Drupal',False)){
     // Reset static cache of default variables in template_preprocess() to reflect the new user.
     drupal_static_reset('template_preprocess');
   }
-  
+  */  
 }else{
   /*
    * Implements hook_user
    */
+  /*
   function ea_user($type, $array, $account, $category){
     ea_init();
     locateAndInclude('bAuth');
@@ -100,6 +101,7 @@ if (class_exists('Drupal',False)){
     locateAndInclude('bAuth');
     bAuth::drupal_hook_user($account);
   }
+  */
 }
 
 if (is_file($f=drupal_get_path('module','myPear').'/includes/drupal8_compat.inc')) require_once $f;

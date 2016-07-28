@@ -2,7 +2,7 @@
 
 define('JAM_MODULE'  , 'jam');
 define('JAM_VERSION','5.49.rc');
-$releaseDate = '2016-07-26';
+$releaseDate = '2016-07-28';
 
 require_once 'config.tabs.inc';
 if (function_exists('drupal_get_path') && is_file($f=drupal_get_path('module','myPear').'/includes/drupal8_compat.inc')) require_once $f;

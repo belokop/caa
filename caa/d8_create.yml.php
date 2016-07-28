@@ -151,7 +151,7 @@ function build_links_menu_yml(){
 # options:
 " 
 . (empty($GLOBALS['parent']) ? ""   : "  parent: <module>.<parent>\n")
-. (empty($GLOBALS['expanded']) ? "" : "  expanded: 'TRUE'\n")
+//. (empty($GLOBALS['expanded']) ? "" : "  expanded: 'TRUE'\n")
 . "
 "));
 }

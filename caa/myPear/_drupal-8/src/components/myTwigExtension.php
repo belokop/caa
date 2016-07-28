@@ -54,6 +54,7 @@ class myTwigExtension extends \Twig_Extension{
       }
       $reply = x('ul class="mypear_login"',$reply);
     }
+    \D8::dbg(\b_fmt::escape($reply));
     return $reply;
   }
 

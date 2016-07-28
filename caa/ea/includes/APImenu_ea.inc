@@ -61,6 +61,8 @@ class APImenu_ea extends APImenu{
     if ($ea_members === Null) $ea_members = (bAuth::authenticated()
 					     ? (bool)myOrg()->eaMembers()->isMember(bAuth::$av->ID)
 					     : False);
+    // load if not yet done
+    ea_init();
 
     locateAndInclude('ea_updates.inc');
     if (!self::startup()){

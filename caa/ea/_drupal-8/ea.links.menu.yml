@@ -9,7 +9,6 @@ ea.ea:
   route_name: ea.ea
   weight: 0
   menu_name: tools
-  expanded: 'TRUE'
 
 ea.ea_356353008:
   title: Home
@@ -17,7 +16,6 @@ ea.ea_356353008:
   weight: 10
   menu_name: tools
   parent: ea.ea
-  expanded: 'TRUE'
 
 ea.ea_3666903923:
   title: Staff members
@@ -25,7 +23,6 @@ ea.ea_3666903923:
   weight: 20
   menu_name: tools
   parent: ea.ea
-  expanded: 'TRUE'
 
 ea.ea_3666903923_3558149342:
   title: Groups
@@ -33,7 +30,6 @@ ea.ea_3666903923_3558149342:
   weight: 21
   menu_name: tools
   parent: ea.ea_3666903923
-  expanded: 'TRUE'
 
 ea.ea_3666903923_3640775405:
   title: CV's
@@ -41,7 +37,6 @@ ea.ea_3666903923_3640775405:
   weight: 22
   menu_name: tools
   parent: ea.ea_3666903923
-  expanded: 'TRUE'
 
 ea.ea_3666903923_1410577895:
   title: Print door labels
@@ -49,7 +44,6 @@ ea.ea_3666903923_1410577895:
   weight: 90
   menu_name: tools
   parent: ea.ea_3666903923
-  expanded: 'TRUE'
 
 ea.ea_3666903923_954465053:
   title: Who sits where List
@@ -57,7 +51,6 @@ ea.ea_3666903923_954465053:
   weight: 88
   menu_name: tools
   parent: ea.ea_3666903923
-  expanded: 'TRUE'
 
 ea.ea_3724363626:
   title: Alumni
@@ -65,7 +58,6 @@ ea.ea_3724363626:
   weight: 30
   menu_name: tools
   parent: ea.ea
-  expanded: 'TRUE'
 
 ea.ea_3724363626_2614215831:
   title: As the years pass...
@@ -73,7 +65,6 @@ ea.ea_3724363626_2614215831:
   weight: 31
   menu_name: tools
   parent: ea.ea_3724363626
-  expanded: 'TRUE'
 
 ea.ea_3003434545:
   title: Administer
@@ -81,7 +72,6 @@ ea.ea_3003434545:
   weight: 40
   menu_name: tools
   parent: ea.ea
-  expanded: 'TRUE'
 
 ea.ea_3003434545_2347876875:
   title: Merge avatars
@@ -89,7 +79,6 @@ ea.ea_3003434545_2347876875:
   weight: 41
   menu_name: tools
   parent: ea.ea_3003434545
-  expanded: 'TRUE'
 
 ea.ea_3003434545_336072095:
   title: Find duplicate avatars
@@ -97,7 +86,6 @@ ea.ea_3003434545_336072095:
   weight: 42
   menu_name: tools
   parent: ea.ea_3003434545
-  expanded: 'TRUE'
 
 ea.ea_3003434545_2574291034:
   title: Rebuild EA
@@ -105,7 +93,6 @@ ea.ea_3003434545_2574291034:
   weight: 43
   menu_name: tools
   parent: ea.ea_3003434545
-  expanded: 'TRUE'
 
 ea.ea_3003434545_3080357576:
   title: Employee types&groups
@@ -113,7 +100,6 @@ ea.ea_3003434545_3080357576:
   weight: 45
   menu_name: tools
   parent: ea.ea_3003434545
-  expanded: 'TRUE'
 
 ea.ea_3003434545_3570397566:
   title: Organization structure
@@ -121,7 +107,6 @@ ea.ea_3003434545_3570397566:
   weight: 44
   menu_name: tools
   parent: ea.ea_3003434545
-  expanded: 'TRUE'
 
 ea.ea_3003434545_2892455105:
   title: All Organizations
@@ -129,7 +114,6 @@ ea.ea_3003434545_2892455105:
   weight: 46
   menu_name: tools
   parent: ea.ea_3003434545
-  expanded: 'TRUE'
 
 ea.ea_3003434545_1087860145:
   title: Syslog
@@ -137,5 +121,4 @@ ea.ea_3003434545_1087860145:
   weight: 99
   menu_name: tools
   parent: ea.ea_3003434545
-  expanded: 'TRUE'
 

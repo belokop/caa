@@ -9,7 +9,6 @@ vm.vm:
   route_name: vm.vm
   weight: 0
   menu_name: tools
-  expanded: 'TRUE'
 
 vm.vm_885638616:
   title: Home
@@ -17,7 +16,6 @@ vm.vm_885638616:
   weight: -900
   menu_name: tools
   parent: vm.vm
-  expanded: 'TRUE'
 
 vm.vm_2751296280:
   title: My visit
@@ -25,7 +23,6 @@ vm.vm_2751296280:
   weight: -800
   menu_name: tools
   parent: vm.vm
-  expanded: 'TRUE'
 
 vm.vm_3255233036:
   title: Visits
@@ -33,7 +30,6 @@ vm.vm_3255233036:
   weight: 0
   menu_name: tools
   parent: vm.vm
-  expanded: 'TRUE'
 
 vm.vm_1735395761:
   title: Visits outside Nordita events
@@ -41,7 +37,6 @@ vm.vm_1735395761:
   weight: -920
   menu_name: tools
   parent: vm.vm
-  expanded: 'TRUE'
 
 vm.vm_1735395761_554956799:
   title: Resolve pending approvals
@@ -49,7 +44,6 @@ vm.vm_1735395761_554956799:
   weight: -520
   menu_name: tools
   parent: vm.vm_1735395761
-  expanded: 'TRUE'
 
 vm.vm_1735395761_1181421194:
   title: Register new guest
@@ -57,7 +51,6 @@ vm.vm_1735395761_1181421194:
   weight: -518
   menu_name: tools
   parent: vm.vm_1735395761
-  expanded: 'TRUE'
 
 vm.vm_1735395761_1961830993:
   title: People I invite
@@ -65,7 +58,6 @@ vm.vm_1735395761_1961830993:
   weight: -516
   menu_name: tools
   parent: vm.vm_1735395761
-  expanded: 'TRUE'
 
 vm.vm_1735395761_2431041440:
   title: Visits budget summary (by projects)
@@ -73,7 +65,6 @@ vm.vm_1735395761_2431041440:
   weight: -514
   menu_name: tools
   parent: vm.vm_1735395761
-  expanded: 'TRUE'
 
 vm.vm_3228126876:
   title: Events to endorse
@@ -81,7 +72,6 @@ vm.vm_3228126876:
   weight: -600
   menu_name: tools
   parent: vm.vm
-  expanded: 'TRUE'
 
 vm.vm_3228126876_3011957312:
   title: Mails exchange with applicants
@@ -89,7 +79,6 @@ vm.vm_3228126876_3011957312:
   weight: -637
   menu_name: tools
   parent: vm.vm_3228126876
-  expanded: 'TRUE'
 
 vm.vm_3228126876_98711347:
   title: A-Z applicant lists
@@ -97,7 +86,6 @@ vm.vm_3228126876_98711347:
   weight: -640
   menu_name: tools
   parent: vm.vm_3228126876
-  expanded: 'TRUE'
 
 vm.vm_3228126876_1972673686:
   title: See/Approve budget
@@ -105,7 +93,6 @@ vm.vm_3228126876_1972673686:
   weight: -635
   menu_name: tools
   parent: vm.vm_3228126876
-  expanded: 'TRUE'
 
 vm.vm_3228126876_2241340077:
   title: Who arrives when
@@ -113,7 +100,6 @@ vm.vm_3228126876_2241340077:
   weight: -630
   menu_name: tools
   parent: vm.vm_3228126876
-  expanded: 'TRUE'
 
 vm.vm_3228126876_2011102128:
   title: Who sits where Matrix
@@ -121,7 +107,6 @@ vm.vm_3228126876_2011102128:
   weight: -601
   menu_name: tools
   parent: vm.vm_3228126876
-  expanded: 'TRUE'
 
 vm.vm_3228126876_669090029:
   title: Who lives where
@@ -129,7 +114,6 @@ vm.vm_3228126876_669090029:
   weight: -620
   menu_name: tools
   parent: vm.vm_3228126876
-  expanded: 'TRUE'
 
 vm.vm_3862121824:
   title: Events I organize
@@ -137,7 +121,6 @@ vm.vm_3862121824:
   weight: -600
   menu_name: tools
   parent: vm.vm
-  expanded: 'TRUE'
 
 vm.vm_3862121824_235316326:
   title: Mails exchange with applicants
@@ -145,7 +128,6 @@ vm.vm_3862121824_235316326:
   weight: -637
   menu_name: tools
   parent: vm.vm_3862121824
-  expanded: 'TRUE'
 
 vm.vm_3862121824_3093446933:
   title: Approve & Accommodate applicants
@@ -153,7 +135,6 @@ vm.vm_3862121824_3093446933:
   weight: -640
   menu_name: tools
   parent: vm.vm_3862121824
-  expanded: 'TRUE'
 
 vm.vm_3862121824_2804193565:
   title: Budget estimation
@@ -161,7 +142,6 @@ vm.vm_3862121824_2804193565:
   weight: -635
   menu_name: tools
   parent: vm.vm_3862121824
-  expanded: 'TRUE'
 
 vm.vm_3862121824_4280338432:
   title: Who arrives when
@@ -169,7 +149,6 @@ vm.vm_3862121824_4280338432:
   weight: -630
   menu_name: tools
   parent: vm.vm_3862121824
-  expanded: 'TRUE'
 
 vm.vm_3862121824_224792861:
   title: Who sits where Matrix
@@ -177,7 +156,6 @@ vm.vm_3862121824_224792861:
   weight: -601
   menu_name: tools
   parent: vm.vm_3862121824
-  expanded: 'TRUE'
 
 vm.vm_3862121824_1566140992:
   title: Who lives where
@@ -185,7 +163,6 @@ vm.vm_3862121824_1566140992:
   weight: -620
   menu_name: tools
   parent: vm.vm_3862121824
-  expanded: 'TRUE'
 
 vm.vm_3862121824_2516207587:
   title: Agenda sync
@@ -193,7 +170,6 @@ vm.vm_3862121824_2516207587:
   weight: 730
   menu_name: tools
   parent: vm.vm_3862121824
-  expanded: 'TRUE'
 
 vm.vm_3862121824_423192063:
   title: Social events
@@ -201,7 +177,6 @@ vm.vm_3862121824_423192063:
   weight: 0
   menu_name: tools
   parent: vm.vm_3862121824
-  expanded: 'TRUE'
 
 vm.vm_3862121824_3712593275:
   title: Photos of attenders
@@ -209,7 +184,6 @@ vm.vm_3862121824_3712593275:
   weight: 0
   menu_name: tools
   parent: vm.vm_3862121824
-  expanded: 'TRUE'
 
 vm.vm_3862121824_3400815725:
   title: Duplicate applications
@@ -217,7 +191,6 @@ vm.vm_3862121824_3400815725:
   weight: 0
   menu_name: tools
   parent: vm.vm_3862121824
-  expanded: 'TRUE'
 
 vm.vm_1146336878:
   title: Administer
@@ -225,7 +198,6 @@ vm.vm_1146336878:
   weight: 700
   menu_name: tools
   parent: vm.vm
-  expanded: 'TRUE'
 
 vm.vm_1146336878_1889519746:
   title: Financial projects
@@ -233,7 +205,6 @@ vm.vm_1146336878_1889519746:
   weight: -783
   menu_name: tools
   parent: vm.vm_1146336878
-  expanded: 'TRUE'
 
 vm.vm_1146336878_3931660922:
   title: VM organizers
@@ -241,7 +212,6 @@ vm.vm_1146336878_3931660922:
   weight: -780
   menu_name: tools
   parent: vm.vm_1146336878
-  expanded: 'TRUE'
 
 vm.vm_1146336878_2516207587:
   title: Agenda sync
@@ -249,7 +219,6 @@ vm.vm_1146336878_2516207587:
   weight: 730
   menu_name: tools
   parent: vm.vm_1146336878
-  expanded: 'TRUE'
 
 vm.vm_1146336878_1353707045:
   title: Edit agenda list
@@ -257,7 +226,6 @@ vm.vm_1146336878_1353707045:
   weight: 728
   menu_name: tools
   parent: vm.vm_1146336878
-  expanded: 'TRUE'
 
 vm.vm_1146336878_2347876875:
   title: Merge avatars
@@ -265,7 +233,6 @@ vm.vm_1146336878_2347876875:
   weight: 0
   menu_name: tools
   parent: vm.vm_1146336878
-  expanded: 'TRUE'
 
 vm.vm_1146336878_520890834:
   title: Edit templates
@@ -273,7 +240,6 @@ vm.vm_1146336878_520890834:
   weight: 0
   menu_name: tools
   parent: vm.vm_1146336878
-  expanded: 'TRUE'
 
 vm.vm_1146336878_2895661681:
   title: Nordita social events
@@ -281,7 +247,6 @@ vm.vm_1146336878_2895661681:
   weight: 0
   menu_name: tools
   parent: vm.vm_1146336878
-  expanded: 'TRUE'
 
 vm.vm_1146336878_3477634891:
   title: Nordita reimbursement rates
@@ -289,7 +254,6 @@ vm.vm_1146336878_3477634891:
   weight: 0
   menu_name: tools
   parent: vm.vm_1146336878
-  expanded: 'TRUE'
 
 vm.vm_1146336878_1087860145:
   title: Syslog
@@ -297,7 +261,6 @@ vm.vm_1146336878_1087860145:
   weight: -785
   menu_name: tools
   parent: vm.vm_1146336878
-  expanded: 'TRUE'
 
 vm.vm_1146336878_2076298819:
   title: Task Manager
@@ -305,7 +268,6 @@ vm.vm_1146336878_2076298819:
   weight: -784
   menu_name: tools
   parent: vm.vm_1146336878
-  expanded: 'TRUE'
 
 vm.vm_1146336878_95737367:
   title: Duplicate avatars
@@ -313,7 +275,6 @@ vm.vm_1146336878_95737367:
   weight: 0
   menu_name: tools
   parent: vm.vm_1146336878
-  expanded: 'TRUE'
 
 vm.vm_1146336878_3400815725:
   title: Duplicate applications
@@ -321,7 +282,6 @@ vm.vm_1146336878_3400815725:
   weight: 0
   menu_name: tools
   parent: vm.vm_1146336878
-  expanded: 'TRUE'
 
 vm.vm_1146336878_423192063:
   title: Social events
@@ -329,7 +289,6 @@ vm.vm_1146336878_423192063:
   weight: 0
   menu_name: tools
   parent: vm.vm_1146336878
-  expanded: 'TRUE'
 
 vm.vm_1146336878_4280338432:
   title: Who arrives when
@@ -337,7 +296,6 @@ vm.vm_1146336878_4280338432:
   weight: -630
   menu_name: tools
   parent: vm.vm_1146336878
-  expanded: 'TRUE'
 
 vm.vm_1146336878_224792861:
   title: Who sits where Matrix
@@ -345,7 +303,6 @@ vm.vm_1146336878_224792861:
   weight: -601
   menu_name: tools
   parent: vm.vm_1146336878
-  expanded: 'TRUE'
 
 vm.vm_1146336878_1566140992:
   title: Who lives where
@@ -353,7 +310,6 @@ vm.vm_1146336878_1566140992:
   weight: -620
   menu_name: tools
   parent: vm.vm_1146336878
-  expanded: 'TRUE'
 
 vm.vm_1110161754:
   title: Accommodation
@@ -361,7 +317,6 @@ vm.vm_1110161754:
   weight: -400
   menu_name: tools
   parent: vm.vm
-  expanded: 'TRUE'
 
 vm.vm_1110161754_3061658821:
   title: Auto accommodate homeless
@@ -369,7 +324,6 @@ vm.vm_1110161754_3061658821:
   weight: -420
   menu_name: tools
   parent: vm.vm_1110161754
-  expanded: 'TRUE'
 
 vm.vm_1110161754_2643578627:
   title: Rooms
@@ -377,7 +331,6 @@ vm.vm_1110161754_2643578627:
   weight: -440
   menu_name: tools
   parent: vm.vm_1110161754
-  expanded: 'TRUE'
 
 vm.vm_1110161754_3055031512:
   title: Buildings
@@ -385,7 +338,6 @@ vm.vm_1110161754_3055031512:
   weight: -443
   menu_name: tools
   parent: vm.vm_1110161754
-  expanded: 'TRUE'
 
 vm.vm_312164533:
   title: Visits within events
@@ -393,7 +345,6 @@ vm.vm_312164533:
   weight: -800
   menu_name: tools
   parent: vm.vm
-  expanded: 'TRUE'
 
 vm.vm_312164533_2390165421:
   title: Mails exchange with attenders
@@ -401,7 +352,6 @@ vm.vm_312164533_2390165421:
   weight: -285
   menu_name: tools
   parent: vm.vm_312164533
-  expanded: 'TRUE'
 
 vm.vm_312164533_2685818727:
   title: Print badges
@@ -409,7 +359,6 @@ vm.vm_312164533_2685818727:
   weight: -220
   menu_name: tools
   parent: vm.vm_312164533
-  expanded: 'TRUE'
 
 vm.vm_312164533_3499549732:
   title: Print photos
@@ -417,7 +366,6 @@ vm.vm_312164533_3499549732:
   weight: -215
   menu_name: tools
   parent: vm.vm_312164533
-  expanded: 'TRUE'
 
 vm.vm_312164533_3547099288:
   title: List of attenders
@@ -425,7 +373,6 @@ vm.vm_312164533_3547099288:
   weight: -289
   menu_name: tools
   parent: vm.vm_312164533
-  expanded: 'TRUE'
 
 vm.vm_312164533_4280338432:
   title: Who arrives when
@@ -433,7 +380,6 @@ vm.vm_312164533_4280338432:
   weight: -630
   menu_name: tools
   parent: vm.vm_312164533
-  expanded: 'TRUE'
 
 vm.vm_312164533_224792861:
   title: Who sits where Matrix
@@ -441,7 +387,6 @@ vm.vm_312164533_224792861:
   weight: -601
   menu_name: tools
   parent: vm.vm_312164533
-  expanded: 'TRUE'
 
 vm.vm_312164533_1566140992:
   title: Who lives where
@@ -449,7 +394,6 @@ vm.vm_312164533_1566140992:
   weight: -620
   menu_name: tools
   parent: vm.vm_312164533
-  expanded: 'TRUE'
 
 vm.vm_312164533_2590773865:
   title: Export tenants Excel files
@@ -457,7 +401,6 @@ vm.vm_312164533_2590773865:
   weight: -270
   menu_name: tools
   parent: vm.vm_312164533
-  expanded: 'TRUE'
 
 vm.vm_312164533_2870145926:
   title: Budget estimation
@@ -465,7 +408,6 @@ vm.vm_312164533_2870145926:
   weight: -287
   menu_name: tools
   parent: vm.vm_312164533
-  expanded: 'TRUE'
 
 vm.vm_312164533_3400815725:
   title: Duplicate applications
@@ -473,7 +415,6 @@ vm.vm_312164533_3400815725:
   weight: 0
   menu_name: tools
   parent: vm.vm_312164533
-  expanded: 'TRUE'
 
 vm.vm_2879110490:
   title: Offices
@@ -481,7 +422,6 @@ vm.vm_2879110490:
   weight: -300
   menu_name: tools
   parent: vm.vm
-  expanded: 'TRUE'
 
 vm.vm_2879110490_2522640501:
   title: Allocate offices
@@ -489,7 +429,6 @@ vm.vm_2879110490_2522640501:
   weight: -650
   menu_name: tools
   parent: vm.vm_2879110490
-  expanded: 'TRUE'
 
 vm.vm_2879110490_1781644875:
   title: Print desk labels
@@ -497,7 +436,6 @@ vm.vm_2879110490_1781644875:
   weight: -660
   menu_name: tools
   parent: vm.vm_2879110490
-  expanded: 'TRUE'
 
 vm.vm_2879110490_674851594:
   title: Who sits where Matrix
@@ -505,7 +443,6 @@ vm.vm_2879110490_674851594:
   weight: -690
   menu_name: tools
   parent: vm.vm_2879110490
-  expanded: 'TRUE'
 
 vm.vm_2879110490_4268120242:
   title: Wipe allocations
@@ -513,7 +450,6 @@ vm.vm_2879110490_4268120242:
   weight: -640
   menu_name: tools
   parent: vm.vm_2879110490
-  expanded: 'TRUE'
 
 vm.vm_2879110490_1410577895:
   title: Print door labels
@@ -521,7 +457,6 @@ vm.vm_2879110490_1410577895:
   weight: -670
   menu_name: tools
   parent: vm.vm_2879110490
-  expanded: 'TRUE'
 
 vm.vm_2879110490_954465053:
   title: Who sits where List
@@ -529,7 +464,6 @@ vm.vm_2879110490_954465053:
   weight: -680
   menu_name: tools
   parent: vm.vm_2879110490
-  expanded: 'TRUE'
 
 vm.vm_2045174345:
   title: Events
@@ -537,5 +471,4 @@ vm.vm_2045174345:
   weight: 0
   menu_name: tools
   parent: vm.vm
-  expanded: 'TRUE'
 
