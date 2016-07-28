@@ -309,16 +309,13 @@ $(document).ready(function() {
 	  // Write the script into a file
 	  $fn = drupal_get_path('module','myPear')."/myPear.inline.js";
 	  if (!$n_entry++){
-	    $ok = (file_exists($fn)
-		   ? unlink($fn)
-		   : True);
+	    $ok = (file_exists($fn) ? unlink($fn) : True);
 	    if (!$ok) myPear::ERROR("Can't create file $fn");
 	  }
 	  $file = @fopen($fn,"a");
 	  if (empty($file)){
 	    myPear::ERROR("Can't write to file $fn");
 	  }else{
-	    d8::dbg();
 	    fwrite($file,$js_code."\n");
 	    fclose($file);
 	  }

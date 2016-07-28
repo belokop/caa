@@ -27,16 +27,18 @@ class myTwigExtension extends \Twig_Extension{
       if ($module == myPear_MODULE && !superUser_here) continue;
       $tabh[] = "<li ><a href='$module?q=$module'>$descr[d] </a></li>";
     }
-    return x('h4','Select the desired Application:') . x('ul',join("\n",(empty($tabh)?[]:$tabh)));
+    return $this->signature(__FUNCTION__,
+                            x('h4','Select the desired Application:') . x('ul',join("\n",(empty($tabh)?[]:$tabh))));
   }
   
   /*
    *
    */
   public function mypear_fp_title(){
-    return 'Welcome to the '.(defined('myOrg_name') ? myOrg_name : '').' <br/>Computer Aided Administration';
+      return $this->signature(__FUNCTION__,
+                              'Welcome to the '.(defined('myOrg_name') ? myOrg_name : '').' <br/>Computer Aided Administration');
   }
-
+  
   /*
    * 
    */
@@ -55,16 +57,17 @@ class myTwigExtension extends \Twig_Extension{
       $reply = x('ul class="mypear_login"',$reply);
     }
     \D8::dbg(\b_fmt::escape($reply));
-    return $reply;
+    return $this->signature(__FUNCTION__,$reply);
   }
 
   /*
    *
    */
   public function mypear_module(){
-    return (empty($GLOBALS['myPear_current_module'])
-	    ? ''
-	    : $GLOBALS['myPear_current_module'].' '.constant(strToUpper($GLOBALS['myPear_current_module']).'_VERSION'));
+      return $this->signature(__FUNCTION__,
+                              (empty($GLOBALS['myPear_current_module'])
+                               ? ''
+                               : $GLOBALS['myPear_current_module'].' '.constant(strToUpper($GLOBALS['myPear_current_module']).'_VERSION')));
   }
 
   /*
@@ -74,12 +77,18 @@ class myTwigExtension extends \Twig_Extension{
     if (class_exists('b_reg',False) && !empty(\b_reg::$modules[\b_reg::$current_module])){
       $reg = \b_reg::$modules[\b_reg::$current_module];
       $module_v = sprintf('%s&nbsp;%s',$reg['m'],$reg['v']);
-      return $reg['r'];
+      return $this->signature(__FUNCTION__,$reg['r']);
     }else{
-      return '';
+      return $this->signature(__FUNCTION__);
     }
   }
 
+  private function signature($who,$body=''){
+      return (defined('cnf_dev') && cnf_dev
+              ? join("\n",["","<!-- start twig extension $who -->",$body,"<!-- end twig extension $who -->",""])
+              : $body);
+  }
+  
   /*
    *
    */
