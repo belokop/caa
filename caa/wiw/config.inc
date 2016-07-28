@@ -72,4 +72,3 @@ class WIW extends myPear{
     return $reply;
   }
 }
-if (class_exists('Drupal\myPear\menuHandler',False)) Drupal\myPear\menuHandler::_toggle_menu_items(\b_reg::get_modules());

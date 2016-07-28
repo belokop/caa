@@ -2,10 +2,10 @@
 
 /**
  * @file
- * Contains \Drupal\myPear\components\AccessController.
+ * Contains \Drupal\myPear\access\AccessController.
  */
 
-namespace Drupal\myPear\components;
+namespace Drupal\myPear\access;
 
 use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Routing\Access\AccessInterface;
@@ -113,7 +113,7 @@ class AccessController implements AccessInterface{
   }      
   
   private function dbg($text=''){
-      \D8::dbg($text,$this,3);
+    \D8::dbg($text,$this,3);
   }
 }
 
@@ -151,15 +151,18 @@ class menuHandler{
    *
    */
   public  function toggle_menu_items($module_list){
-    
-    static $dejaVu = 0;
-    if ($dejaVu++) return;
+    static $dejaVu = 0;    if ($dejaVu++) return;
+
+    $menus_to_preprocess = array('main','tools');
+    $menus_to_preprocess = array('main');
+    $modules_to_preprocess = array_intersect(module_list(),$module_list);
+    $this->dbg(['modules'=>$modules_to_preprocess,'menus'=>$menus_to_preprocess]);
     
     bAuth();
     myOrg();
     
     foreach(array_intersect(module_list(),$module_list) as $module){
-      foreach(array('main','tools') as $menu_name){
+      foreach($menus_to_preprocess as $menu_name){
         $this->_toggle_menu_items_exec($module,$menu_name);
       }
     }

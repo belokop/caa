@@ -71,13 +71,15 @@
   color: #a51b00;
 }
 /* --------------- debug --------------- */
+.messages--debug {
+  font-family: monospace;
+}
 .messages--info, 
 .messages--debug {
   background-color: white;
   color: grey;
   border-color: grey grey grey transparent;  /* LTR */
   box-shadow: -8px 0 0 grey; /* LTR */
-  font-family: monospace;
 }
 [dir="rtl"] .messages--info,
 [dir="rtl"] .messages--debug {

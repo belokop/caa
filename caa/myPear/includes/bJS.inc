@@ -299,19 +299,30 @@ $(document).ready(function() {
 	case 6: 
 	  drupal_add_js($js_code, 'inline', 'footer');
 	  break;
+
 	case 7:
 	  drupal_add_js($js_code, array('type'=>'inline','scope'=>'footer')); 
 	  break;
+
 	case 8:
 	  static $n_entry = 0;
 	  // Write the script into a file
-	  $fn = "/tmp/myPear.inline.js";
-	  if (!$n_entry++) system("rm -rf $fn && touch $fn");
-	  $file = fopen($fn,"a");
-	  fwrite($file,$js_code."\n\n");
-	  fclose($file);
-
-	  global $myPear_page_attachments;
+	  $fn = drupal_get_path('module','myPear')."/myPear.inline.js";
+	  if (!$n_entry++){
+	    $ok = (file_exists($fn)
+		   ? unlink($fn)
+		   : True);
+	    if (!$ok) myPear::ERROR("Can't create file $fn");
+	  }
+	  $file = @fopen($fn,"a");
+	  if (empty($file)){
+	    myPear::ERROR("Can't write to file $fn");
+	  }else{
+	    d8::dbg();
+	    fwrite($file,$js_code."\n");
+	    fclose($file);
+	  }
+	  // global $myPear_page_attachments;
 	  // $myPear_page_attachments['script'][] = $js_code;
 	  break;
 	case 9:

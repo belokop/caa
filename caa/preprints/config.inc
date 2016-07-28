@@ -110,5 +110,3 @@ function PRP_submitters(){
 function prp_used_by_myOrg(){
   return array('nordita');
 }
-
-if (class_exists('Drupal\myPear\menuHandler',False)) Drupal\myPear\menuHandler::_toggle_menu_items(\b_reg::get_modules());

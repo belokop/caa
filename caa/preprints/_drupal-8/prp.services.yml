@@ -1,6 +1,6 @@
 services:
   prp.access_checker:
-    class: Drupal\myPear\components\AccessController
+    class: Drupal\myPear\access\AccessController
     arguments: ['@entity.manager']
     tags:
       - { name: access_check, applies_to: _access_check_token }

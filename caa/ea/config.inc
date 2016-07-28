@@ -27,5 +27,3 @@ define('ea_see_a',b_cnf::get('ea_see_a'));  if (ea_see_a) $ea_tmp[] = 'Alumni';
 define('ea_see_e',b_cnf::get('ea_see_e'));  if (ea_see_e) $ea_tmp[] = 'Stuff';
 
 define('ea_year', b_cnf::get('ea_year',date('Y',time())));
-
-if (class_exists('Drupal\myPear\menuHandler',False)) Drupal\myPear\menuHandler::_toggle_menu_items(\b_reg::get_modules());

@@ -79,5 +79,3 @@ class LIC extends myPear{
   }
 
 }
-
-if (class_exists('Drupal\myPear\menuHandler',False)) Drupal\myPear\menuHandler::_toggle_menu_items(\b_reg::get_modules());

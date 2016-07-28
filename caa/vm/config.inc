@@ -1057,4 +1057,3 @@ function VM_unit($rank,$module=VM_MODULE,$org=myOrg_ID){
   default:  b_debug::internalError("Unexpected rank '$rank'");
   }
 }
-if (class_exists('Drupal\myPear\menuHandler',False)) Drupal\myPear\menuHandler::_toggle_menu_items(\b_reg::get_modules());

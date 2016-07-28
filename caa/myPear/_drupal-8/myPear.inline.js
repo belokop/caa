@@ -1,1 +1,0 @@
-/tmp/myPear.inline.js
