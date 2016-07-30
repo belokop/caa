@@ -22,8 +22,6 @@ function AC(){
 
 class AccessController implements AccessInterface{ 
 
-  public $route = Null;
-
   /*
    * Activate the current module menu, deactivate the others
    */
@@ -39,19 +37,21 @@ class AccessController implements AccessInterface{
    */
   public function access(Route $route){
     
-    $this->route = $route;
     $reply = $this->_access_exec($route->getPath());
-    if (!$reply) \myPear::ERROR(sprintf("??? %s(%s) access forbidden, but the link is active",
-                                        $route->getPath(),$this->tab));
+
+    if ($reply){
+    // Update on the fly the menu database.
+    // However, to my understanding that should be done by the Drupal core...
+      MH()->toggle_enabled($this->menu_route,$reply);
+      MH()->toggle_enabled('clean cache');
+    }else{
+      \myPear::ERROR(sprintf("??? %s(%s) access forbidden, the link is not active(?), who called the method??",
+			     $route->getPath(),$this->tab));
+    }
+    
     $this->dbg(array('path' => $route->getPath(),
 		     'tab'  => $this->tab,
 		     'reply'=>var_export($reply,True)));
-
-    // Update on the fly the menu database.
-    // However, to my understanding that should be done by the Drupal core...
-    MH()->toggle_enabled($this->menu_route,$reply); // ,($reply ? True : 'any'));
-    MH()->toggle_enabled('clean cache');
-
     return ($reply ? AccessResult::allowed() : AccessResult::forbidden()); 
   }
   
@@ -153,8 +153,15 @@ class menuHandler{
    */
   public function toggle_menu_items($module_list){
     static $dejaVu = 0;    if ($dejaVu++) return;
-    
-    $menus_to_preprocess = ['main']; // ['main','tools'] 
+  
+    // Do not deactivate items in the tools menu,
+    // after activation the become "permanently collapsed" (bug in D8??)
+    // Workaround - hiding the menu items, see my twig extesion class Drupal\myPear\components\myTwigExtension
+    //
+    //$menus_to_preprocess = ['main','tools']; 
+    //
+    $menus_to_preprocess = ['main']; 
+
     $modules_to_preprocess = array_intersect(module_list(),$module_list); sort($modules_to_preprocess);
     //    $this->dbg(['modules'=>$modules_to_preprocess]);
     
