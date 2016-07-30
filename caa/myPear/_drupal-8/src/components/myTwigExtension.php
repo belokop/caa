@@ -87,6 +87,16 @@ class myTwigExtension extends \Twig_Extension{
     }
   }
 
+  /*
+   * D8 features Workaround 
+   */
+  public function mypear_hidden_item(\Drupal\Core\Url $url){
+    list($m,$p) = explode('.',$url->getRouteName());
+    $to_be_hidden = (($m == $p) && ($m != \b_reg::$current_module));
+    if ($to_be_hidden) \D8::dbg(['module'=>$m,'to hide'=>$to_be_hidden]);
+    return $to_be_hidden;
+  }
+
   private function signature($who,$body=''){
       return (defined('cnf_dev') && cnf_dev
               ? join("\n",["","<!-- start twig extension $who -->",$body,"<!-- end twig extension $who -->",""])
@@ -97,7 +107,7 @@ class myTwigExtension extends \Twig_Extension{
    *
    */
   public function getFunctions(){
-    foreach (array('module','date','login','is_fp','fp_title','fp_content') as $ext){
+    foreach (array('hidden_item','module','date','login','is_fp','fp_title','fp_content') as $ext){
       $functions["mypear_$ext"] = new \Twig_Function_Method($this, "mypear_$ext");
     }
     return $functions;

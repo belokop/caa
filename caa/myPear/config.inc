@@ -1,6 +1,6 @@
 <?php
 // myPear module 
-$releaseDate = '2016-07-28';
+$releaseDate = '2016-07-30';
 define('myPear_VERSION','5.142');
 define('myPear_MODULE', 'myPear');
 define('myPear_DATE',    $releaseDate);

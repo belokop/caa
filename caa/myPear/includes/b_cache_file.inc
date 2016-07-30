@@ -51,8 +51,8 @@ class b_cache_file{
     if (!empty($fileName)) $this->file = $this->cacheArea . $fileName;
 
     // On Windows it does not work... Not yet tested on Drupal8.
-    if (b_os::type() == 'win')  self::$cachePosible = False;
-    if (class_exists('Drupal',False))  $_GET['resetcache_once'] = 1;
+    if (b_os::type() == 'win')         self::$cachePosible = False;
+    if (class_exists('Drupal',False))  self::$cachePosible = False;
     
     // Optionally wipe the cache
     if (self::$cachePosible){
@@ -81,7 +81,10 @@ class b_cache_file{
    */
   function notYetReady($use_GET_as_trigger=True){
 
-    if (!self::$cachePosible) return True;
+    if (!self::$cachePosible){
+      ob_start();
+      return True;
+    }
 
     /*
      * Construct the cache file name
@@ -209,6 +212,9 @@ class b_cache_file{
     if ($this->debug) b_debug::xxx($text,array(3,'greenText',$this,True));
   }
 
+  /*
+   *
+   */
   function get(){
     if (self::$cachePosible){
       switch ($this->state){
@@ -254,11 +260,12 @@ class b_cache_file{
 	}
 	$this->dbg($this->state.' - '.$this->file);
 	return $content;
-
-      default:
-	$this->dbg('cache is off');
-	return '';
       }
+    }else{
+      // cache is not posible...
+      $content = ob_get_contents();
+      ob_end_clean();
+      return $content;
     }
   }
   

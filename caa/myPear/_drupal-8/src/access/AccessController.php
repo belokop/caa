@@ -46,12 +46,12 @@ class AccessController implements AccessInterface{
     $this->dbg(array('path' => $route->getPath(),
 		     'tab'  => $this->tab,
 		     'reply'=>var_export($reply,True)));
-    
+
     // Update on the fly the menu database.
     // However, to my understanding that should be done by the Drupal core...
     MH()->toggle_enabled($this->menu_route,$reply); // ,($reply ? True : 'any'));
     MH()->toggle_enabled('clean cache');
- 
+
     return ($reply ? AccessResult::allowed() : AccessResult::forbidden()); 
   }
   
@@ -148,25 +148,26 @@ class menuHandler{
   }
 
   /*
-   * The main menu dosn't show modules which are not used by the current organization,
-   * and the tools menu shows only the tree for the current module tree
+   * The main menu should not show modules which are not used by the current organization,
+   * and the tools menu shows only the tree for the current module 
    */
-  public  function toggle_menu_items($module_list){
+  public function toggle_menu_items($module_list){
     static $dejaVu = 0;    if ($dejaVu++) return;
     
+    $menus_to_preprocess = ['main']; // ['main','tools'] 
     $modules_to_preprocess = array_intersect(module_list(),$module_list); sort($modules_to_preprocess);
-    $this->dbg(['modules'=>$modules_to_preprocess]);
+    //    $this->dbg(['modules'=>$modules_to_preprocess]);
     
     bAuth();
     myOrg();
     
     $APImenu = new \APImenu();
-    foreach(['main','tools'] as $menu_name){
+    foreach($menus_to_preprocess as $menu_name){
       foreach($modules_to_preprocess as $module){
 	$enabled = ($APImenu->_used_by_myOrg($module) &&
 		    (($menu_name == 'main') || ($module === $GLOBALS['myPear_current_module'])));
 	$route_name = $this->get_all_route_names($module,$menu_name,True);
-	// $this->dbg(['route'=>$route_name,'access'=>(bool)$enabled]);;
+	// $this->dbg(['access'=>(bool)$enabled,'route'=>$route_name]);
 	AC()->tab = $module;
 	$this->toggle_enabled($route_name,$enabled,'any');
       }
@@ -226,10 +227,11 @@ class menuHandler{
       if (($e=((bool)$link['enabled']  !== (bool)$enabled)) || 
 	  ($x=((bool)$link['expanded'] !== (bool)$expanded))){
 
+	// debugging block
 	if ($e) $dbg['enabled'] = var_export((bool)$link['enabled'],True) .'->'.var_export((bool)$enabled,True);
 	if ($x) $dbg['expanded']= var_export((bool)$link['expanded'],True).'->'.var_export((bool)$expanded,True);
 	$dbg['menu'] = $link['menu_name'];
-	$this->dbg($dbg);
+	// $this->dbg($dbg);
 
 	$this->toggle_counter++;
 	$link['enabled']  = $enabled  ? 1 : 0; 
