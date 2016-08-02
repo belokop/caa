@@ -194,7 +194,7 @@ class APImenu_vm extends APImenu_ea{
     
     $this->start();
 
-    if (!$this->_used_by_myOrg(VM_MODULE)){
+    if (!self::_used_by_myOrg(VM_MODULE)){
       // Organization restrictions
       $reply = False;
     }elseif ((b_reg::$current_module === VM_MODULE) && ($_GET['q'] !== VM_MODULE) && !bAuth()->loginPrompt()){

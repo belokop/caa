@@ -4,8 +4,9 @@
  */
 
 define('b_rawData','raw');
+locateAndInclude('myPear_base');
 
-class myPear_getValue{
+class myPear_getValue extends myPear_base{
 
   public $TABLE           = Null;
   public $TABLEID         = Null;
@@ -23,8 +24,6 @@ class myPear_getValue{
   public $vars = array();
 
   public $show_gv         = False;
-  public $debug           = False;
-  public static $_debug   = False;
 
   protected $dbg_color = 'blackText';
 
@@ -87,34 +86,6 @@ class myPear_getValue{
     return str_replace('bForm_','',get_class($this)) . '('.implode(',',$ids).')';
   }
 
-  //                  $id,     $text,   $force,      $addLevel
-  protected function dbg($arg0='',$arg1='',$arg2=False, $arg3=0) {
-
-    // Monitor the change of a variable 
-    /*
-    if (stripos(get_class($this),'bList') !== False)    b_debug::watchDog(@$this->TABLEID,$this);
-    if (0) b_debug::watchDog(@$this->isMBE['av_citizenship'],$this,True);
-    if (0) b_debug::watchDog(@$this->isRO['av_birthdate'],$this,True);
-    if (0) b_debug::watchDog($this->MODE,$this,(stripos(get_class($this),'Lease')));
-    if (0) b_debug::watchDog("$this->t",get_class($this),True);
-    if (0) b_debug::watchDog($this->debug,$this,(stripos(get_class($this),'Avatar') !== False));
-    if (0) $x=defined('superUser_here');  if (class_exists('b_debug',0)) b_debug::watchDog($x);
-    if (stripos(get_class($this),'Visit') !== False)    b_debug::watchDog(@$this->isRO['v_status'],$this);
-    */
-
-    switch(func_num_args()){
-    case 0: 
-      return b_debug::xxx(' ',  array(3,$this, (bool)($this->debug||self::$_debug), $this->dbg_color));
-    case 1:
-      return b_debug::xxx($arg0,array(3,$this, (bool)($this->debug||self::$_debug), $this->dbg_color));
-    case 2:  
-      if    (is_bool($arg1))  return b_debug::xxx($arg0,array($arg1,3,'redText',$this));
-      elseif(is_array($arg1)) return b_debug::xxx($arg0,$arg1);
-    default: 
-      return b_debug::xxx($arg1,array(3+$arg3,$this, (bool)($this->debug || self::$_debug || $arg2), $this->dbg_color));
-    }
-  }
-    
   /*
    * Is manager here?
    */

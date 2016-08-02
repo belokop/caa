@@ -65,7 +65,7 @@ foreach(array('links.menu','routing') as $yml){
 }
 
 $_title_callback = "_".$module."_title_callback";
-if (!function_exists($_title_callback)) die("Where is $_title_callback???");
+if (!function_exists($_title_callback)) die(__FILE__.": where is $_title_callback???\n");
 
 $menu_tree = $menu->build_menuTree('dummy_page_callback','dummy_access_callback');
 
@@ -86,8 +86,12 @@ foreach($menu_tree as $path=>$item){
     $parent = '';
     $access = 'main_menu';
     $expanded = False;
+    // Make the main menu path different from the tools menu, this helps in debugging
+    $path_sv = $path;
+    $path .= '/';
     build_routing_yml($file['routing']);
     build_links_menu_yml($file['links.menu']);  
+    $path = $path_sv;
   }
 
   // Build "left menu"

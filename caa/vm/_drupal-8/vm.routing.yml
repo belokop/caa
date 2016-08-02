@@ -1,5 +1,5 @@
 vm.main_menu:
-  path: /vm
+  path: /vm/
   defaults:
     _controller:     Drupal\myPear\components\PageController::getPageContent
     _title_callback: Drupal\myPear\components\PageController::getPageTitle

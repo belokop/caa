@@ -1326,7 +1326,7 @@ class bList extends myPear_getValue{
   public $extra_buttons = array();
   protected function draw_buttons(){
     $reply = array();
-    if ($this->isWritable() && $this->isAddable()) {
+    if ($this->isAddable()) {
       $reply[] = b_btn::submit("add new ".$this->memberTitle(),
 			       $this->get_action('add'),
 			       $confirm=True);
@@ -1372,7 +1372,9 @@ class bList extends myPear_getValue{
    * Possible to add a new member to the list?
    */
   function isAddable(){
-    return $this->isWritable();
+    $reply = $this->isWritable();
+    b_debug::xxx($reply);
+    return $reply;
   }
 
   /*

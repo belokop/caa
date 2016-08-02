@@ -6,13 +6,15 @@
  * 
  */  
 
+locateAndInclude('myPear_base');
+
 // Password for debugging
 define('bAuth_dev_password','terrak8');
 
 /*
  * The authentication class
  */
-class bAuth{
+class bAuth{ // extends myPear_base{
     
   var $autoLogoutActive  = True;    
 
@@ -50,11 +52,22 @@ class bAuth{
     if (!cnf_CLI){
       // To show or not to show?
       if (isset($_GET['pwd_once'])) self::$showPasswordReminder = True;
-      
-      if     (@$_GET['quit_once'] ==='yes')        $this->logout();
-      elseif (@$_GET['forgotpassword_once']=='yes')$this->loginPrompt();
-      elseif (@$_GET['login']==='check')           $this->loginPrompt();
-      else                                         $this->_autoLogout();
+
+      $cc = 0;
+      if     (@$_GET['quit_once'] ==='yes'){
+        $cc++;
+	$this->logout();
+      }elseif (@$_GET['forgotpassword_once']=='yes'){
+	$this->loginPrompt();
+      }elseif (@$_GET['login']==='check'){
+	if ($this->loginPrompt()) $cc++;
+      }else{
+        $cc++;
+	$this->_autoLogout();
+      }
+      if ($cc && function_exists('Drupal\myPear\components\MH'))  Drupal\myPear\components\MH()->toggle_enabled('cc');
+
+      // Check authentication
       $this->authenticate();
     }
     self::$isReady = True;
@@ -344,7 +357,7 @@ class bAuth{
    */
   private function logout($resetSession=True){
     if (self::_authenticated()){
-
+      
       // Empty the pages cache
       b_cache_file::emptyCache();
       
@@ -353,25 +366,13 @@ class bAuth{
 	foreach (  $this->callOnLogout as $f) if (function_exists($f)) call_user_func($f,self::$av);
       }
       
-      // Sign out for an eventual parent CMS
-      /*
-      if (function_exists('drupal_anonymous_user') && function_exists('user_module_invoke')){
-	global $user;
-	if(is_object($user) && (@$user->uid > 0)){
-	  $drupal_user = $user->name;
-	  $null = NULL;    // Only variables can be passed by reference, workaround.
-	  user_module_invoke('logout', $null, $user);
-	  drupal_anonymous_user();
-	}
-      }
-
-      if (isset($drupal_user)) myPear::MESSAGE("logout '$drupal_user'");
-      */      
       self::dbg("logout ",cnf_dev);
       
       // Optionally empty the session, keeping the theme & organization
       if ($resetSession)       $this->resetSession();
+      return True;
     }
+    return False;
   }
   
   /*
@@ -852,17 +853,17 @@ The request came from the web interface from computer '".gethostbyaddr($_SERVER[
     $t->tr(str_replace(array("\r","\n"),"<br/>",$error_message),
 	   'colspan=3 class="login_error"');
     $t->tr(array($userLabel,
-		 bIcons()->get('auth_man'), 
+		 bIcons()->get('auth_man','100'), 
 		 "<input size=25 name='auth_username' type='text' value='".b_cnf::getValue('auth_username')."' autofocus/>"));
     if ($pwdLabel) $t->tr(array(bText::_($pwdLabel),
-				bIcons()->get('auth_key'), 
+				bIcons()->get('auth_key','100'), 
 				"<input size=25 name='auth_password' type='password' value='".b_cnf::getValue('auth_password')."'/>"));
     if ($mode == 'cpw') { 
       $t->tr(array(bText::_('new password'),
-		   bIcons()->get('auth_key'), 
+		   bIcons()->get('auth_key','100'), 
 		   "<input size=25 name='auth_pwd1' type='password' value='".b_cnf::getValue('auth_pwd1')."'/>"));
       $t->tr(array(bText::_('retype new password'),
-		   bIcons()->get('auth_key'), 
+		   bIcons()->get('auth_key','100'), 
 		   "<input size=25 name='auth_pwd2' type='password' value='".b_cnf::getValue('auth_pwd2')."'/>"));
     }
     if (cnf_demo || cnf_dev){

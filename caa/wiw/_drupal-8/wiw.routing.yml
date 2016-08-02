@@ -1,5 +1,5 @@
 wiw.main_menu:
-  path: /wiw
+  path: /wiw/
   defaults:
     _controller:     Drupal\myPear\components\PageController::getPageContent
     _title_callback: Drupal\myPear\components\PageController::getPageTitle
@@ -24,14 +24,6 @@ wiw.wiw_1088763606:
 
 wiw.wiw_1088763606_3956320423:
   path: /wiw/1088763606/3956320423
-  defaults:
-    _controller:     Drupal\myPear\components\PageController::getPageContent
-    _title_callback: Drupal\myPear\components\PageController::getPageTitle
-  requirements:
-    _access_check_token: 'TRUE'
-
-wiw.wiw_1439710518:
-  path: /wiw/1439710518
   defaults:
     _controller:     Drupal\myPear\components\PageController::getPageContent
     _title_callback: Drupal\myPear\components\PageController::getPageTitle

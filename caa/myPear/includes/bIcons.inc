@@ -130,6 +130,7 @@ class bIcons{
       if (!empty($f)){
  	$description = (string)@self::$iconsPool[$icon]['d'];
 
+	list($helper,$c) = explode(':',$helper,2);
 	switch($helper){
 
 	case 'submit':
@@ -145,12 +146,17 @@ class bIcons{
 	  $reply = "<span class='opacity_on'><input src='$f' type='image' name='_button' title='$description' alt='' /></span>";
 	  break;
 	  
+	case '100':	  
+	  $class[] = 'min100';
 	default:
 	  if ($description){
 	    if (isset(self::$iconsPool[$icon]['X'])) unset(self::$iconsPool[$icon]['u']);
 	    elseif  (!$this->hide_explainIcons)               $this->toExplain[] = $icon;
 	  }
-	  if ($c = @self::$iconsPool[$icon]['c']) $c = "class='$c'";
+	  if ($c = @self::$iconsPool[$icon]['c']) $class[] = $c;
+	  $c = (empty($class)
+		? ''
+		: sprintf("class='%s'",join(' ',$class)));
 	  $img = "<img src='$f' alt='".b_fmt::escape($description)."' $c />"; 
 	  if(!cnf_inside_fb && $this->showToolTips && $description) $reply = bJS()->tip($img,$description);
 	  else                                                      $reply = $img;
@@ -205,7 +211,9 @@ class bIcons{
 	case 'flag':
 	  $helper = 'flags';
 	default:
-	  $f = myPear_images."/$helper/$img.$ext";
+	  $f = (is_dir(myPear_images."/".$helper)
+		? myPear_images."/$helper/$img.$ext"
+		: myPear_images."/$img.$ext");
 	}
 	// file_exists($f) will fail in the 'clean url mode', hence check the full path
 	if (file_exists(b_os::url2path($f))){

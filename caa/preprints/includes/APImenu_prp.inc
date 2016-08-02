@@ -62,7 +62,7 @@ class APImenu_prp extends APImenu{
     if (!self::startup())  return False;
 
     // Organization restrictions
-    if (!$this->_used_by_myOrg(PRP_MODULE)) return False;
+    if (!self::_used_by_myOrg(PRP_MODULE)) return False;
 
     if (($reply = $this->access_callback($tab))===Null){
       

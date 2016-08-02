@@ -1,5 +1,5 @@
 prp.main_menu:
-  path: /prp
+  path: /prp/
   defaults:
     _controller:     Drupal\myPear\components\PageController::getPageContent
     _title_callback: Drupal\myPear\components\PageController::getPageTitle

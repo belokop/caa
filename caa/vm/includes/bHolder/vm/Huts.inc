@@ -5,7 +5,7 @@ class bHolder_vm_Huts extends bHolder_vm{
   var $debug = False;
   var $repetValuesCol1only = True;
 
-  public function __construct($title='All huts'){
+  public function __construct($title='All available buildings'){
     $this->dbg();
     parent::__construct();
     $this->title = bText::_($title);
@@ -14,8 +14,8 @@ class bHolder_vm_Huts extends bHolder_vm{
   function query(){
     $_GET['sBy'] = 'hut_code';
     return myPear_db()->qquery("SELECT * FROM abs_huts ".
-				 " WHERE hut_code != '".HUT_BI."'".
-				 " ORDER BY hut_code,hut_name ASC ",$this->debug); 
+			       " WHERE hut_code != '".HUT_BI."'".
+			       " ORDER BY hut_code,hut_name ASC ",$this->debug); 
   }
     
   function header(){

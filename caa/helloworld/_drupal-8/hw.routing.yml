@@ -4,5 +4,5 @@ hw.render:
     _controller: '\Drupal\hw\hwController::render'
     _title: 'Title hw.render'
   requirements:
-    _permission: 'access content'
+    _permission: 'TRUE'
 

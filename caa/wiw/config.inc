@@ -1,5 +1,5 @@
 <?php
-$releaseDate = '2016-07-28';
+$releaseDate = '2016-08-02';
 define('WIW_MODULE'   , 'wiw');
 define('WIW_VERSION','5.13.rc');
 
@@ -61,7 +61,13 @@ class WIW extends myPear{
   static public function _MENU()  { 
     locateAndInclude('APIaccess_wiw.inc');
     WIW_access();
-    return self::_fromCache('APImenu_wiw'); 
+
+    static $menu = Null;
+    if (empty($menu)){
+      locateAndInclude('APImenu_wiw.inc'); 
+      $menu = new APImenu_wiw();
+    }
+    return $menu;
   }
 
   /*

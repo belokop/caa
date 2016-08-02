@@ -25,14 +25,17 @@ class myTwigExtension extends \Twig_Extension{
   public function mypear_fp_content(){
     myPear_init();
     \b_reg::load_module();
-    $api = new \APImenu();
+     $tabh[] = x('h4','Select the desired Application:');
     foreach(\b_reg::$modules as $module=>$descr){
-      if (!$api->_used_by_myOrg($module) || !in_array($module,module_list())) continue;
-      if ($module == myPear_MODULE && !superUser_here) continue;
+        if (!\APImenu::_used_by_myOrg($module) || !in_array($module,module_list())) continue;
+      if ($module == myPear_MODULE){
+	if (!superUser_here) continue;
+	$descr['d'] = myPear_MODULE.' core';
+      }
+      // $tabh[] = "<!-- ".__FUNCTION__.": module='$module' descr='$descr[d]' -->";
       $tabh[] = "<li ><a href='$module?q=$module'>$descr[d] </a></li>";
     }
-    return $this->signature(__FUNCTION__,
-                            x('h4','Select the desired Application:') . x('ul',join("\n",(empty($tabh)?[]:$tabh))));
+    return $this->signature(__FUNCTION__,x('ul',join("\n",$tabh)));
   }
   
   /*
@@ -51,9 +54,13 @@ class myTwigExtension extends \Twig_Extension{
     if (class_exists('bAuth',False)){
       $flavor = sprintf("%s=1&q=%s&flavor=%s&org=%s&resetcache_once=1",
 			b_crypt_no,$GLOBALS['myPear_current_module'],\b_cnf::get('flavor'),myOrg_code);
-      if (is_object(\bAuth::$av) && function_exists('myPear_access')){
-	$rank = myPear_access()->getRank();
-	$title = ($rank > RANK__authenticated ? myPear_access()->getTitle() : '') . ' ' . \bAuth::$av->fmtName('fl').' ';
+      if (is_object(\bAuth::$av)){
+	if (function_exists('myPear_access')){
+	  $rank = myPear_access()->getRank();
+	  $title = ($rank > RANK__authenticated ? myPear_access()->getTitle() : '') . ' ' . \bAuth::$av->fmtName('fl').' ';
+	}else{
+	  $title = 'Ghost';
+	}
 	$reply = x("li","$title<a href='".\b_url::same("?quit_once=yes&$flavor")."'>[logout]</a>");
       }elseif($GLOBALS['myPear_current_module']){
 	$reply = x("li","<a href='".\b_url::same("?login=check&$flavor")."'><img alt='login' src=/".drupal_get_path('theme','nordita')."/images/login.png /></a>");
@@ -88,12 +95,23 @@ class myTwigExtension extends \Twig_Extension{
   }
 
   /*
-   * D8 features Workaround 
+   * D8 features Workaround,
+   * hide the non-active modules in the menu
    */
   public function mypear_hidden_item(\Drupal\Core\Url $url){
-    list($m,$p) = explode('.',$url->getRouteName());
-    $to_be_hidden = (($m == $p) && ($m != \b_reg::$current_module));
-    if ($to_be_hidden) \D8::dbg(['module'=>$m,'to hide'=>$to_be_hidden]);
+
+    if (D8MENU_CSS_HIDING_LINKS){
+      \D8::current_tab();
+      
+      list($m,$p) = explode('.',$url->getRouteName());
+      $to_be_hidden = (($m == $p) && ($m != $GLOBALS['myPear_current_module']));
+      if ($to_be_hidden){
+	if (class_exists('myPear',0)) \myPear::MESSAGE("$m to be hidden");
+	\D8::dbg(['module'=>$m,'to hide'=>$to_be_hidden]);
+      }
+    }else{
+      $to_be_hidden = False;
+    }
     return $to_be_hidden;
   }
 

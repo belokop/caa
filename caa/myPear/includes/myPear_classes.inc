@@ -1904,7 +1904,8 @@ class b_debug{
       foreach(explode("\n",$trace) as $line){
 	foreach(array('call_user_func_array',
 		      'menu_execute_active_handler',
-		      __FUNCTION__) as $drop) if(preg_match("/$drop/i",$line)) continue 2;
+		      '#[0-9]* *(Drupal|Stack|Symfony)',
+		      __FUNCTION__) as $drop) if((strpos($line,'#')!==0) || preg_match("/$drop/i",$line)) continue 2;
 	$lines[] = preg_replace(array_keys($reps),
 				array_values($reps),
 				str_replace("$srv/",'',
@@ -3417,14 +3418,12 @@ class b_url{
    */
   static function header($query){
 
-    if (class_exists('Drupal')){
-      //      \D8::dbg(sprintf("%s(%s) <em style='color:red;'>is NOT executed</em>",__METHOD__,$query));
-    }
-    
     if (is_string($query)) $query = trim(str_ireplace('location:','',$query));
+    b_debug::xxx($query);
     $repack = self::_(is_array($query) || (is_string($query) && (strpos($query,'?') === 0))
 		      ? self::repack($query)
 		      : $query);
+    b_debug::xxx($repack);
     $location = str_ireplace('&amp;','&',$repack);
 
     // Debugging message
@@ -3435,7 +3434,7 @@ class b_url{
     
     // Go on...
     if (cnf_show_h){
-      // ignore redirects. Not safe, but need it for debugging
+      // ignore redirects. Not safe, but needed for debugging
       $msg = "Redirects are cancelled by the configuration<br/>$msg";
     }elseif (cnf_useTrickyHeader){
       // JS-bases redirect
@@ -3445,7 +3444,9 @@ class b_url{
       session_write_close();
       ob_get_contents();
       ob_end_clean();
-      printf("<script>location.href='$location'</script>");
+      $js = "<script>location.href='$location'</script>";
+      b_debug::xxx(b_fmt::escape($js));
+      print $js;
       return True;
     }else{
       // Usual header(location: url)
@@ -3560,6 +3561,9 @@ class b_url{
     if (!cnf_show_e && !self::$no_crypt) $_myGET = b_crypt::encodeURL($_myGET);
     self::$no_crypt = False;
 
+    // Workaround for D8
+    if ((HOSTED_BY_CMS_vrsn == 8) && ($_prf =='?')) $_prf = '/'.$_myGET['q'].$_prf;
+
     // Return encoded the result in the form of URL
     $reply = trim($_prf) . trim(b_fmt::joinX('&amp;',$_myGET,''));
     return $reply;
@@ -3604,6 +3608,7 @@ class b_url{
       }
     }
     $reply = self::repack('?',$_myGET,$_myDrop);
+    // Workaround for D8
     if (HOSTED_BY_CMS_vrsn == 8) $reply = D8::compat($_GET['q']).$reply;
     //    b_debug::xxx($reply);
     return $reply; 
@@ -3657,9 +3662,10 @@ class b_url{
     if (empty($_SESSION['core_referrer'])) $_SESSION['core_referrer'] = array();
     if (!cnf_inside_fb){
       if ($url === 'reset'){
-	if (isset($_SESSION['core_referrer'][$id])) unset($_SESSION['core_referrer'][$id]);
+	unset($_SESSION['core_referrer'][$id]);
       }else{
-	if ($url === Null)     $url = @$_SERVER["REQUEST_URI"];
+	if ($url === Null) $url = @$_SERVER["REQUEST_URI"];
+	if (strpos($url,'?') === False) $url .= '?';
 	$_SESSION['core_referrer'][$id] = array('url'=>b_url::repack($url,array(b_crypt_no=>1)),
 						'cmt'=>$comment);
       }

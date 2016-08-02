@@ -1,5 +1,5 @@
 lic.main_menu:
-  path: /lic
+  path: /lic/
   defaults:
     _controller:     Drupal\myPear\components\PageController::getPageContent
     _title_callback: Drupal\myPear\components\PageController::getPageTitle

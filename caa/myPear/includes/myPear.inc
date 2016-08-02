@@ -377,7 +377,6 @@ $reply = True;
       list($table,$id) = (empty($helper)
 			  ? array_values(b_reg::sql_ids($class,b_reg::$current_module))
 			  : $helper);
-      //      var_dump($table,$id,$class,b_reg::$current_module);
 
       // Parse class arguments, it might be class_ID, av_email or query
       if (is_numeric($args))            $args = array($id=>$args);

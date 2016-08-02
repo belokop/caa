@@ -1,12 +1,12 @@
 <?php
 // myPear module 
-$releaseDate = '2016-07-30';
+$releaseDate = '2016-08-02';
 define('myPear_VERSION','5.142');
 define('myPear_MODULE', 'myPear');
 define('myPear_DATE',    $releaseDate);
 
 // Protection against attacks...
-if (isset($_GET['id'])) $_REQUEST['id'] = $_GET['id'] = (string)((int)$_GET['id']);
+if (isset($_GET['id']) && !in_array($_GET['id'],['new','empty'])) $_REQUEST['id'] = $_GET['id'] = (string)((int)$_GET['id']);
 
 define('cnf_dev_email','yb@nordita.org');
 define('cnf_test_email','test@nordita.org');

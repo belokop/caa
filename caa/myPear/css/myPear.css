@@ -1,11 +1,15 @@
 /*
- * Drupal fix
+ * Drupal fixes
  */
 .print_r,
 .traceback{
   font-family:monospace;   /* Lucida Console; */	
   font-size:x-small;
   white-space: nowrap;
+}
+
+.min100{
+  min-width: 100%;
 }
 
 /*

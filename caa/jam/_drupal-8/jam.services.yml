@@ -1,6 +1,6 @@
 services:
   jam.access_checker:
-    class: Drupal\myPear\access\AccessController
+    class: Drupal\myPear\components\AccessController
     arguments: ['@entity.manager']
     tags:
       - { name: access_check, applies_to: _access_check_token }

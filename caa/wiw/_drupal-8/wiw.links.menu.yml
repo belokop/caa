@@ -24,13 +24,6 @@ wiw.wiw_1088763606_3956320423:
   menu_name: tools
   parent: wiw.wiw_1088763606
 
-wiw.wiw_1439710518:
-  title: Search Trips
-  route_name: wiw.wiw_1439710518
-  weight: 0
-  menu_name: tools
-  parent: wiw.wiw
-
 wiw.wiw_3818030668:
   title: My Trips
   route_name: wiw.wiw_3818030668

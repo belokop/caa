@@ -684,10 +684,10 @@ class bForm_vm_Lease extends bForm_vm{
     $where = array(0);
     if (empty($accommodationOptions)){
       //
-      // Check ALL the available rooms
+      // Check ALL available rooms
       //
       locateAndInclude('bList_vm_accommodationOptions');
-      foreach(bList_vm_accommodationOptions::get_allHuts() as $hut_id){
+      foreach(bList_vm_accommodationOptions::get_allHuts() as $hut_id=>$hut_name){
 	$where[] = 'hut_id = '.$hut_id;
       }
     }else{    

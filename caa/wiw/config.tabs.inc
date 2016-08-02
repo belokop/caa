@@ -2,8 +2,7 @@
 
 if (function_exists('locateAndInclude')) locateAndInclude('APImenu');
 
-foreach(array(
-              'tab_wiw'        => 'Who Is Where?',
+foreach(array('tab_wiw'        => 'Who Is Where?',
               'tab_wiw_adm'    => 'Administer',
               'tab_wiw_admTT'  => 'Edit Trip Colors',
               'tab_wiw_myTrips'=> 'My Trips',

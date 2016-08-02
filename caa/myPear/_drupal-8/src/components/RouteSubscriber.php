@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Contains \Drupal\myPear\components\RouteSubscriber
+ * Contains Drupal\myPear\components\RouteSubscriber
  */
 
 namespace Drupal\myPear\components;
@@ -13,6 +13,11 @@ use Symfony\Component\Routing\RouteCollection;
  * Listens to the dynamic route events.
  */
 class RouteSubscriber extends RouteSubscriberBase {
+
+  public function routes($arg){
+    static $dejaVu = 0;
+    $this->dbg(++$dejaVu);
+  }
 
   /**
    * {@inheritdoc}
@@ -47,4 +52,3 @@ class RouteSubscriber extends RouteSubscriberBase {
     \D8::dbg($text,$this,3);
   }
 }
-

@@ -1,5 +1,4 @@
 <?php
-
 /*
  * Tentative... Drupal8 wruppers
  */
@@ -78,6 +77,7 @@ if (!class_exists('D8',False)){
 
     public static function dbg($text='',$instance=Null,$level=2,$type='debug',$color='red'){
       if (defined('cnf_dev') && cnf_dev){
+	if (is_string($instance)) { $color=$instance; $instance=Null; }
 	drupal_set_message(
 			   preg_replace('/(Drupal|Symfony)[a-zA-Z\\\\]*\\\\/','',
 					sprintf("%s<span style='color:%s;'>%s: <em>%s</em></span>",
@@ -90,7 +90,7 @@ if (!class_exists('D8',False)){
 						    ? D8_joinX($text,False)
 						    : (is_object($text)
 						       ? 'object('.get_class($text).')'
-						       : $text))))),
+						     : $text))))),
 			   $type,
 			   $keep_duplications=False);
       }
@@ -136,12 +136,12 @@ if (!class_exists('D8',False)){
       if (!is_array($call['args'])) $call['args'] = array();
       $args = array();
       foreach($call['args'] as $a) {
-	$classArgs = array();
-	if (is_object($a) && ($id=@$a->ID))  $classArgs[] = $id;
-	if (is_object($a) && ($id=@$a->MODE))$classArgs[] = $id;
-	if     ($classArgs)      $args[] = get_class($a)."(".join(',',$classArgs).")";      
-	elseif (is_object($a))   $args[] = get_class($a);      
-	elseif (is_array($a))    $args[] = D8_joinX($a);      
+	if (is_object($a)){
+	  $classArgs = array();
+	  if ($id=@$a->ID)  $classArgs[] = $id;
+	  if ($id=@$a->MODE)$classArgs[] = $id;
+	  $args[] = get_class($a)."(".join(',',$classArgs).")";      
+	}elseif (is_array($a))   $args[] = D8_joinX($a);      
 	else                     $args[] = $a;
       }
       $reply = str_replace('[','',
@@ -158,8 +158,6 @@ if (!class_exists('D8',False)){
   // Adjust the query string
   D8::compat();
   
-  D8::dbg(__FILE__);
-
 }
 
 
@@ -239,3 +237,6 @@ if (class_exists('Drupal',False)){
     if (is_file($f)) require_once $f; 
   }
 }
+
+D8::dbg(__FILE__);
+

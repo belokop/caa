@@ -1,5 +1,8 @@
+route_callbacks:
+  - Drupal\myPear\components\RouteSubscriber::routes
+
 ea.main_menu:
-  path: /ea
+  path: /ea/
   defaults:
     _controller:     Drupal\myPear\components\PageController::getPageContent
     _title_callback: Drupal\myPear\components\PageController::getPageTitle

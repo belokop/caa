@@ -1,6 +1,5 @@
-
 jam.main_menu:
-  path: /jam
+  path: /jam/
   defaults:
     _controller:     Drupal\myPear\Controller::getPageContent
     _title_callback: Drupal\myPear\Controller::getPageTitle

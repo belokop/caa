@@ -25,7 +25,7 @@ class APImenu_wiw extends APImenu{
   var $title  = 'Who Is Where';
   var $q      = WIW_MODULE;
   var $static_menu = array(tab_wiw_adm    =>array(tab_wiw_admTT),
-			   tab_wiw_sok    =>array(),
+			   // tab_wiw_sok    =>array(),
 			   tab_wiw_myTrips=>array(),
 			   tab_wiw_reg    =>array(),
 			   );

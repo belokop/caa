@@ -29,10 +29,10 @@ class bList_vm_accommodationOptions extends bList_vm{
    *
    */
   public static function get_allHuts(){
-    $q = myPear_db()->query("SELECT hut_id FROM abs_huts WHERE hut_code != '".HUT_BI."' ORDER BY hut_code");
+    $q = myPear_db()->query("SELECT hut_id,hut_name FROM abs_huts WHERE hut_code != '".HUT_BI."' ORDER BY hut_code");
     $reply = array();
     while($r = myPear_db()->next_record($q)){
-      $reply[] = $r['hut_id'];
+      $reply[$r['hut_id']] = $r['hut_name'];
     }
     return $reply;
   }
@@ -119,8 +119,12 @@ class bList_vm_accommodationOptions extends bList_vm{
 				   $this);
   }
 	     
+  /*
+   * Should that be editable???
+   */
   protected function isMemberEditable(){
-    $reply = $this->isWritable();
+    //    $reply = $this->isWritable();
+    $reply = False;
     $this->dbg($reply);
     return $reply;
   }
@@ -246,7 +250,7 @@ class bList_vm_accommodationOptions extends bList_vm{
 				       "LEFT JOIN abs_visits ON lease_vid = v_id"));
       $this->where_eq = array("v_host_avid = '$av_id'");
     }
-    if ($this->parent_ID == myOrg_ID) print x('h4',$this->title);
+    if ($this->parent_ID == myOrg_ID) print x('h4',"Statistics for ".$this->title);
     parent::show(' ');
   }
 
@@ -283,7 +287,6 @@ class bList_vm_accommodationOptions extends bList_vm{
    * Do not show buttons if there is no huts left for the selection
    */
   protected function draw_buttons(){
-    return array();
     //    $huts = $this->hutSelectMenu(Null,True);
     //    if (!empty($huts)) 
     $reply = parent::draw_buttons();
@@ -295,7 +298,11 @@ class bList_vm_accommodationOptions extends bList_vm{
    */
   private $setPageHeader_dejaVu = 0;
   protected function setPageHeader(){
-    if (!$this->setPageHeader_dejaVu++) myPear::setPageHeader(b_fmt::unescape($this->title.' usage'));
+    if (!$this->setPageHeader_dejaVu++){
+      $header = b_fmt::unescape($this->title.' usage');
+      myPear::setPageHeader($header);
+      $this->dbg($header,cnf_dev);
+    }
   }
 
   /*

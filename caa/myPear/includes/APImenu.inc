@@ -154,7 +154,7 @@ class APImenu{
     if (@$_GET['login']==='yes') return False;
     if (empty($menuItem))        return False;
 
-    if (!$this->_used_by_myOrg($menuItem)) return False;
+    if (!self::_used_by_myOrg($menuItem)) return False;
 
     myPear_logs()->add_access();
 
