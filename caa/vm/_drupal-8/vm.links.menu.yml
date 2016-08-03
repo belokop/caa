@@ -367,6 +367,13 @@ vm.vm_312164533_3499549732:
   menu_name: tools
   parent: vm.vm_312164533
 
+vm.vm_312164533_1517189256:
+  title: Accommodation options
+  route_name: vm.vm_312164533_1517189256
+  weight: -286
+  menu_name: tools
+  parent: vm.vm_312164533
+
 vm.vm_312164533_3547099288:
   title: List of attenders
   route_name: vm.vm_312164533_3547099288

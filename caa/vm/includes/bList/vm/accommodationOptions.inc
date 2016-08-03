@@ -1,7 +1,7 @@
 <?php
 /*
  * Helper for bForm_vm_Hut & bForm_vm_Room classes.
- * Keep accommodation options available for the given event.
+ * Keep accommodation options available for the given event AND/OR organization
  * 
  * Member format:
  *  lm_key   - Hut ID
@@ -60,6 +60,13 @@ class bList_vm_accommodationOptions extends bList_vm{
    *
    */
   function getFormAdd_OK(){
+    if ($this->parent_ID != myOrg_ID){
+      $see_here = x(sprintf('a href="%s"',b_url::same('?q=/vm/1110161754/3055031512')),'(see_here)');;
+      $see_here = '';
+      myPear::INFO(["Select the accommodation option, click <em>\"continue ...\"</em>, after that select the bulding.",
+		    "Note, you can select only buildings defined by the ".myOrg_name." accommodation $see_here, ".
+		    "so a new buiding should be first added to the  ".myOrg_name." list."]);
+    }
     
     $lm_id    = $this->getValue('lm_id');
     $this->dbg("lm_id='$lm_id'");
@@ -160,7 +167,7 @@ class bList_vm_accommodationOptions extends bList_vm{
       $this->f->textHidden('lm_key',$hut_id);
     }
     
-    // Select accomodation which is available for the event duration
+    // Select accommodation which is available for the event duration
     $VM_hutCodes = VM_hutCodes()->getCodes(($this->parent_ID == myOrg_ID
 					    ? Null
 					    : bList::getListInstance(myOrg_ID,__CLASS__)),
@@ -226,7 +233,7 @@ class bList_vm_accommodationOptions extends bList_vm{
       case 'name':    $reply = $this->hut[$hut_id]->name();               break;
       case 'hut_code':$reply = $this->hut[$hut_id]->getValue('hut_code'); break;
       case 'capacity':$reply = $this->hut[$hut_id]->getCapacity();        break;
-      defailt:
+      default:
       }
     }
     $this->dbg($reply);
@@ -242,7 +249,12 @@ class bList_vm_accommodationOptions extends bList_vm{
    */
   private $getMembers_forListing = array();
   function show($av_id=''){
-    if (!empty($av_id)){
+    if (empty($av_id)){
+      $this->hookJOIN = join(' ',array("LEFT JOIN abs_huts ON hut_id = lm_key",
+				       ));
+      $this->orderBy     = 'hut_code';
+      $this->orderByDir  = 'ASC';
+    }else{
       $this->debug = True;
       $this->hookJOIN = join(' ',array("LEFT JOIN abs_huts ON hut_id = lm_key",
 				       "LEFT JOIN abs_rooms ON a_hutid = hut_id",
@@ -250,7 +262,11 @@ class bList_vm_accommodationOptions extends bList_vm{
 				       "LEFT JOIN abs_visits ON lease_vid = v_id"));
       $this->where_eq = array("v_host_avid = '$av_id'");
     }
-    if ($this->parent_ID == myOrg_ID) print x('h4',"Statistics for ".$this->title);
+    if ($this->parent_ID == myOrg_ID){
+      print x('h4',"Statistics for ".$this->title);
+    }else{
+      print x('h4',$this->e->name());
+    }
     parent::show(' ');
   }
 
@@ -314,8 +330,7 @@ class bList_vm_accommodationOptions extends bList_vm{
     // Split by the accommodation options
     if ($ao_was != ($ao_now=$this->getHutInfo($this->r['lm_key'],'hut_code'))){
       if (empty($ao_now)){
-	$this->dbg('??? empty "\$ao_now"',cnf_dev);
-	if (cnf_dev) b_debug::var_dump($this->r);
+	b_debug::var_dump($this->r,'??? empty "$ao_now"');
 	$this->r = array();
 	return;
       }
@@ -334,7 +349,7 @@ class bList_vm_accommodationOptions extends bList_vm{
   }
   
   /*
-   * Update list of accomodation options (or available huts) for a given event
+   * Update list of accommodation options (or available huts) for a given event
    */
   public function update(){
     $this->dbg();    
@@ -345,7 +360,7 @@ class bList_vm_accommodationOptions extends bList_vm{
     locateAndInclude('b_checkBox.inc');
     foreach(b_checkBox::$ON as $on) $s[] = "hut_status = '$on'";
     foreach(array(
-		  // first select the huts where the participans already allocated
+		  // first select the huts where the participants already allocated
 		  'hut_capacity,hut_id'.(($this->parent_ID == myOrg_ID)?'':',e_end') => 'FROM abs_visits '.
 		  ' LEFT JOIN abs_leases ON v_id = lease_vid '. 
 		  ' LEFT JOIN abs_rooms ON a_id = lease_aid '.

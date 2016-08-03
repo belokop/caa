@@ -1,6 +1,3 @@
-route_callbacks:
-  - Drupal\myPear\components\RouteSubscriber::routes
-
 ea.main_menu:
   path: /ea/
   defaults:
@@ -144,4 +141,7 @@ ea.ea_3003434545_1087860145:
     _title_callback: Drupal\myPear\components\PageController::getPageTitle
   requirements:
     _access_check_token: 'TRUE'
+
+route_callbacks:
+  - Drupal\myPear\components\RouteSubscriber::routes
 

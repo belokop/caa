@@ -46,3 +46,6 @@ wiw.wiw_2806772640:
   requirements:
     _access_check_token: 'TRUE'
 
+route_callbacks:
+  - Drupal\myPear\components\RouteSubscriber::routes
+

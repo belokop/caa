@@ -62,3 +62,6 @@ prp.prp_1584604688_2347876875:
   requirements:
     _access_check_token: 'TRUE'
 
+route_callbacks:
+  - Drupal\myPear\components\RouteSubscriber::routes
+

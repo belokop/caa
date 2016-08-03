@@ -10,7 +10,7 @@ if (function_exists('drupal_get_path') && file_exists($f=drupal_get_path('module
 require_once 'config.tabs.inc';
 
 // register the module in myPear registry
-$releaseDate = '2016-08-02';
+$releaseDate = '2016-08-03';
 define('EA_VERSION','5.24');
 
 b_reg::add_module(EA_MODULE,array('v' =>EA_VERSION,

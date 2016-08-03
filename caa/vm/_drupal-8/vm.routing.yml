@@ -422,6 +422,14 @@ vm.vm_312164533_3499549732:
   requirements:
     _access_check_token: 'TRUE'
 
+vm.vm_312164533_1517189256:
+  path: /vm/312164533/1517189256
+  defaults:
+    _controller:     Drupal\myPear\components\PageController::getPageContent
+    _title_callback: Drupal\myPear\components\PageController::getPageTitle
+  requirements:
+    _access_check_token: 'TRUE'
+
 vm.vm_312164533_3547099288:
   path: /vm/312164533/3547099288
   defaults:
@@ -541,4 +549,7 @@ vm.vm_2045174345:
     _title_callback: Drupal\myPear\components\PageController::getPageTitle
   requirements:
     _access_check_token: 'TRUE'
+
+route_callbacks:
+  - Drupal\myPear\components\RouteSubscriber::routes
 

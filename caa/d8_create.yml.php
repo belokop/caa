@@ -35,13 +35,17 @@ if ($_GET['org'] == 'nordita'){
 
 print "... Build for module '$module'\n";
 
-foreach(array(
-	      "$root/myPear/config.inc",
-	      "$root/myPear/includes/drupal8_compat.inc",
-	      "$root/myPear/includes/APImenu.inc",
-	      "$root/$area/config.inc",
-	      "$root/$area/config.tabs.inc",
-	      ) as $f){
+$to_load = array(
+		 "$root/myPear/config.inc",
+		 "$root/myPear/includes/drupal8_compat.inc",
+		 "$root/myPear/includes/APImenu.inc",
+		 "$root/$area/config.inc",
+		 ); 
+$to_load[] = (in_array($area,['vm','ea'])
+	      ? "$root/$area/includes/APImenu_${module}.inc"
+	      : "$root/$area/config.tabs.inc");
+
+foreach($to_load as $f){
   if (empty($argv[1])) print "... loading $f";
   require_once $f;
   if (empty($argv[1])) print "           ...............OK\n";
@@ -118,8 +122,12 @@ foreach($menu_tree as $path=>$item){
   build_links_menu_yml($file['links.menu']);  
 }  
 
+build_routing_yml($file['routing'],True);
+
 foreach(array('links.menu','routing') as $yml)  fclose($file[$yml]);
-// system("ls -lrt /tmp/*yml");
+if (empty($argv[1])){
+  system("ls -1 /tmp/$module*yml");
+}
 system("grep -E '<.*>' /tmp/*yml");
 
 exit;
@@ -174,9 +182,15 @@ function build_links_menu_yml(){
  *   _access: access is either granted (TRUE) or not (FALSE)
  *   _custom_access: access is determined by a method in our class
  */
-function build_routing_yml($file){
+function build_routing_yml($file,$only_route_callbacks=False){
+
   fwrite($file,process_template(
-"<route_name>:
+				($only_route_callbacks
+				 ? "route_callbacks:
+  - Drupal\myPear\components\RouteSubscriber::routes
+
+"
+				 : "<route_name>:
   path: /<path>
   defaults:
     _controller:     Drupal\\myPear\\components\\PageController::getPageContent
@@ -184,7 +198,7 @@ function build_routing_yml($file){
   requirements:
     _access_check_token: 'TRUE'
 
-"));
+")));
 }
 
 /*

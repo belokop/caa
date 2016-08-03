@@ -315,7 +315,7 @@ class bForm extends myPear_getValue{
     if (!empty($this->submitOnChange[$name])){
       if ($type != 'change') $r[] = "onclick='submit()'";
       $r[] = "onchange='submit()'";
-      $r[] = "class='ZZZpage_load_progress $class'";
+      $r[] = "class='page_load_progress $class'";
       $reply = join(' ',$r);
     }else{
       $reply = (empty($class) ? "" : "class='$class'");

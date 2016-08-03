@@ -106,6 +106,7 @@ function vm_updates(){
       // 2016-05-01
       vm_compat_update_44();
       vm_compat_update_45();
+      vm_compat_update_46();
     }
 
     myPear_logs()->doNotLog = False;
@@ -129,6 +130,19 @@ function vm_compat_update_ad_hocks(){
     myPear_update_zzz_lists(VM_MODULE);
   }
 }
+
+function vm_compat_update_46(){
+  foreach(['bList_vm_accommodationOptions'=>['lm_key'],
+	   ] as $bList=>$targets){
+    $q = myPear_db()->qquery("SELECT l_id FROM zzz_lists WHERE l_class = '$bList'");
+    while($r = myPear_db()->next_record($q)){
+      foreach($targets as $target){
+	myPear_db()->qquery("DELETE FROM zzz_list_members WHERE lm_lid = $r[l_id] AND ($target IS NULL OR $target = 0 OR $target = '')",True);
+      }
+    }
+  }
+}
+
 
 function vm_compat_update_45(){
   locateAndInclude('bForm_vm_Visit');

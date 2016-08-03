@@ -94,3 +94,6 @@ lic.lic_13736742:
   requirements:
     _access_check_token: 'TRUE'
 
+route_callbacks:
+  - Drupal\myPear\components\RouteSubscriber::routes
+

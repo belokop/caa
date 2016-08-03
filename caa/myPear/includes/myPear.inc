@@ -226,17 +226,18 @@ $reply = True;
    *
    */
   static function setPageHeader($header,$strip_tags=True){
-    global $myPear_custom_title;
+    global $myPear_custom_title_striped,
+           $myPear_custom_title;
 
     b_cache_file::CMS(__METHOD__,array($header));
-    $myPear_custom_title = $header;
+    $myPear_custom_title_striped = $header;
 
     if (function_exists('drupal_set_title')) { 
       // Drupal does not let html tags to be in the header
       if (($header_striped = strip_tags($header)) != $header){
-	$GLOBALS['custom_title'] = $header;
+	$myPear_custom_title = $header;
+	$myPear_custom_title_striped = $header_striped;
 	drupal_set_title($header_striped);
-	$myPear_custom_title = $header_striped;
       }else{
 	drupal_set_title($header);
       }
