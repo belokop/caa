@@ -14,7 +14,7 @@ use Symfony\Component\Routing\RouteCollection;
  */
 class RouteSubscriber extends RouteSubscriberBase {
 
-  public function routes($arg){
+  public function routes($arg=Null){
     static $dejaVu = 0;
     $this->dbg(++$dejaVu);
   }

@@ -46,7 +46,8 @@ class AccessController implements AccessInterface{
       
       myPear_init();
       \d8::current_tab();    
-      if (!\Drupal::service('router.admin_context')->isAdminRoute()){
+      if (!defined('cnf_CLI'))  define('cnf_CLI',empty($_SERVER["HTTP_USER_AGENT"]));
+      if (!cnf_CLI && !\Drupal::service('router.admin_context')->isAdminRoute()){
 	// Build the top menu
 	MH()->toggle_menu_items(\b_reg::get_modules());
       }
