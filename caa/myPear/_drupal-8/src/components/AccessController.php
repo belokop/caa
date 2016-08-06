@@ -11,13 +11,24 @@ use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Routing\Access\AccessInterface;
 use Symfony\Component\Routing\Route;
 
-define('D8MENU_DYNAMIC_ROUTES', False);
-define('D8MENU_CSS_HIDING_LINKS', False);
-define('D8MENU_DISABLING_MODULES', True);
-define('D8MENU_DISABLING_MODULES_all_links',D8MENU_DISABLING_MODULES);
-define('D8MENU_ALL_VISIBLE',!D8MENU_CSS_HIDING_LINKS && !D8MENU_DISABLING_MODULES);
+// As is, no changes in the menu...
+define('D8MENU_VANILLA', True);
 
-if (D8MENU_CSS_HIDING_LINKS && D8MENU_DISABLING_MODULES) die("Both D8MENU_CSS_HIDING_LINKS && D8MENU_DISABLING_MODULES are enabled\n");
+// Seems that the both RouteSubscriber && RouteBuilder are called ONLY when the module is built, 
+// and not on the each page
+define('D8MENU_DYNAMIC_ROUTES', False &&   !D8MENU_VANILLA);
+
+// This does not work, Twig caches the functions replies, and the first reply is always used
+define('D8MENU_CSS_HIDING_LINKS', False && !D8MENU_VANILLA);
+
+// Menu 'main':  enable level 1 links for all modules (except those which are private for other org)
+// menu 'tools': enable level 1 link for the module in active trail, disable level 1 links for the others
+define('D8MENU_DISABLING_MODULES', True && !D8MENU_VANILLA);
+// In addition the above enable/disable the links in the "access check" method
+// Works on the development laptop, but not on the production site. Mystery... 
+define('D8MENU_DISABLING_MODULES_all_links',False && D8MENU_DISABLING_MODULES);
+
+if ((int)D8MENU_VANILLA + (int)D8MENU_DYNAMIC_ROUTES + (int)D8MENU_CSS_HIDING_LINKS + (int)D8MENU_DISABLING_MODULES != 1) die("Two D8MENU_xxx options are active, please correct");
 
 /*
  *
@@ -36,14 +47,15 @@ class AccessController implements AccessInterface{
    * Activate the current module menu, deactivate the others
    */
   public function __construct($EntityManager=Null) {
-    static $dejaVu = 0;
-    if (!$dejaVu++){
+
+      if (D8MENU_VANILLA)               $this->dbg('D8MENU_VANILLA');
       if (D8MENU_CSS_HIDING_LINKS)      $this->dbg('D8MENU_CSS_HIDING_LINKS');
-      if (D8MENU_ALL_VISIBLE)           $this->dbg('D8MENU_ALL_VISIBLE');
       if (D8MENU_DYNAMIC_ROUTES)        $this->dbg('D8MENU_DYNAMIC_ROUTES');
       if (D8MENU_DISABLING_MODULES)     $this->dbg('D8MENU_DISABLING_MODULES');
       if (D8MENU_DISABLING_MODULES_all_links) $this->dbg('D8MENU_DISABLING_MODULES_all_links');
       
+    static $dejaVu = 0;
+    if (!$dejaVu++){
       myPear_init();
       \d8::current_tab();    
       if (!defined('cnf_CLI'))  define('cnf_CLI',empty($_SERVER["HTTP_USER_AGENT"]));
@@ -59,7 +71,7 @@ class AccessController implements AccessInterface{
    */
   public function access(Route $route){
     
-    if ((D8MENU_CSS_HIDING_LINKS || D8MENU_ALL_VISIBLE) && in_array(($module=str_replace('/','',$route->getPath())),module_list())){
+    if (D8MENU_CSS_HIDING_LINKS && in_array(($module=str_replace('/','',$route->getPath())),module_list())){
       static $dejaVu = 0;
       if (!$dejaVu++){
 	myPear_init();
@@ -68,26 +80,22 @@ class AccessController implements AccessInterface{
 	locateAndInclude('APImenu');    
       }
       $reply = \APImenu::_used_by_myOrg($module);
-      if (D8MENU_CSS_HIDING_LINKS) $variant = 'D8MENU_CSS_HIDING_LINKS';
-      if (D8MENU_ALL_VISIBLE)      $variant = 'D8MENU_ALL_VISIBLE';
     }else{
       
-      $variant = (D8MENU_DISABLING_MODULES_all_links ? 'D8MENU_DISABLING_MODULES_all_links' : 'normal');
-      
+      // Check is this page accessible or not
       $reply = $this->_access_exec($route->getPath());
       
-      if ($reply || D8MENU_DISABLING_MODULES_all_links){
+      if (D8MENU_DISABLING_MODULES_all_links){
 	// Update on the fly the menu database.
 	// However, to my understanding that should be done by the Drupal core...
 	MH()->toggle_enabled($this->menu_route,$reply);
 	MH()->toggle_enabled('clean cache');
       }
-      if (!$reply) \d8::dbg(sprintf("??? %s(%s) access is forbidden, who called me?",
+      if (!$reply) \d8::dbg(sprintf("??? %s(%s) access is forbidden, who calls me?",
 				    $route->getPath(),$this->tab),'fuchsiaText');
     }
     $this->dbg(array('path'   => $route->getPath(),
 		     'tab'    => $this->tab,
-		     // 'variant'=> $variant,
 		     'reply'  =>var_export($reply,True)));
     return ($reply ? AccessResult::allowed() : AccessResult::forbidden()); 
   }
@@ -144,7 +152,7 @@ class AccessController implements AccessInterface{
     list($_module,$route) = explode('.',$menu_route,2);
     $q_exploded = explode('_',$route);
     $__module = array_shift($q_exploded);
-    if (file_exists($f=drupal_get_path('module',$_module) . '/config.tabs.inc')) require_once $f;
+    if (file_exists($f=drupal_get_path('module',$_module) . '/includes/APImenu_${_module}.inc')) require_once $f;
     if (empty($q_exploded)) $q_exploded = array($_module);
     $tab_code = array_pop($q_exploded);
     $this->tab = APItabs_code2tab($tab_code);
@@ -197,7 +205,7 @@ class menuHandler{
     if (D8MENU_CSS_HIDING_LINKS){
       // Do not deactivate items in the tools menu,
       // after activation the become "permanently collapsed" (bug in D8??)
-      // Workaround - hiding the menu items, see my twig extesion class Drupal\myPear\components\myTwigExtension
+      // Workaround - hiding the menu items, see my twig extension class Drupal\myPear\components\myTwigExtension
       //
       $menus_to_preprocess = ['main']; 
     }else{
@@ -216,14 +224,10 @@ class menuHandler{
 	if ($enabled = \APImenu::_used_by_myOrg($module)){
 	  if ($menu_name == 'tools'){
 	    if     (D8MENU_CSS_HIDING_LINKS) {
-	      $expanded = 'any';
-	    }elseif(D8MENU_DISABLING_MODULES){
 	      $enabled = ($module === $GLOBALS['myPear_current_module']);
 	      $expanded = True;
-	    }elseif(D8MENU_ALL_VISIBLE){
-	      $expanded = 'any';
 	    }else{
-	      \myPear::internalError("Unexpected MENU_ options combination");
+	      $expanded = 'any';
 	    }
 	  }	      
 	}
@@ -268,21 +272,20 @@ class menuHandler{
   private static $toggle_counter = 0;
   public function toggle_enabled($route_name,$enabled=False,$expanded='any'){
 
-    if (empty($route_name)){
+    if (cnf_CLI || empty($route_name)){
       $this->dbg('???? empty route_name');
       return;
     }
     
     if (($route_name === 'clean cache') || ($route_name === 'cc')){
-      if ($this->toggle_counter  || ($route_name === 'cc')){
+      if (!D8MENU_VANILLA && !($this->toggle_counter || ($route_name === 'cc'))){
         $this->toggle_counter = 0;
         foreach(array('menu','render') as $cache_name){
 	  \Drupal::cache($cache_name)->deleteAll();
-	  $this->dbg($cache_name);
+	  $this->dbg("cleaning cache '$cache_name'");
 	}
       }
     }else{
-      
       // Compare the existing link with the input arguments, update if needed
       $link = $this->menu_link_manager()->getDefinition($route_name);
       if ($expanded === 'any') $expanded = $link['expanded'];
@@ -293,12 +296,15 @@ class menuHandler{
 	if ($e) $dbg['enabled'] = var_export((bool)$link['enabled'],True) .'->'.var_export((bool)$enabled,True);
 	if ($x) $dbg['expanded']= var_export((bool)$link['expanded'],True).'->'.var_export((bool)$expanded,True);
 	$dbg['menu'] = $link['menu_name'];
+	if (D8MENU_VANILLA) $dbg['ignored'] = 'D8MENU_VANILLA';
 	$this->dbg($dbg);
 
-	$this->toggle_counter++;
-	$link['enabled']  = $enabled  ? 1 : 0; 
-	$link['expanded'] = $expanded ? 1 : 0; 
-	$this->menu_link_manager()->updateDefinition($route_name, $link);
+	if (!D8MENU_VANILLA){
+	  $this->toggle_counter++;
+	  $link['enabled']  = $enabled  ? 1 : 0; 
+	  $link['expanded'] = $expanded ? 1 : 0; 
+	  $this->menu_link_manager()->updateDefinition($route_name, $link);
+	}
       }
     }
   }
