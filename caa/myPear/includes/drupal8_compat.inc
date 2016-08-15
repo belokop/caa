@@ -136,24 +136,25 @@ if (!class_exists('D8',False)){
      */    
     public static function traceBack(){
 
-      foreach(debug_backtrace() as $n=>$bt){
-	if (empty($bt['args'])) $bt['args'] = [];
-	$args = []; foreach($bt['args'] as $a) $args[] = self::var_export($a);
-	$args = '('.join(',',$args).')';
-	
-	$tr[] = '<tr>'.join(" ",[ '<td>'.$n.'</td>',
-				  '<td>'.(empty($bt['line'])
-					  ? ''
-					  : self::var_export($bt['file']) . '&nbsp;;&nbsp;'. $bt['line']).'</td>',
-				  '<td>'.$bt['class'] . $bt['type'] . $bt['function'] . $args . '</td>',
-				  ]).'</tr>';
+      if (self::cnf_dev()){
+	foreach(debug_backtrace() as $n=>$bt){
+	  if (empty($bt['args'])) $bt['args'] = [];
+	  $args = []; foreach($bt['args'] as $a) $args[] = self::var_export($a);
+	  $args = '('.join(',',$args).')';
+	  
+	  $tr[] = '<tr>'.join(" ",[ '<td>'.$n.'</td>',
+				    '<td>'.(empty($bt['line'])
+					    ? ''
+					    : self::var_export($bt['file']) . '&nbsp;;&nbsp;'. $bt['line']).'</td>',
+				    '<td>'.$bt['class'] . $bt['type'] . $bt['function'] . $args . '</td>',
+				    ]).'</tr>';
+	}
+	$traceBack = '<table>'.'<tbody>'.join("\n",$tr).'</tbody></table>';
+	if (cnf_CLI) print str_replace('&nbsp;',' ',strip_tags("\n".$traceBack."\n"));
+	else self::dbg($traceBack,Null,2,'debug','gray');
       }
-      $traceBack = '<table>'.'<tbody>'.join("\n",$tr).'</tbody></table>';
-      if (cnf_CLI) print str_replace('&nbsp;',' ',strip_tags("\n".$traceBack."\n"));
-      else self::dbg($traceBack,Null,2,'debug','gray');
     }
     
-
     /*
      *
      */

@@ -1078,36 +1078,6 @@ class APImenu_vm extends APImenu_ea{
   }
 
   /*
-   * The administrators have the right to modify settings for both the Organization & the Event.
-   * Ask them what they want
-   */
-  static function sseSelector(){ // OBSOLETE
-    define('sse_id','sse');
-    if (myPear::is_empty($sse_id = b_cnf::get(sse_id))) $sse_id = myOrg_ID;
-    
-    if (VM::e_id() > 0){
-      // Print a message asking to choose the action
-      if (myPear::is_empty(b_cnf::get(sse_id))){
-	myPear::WARNING("As the VM administrator you can modify both the global ".myOrg_name." rates and those for the event.<br/>".
-			"Please select the required category");
-      }
-
-      // Put the selector on the top of the page
-      $items = array(myOrg_ID   => "Setting ".myOrg_name." global rates",
-		     VM::$e->ID => 'Rates for '.VM::$e->name());
-      
-      VM::$formDummy->formDB[sse_id] = $sse_id; 
-      $selector = array(VM::$formDummy->selectMenu_exec(sse_id,
-							$items,
-							"class='shadow-box evHeader' onchange='this.form.submit()'",
-							$onlyRW=True));
-      $selector[] = x('noscript','<input type="submit" value="confirm"/>');
-      $GLOBALS['myPear_custom_title'] = myPear::set_page_selector_a($selector,True);
-    }
-    return $sse_id;
-  }
-
-  /*
    * Set the event selected for viewing as the "current event"
    */
   function eventSelector(){
@@ -1143,14 +1113,20 @@ class APImenu_vm extends APImenu_ea{
 	}
 	VM::$formDummy->formDB['vm_eventSelector'] = b_cnf::get('vm_eventSelector');
 	VM::$formDummy->submitOnChange['vm_eventSelector'] = True;
+	/*
 	$selector = array(VM::$formDummy->selectMenu_exec('vm_eventSelector',
 							  $events,
-							  //"class='shadow-box evHeader' onchange='this.form.submit()'",
 							  "class='evHeader'",
 							  $onlyRW=True));
 	$selector[] = x('noscript','<input type="submit" value="confirm"/>');
 	$selector[] = '<br/>';
 	$GLOBALS['myPear_custom_title'] = myPear::set_page_selector($selector,Null,True);
+	*/
+	$GLOBALS['myPear_custom_title'] = myPear::set_page_selector_a(array(''=>VM::$formDummy->selectMenu_exec('vm_eventSelector',
+														$events,
+														"class='evHeader'",
+														$onlyRW=True)),
+								      True);
       }else{
 	if (is_object(VM::$e)) myPear::H1(VM::$e->name(True),'reset');
       }

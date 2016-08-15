@@ -47,8 +47,6 @@ function D8MENU_definitions(){
       (int)D8MENU_DYNAMIC_ROUTES +
       (int)D8MENU_DISABLING_MODULES_all_links
       != 1) die("Two D8MENU_xxx options are active, please correct");
-
-  \D8::traceBack('test traceBack');
 }
 
 /*

@@ -149,6 +149,9 @@ $reply = True;
     return $reply;
   }
 
+  /*
+   *
+   */
   public static function H1($text, $mode=array()){
     static $dejaVu = array();
     static $title = Null;
@@ -171,6 +174,9 @@ $reply = True;
     return '';
   }
 
+  /*
+   *
+   */
   static function set_page_selector_a($input,$noPrint=False){
     static $n = 0;
 
@@ -188,22 +194,9 @@ $reply = True;
     else            print  $reply;
   }
       
-  static function set_page_selector_a_TABLE($input,$noPrint=False){
-    static $n = 0;
-
-    $td = array();
-    foreach($input as $label=>$selection){
-      $td[] = x("td style='text-align:right'",$label);
-      $td[] = x("td style='text-align:left'",
-		x(sprintf("form action='%s' method='post' enctype='multipart/form-data' class='only_online' name='%s%d'",
-			  b_url::same(),__FUNCTION__,++$n),
-		  $selection));
-    }
-    $reply = x("table id='mypear_selector'",x("tbody",x("tr",join("\n",$td))));
-    if ($noPrint)   return $reply;
-    else            print  $reply;
-  }
-      
+  /*
+   * Old version, to be replaced by the above
+   */
   static function set_page_selector($input,$action=Null,$noPrint=False,$input2=array()){
     static $n = 0;
 
