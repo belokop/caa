@@ -53,7 +53,7 @@ class bHolder_prp_preprints extends bHolder{
 			     x('noscript','<input type="submit" value="go"/>')),
 		      ' '=> ($f->selectMenu_exec('_prp_year',$years,"onchange='submit()'",$onlyRW=True).
 			     x('noscript','<input type="submit" value="go"/>')));
-    myPear::set_page_selector_a($selector);
+    myPear::set_page_selector($selector);
   }
   
   /*

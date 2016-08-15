@@ -177,12 +177,12 @@ $reply = True;
   /*
    *
    */
-  static function set_page_selector_a($input,$noPrint=False){
+  static function set_page_selector($input,$noPrint=False){
     static $n = 0;
 
     $li = array();
     foreach($input as $label=>$selection){
-      $li[] = x("li role='label'",$label);
+      if (!is_numeric($label)) $li[] = x("li role='label'",$label);
       $li[] = x("li",
 		x(sprintf("form action='%s' method='post' enctype='multipart/form-data' class='only_online' name='%s%d'",
 			  b_url::same(),__FUNCTION__,++$n),
@@ -194,27 +194,6 @@ $reply = True;
     else            print  $reply;
   }
       
-  /*
-   * Old version, to be replaced by the above
-   */
-  static function set_page_selector($input,$action=Null,$noPrint=False,$input2=array()){
-    static $n = 0;
-
-    if (empty($action)) $action = b_url::same();
-
-    if (!is_array($input)) $input = array($input);
-    $input_td = '';
-    foreach($input as $i) $input_td .= x("td",$i)."\n";
-
-    $form = x(sprintf("form action='$action' method='post' enctype='multipart/form-data' class='only_online' name='%s%d'",__FUNCTION__,++$n),
-	      x("table id='mypear_selector'",x("tbody",x("tr",$input_td))).
-	      (empty($input2)
-	       ? ""
-	       : x("table id='input2' class='centralized' style='width:50%;'",x("tbody",x("tr",x("td",$input2)))).'<br/>'));
-    if ($noPrint)   return $form;
-    else            print  $form;
-  }
-
   /*
    *
    */

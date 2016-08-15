@@ -44,11 +44,16 @@ h4.ui-widget-header  .ui-state-default
 
 #mypear_ul_selector{
   position: relative;
+  top: -1em;
+  font-size: smaller;
+}
+#mypear_ul_selector ul{
+  vertical-align: center;
 }
 #mypear_ul_selector li{
   float:left;
   list-style-type: none;
-  margin: 0.2em;
+  margin-top: 0.2em;
 }
 
 /*

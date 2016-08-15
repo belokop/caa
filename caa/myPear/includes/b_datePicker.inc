@@ -63,9 +63,9 @@ class b_datePicker{
     });", True);
     $fr = "<input id='$fr' type='text' name='$fr' value='$vfr' size=10 />";
     $to = "<input id='$to' type='text' name='$to' value='$vto' size=10 />";
-  $reply = (empty($this->icon1)
-	    ? array($fr, " -&gt; ", $to)
-	    : array($this->icon1,$fr,'&nbsp;',$this->icon2,$to));
+    $reply = (empty($this->icon1)
+	      ? array($fr, " -&gt; ", $to)
+	      : array($this->icon1,$fr,'&nbsp;',$this->icon2,$to));
     if ($returnResult) return $reply;
     else               print  join("&nbsp;\n",$reply);
   }
