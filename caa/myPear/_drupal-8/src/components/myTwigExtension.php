@@ -22,7 +22,7 @@ class myTwigExtension extends \Twig_Extension{
   private $serviceID = Null;
   
   public function __construct(SecurityService $serviceID= null){
-    locateAndInclude('APImenu');
+    if (function_exists('locateAndInclude')) locateAndInclude('APImenu');
     $this->serviceID = $serviceID;
   }
 
@@ -52,8 +52,8 @@ class myTwigExtension extends \Twig_Extension{
    *
    */
   public function mytwig_fp_title(){
-      return $this->signature(__FUNCTION__,
-                              'Welcome to the '.(defined('myOrg_name') ? myOrg_name : '').' <br/>Computer Aided Administration');
+    return $this->signature(__FUNCTION__,
+			    'Welcome to the '.(defined('myOrg_name') ? myOrg_name : '').' <br/>Computer Aided Administration');
   }
   
   /*
@@ -122,16 +122,10 @@ class myTwigExtension extends \Twig_Extension{
     ob_end_clean();
 
     if (!empty($timing1) || !empty($timing2)){
-      $timing = [];
-      if (!empty($timing1)) $timing[] = $timing1;
-      if (!empty($timing2)) $timing[] = $timing2;
-      ob_start();
-      locateAndInclude('b_table');
-      $t = new \b_table();
-      $t->tr($timing);
-      $t->close();
-      $timing = ob_get_contents();
-      ob_end_clean();
+      $timing = "<table><tbody>\n<tr>\n";
+      if (!empty($timing1)) $timing .= "<td>$timing1</td>\n";
+      if (!empty($timing2)) $timing .= "<td>$timing2</td>\n";
+      $timing .= "</tr></tbody></table>\n";
     }
 
     return $this->signature(__FUNCTION__,$timing);
