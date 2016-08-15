@@ -8,8 +8,6 @@
 namespace Drupal\myPear\components;
 use Drupal\Core\Controller\ControllerBase;
 
-// require_once dirname(__FILE__).'/TwigExtension.php';
-
 /**
  * Displays content for our menu links.
  */
@@ -25,9 +23,6 @@ class PageController extends ControllerBase{
         $myPear_custom_title,
         $myPear_custom_title_striped;
 
-    //    $this->dbg();
-
-    \D8::current_tab();    
     if (empty($myPear_current_module)) return t('?');
 
     // Be sure that the init is done
@@ -56,7 +51,6 @@ class PageController extends ControllerBase{
    */
   public function getPageContent() {
 
-    \D8::current_tab();    
     $callback = sprintf('_%s_output',$GLOBALS['myPear_current_module']);
     $content  = call_user_func($callback,$GLOBALS['myPear_current_tab']);
     $reply = array('#type' => 'markup',

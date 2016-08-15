@@ -112,10 +112,17 @@ class bForm_Organization extends bForm {
     // Be shure that the org code is not fake
     if (!self::is_orgID_valid($org_id)) $org_id = Null;
 
-    if (empty($org_id) && ($o=b_cnf::get('org')) && self::is_orgID_valid($o)) $org_id = $o;
-    if (empty($org_id) && function_exists($f=b_reg::$current_module.'_used_by_myOrg')) $org_id = array_pop($f());
-    if (empty($org_id) && !empty($default)) $org_id = $default;
-
+    if (empty($org_id) && ($o=b_cnf::get('org')) && self::is_orgID_valid($o)){
+      $org_id = $o;
+    }
+    if (empty($org_id) && function_exists($f=b_reg::$current_module.'_used_by_myOrg')){
+      $org_ids = call_user_func($f);
+      $org_id  = array_pop($org_ids);
+    }
+    if (empty($org_id) && !empty($default)){
+      $org_id = $default;
+    }
+    
     if (!empty($org_id)){
       if (empty(self::$code2id[$org_id])){
 	$q = myPear_db()->query("SELECT org_id,org_code FROM zzz_organizations WHERE org_code='$org_id' OR org_id='$org_id' LIMIT 1");

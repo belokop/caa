@@ -67,6 +67,7 @@ class bForm_vm_Visit extends bForm_vm {
    * Constructor
    */
   function __construct($id, $mode='RO') {
+
     // Ask the parent...
     parent::__construct($id, $mode);
 

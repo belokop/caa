@@ -1,6 +1,6 @@
 <?php
 
-$releaseDate = '2016-08-03';
+$releaseDate = '2016-08-15';
 define('PRP_MODULE'   , 'prp');
 define('PRP_VERSION','5.9.rc2');
 
@@ -14,9 +14,6 @@ define('RANK_prp_censor' , 12);
 define('RANK_prp_manager', 14);
 
 define('PRP_remindingPeriod' , 604800); // a week = 7 * 24 * 3600
-
-// Load tabs definition
-require_once 'config.tabs.inc';
 
 // The SQL tables used by the preprints module
 // register the module in myPear registry

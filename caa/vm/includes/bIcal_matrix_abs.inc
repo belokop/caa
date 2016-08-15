@@ -155,7 +155,7 @@ class bIcal_matrix_abs extends bIcal_matrix{
     $entry=array('day1' => $r['lease_start'],
 		 'day9' => $r['lease_end'],
 		 'text' => x("a href='".b_url::same("?function=vm_edit_accommodation&resetcache_once=1&lease_id=$r[lease_id]&v_id=$r[v_id]&action_once=".btn_edit_accommodation)."'",$r['name']),
-		 'clas' => $this->getRandomColor(abs_colorLegend($r)),
+		 'clas' => $this->getRandomColor(vm_colorLegend($r)),
 		 'name' => (True
 			    ? $app
 			    : bJS()->popup($app,b_url::same("?mode=RO&form=vm_Room&id=$r[a_id]"))),

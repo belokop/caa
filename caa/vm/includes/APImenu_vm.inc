@@ -2,7 +2,7 @@
 
 // Load dependencies
 if (function_exists('locateAndInclude')){
-  locateAndInclude('APImenu_ea');
+  locateAndInclude('APImenu_ea','fatal');
   require_once(dirname(__FILE__).'/vm_functions.inc');
   require_once(dirname(__FILE__).'/vm_updates.inc');
 }elseif (file_exists($f=str_replace('/vm/','/ea/',__FILE__))){
@@ -105,6 +105,9 @@ function vm_after_search_check($av_id,$_after_search=''){
 /*
  *
  */
+if (function_exists('locateAndInclude')) locateAndInclude('APImenu_ea');
+else require_once drupal_get_path('module','ea').'/includes/APImenu_ea.inc';
+
 class APImenu_vm extends APImenu_ea{
   var $title  = 'Visits';
   var $q      = VM_MODULE;
@@ -482,7 +485,6 @@ class APImenu_vm extends APImenu_ea{
       }
     }
     //    $this->dbg($reply,True);
-    \D8::dbg($reply,$this);
     return $reply;
   }
   

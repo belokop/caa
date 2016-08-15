@@ -3,12 +3,9 @@ set_time_limit(0);
 /**
  * Visitors Manager (VM) configuration file
  */
-$releaseDate = '2016-08-03';
+$releaseDate = '2016-08-15';
 define('VM_MODULE'   , 'vm');
 define('VM_VERSION','5.78');
-
-// Tabs definition
-require_once 'config.tabs.inc';
 
 //
 // transition problems...

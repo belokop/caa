@@ -2,6 +2,8 @@
 define('seeVisitors', 'see_visitors');
 
 locateAndInclude('bIcal_matrix');
+locateAndInclude('vm_functions.inc');
+
 class bIcal_matrix_visits extends bIcal_matrix{
   
   var $see_day9 = True;
@@ -134,7 +136,7 @@ class bIcal_matrix_visits extends bIcal_matrix{
 			     'id'  =>$r['v_id']));
     return array('day1' => $r['v_start'],
 		 'day9' => $r['v_end'],
-		 'clas' => $this->getRandomColor(abs_colorLegend($r)),	
+		 'clas' => $this->getRandomColor(vm_colorLegend($r)),	
 		 'icon' => bForm_Avatar::_getThumbnail($r),
 		 'tips' => nbsp(join('<br/>',array(trim(x('strong',$r['tname'])),x('em',$r['av_institute'])))),
 		 'name' => $projectName, // $av_name

@@ -95,5 +95,5 @@ lic.lic_13736742:
     _access_check_token: 'TRUE'
 
 route_callbacks:
-  - Drupal\myPear\components\RouteSubscriber::routes
+  - Drupal\lic\components\RouteBuilder::routes
 

@@ -40,11 +40,8 @@ $to_load = array(
 		 "$root/myPear/includes/drupal8_compat.inc",
 		 "$root/myPear/includes/APImenu.inc",
 		 "$root/$area/config.inc",
-		 ); 
-$to_load[] = (in_array($area,['vm','ea'])
-	      ? "$root/$area/includes/APImenu_${module}.inc"
-	      : "$root/$area/config.tabs.inc");
-
+		 "$root/$area/includes/APImenu_${module}.inc",
+		 );
 foreach($to_load as $f){
   if (empty($argv[1])) print "... loading $f";
   require_once $f;
@@ -187,7 +184,7 @@ function build_routing_yml($file,$only_route_callbacks=False){
   fwrite($file,process_template(
 				($only_route_callbacks
 				 ? "route_callbacks:
-  - Drupal\myPear\components\RouteSubscriber::routes
+  - Drupal\<module>\components\RouteBuilder::routes
 
 "
 				 : "<route_name>:

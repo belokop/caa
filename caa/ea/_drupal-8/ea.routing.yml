@@ -143,5 +143,5 @@ ea.ea_3003434545_1087860145:
     _access_check_token: 'TRUE'
 
 route_callbacks:
-  - Drupal\myPear\components\RouteSubscriber::routes
+  - Drupal\ea\components\RouteBuilder::routes
 

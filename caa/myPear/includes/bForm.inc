@@ -100,15 +100,9 @@ class bForm extends myPear_getValue{
      */
     if ((strpos($id,'=') !== False) || (stripos($id,'REGEXP')!==False)){
       $q = myPear_db()->query("SELECT ".$this->TABLEID." FROM $this->TABLE WHERE $id");
-      if (($n=myPear_db()->num_rows($q)) != 1) myPear::WARNING_T("Found $n records",$this);
-      
+      if (($n=myPear_db()->num_rows($q)) > 1) myPear::WARNING_T("Found $n records",$this);
       while ($r=myPear_db()->next_record($q)) $this->ID = $r[$this->TABLEID];
-      if (empty($this->ID)){
-	$this->ID = 'new';
-	if (stripos($id,'REGEXP')===False){
-	  // create on the fly???
-	}
-      }
+      if (empty($this->ID)) $this->ID = 'new';
     }else{
       $this->ID = $id;
     }

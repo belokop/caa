@@ -195,18 +195,20 @@ $(document).ready(function() {
 	case 6: 
 	  drupal_add_css($object,'theme');
 	  break;
+
 	case 7:
 	  drupal_add_css($object,array('type'=>'file','scope'=>'header'));
 	  break;
+
 	case 8:
 	  if ($media === 'content'){
 	    $content = file_get_contents('.'.$object);
 	    $this->add_css_inline(b_fmt::compact_html($content));
 	  }else{
-	    b_debug::xxx("not loaded by D8, must be in ".basename(dirname(realpath($f))).".libraries.yml");
+	    b_debug::xxx("not loaded by D8, must be in myPear.libraries.yml");
 	  }
 	  break;
-	case 9:
+
 	default:
 	  myPear::ERROR($object);
 	  myPear::ERROR(b_debug::__().' is not ready for drupal-'.HOSTED_BY_CMS_vrsn);

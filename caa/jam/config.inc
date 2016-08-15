@@ -2,10 +2,7 @@
 
 define('JAM_MODULE'  , 'jam');
 define('JAM_VERSION','5.49.rc');
-$releaseDate = '2016-08-02';
-
-require_once 'config.tabs.inc';
-if (function_exists('drupal_get_path') && is_file($f=drupal_get_path('module','myPear').'/includes/drupal8_compat.inc')) require_once $f;
+$releaseDate = '2016-08-15';
 
 // Ranks and rights...
 define('RANK_jam_manager'    , 59); // same rights as superuser, but for JAM_MODULE only

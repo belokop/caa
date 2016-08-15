@@ -2,33 +2,54 @@
 
 /**
  * @file
- * Contains \Drupal\myPear\components\AccessController.
+ * Contains \Drupal\myPear\access\AccessController.
  */
 
-namespace Drupal\myPear\components;
+namespace Drupal\myPear\access;
 
 use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Routing\Access\AccessInterface;
 use Symfony\Component\Routing\Route;
 
-// As is, no changes in the menu...
-define('D8MENU_VANILLA', True);
 
-// Seems that the both RouteSubscriber && RouteBuilder are called ONLY when the module is built, 
-// and not on the each page
-define('D8MENU_DYNAMIC_ROUTES', False &&   !D8MENU_VANILLA);
+require_once drupal_get_path('module','myPear').'/includes/drupal8_compat.inc';
 
-// This does not work, Twig caches the functions replies, and the first reply is always used
-define('D8MENU_CSS_HIDING_LINKS', False && !D8MENU_VANILLA);
+/*
+ *
+ */
+function D8MENU_definitions(){
 
-// Menu 'main':  enable level 1 links for all modules (except those which are private for other org)
-// menu 'tools': enable level 1 link for the module in active trail, disable level 1 links for the others
-define('D8MENU_DISABLING_MODULES', True && !D8MENU_VANILLA);
-// In addition the above enable/disable the links in the "access check" method
-// Works on the development laptop, but not on the production site. Mystery... 
-define('D8MENU_DISABLING_MODULES_all_links',False && D8MENU_DISABLING_MODULES);
+  define('no_changes_',True);
+  
+  // As is, no changes in the menu...
+  define('D8MENU_VANILLA', False);
+  
+  // Seems that the both RouteSubscriber && RouteBuilder are called ONLY ONCE when the module is built, 
+  // and not on the each page as desired
+  define('D8MENU_DYNAMIC_ROUTES', False &&   !D8MENU_VANILLA);
+  
+  // This does not work, Twig caches the functions replies, and the first reply is always used
+  define('D8MENU_CSS_HIDING_LINKS', False && !D8MENU_VANILLA);
+  
+  // Menu 'main':  enable level 1 links for all modules (except those which are private for other org)
+  // menu 'tools': enable level 1 link for the module in active trail, disable level 1 links for the others
+  define('D8MENU_DISABLING_MODULES', True);
 
-if ((int)D8MENU_VANILLA + (int)D8MENU_DYNAMIC_ROUTES + (int)D8MENU_CSS_HIDING_LINKS + (int)D8MENU_DISABLING_MODULES != 1) die("Two D8MENU_xxx options are active, please correct");
+  // In addition the above enable/disable the links in the "access check" method
+  // Works on the development laptop, but not on the production site. Mystery... 
+  define('D8MENU_DISABLING_MODULES_all_links',False && D8MENU_DISABLING_MODULES);
+
+  // Same as D8MENU_DISABLING_MODULES + toggle the root link
+  define('D8MENU_TOGGLE_ROOT_LINK',True && D8MENU_DISABLING_MODULES);
+  
+  if ((int)D8MENU_VANILLA +
+      (int)D8MENU_TOGGLE_ROOT_LINK + 
+      (int)D8MENU_DYNAMIC_ROUTES +
+      (int)D8MENU_DISABLING_MODULES_all_links
+      != 1) die("Two D8MENU_xxx options are active, please correct");
+
+  \D8::traceBack('test traceBack');
+}
 
 /*
  *
@@ -38,62 +59,110 @@ function AC(){
   if (empty($AccessController)){
     $AccessController = new AccessController();
   }
+  die("666\n");
+  // Build the top menu
+  if ($AC->is_ready && !D8MENU_VANILLA && !cnf_CLI && !\Drupal::service('router.admin_context')->isAdminRoute()){
+    MH()->toggle_menu_items(\b_reg::get_modules());
+  }
   return $AccessController;
 }
 
 class AccessController implements AccessInterface{ 
-
   /*
    * Activate the current module menu, deactivate the others
    */
+  public $is_ready = False;
   public function __construct($EntityManager=Null) {
+    //    if (!$this->is_ready) $this->init();
+    $this->is_ready = True;
+    //    \D8::traceBack();
+  }
 
-      if (D8MENU_VANILLA)               $this->dbg('D8MENU_VANILLA');
-      if (D8MENU_CSS_HIDING_LINKS)      $this->dbg('D8MENU_CSS_HIDING_LINKS');
-      if (D8MENU_DYNAMIC_ROUTES)        $this->dbg('D8MENU_DYNAMIC_ROUTES');
-      if (D8MENU_DISABLING_MODULES)     $this->dbg('D8MENU_DISABLING_MODULES');
-      if (D8MENU_DISABLING_MODULES_all_links) $this->dbg('D8MENU_DISABLING_MODULES_all_links');
-      
-    static $dejaVu = 0;
-    if (!$dejaVu++){
-      myPear_init();
-      \d8::current_tab();    
-      if (!defined('cnf_CLI'))  define('cnf_CLI',empty($_SERVER["HTTP_USER_AGENT"]));
-      if (!cnf_CLI && !\Drupal::service('router.admin_context')->isAdminRoute()){
-	// Build the top menu
-	MH()->toggle_menu_items(\b_reg::get_modules());
-      }
-    }
+  /*
+   *
+   */
+  private function init(){
+    //    static $dejaVu = 0;    if ($dejaVu++) return;
+    
+    if (!defined('cnf_CLI'))  define('cnf_CLI',empty($_SERVER["HTTP_USER_AGENT"]));
+    
+    if (D8MENU_VANILLA)               $this->dbg('D8MENU_VANILLA');
+    if (D8MENU_DYNAMIC_ROUTES)        $this->dbg('D8MENU_DYNAMIC_ROUTES');
+    if (D8MENU_DISABLING_MODULES)     $this->dbg('D8MENU_DISABLING_MODULES');
+    if (D8MENU_DISABLING_MODULES_all_links) $this->dbg('D8MENU_DISABLING_MODULES_all_links');
+
+    // Load D8 compats
+    \D8::current_tab();
+    
+    // Load myPear as a drupal module    
+    myPear_init();
+
+    // Start myPear
+    bAuth();
+    myOrg();
+
   }
   
   /*
-   * Returns the PAGE access permission
+   * Returns the page access permission
    */
   public function access(Route $route){
     
-    if (D8MENU_CSS_HIDING_LINKS && in_array(($module=str_replace('/','',$route->getPath())),module_list())){
-      static $dejaVu = 0;
-      if (!$dejaVu++){
-	myPear_init();
-	bAuth();
-	myOrg();
-	locateAndInclude('APImenu');    
-      }
-      $reply = \APImenu::_used_by_myOrg($module);
+    $this->init();
+
+    // Get the module & tab from the Route
+    $module = $this->route2module($route->getPath());
+
+    if (cnf_CLI){
+
+      $reply = True;
+
+    }elseif (($module === 'myPear') ||
+	!\APImenu::_used_by_myOrg($module) || 
+	!in_array($module,module_list())){ 
+
+      // Unused or unknown module
+      $reply = False;
+      
     }else{
       
-      // Check is this page accessible or not
-      $reply = $this->_access_exec($route->getPath());
-      
-      if (D8MENU_DISABLING_MODULES_all_links){
-	// Update on the fly the menu database.
-	// However, to my understanding that should be done by the Drupal core...
-	MH()->toggle_enabled($this->menu_route,$reply);
-	MH()->toggle_enabled('clean cache');
+      // Module from myPear
+      if ($this->main_menu_route){
+	//
+	// Main horizontal menu, all the modules to be shown (except the unused ones)
+	//
+	$reply = \APImenu::_used_by_myOrg($module); 
+
+      }else{
+	//
+	// Side menu (tools), check the access
+	//
+	$_module_access_callback = sprintf('_%s_access_callback',$module);
+	$reply = ($module == $GLOBALS['myPear_current_module']
+		  ? call_user_func($_module_access_callback,$this->tab) // The active trail
+		  : False);                                             // Non active trail
+	
+	if (D8MENU_TOGGLE_ROOT_LINK){
+	  // Toggle the active link
+	  if ($reply) MH()->toggle_enabled($this->menu_route,$reply);
+	  // Toggle the root link
+	  $root_link = MH()->get_all_route_names($module,'tools',True);
+	  $this->dbg($root_link);
+	  //	  var_dump(MH()->menu_link_manager()->getDefinition($root_link));
+	  MH()->toggle_enabled($root_link,$reply);
+	  MH()->toggle_enabled('clean cache');
+	}
       }
-      if (!$reply) \d8::dbg(sprintf("??? %s(%s) access is forbidden, who calls me?",
-				    $route->getPath(),$this->tab),'fuchsiaText');
     }
+    
+    if (D8MENU_DISABLING_MODULES_all_links){
+      // Update on the fly the menu database.
+      // However, to my understanding that should be done by the Drupal core...
+      MH()->toggle_enabled($this->menu_route,$reply);
+      MH()->toggle_enabled('clean cache');
+    }
+    if (!$reply) \D8::dbg(sprintf("??? %s(%s) access is forbidden, who calls me?",
+				  $route->getPath(),$this->tab),'fuchsiaText');
     $this->dbg(array('path'   => $route->getPath(),
 		     'tab'    => $this->tab,
 		     'reply'  =>var_export($reply,True)));
@@ -101,37 +170,44 @@ class AccessController implements AccessInterface{
   }
   
   /*
-   * Check access to the tab, the current tab is a default
+   * Check access to the route
    */
   private $menu_route = Null;
   public  $tab = '?';
-  public function _access_exec($menu_route){
+  private function _access_exec($menu_route){
+
+    $this->init();
 
     if (empty($menu_route)){
       print_r(debug_backtrace(False,5));
       die();
     }
-    if (!function_exists('myPear_init')) return True;
-    
-    \myPear_init();
-    \d8::current_tab();    
-    if (empty($GLOBALS['myPear_current_module'])){
+
+    $module = $this->route2module($menu_route);
+
+    if (($module === 'myPear') ||
+	!\APImenu::_used_by_myOrg($module) || 
+	!in_array($module,module_list())){ 
       
-      $reply = True;
+      $reply = False;
       
     }else{
 
-      $module = $this->route2module($menu_route);
+
+      // Main horizontal menu, all the modules to be shown
       if ($this->main_menu_route){
-	$reply = \APImenu::_used_by_myOrg($module);
-      }elseif ($module == $GLOBALS['myPear_current_module']){
+	$reply = \APImenu::_used_by_myOrg($module); 
+      }
+      // The active trail
+      elseif ($module == $GLOBALS['myPear_current_module']){
 	$_module_access_callback = sprintf('_%s_access_callback',$module);
 	$reply = call_user_func($_module_access_callback,$this->tab);
-      }else{
+      }	
+      // Non active trail
+      else{
 	$reply = False;
       }
     }
-    //    $this->dbg($reply);
     return $reply;
   }
 
@@ -152,7 +228,6 @@ class AccessController implements AccessInterface{
     list($_module,$route) = explode('.',$menu_route,2);
     $q_exploded = explode('_',$route);
     $__module = array_shift($q_exploded);
-    if (file_exists($f=drupal_get_path('module',$_module) . '/includes/APImenu_${_module}.inc')) require_once $f;
     if (empty($q_exploded)) $q_exploded = array($_module);
     $tab_code = array_pop($q_exploded);
     $this->tab = APItabs_code2tab($tab_code);
@@ -184,13 +259,13 @@ class menuHandler{
    * There are maybe other ways to to it, but let's try a simple approach...
    */
   function __construct(){
-      \d8::current_tab();    
+      \D8::current_tab();    
   }
 
   /*
    * Drupal::service(plugin.manager.menu.link) class holder
    */
-  private function menu_link_manager(){
+  function menu_link_manager(){
     static $menu_link_manager = Null;
     if (empty($menu_link_manager)) $menu_link_manager = \Drupal::service('plugin.manager.menu.link');
     return $menu_link_manager;
@@ -201,36 +276,19 @@ class menuHandler{
    * and the tools menu shows only the tree for the current module 
    */
   public function toggle_menu_items($module_list){
+    $this->dbg();
   
-    if (D8MENU_CSS_HIDING_LINKS){
-      // Do not deactivate items in the tools menu,
-      // after activation the become "permanently collapsed" (bug in D8??)
-      // Workaround - hiding the menu items, see my twig extension class Drupal\myPear\components\myTwigExtension
-      //
-      $menus_to_preprocess = ['main']; 
-    }else{
-      // To my understanding that is the logical way to go. 
-      $menus_to_preprocess = ['main','tools']; 
-    }
-
+    $menus_to_preprocess = ['main'=>'/','tools'=>'']; 
     $modules_to_preprocess = array_intersect(module_list(),$module_list); sort($modules_to_preprocess);
     $this->dbg(['modules'=>$modules_to_preprocess]);
     
     bAuth();
     myOrg();
     
-    foreach($menus_to_preprocess as $menu_name){
+    foreach($menus_to_preprocess as $menu_name=>$slach){
       foreach($modules_to_preprocess as $module){
-	if ($enabled = \APImenu::_used_by_myOrg($module)){
-	  if ($menu_name == 'tools'){
-	    if     (D8MENU_CSS_HIDING_LINKS) {
-	      $enabled = ($module === $GLOBALS['myPear_current_module']);
-	      $expanded = True;
-	    }else{
-	      $expanded = 'any';
-	    }
-	  }	      
-	}
+	$expanded = 'any';
+	$enabled = AC()->access(new Route("/$module$slach"));
 	$route_name = $this->get_all_route_names($module,$menu_name,True);
 	// $this->dbg(['access'=>(bool)$enabled,'route'=>$route_name]);
 	$this->toggle_enabled($route_name,$enabled,$expanded);
@@ -273,16 +331,16 @@ class menuHandler{
   public function toggle_enabled($route_name,$enabled=False,$expanded='any'){
 
     if (cnf_CLI || empty($route_name)){
-      $this->dbg('???? empty route_name');
+      if (!cnf_CLI) \D8::traceBack('???? empty route_name');
       return;
     }
     
     if (($route_name === 'clean cache') || ($route_name === 'cc')){
+      $this->dbg();
       if (!D8MENU_VANILLA && !($this->toggle_counter || ($route_name === 'cc'))){
         $this->toggle_counter = 0;
         foreach(array('menu','render') as $cache_name){
 	  \Drupal::cache($cache_name)->deleteAll();
-	  $this->dbg("cleaning cache '$cache_name'");
 	}
       }
     }else{
@@ -297,9 +355,11 @@ class menuHandler{
 	if ($x) $dbg['expanded']= var_export((bool)$link['expanded'],True).'->'.var_export((bool)$expanded,True);
 	$dbg['menu'] = $link['menu_name'];
 	if (D8MENU_VANILLA) $dbg['ignored'] = 'D8MENU_VANILLA';
+	elseif (no_changes_)$dbg['ignored'] = 'no_changes_'; 
 	$this->dbg($dbg);
 
-	if (!D8MENU_VANILLA){
+	// Toggle the value
+	if (!no_changes_ && !D8MENU_VANILLA){
 	  $this->toggle_counter++;
 	  $link['enabled']  = $enabled  ? 1 : 0; 
 	  $link['expanded'] = $expanded ? 1 : 0; 
@@ -317,5 +377,4 @@ class menuHandler{
   }
 }
 
-
-require_once drupal_get_path('module','myPear').'/includes/drupal8_compat.inc';
+D8MENU_definitions();

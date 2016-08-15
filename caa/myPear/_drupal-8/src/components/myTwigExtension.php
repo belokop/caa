@@ -2,38 +2,48 @@
 
 namespace Drupal\myPear\components;
 
+use Drupal\myPear\access\AccessController;
+use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Template\TwigExtension;
+use Symfony\Component\Routing\Route;
 
+
+if ($path = drupal_get_path('module','myPear')){
+  require_once $path . '/includes/drupal8_compat.inc';
+  require_once $path . '/config.inc';
+}elseif (!defined('myPear_MODULE')){
+  define('myPear_MODULE','myPear');
+}
 
 /*
  */
 class myTwigExtension extends \Twig_Extension{
 
-  private $anotherService = Null;
+  private $serviceID = Null;
   
-  public function __construct(SecurityService $anotherService= null){
-    $this->anotherService = $anotherService;
+  public function __construct(SecurityService $serviceID= null){
+    locateAndInclude('APImenu');
+    $this->serviceID = $serviceID;
   }
 
   /*
    *
    */  
-  public function mypear_is_fp(){
-    return empty($GLOBALS['myPear_current_module']);
+  public function mytwig_is_fp(){
+    return \D8::is_fp();
   }
 
-  public function mypear_fp_content(){
+  public function mytwig_fp_content(){
+    \D8::dbg();
     myPear_init();
     \b_reg::load_module();
-     $tabh[] = x('h4','Select the desired Application:');
+    $tabh[] = x('h4','Select the desired Application:');
+    $AC = new AccessController();
     foreach(\b_reg::$modules as $module=>$descr){
-        if (!\APImenu::_used_by_myOrg($module) || !in_array($module,module_list())) continue;
-      if ($module == myPear_MODULE){
-	if (!superUser_here) continue;
-	$descr['d'] = myPear_MODULE.' core';
+      if ($AC->access(new Route("/$module/")) == AccessResult::allowed()){
+	\D8::dbg($module);
+	$tabh[] = "<li ><a href='$module?q=$module'>$descr[d] </a></li>";
       }
-      // $tabh[] = "<!-- ".__FUNCTION__.": module='$module' descr='$descr[d]' -->";
-      $tabh[] = "<li ><a href='$module?q=$module'>$descr[d] </a></li>";
     }
     return $this->signature(__FUNCTION__,x('ul',join("\n",$tabh)));
   }
@@ -41,7 +51,7 @@ class myTwigExtension extends \Twig_Extension{
   /*
    *
    */
-  public function mypear_fp_title(){
+  public function mytwig_fp_title(){
       return $this->signature(__FUNCTION__,
                               'Welcome to the '.(defined('myOrg_name') ? myOrg_name : '').' <br/>Computer Aided Administration');
   }
@@ -49,7 +59,7 @@ class myTwigExtension extends \Twig_Extension{
   /*
    * 
    */
-  public function mypear_login(){
+  public function mytwig_login(){
     $reply = '';
     if (class_exists('bAuth',False)){
       $flavor = sprintf("%s=1&q=%s&flavor=%s&org=%s&resetcache_once=1",
@@ -65,7 +75,7 @@ class myTwigExtension extends \Twig_Extension{
       }elseif($GLOBALS['myPear_current_module']){
 	$reply = x("li","<a href='".\b_url::same("?login=check&$flavor")."'><img alt='login' src=/".drupal_get_path('theme','nordita')."/images/login.png /></a>");
       }
-      $reply = x('ul class="mypear_login"',$reply);
+      $reply = x('ul class="mytwig_login"',$reply);
     }
     \D8::dbg(\b_fmt::escape($reply));
     return $this->signature(__FUNCTION__,$reply);
@@ -74,7 +84,7 @@ class myTwigExtension extends \Twig_Extension{
   /*
    *
    */
-  public function mypear_module(){
+  public function mytwig_module(){
       return $this->signature(__FUNCTION__,
                               (empty($GLOBALS['myPear_current_module'])
                                ? ''
@@ -84,7 +94,7 @@ class myTwigExtension extends \Twig_Extension{
   /*
    *
    */
-  public function mypear_date(){
+  public function mytwig_date(){
     if (class_exists('b_reg',False) && !empty(\b_reg::$modules[\b_reg::$current_module])){
       $reg = \b_reg::$modules[\b_reg::$current_module];
       $module_v = sprintf('%s&nbsp;%s',$reg['m'],$reg['v']);
@@ -95,26 +105,54 @@ class myTwigExtension extends \Twig_Extension{
   }
 
   /*
-   * D8 features Workaround,
-   * hide the non-active modules in the menu
+   *
    */
-  public function mypear_hidden_item(\Drupal\Core\Url $url){
+  public function mytwig_showtime($args){
 
-    if (D8MENU_CSS_HIDING_LINKS){
-      \D8::current_tab();
-      
-      list($m,$p) = explode('.',$url->getRouteName());
-      $to_be_hidden = (($m == $p) && ($m != $GLOBALS['myPear_current_module']));
-      if ($to_be_hidden){
-	if (class_exists('myPear',0)) \myPear::MESSAGE("$m to be hidden");
-	\D8::dbg(['module'=>$m,'to hide'=>$to_be_hidden]);
-      }
-    }else{
-      $to_be_hidden = False;
+    $timing = '<!-- no timing information -->';
+
+    ob_start();
+    bTiming()->show();
+    $timing1 = ob_get_contents();
+    ob_end_clean();
+
+    ob_start();
+    bCount()->show();
+    $timing2 = ob_get_contents();
+    ob_end_clean();
+
+    if (!empty($timing1) || !empty($timing2)){
+      $timing = [];
+      if (!empty($timing1)) $timing[] = $timing1;
+      if (!empty($timing2)) $timing[] = $timing2;
+      ob_start();
+      locateAndInclude('b_table');
+      $t = new \b_table();
+      $t->tr($timing);
+      $t->close();
+      $timing = ob_get_contents();
+      ob_end_clean();
     }
+
+    return $this->signature(__FUNCTION__,$timing);
+  }
+
+  /*
+   * NOT A GOOD IDEA. To be removed
+   *
+   * D8 features Workaround test... 
+   * hide the non-active modules in the menu.
+   * See also AccessController
+   */
+  public function mytwig_hidden_item(\Drupal\Core\Url $url){
+
+    $to_be_hidden = False;
     return $to_be_hidden;
   }
 
+  /*
+   * Debugging...
+   */
   private function signature($who,$body=''){
       return (defined('cnf_dev') && cnf_dev
               ? join("\n",["","<!-- start twig extension $who -->",$body,"<!-- end twig extension $who -->",""])
@@ -125,8 +163,9 @@ class myTwigExtension extends \Twig_Extension{
    *
    */
   public function getFunctions(){
-    foreach (array('hidden_item','module','date','login','is_fp','fp_title','fp_content') as $ext){
-      $functions["mypear_$ext"] = new \Twig_Function_Method($this, "mypear_$ext");
+    $extensions = preg_grep('/mytwig_/',get_class_methods($this));
+    foreach ($extensions as $ext){
+      $functions[$ext] = new \Twig_Function_Method($this, $ext);
     }
     return $functions;
   }
@@ -144,7 +183,7 @@ class myTwigExtension extends \Twig_Extension{
    * another example
    */
   public function foo($param){
-    $this->anotherService->bar($param);
+    $this->serviceID->bar($param);
     return __METHOD__;
   }
 }

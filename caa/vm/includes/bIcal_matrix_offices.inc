@@ -45,7 +45,7 @@ class bIcal_matrix_offices extends bIcal_matrix{
 				'day9' => b_time::_($r['e_end']  ,20),
 				'text' => $r['e_name'],
 				'tips' => x('strong',myOrg_name.' program').'<br/>'.nbsp($r['e_name']),
-				'clas' => $this->getRandomColor(abs_colorLegend($r)),
+				'clas' => $this->getRandomColor(vm_colorLegend($r)),
 				'name' => '  NORDITA EVENTS',
 				'styl' => 'strong',
 				'url'  => 'em');
@@ -143,7 +143,7 @@ class bIcal_matrix_offices extends bIcal_matrix{
     $entry=array('day1' => $r['v_start'],
 		 'day9' => $r['v_end'],
 		 'text' => "<a href='$url'>$r[name]</a>",
-		 'clas' => $this->getRandomColor(abs_colorLegend($r)),
+		 'clas' => $this->getRandomColor(vm_colorLegend($r)),
 		 'name' => nbsp($o_name),
 		 'tips' => nbsp(str_replace('<br /><br />','<br/>',
 					    join('<br/>',array(x('strong',$r['name']),

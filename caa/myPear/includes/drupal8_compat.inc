@@ -6,9 +6,9 @@ if (!class_exists('D8',False)){
   
   class D8{
     
-  /*
-   * Extract current myPear menu tab
-   */
+    /*
+     * Extract the current myPear menu tab
+     */
     public static function current_tab(){
       
       require_once dirname(__FILE__).'/APImenu.inc';
@@ -21,13 +21,20 @@ if (!class_exists('D8',False)){
 					  ? $GLOBALS['myPear_current_module']
 					  : APItabs_code2tab($tab_code,$GLOBALS['myPear_current_module']));
       }
+      self::dbg(array('is_fp' => self::is_fp(),
+		      'myPear_current_module'=>@$GLOBALS['myPear_current_module'],
+		      'myPear_current_tab'   =>@$GLOBALS['myPear_current_tab']));
     }
     
-
+    /*
+     * Is it the front page?
+     */
+    public static function is_fp(){
+      return empty($GLOBALS['myPear_current_module'] || (@$GLOBALS['myPear_current_module'] === myPear_MODULE));
+    }
+    
     public static function compat($q=''){
       static $known_modules = array('prp','ea','vm','wiw','lic','jam','hw','legacy','myPear');
-      
-      if (!class_exists('Drupal',False)) return;
       
       // Tidy up the url, remove double&leading slashes
       list($url,$QUERY_STRING) = explode('?',$_SERVER['REQUEST_URI']);
@@ -63,8 +70,21 @@ if (!class_exists('D8',False)){
       return '';
     }
     
+    /*
+     *
+     */
+    private static function cnf_dev(){
+      if (!defined('cnf_localhost')) define('cnf_localhost',
+					    (bool)(preg_match('/^((.*)?::1$|127.0.0.1|local)/',trim(@$_SERVER["REMOTE_ADDR"])) &&
+						   strpos(__FILE__,'/trunk/')!==False));
+      return ((defined('cnf_dev') && cnf_dev) || cnf_localhost);
+    }
+    
+    /*
+     *
+     */
     public static function var_dump($variable,$comment='',$type='debug'){
-      if (defined('cnf_dev') && cnf_dev){
+      if (self::cnf_dev()){
 	ob_start();
 	var_dump($variable);
 	$dump = ob_get_contents();
@@ -74,28 +94,69 @@ if (!class_exists('D8',False)){
 			   $keep_duplications=False);
       }
     }
-
+    
+    /*
+     *
+     */
     public static function dbg($text='',$instance=Null,$level=2,$type='debug',$color='red'){
-      if (defined('cnf_dev') && cnf_dev){
+      if (self::cnf_dev()){
 	if (is_string($instance)) { $color=$instance; $instance=Null; }
 	drupal_set_message(
-			   preg_replace('/(Drupal|Symfony)[a-zA-Z\\\\]*\\\\/','',
+			   // preg_replace('/(Drupal|Symfony)[a-zA-Z\\\\]*\\\\/','',
 					sprintf("%s<span style='color:%s;'>%s: <em>%s</em></span>",
 						(class_exists('b_debug',False) ? b_debug::s_e_depth() : ''),
 						$color,
 						self::__($level, $instance),
-						(is_bool($text) 
-						 ? var_export($text,True) 
-						 : (is_array($text)
-						    ? D8_joinX($text,False)
-						    : (is_object($text)
-						       ? 'object('.get_class($text).')'
-						     : $text))))),
+						self::var_export($text)),
 			   $type,
 			   $keep_duplications=False);
       }
     }
+
+    /*
+     *
+     */
+    public static function var_export($text){
+      return (is_bool($text) 
+	      ? var_export($text,True) 
+	      : (is_string($text)
+		 ? preg_replace('/(Drupal|Symfony)\\\\[a-zA-Z\\\\]*\\\\/','',
+				str_replace(getcwd().'/','',
+					    str_replace(dirname(dirname(__FILE__)).'/','',$text)))
+		 : (is_object($text)
+		    ? 'object('.self::var_export(get_class($text)).')'
+		    : (is_array($text)
+		       ? self::joinX($text,False)
+		       : $text))));
+      
+    }
+
+    /*
+     *
+     */    
+    public static function traceBack(){
+
+      foreach(debug_backtrace() as $n=>$bt){
+	if (empty($bt['args'])) $bt['args'] = [];
+	$args = []; foreach($bt['args'] as $a) $args[] = self::var_export($a);
+	$args = '('.join(',',$args).')';
+	
+	$tr[] = '<tr>'.join(" ",[ '<td>'.$n.'</td>',
+				  '<td>'.(empty($bt['line'])
+					  ? ''
+					  : self::var_export($bt['file']) . '&nbsp;;&nbsp;'. $bt['line']).'</td>',
+				  '<td>'.$bt['class'] . $bt['type'] . $bt['function'] . $args . '</td>',
+				  ]).'</tr>';
+      }
+      $traceBack = '<table>'.'<tbody>'.join("\n",$tr).'</tbody></table>';
+      if (cnf_CLI) print str_replace('&nbsp;',' ',strip_tags("\n".$traceBack."\n"));
+      else self::dbg($traceBack,Null,2,'debug','gray');
+    }
     
+
+    /*
+     *
+     */
     public static function __($flags=array(),$class=Null){
       static $inside = 0;    if ($inside++) die("recursion in b_cnf::__($flags)");
       $includeClass = True;
@@ -120,7 +181,7 @@ if (!class_exists('D8',False)){
 	$clas = $class;
       }
       
-      $calls = debug_backtrace(false);
+      $calls = debug_backtrace(false,$level+1);
       while (True){
 	if (isset($calls[$level])){
 	  $call = $calls[$level];
@@ -141,7 +202,7 @@ if (!class_exists('D8',False)){
 	  if ($id=@$a->ID)  $classArgs[] = $id;
 	  if ($id=@$a->MODE)$classArgs[] = $id;
 	  $args[] = get_class($a)."(".join(',',$classArgs).")";      
-	}elseif (is_array($a))   $args[] = D8_joinX($a);      
+	}elseif (is_array($a))   $args[] = self::joinX($a);      
 	else                     $args[] = $a;
       }
       $reply = str_replace('[','',
@@ -153,73 +214,68 @@ if (!class_exists('D8',False)){
       $inside = 0;  
       return $reply;
     }
-  }
+    
+    /*
+     *
+     */
+    static function joinX($array,$simple_output=True){
 
-  // Adjust the query string
-  D8::compat();
-  
-}
-
-
-function D8_joinX($array,$simple_output=True){
-  if (empty($array)){
-    $a = array();
-    $simple_output = True;
-  }else{ 
-    $a_keys = array_keys($array);
-    $is_associative = !($a_keys[0] === 0 &&
-			$a_keys[count($a_keys)-1] === count($a_keys)-1);
-    $a = ($is_associative
-	  ? array_keys($array)
-	  : $array);
-  }
-  if ($simple_output || !$is_associative){
-    return '['.join(', ',$a).']';
-  }else{
-    $reply = array();
-    foreach($array as $k=>$v){
-      if (is_object($v))   $v = "object(".get_class($v).")";
-      elseif (is_array($v))$v = D8_joinX($v); // $v = "array(...)";
-      elseif (is_bool($v)) $v = var_export($v,True);
-      $reply[] = "$k=$v";
+      if (empty($array)){
+	$a = array();
+	$simple_output = True;
+      }else{ 
+	$a_keys = array_keys($array);
+	$is_associative = !($a_keys[0] === 0 &&
+			    $a_keys[count($a_keys)-1] === count($a_keys)-1);
+	$a = ($is_associative
+	      ? array_keys($array)
+	      : $array);
+      }
+      if ($simple_output || !$is_associative){
+	if ($is_associative) $a = array_keys($a);
+	$a_filtered = [];
+	foreach($a as $item) $a_filtered[] = (is_object($item) ? 'object '.get_class($item) : $item);
+	return '['.join(', ',$a_filtered).']';
+      }else{
+	$reply = [];
+      foreach($array as $k=>$v) $reply[] = "$k=".self::var_export($v);
+      return join(', ',$reply);
+      }
     }
-    return join(', ',$reply);
   }
 }
 
-  
 if (class_exists('Drupal',False)){
+  
   /*
    * module_list 
    */
-  if (!function_exists('module_list')){
-    function module_list(){
-      $modules = \Drupal::moduleHandler()->getModuleList();
-      return array_keys($modules);
-    }
-    
-    /*
-     * variable_get / variable_set / variable_del
-     */
-    function variable_get($var,$default=Null){
-      return (\Drupal::state()->get($var) ?: $default);
-    }
-    function variable_set($var,$value){
-      \Drupal::state()->set($var, $value);
-    }
-    function variable_del($var){
-      \Drupal::state()->delete($var);
-    }
-    
-    /*
-     * drupal_add_js / drupal_add_css
-     */
-    function drupal_add_js($arg1='',$arg2=''){
-      //      \D8::dbg(sprintf("CALLING OBSOLETE %s(%s,%s)",__FUNCTION__,$arg1,$arg2));
-    }
-    function drupal_add_css($arg1='',$arg2=''){
-      //      \D8::dbg(sprintf("CALLING OBSOLETE %s(%s,%s)",__FUNCTION__,$arg1,$arg2));
-    }
+  function module_list(){
+    $modules = \Drupal::moduleHandler()->getModuleList();
+    return array_keys($modules);
+  }
+  
+  /*
+   * variable_get / variable_set / variable_del
+   */
+  function variable_get($var,$default=Null){
+    return (\Drupal::state()->get($var) ?: $default);
+  }
+  function variable_set($var,$value){
+    \Drupal::state()->set($var, $value);
+  }
+  function variable_del($var){
+    \Drupal::state()->delete($var);
+  }
+  
+  /*
+   * drupal_add_js / drupal_add_css
+   */
+  function drupal_add_js($arg1='',$arg2=''){
+    //      \D8::dbg(sprintf("CALLING OBSOLETE %s(%s,%s)",__FUNCTION__,$arg1,$arg2));
+  }
+  function drupal_add_css($arg1='',$arg2=''){
+    //      \D8::dbg(sprintf("CALLING OBSOLETE %s(%s,%s)",__FUNCTION__,$arg1,$arg2));
   }
   
   /*
@@ -228,15 +284,15 @@ if (class_exists('Drupal',False)){
   variable_set('clean_url',1);
   
   /*
-   * Load the D8 Controller
+   * Adjust the query string
    */
-  //  require_once drupal_get_path('module','myPear') . '/Controller.inc';
-  require_once drupal_get_path('module','myPear') . '/includes/myPear_classes.inc';
-  foreach(module_list() as $m){
-    $f = drupal_get_path('module',$m) . "/${m}.custom_hooks.inc";
-    if (is_file($f)) require_once $f; 
-  }
+  D8::compat();
+  
+  /*
+   * Get the curent module & tab
+   */
+  //  D8::current_tab();
+  
 }
 
-D8::dbg(__FILE__);
 

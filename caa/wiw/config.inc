@@ -1,5 +1,5 @@
 <?php
-$releaseDate = '2016-08-03';
+$releaseDate = '2016-08-15';
 define('WIW_MODULE'   , 'wiw');
 define('WIW_VERSION','5.13.rc');
 
@@ -8,9 +8,6 @@ define('wiw_acl_protected','protected');
 
 define('RANK_wiw_admin', 11);
 define('RANK_wiw_manager', 12);
-
-require_once 'config.tabs.inc';
-if (function_exists('drupal_get_path') && is_file($f=drupal_get_path('module','myPear').'/includes/drupal8_compat.inc')) require_once $f;
 
 /*
  * Describe the WIW module
@@ -63,7 +60,7 @@ class WIW extends myPear{
     WIW_access();
 
     static $menu = Null;
-    if (empty($menu)){
+    if ($menu === Null){
       locateAndInclude('APImenu_wiw.inc'); 
       $menu = new APImenu_wiw();
     }

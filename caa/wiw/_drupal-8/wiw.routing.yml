@@ -47,5 +47,5 @@ wiw.wiw_2806772640:
     _access_check_token: 'TRUE'
 
 route_callbacks:
-  - Drupal\myPear\components\RouteSubscriber::routes
+  - Drupal\wiw\components\RouteBuilder::routes
 

@@ -3,6 +3,6 @@ services:
     class: Drupal\myPear\components\myTwigExtension
     argument: 
      _type: service
-     _id: another.service
+     _id:   service.id
     tags: 
       - { name: twig.extension }

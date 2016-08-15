@@ -66,7 +66,7 @@ function VM_agenda(){
 /*
  *
  */
-function abs_colorLegend($r){
+function vm_colorLegend($r){
   
   if ($e=@$r['e_name']){
     $colorLegend = $e;

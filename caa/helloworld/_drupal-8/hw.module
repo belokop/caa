@@ -56,8 +56,8 @@ function hw_render() {
 				   'legacy','lic','page_load_progress','prp'),module_list());
   if (in_array('myPear',$modules) && ($path=drupal_get_path('module','myPear'))){
     if (!function_exists('module_list')) require_once "$path/includes/drupal8_compat.inc";
-    if (!function_exists('_myPear_install_bDB')){
-      require_once "./$path/myPear.install";
+    if (!function_exists('_myPear_install_bDB') && file_exists($f="./$path/myPear.install")){
+      require_once $f;
       myPear_install();
     }
   }

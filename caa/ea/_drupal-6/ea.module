@@ -103,5 +103,3 @@ if (class_exists('Drupal',False)){
   }
   */
 }
-
-if (is_file($f=drupal_get_path('module','myPear').'/includes/drupal8_compat.inc')) require_once $f;

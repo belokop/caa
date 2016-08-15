@@ -551,5 +551,5 @@ vm.vm_2045174345:
     _access_check_token: 'TRUE'
 
 route_callbacks:
-  - Drupal\myPear\components\RouteSubscriber::routes
+  - Drupal\vm\components\RouteBuilder::routes
 

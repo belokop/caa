@@ -129,15 +129,22 @@ function vm_compat_update_ad_hocks(){
     myPear_db()->truncateTable('zzz_templates');
     myPear_update_zzz_lists(VM_MODULE);
   }
+
+  // Strange... Where the empty records come from???
+  vm_compat_update_46($only_report=True);
+
 }
 
-function vm_compat_update_46(){
+function vm_compat_update_46($only_report=False){
   foreach(['bList_vm_accommodationOptions'=>['lm_key'],
 	   ] as $bList=>$targets){
     $q = myPear_db()->qquery("SELECT l_id FROM zzz_lists WHERE l_class = '$bList'");
     while($r = myPear_db()->next_record($q)){
       foreach($targets as $target){
-	myPear_db()->qquery("DELETE FROM zzz_list_members WHERE lm_lid = $r[l_id] AND ($target IS NULL OR $target = 0 OR $target = '')",True);
+	myPear_db()->qquery(($only_report
+			     ? "SELECT lm_id "
+			     : "DELETE ").
+			    " FROM zzz_list_members WHERE lm_lid = $r[l_id] AND ($target IS NULL OR $target = 0 OR $target = '')",True);
       }
     }
   }

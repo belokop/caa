@@ -120,6 +120,7 @@ class bIcons{
       if (is_array($icon) && ($description=@$icon['d']) && ($i=@$icon['i'])){
 	$iconName = b_crypt::hash($description);
 	$this->setDescription(array($iconName => $icon));
+	if (!empty($icon['class'])) $class = explode(' ',$icon['class']);
 	$icon = $iconName;
       }
       
@@ -130,7 +131,6 @@ class bIcons{
       if (!empty($f)){
  	$description = (string)@self::$iconsPool[$icon]['d'];
 
-	list($helper,$c) = explode(':',$helper,2);
 	switch($helper){
 
 	case 'submit':

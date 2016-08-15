@@ -31,7 +31,7 @@ APItabs_init();
 
 // workaround "namespace problem"
 function APItabs_code2tab($code,$module=''){
-  if (!empty($module) && function_exists('drupal_get_path')) require_once drupal_get_path('module',$module).'/config.tabs.inc';
+  if (!empty($module) && function_exists('drupal_get_path')) require_once drupal_get_path('module',$module)."/includes/APImenu_${module}.inc";
   return APItabs::code2tab($code);
 }
 
@@ -128,7 +128,7 @@ class APImenu{
    */
   public static function _used_by_myOrg($module){
     $reply = True;
-    foreach(explode('.',$module) as $m){
+    foreach(explode('.',str_replace('/','',$module)) as $m){
       if (in_array($m,module_list())){
 	myOrg();
 	call_user_func("${module}_init");
