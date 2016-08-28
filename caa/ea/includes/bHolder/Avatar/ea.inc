@@ -19,12 +19,8 @@ class bHolder_Avatar_ea extends bHolder_Avatar{
    *
    */
   protected function avatar_anker($av_id){
-    if (1) $reply = sprintf("?function=ea_myPage&av_id=%s&q=%s",$av_id,EA_MODULE);
-    else   $reply = sprintf("?q=%s&av_id=%s",
-			    join('/',array(EA_MODULE)), // ,APImenu::tab_code(tab_ea_home))),
-			    $av_id);
+    $reply = sprintf("?function=ea_myPage&av_id=%s&q=%s",$av_id,EA_MODULE);
     $this->dbg($reply);
-    b_debug::xxx($reply);
     return $reply;
   }
   

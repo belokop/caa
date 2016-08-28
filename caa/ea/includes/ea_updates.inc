@@ -3,7 +3,9 @@
  * EA updates
  */
 
+
 myPear_startup_queue('ea_updates');
+
 
 function ea_updates(){
   if    (file_exists($f=dirname(__FILE__)."/../config.inc")) require_once($f);
@@ -47,6 +49,8 @@ function ea_updates(){
  */
 function ea_update15(){
   if (!cnf_CLI){
+
+    vm_init();
 
     foreach(array('450110-3129',
 		  '421029-2491',

@@ -90,9 +90,37 @@ function myPear_updates(){
       }
       // Drop the local legacy sql table, not used any more
       if (myPear_db()->tableExists('legacy_maildb')) myPear_db()->qquery("DROP TABLE `legacy_maildb`");
+
+      // Fix collation
+      myPear_set_collation();
     }
     myPear_db()->noAutoCommit('end');
     bTiming()->cpu();
+  }
+}
+
+/*
+ *    ALTER TABLE  `tableName` CHANGE  `Name`  `Name` VARCHAR( 255 ) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL
+ */
+function myPear_set_collation(){
+  $needed = False;
+  if (!$needed) return;
+  $c_set = 'utf8';
+  $d_col = 'utf8_unicode_ci';
+  myPear_db()->qquery("ALTER SCHEMA ".myPear_db()->Database." DEFAULT CHARACTER SET $c_set DEFAULT COLLATE $d_col",True);
+  foreach(myPear_db()->getTables() as $table){
+    b_debug::xxx($table."------------------------------------------------");
+    myPear_db()->qquery("ALTER TABLE $table CONVERT TO CHARACTER SET $c_set COLLATE $d_col",True);
+    $q = myPear_db()->qquery("SHOW COLUMNS FROM $table",cnf_dev);
+    while($r = $this->next_record($q)){
+      if (preg_match('/(char|text)/i',strToLower($r['Type']))){
+	b_debug::xxx($r['Field']);
+	myPear_db()->qquery(sprintf("ALTER TABLE `%s` CHANGE `%s` `%s` %s CHARACTER SET $c_set COLLATE $d_col %s NULL",
+				    $r['Field'],$r['Field'],$r['Type'],(strToLower($r['Null']) == 'yes' ? '' : 'NOT')),
+			    True);
+	
+      }
+    }
   }
 }
 

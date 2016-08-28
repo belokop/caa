@@ -9,10 +9,20 @@ class bDB_myPear extends bDB{
    * Use proper collation for sorting people by name
    */
   function orderBy($columns='av_lastname',$table='zzz_avatars',$direction='ASC'){
+    if (empty($_SESSION['collation_database'])){
+      $q = $this->query('show variables like "collation_database"');
+      while ($r = $this->next_record($q)){
+	if (!empty($r['Value'])){
+	  $_SESSION['collation_database'] = $r['Value'];
+	  $this->dbg("collation ".$_SESSION['collation_database'],cnf_dev);
+	}
+      }
+    }
     $order = array();
     foreach(explode(',',$columns) as $c){
-      if (!cnf_CLI && (stripos($this->getColumnType($table,$c,True),'varchar')!==False)) $order[] = "UPPER($c) COLLATE utf8_bin";
-      else                                                                               $order[] = $c;
+      $order[] = (!cnf_CLI && preg_match("/(text|char)/i",$this->getColumnType($table,$c,True))
+		  ? "UPPER($c) COLLATE ".$_SESSION['collation_database']
+		  : $c);
     }
     $reply = " ORDER BY ".join(',',$order)." $direction ";
     return $reply;

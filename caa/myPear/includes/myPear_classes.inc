@@ -1305,10 +1305,12 @@ class b_pdf{
       if ($isPDF){
 	// The file must be "CONCAT-enable", i.e. not signed, etc.
 	$tmp_file = tempnam("/tmp", __FUNCTION__);
-	system(b_os::path() . "pdftk $file cat output /dev/null >$tmp_file 2>&1",$exit);
+	$cmd = b_os::path() . "pdftk $file cat output /dev/null > $tmp_file 2>&1";
+	b_debug::xxx($cmd);
+	system($cmd,$exit);
 	self::$isPDF_error = (($isPDF = ($exit == 0))
 			      ? ""
-			      : $display_name.' is not a USABLE pdf file.<br/>Please check the file validity, remove the signature, etc..');
+			      : $display_name.' is not an usable pdf file.<br/>Please check the file validity, remove the signature, etc...');
 	unlink($tmp_file);
       }
       // Argument by reference, hence this:
@@ -3514,7 +3516,7 @@ class b_url{
     $url = trim(preg_replace('/^location:/i','',trim($url)));
     if (is_string($url)){
       if (preg_match('#https?:/#',$url)) return $url;
-      if (strpos($url,'?') === 0) $url = str_replace('/index.php','',$_SERVER['PHP_SELF'] . $url);
+      if (strpos($url,'?') === 0) $url = str_replace('/index.php','/',$_SERVER['PHP_SELF'] . $url);
       $_url = b_crypt::parse_query_string($url);
       $_prf = b_crypt::$parse_query_string_arg0;
     }elseif(is_array($url)){
@@ -3787,19 +3789,31 @@ class b_os{
 	$path = dirname($path);
       }
 
+      $virt_path = [];
+      $existing_path = explode(DIRECTORY_SEPARATOR,$path);
+      
       // Go down the directory tree if the path is not yet created
-      $pst = array();
-      $pth = explode(DIRECTORY_SEPARATOR,$path);
-      while(count($pth) && !is_dir($dir=implode(DIRECTORY_SEPARATOR,$pth))) array_unshift($pst,array_pop($pth));
-
-      // Get the true path from Unix
-      $reply = implode(DIRECTORY_SEPARATOR,array_merge(array(trim(`cd "$dir"; pwd -P`)),$pst));
-      if (!empty($reply) && $is_file) $reply .= "/$fn"; 
+      while(count($existing_path)){
+	$p = implode(DIRECTORY_SEPARATOR,$existing_path);
+	if ($r=is_dir($p) || is_dir(getcwd().DIRECTORY_SEPARATOR.$p)){
+	  break;
+	}else{
+	  array_unshift($virt_path,array_pop($existing_path));
+	}
+      }
+      
+      // Get the true path 
+      $reply = implode(DIRECTORY_SEPARATOR,array_merge(explode(DIRECTORY_SEPARATOR,getcwd()),$existing_path,$virt_path));
+      if (!empty($reply) && $is_file) $reply .= DIRECTORY_SEPARATOR . $fn; 
       break;
 
     default:
       $reply = realpath($path);
     }
+
+    // Just for beauty...
+    $reply = str_replace(DIRECTORY_SEPARATOR.DIRECTORY_SEPARATOR,DIRECTORY_SEPARATOR,$reply);
+    // b_debug::xxx($reply);
     return $reply;
   }
 
@@ -3883,6 +3897,7 @@ class b_os{
    */
   public static function url2path($url,$createIfMissing=False){
     $path = self::realpath($url);
+    //    b_debug::xxx($path);
     if (!file_exists($path) && $createIfMissing) self::mkdir($path);
     return $path;
   }

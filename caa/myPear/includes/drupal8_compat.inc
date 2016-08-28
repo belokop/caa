@@ -1,6 +1,6 @@
 <?php
 /*
- * Tentative... Drupal8 wruppers
+ * Tentative... Drupal8 wrappers
  */
 if (!class_exists('D8',False)){
   
@@ -43,7 +43,7 @@ if (!class_exists('D8',False)){
       
       if (empty($_REQUEST['q'])){
 	//
-	// build $_REQUEST['q'] (make wrupper compatibility with D6/D7) 
+	// build $_REQUEST['q'] (make wrapper compatibility with D6/D7) 
 	//
 	if (in_array($u[0],$known_modules)){
 	  $_REQUEST['q'] = $_GET['q'] = implode('/',$u);
@@ -73,11 +73,18 @@ if (!class_exists('D8',False)){
     /*
      *
      */
-    private static function cnf_dev(){
+    public static function cnf_localhost(){
       if (!defined('cnf_localhost')) define('cnf_localhost',
 					    (bool)(preg_match('/^((.*)?::1$|127.0.0.1|local)/',trim(@$_SERVER["REMOTE_ADDR"])) &&
 						   strpos(__FILE__,'/trunk/')!==False));
-      return ((defined('cnf_dev') && cnf_dev) || cnf_localhost);
+      return cnf_localhost;
+    }
+    
+    /*
+     *
+     */
+    public static function cnf_dev(){
+      return ((defined('cnf_dev') && cnf_dev) || self::cnf_localhost());
     }
     
     /*
@@ -101,27 +108,25 @@ if (!class_exists('D8',False)){
     public static function dbg($text='',$instance=Null,$level=2,$type='debug',$color='red'){
       if (self::cnf_dev()){
 	if (is_string($instance)) { $color=$instance; $instance=Null; }
-	drupal_set_message(
-			   // preg_replace('/(Drupal|Symfony)[a-zA-Z\\\\]*\\\\/','',
-					sprintf("%s<span style='color:%s;'>%s: <em>%s</em></span>",
-						(class_exists('b_debug',False) ? b_debug::s_e_depth() : ''),
-						$color,
-						self::__($level, $instance),
-						self::var_export($text)),
+	drupal_set_message(self::var_export(sprintf("%s<span style='color:%s;'>%s: <em>%s</em></span>",
+						    (class_exists('b_debug',False) ? b_debug::s_e_depth() : ''),
+						    $color,
+						    self::__($level, $instance),
+						    self::var_export($text))),
 			   $type,
 			   $keep_duplications=False);
       }
     }
 
     /*
-     *
+     * var_export extension
      */
     public static function var_export($text){
       return (is_bool($text) 
 	      ? var_export($text,True) 
 	      : (is_string($text)
 		 ? preg_replace('/(Drupal|Symfony)\\\\[a-zA-Z\\\\]*\\\\/','',
-				str_replace(getcwd().'/','',
+				str_replace(getcwd().'/','&lt;cwd&gt;',
 					    str_replace(dirname(dirname(__FILE__)).'/','',$text)))
 		 : (is_object($text)
 		    ? 'object('.self::var_export(get_class($text)).')'
@@ -280,20 +285,44 @@ if (class_exists('Drupal',False)){
   }
   
   /*
-   * Set the 'clean_url' flag
+   * D8 compats
    */
-  variable_set('clean_url',1);
-  
-  /*
-   * Adjust the query string
-   */
-  D8::compat();
-  
-  /*
-   * Get the curent module & tab
-   */
-  //  D8::current_tab();
-  
+  if (class_exists('Drupal',False)){
+    
+    /*
+     * Adjust the query string
+     */
+    D8::compat();
+    
+    /*
+     * Get the current module & tab
+     */
+    //  D8::current_tab();
+  }
 }
 
+/*
+ * Workaround...
+ */
+function get_clean_url(){
+  static $clean_url = Null;
+  if ($clean_url === Null){
+    $clean_url = (class_exists('Drupal',False)
+		  ? (int)True
+		  : (int)!\D8::cnf_localhost());
+    D8::dbg(['getcwd()'=>getcwd()]);
+  }
+  $drupal_clean_url = variable_get('clean_url','???');
+  if ($clean_url === $drupal_clean_url){
+    D8::dbg($clean_url);
+  }else{
+    \D8::dbg(['drupal'     =>var_export($drupal_clean_url,True),
+	      __FUNCTION__ =>var_export($clean_url,True)]);
 
+    variable_set('clean_url',($clean_url ? 1 : 0));
+    $msg = sprintf("Set 'clean_url' %s --> %s",var_export($drupal_clean_url,True),var_export($clean_url,True));
+    if (class_exists('myPear',False))  myPear::WARNING($msg);
+    else D8::dbg($msg);
+  }
+  return $clean_url;
+}

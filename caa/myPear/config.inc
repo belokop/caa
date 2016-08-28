@@ -1,6 +1,9 @@
 <?php
+ini_set("allow_url_fopen", true);
+//var_dump(file_get_contents('php://input'));
+
 // myPear module 
-$releaseDate = '2016-08-15';
+$releaseDate = '2016-08-28';
 define('myPear_VERSION','5.142');
 define('myPear_MODULE', 'myPear');
 define('myPear_DATE',    $releaseDate);
@@ -77,7 +80,7 @@ if (!defined('cnf_CLI'))          define('cnf_CLI',empty($_SERVER["HTTP_USER_AGE
 
 //  set flag "running locally, without a network on a Ryan-air jet"
 if (!defined('cnf_localhost')) define('cnf_localhost',
-				      (bool)(preg_match('/^((.*)?::1$|127.0.0.1|local)/',trim(@$_SERVER["REMOTE_ADDR"])) &&
+				      (bool)(preg_match('/^((.*)?::1$|127.0.0.1|local|192.168.)/',trim(@$_SERVER["REMOTE_ADDR"])) &&
 					     strpos(__FILE__,'/trunk/')!==False));
 
 // Set a shortcut "Processing task manager queue", see class "myPear_taskManager"
@@ -283,6 +286,9 @@ case 'CLI':
   break;
   
 case 'drupal': 
+
+  require_once drupal_get_path('module',myPear_MODULE).'/includes/drupal8_compat.inc';
+
   // Say "here is drupal" (DRUPAL_ROOT is not defined in some drupal versions)
   if (!defined('DRUPAL_ROOT'))        define('DRUPAL_ROOT', DOCUMENT_ROOT);
   
@@ -291,15 +297,14 @@ case 'drupal':
     function my_drupal_get_path($type,$name=''){
       if ($name) $p = drupal_get_path($type,$name);
       else       $p = $type;
-      if (substr($p,0,1) !== DIRECTORY_SEPARATOR) $p = DIRECTORY_SEPARATOR . $p;
-      if (!variable_get('clean_url','0')) $p = '.' . $p;
+      if (strpos($p,DIRECTORY_SEPARATOR) !== 0) $p = DIRECTORY_SEPARATOR . $p;
+      if (!get_clean_url()) $p = '.' . $p;
       return $p;
-      }
+    }
   }
   // Define the root directory for the myPear distribution
-  define('myPear_root',       my_drupal_get_path('module',myPear_MODULE)).'/';
+  define('myPear_root',       my_drupal_get_path('module',myPear_MODULE).DIRECTORY_SEPARATOR);
   define('myPear_root_files', my_drupal_get_path('/sites/default/files'));
-  
   break;
   
 case 'joomla':

@@ -1095,12 +1095,12 @@ class APImenu_vm extends APImenu_ea{
       bDatePicker()->message = ' ';
       bDatePicker()->imposeConversion = True;
       bDatePicker()->reset(); // reset to defaults
-      $GLOBALS['myPear_custom_title'] = myPear::set_page_selector(array_merge([x('h1', $events[EVT_ANY])],
-										bDatePicker()->get2('vm_day1',vm_day1,
-												    'vm_day9',vm_day9,
-												    True),
-										['<input type="submit" class="page_load_progress" value="Set new time range"/>']
-										));
+      $GLOBALS['myPear_custom_title'] = join("\n",array(x('h1', $events[EVT_ANY]),
+							myPear::set_main_selector(bDatePicker()->get2('vm_day1',vm_day1,
+												      'vm_day9',vm_day9,
+												      True),
+										  ['<input type="submit" class="page_load_progress" value="Set new time range"/>']
+										  )));
       break;
       
     case False:      // Visits within events
@@ -1113,11 +1113,12 @@ class APImenu_vm extends APImenu_ea{
 	}
 	VM::$formDummy->formDB['vm_eventSelector'] = b_cnf::get('vm_eventSelector');
 	VM::$formDummy->submitOnChange['vm_eventSelector'] = True;
-	$GLOBALS['myPear_custom_title'] = myPear::set_page_selector([VM::$formDummy->selectMenu_exec('vm_eventSelector',
-												       $events,
-												       "class='evHeader'",
-												       $onlyRW=True)],
-								      True);
+	$GLOBALS['myPear_custom_title'] = myPear::set_main_selector([VM::$formDummy->selectMenu_exec('vm_eventSelector',
+												     $events,
+												     "class='evHeader'",
+												     $onlyRW=True)],
+								    True,
+								    True);
       }else{
 	if (is_object(VM::$e)) myPear::H1(VM::$e->name(True),'reset');
       }

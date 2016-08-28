@@ -848,7 +848,7 @@ The request came from the web interface from computer '".gethostbyaddr($_SERVER[
     ob_start();
     $t = new b_table('','<div class="login_prompt centralized">'.
 		     (($m=$message) ? x("div class='login_message'",$m) : '').
-		     "<form name='login'  method='post' action='".b_url::same("?login=$flagToAutoCheck")."'>");
+		     "<form name='login'  method='POST' action='".b_url::same("?login=$flagToAutoCheck")."'>");
     
     $t->tr(str_replace(array("\r","\n"),"<br/>",$error_message),
 	   'colspan=3 class="login_error"');

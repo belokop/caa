@@ -34,7 +34,7 @@ class b_reg{
 	  
 	case 'drupal':
 	  // In drupal-8 this does not work... 
-	  if (!variable_get('clean_url','0')) $path = (string)@$_GET['q'];
+	  if (!get_clean_url()) $path = (string)@$_GET['q'];
 	  elseif (empty($_GET['q']))          $path = b_os::pathinfo($_SERVER["SCRIPT_URL"],PATHINFO_DIRNAME); 
 	  else                                $path = $_GET['q'];
 

@@ -32,7 +32,7 @@ class bJS{
    * This flag triggers the widget to be shown without the theme header/footer.
    *
    * How to cut off the trigger/footer is a separate problem...
-   * One way to do it (thanks to HvZM) is to use css, see noHeader.css
+   * The best way to do it (thanks to HvZM) is to use css, see noHeader.css
    */
   public function modal_once($type=0){
     if    (cnf_inside_fb_ajax)  $modal_once = 0;

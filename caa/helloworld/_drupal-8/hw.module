@@ -229,7 +229,7 @@ function hw_render() {
   if (function_exists('locateAndInclude')){
     locateAndInclude('b_datePicker.inc');
     print "<h2>bDatePicker()->get2()</h2>";
-    myPear::set_page_selector(bDatePicker()->get2('from',0,'to',0,$returnResult=True));
+    myPear::set_main_selector(bDatePicker()->get2('from',0,'to',0,$returnResult=True));
   }
   
   /*

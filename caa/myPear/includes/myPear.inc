@@ -79,25 +79,21 @@ class myPear{
   public static function myPear_enabled_theme(){
     static $reply = Null;
     static $theme_default = '?';
-    if ($reply === Null){
-      if (function_exists('drupal_get_path')){
-	$theme_default = variable_get('theme_default', NULL);
-	if (!empty($theme_default)){
-	  $theme_path = drupal_get_path('theme', ($theme_default=variable_get('theme_default', NULL)));
-	  if     (file_exists($c="$theme_path/config.inc")) require_once $c;
-	  elseif (file_exists($c="$theme_path/config.inc")) require_once $c;
+    if (($reply === Null) && function_exists('drupal_get_path')){
+      $theme_default = variable_get('theme_default', NULL);
+      if (!empty($theme_default)){
+	$theme_path = drupal_get_path('theme', ($theme_default=variable_get('theme_default', NULL)));
+	if     (file_exists($c="$theme_path/config.inc")) require_once $c;
+	elseif (file_exists($c="$theme_path/config.inc")) require_once $c;
 	}
-	$reply = defined('myPear_enabled_theme');
-      }
+      $reply = defined('myPear_enabled_theme');
       if (cnf_show_acl) b_debug::xxx(($reply ? 'YES' : 'NO').", theme_default=$theme_default");
     }
-$reply = True;
-    b_debug::xxx($reply);
     return $reply;
   }
   
   /*
-   * Has av_id an organization duty?
+   * Has av_id a duty in the organization?
    */
   public static function org_duty($av_id,$ranks,$parent_ID=myOrg_ID){
 
@@ -177,16 +173,19 @@ $reply = True;
   /*
    *
    */
-  static function set_page_selector($input,$noPrint=False){
+  static function set_main_selector($input,$noPrint=False,$add_form=False){
     static $n = 0;
 
-    $li = array();
+    $li = array('');
+    $enctype = (1 ? 'application/x-www-form-urlencoded' : 'multipart/form-data');
     foreach($input as $label=>$selection){
       if (!is_numeric($label)) $li[] = x("li role='label'",$label);
       $li[] = x("li",
-		x(sprintf("form action='%s' method='post' enctype='multipart/form-data' class='only_online' name='%s%d'",
-			  b_url::same(),__FUNCTION__,++$n),
-		  $selection));
+		(preg_match('/<(select|input)/i',$selection)
+		 ? x(sprintf("form action='%s' method='POST' enctype='$enctype' class='only_online' name='%s%d' accept-charset='UTF-8'",
+			     b_url::same(),'selector',++$n),
+		     $selection)
+		 : $selection));
     }
     $reply = (x("div id='mypear_ul_selector'",x('ul',join("\n",$li))).
 	      x("div style='clear:both'",''));

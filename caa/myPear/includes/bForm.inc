@@ -1101,7 +1101,7 @@ class bForm extends myPear_getValue{
 			      sprintf("%06d",myOrg_ID)),
 			$module_path) as $element){
       $path .= $element . DIRECTORY_SEPARATOR;
-      if (!is_dir($path)){
+      if (!is_dir($path) && !is_dir(getcwd().$path)){
 	// Create the uploads area and protect it with an empty index.html file
 	$this->dbg("creating $path",cnf_dev);
 	b_os::mkdir($path);

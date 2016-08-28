@@ -49,11 +49,11 @@ class bHolder_prp_preprints extends bHolder{
     $f->formDB['prp_field'] = $this->field_selected;
     
     myPear::H1(PRP::$fields[$this->field_selected].(($y=$this->year_selected) ? " - ".$years[$y]:""));
-    $selector = array('' => ($f->selectMenu_exec('prp_field',PRP::$fields,"onchange='submit()'",$onlyRW=True).
-			     x('noscript','<input type="submit" value="go"/>')),
-		      ' '=> ($f->selectMenu_exec('_prp_year',$years,"onchange='submit()'",$onlyRW=True).
-			     x('noscript','<input type="submit" value="go"/>')));
-    myPear::set_page_selector($selector);
+    $selector = array($f->selectMenu_exec('prp_field',PRP::$fields,"onchange='submit()'",$onlyRW=True).
+		      x('noscript','<input type="submit" value="go"/>'),
+		      $f->selectMenu_exec('_prp_year',$years,"onchange='submit()'",$onlyRW=True).
+		      x('noscript','<input type="submit" value="go"/>'));
+    myPear::set_main_selector($selector,False,True);
   }
   
   /*
