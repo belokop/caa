@@ -143,16 +143,16 @@ if (!class_exists('D8',False)){
 
       if (self::cnf_dev()){
 	foreach(debug_backtrace() as $n=>$bt){
-	  if (empty($bt['args'])) $bt['args'] = [];
-	  $args = []; foreach($bt['args'] as $a) $args[] = self::var_export($a);
+	  if (empty($bt['args'])) $bt['args'] = array();
+	  $args = array(); foreach($bt['args'] as $a) $args[] = self::var_export($a);
 	  $args = '('.join(',',$args).')';
 	  
-	  $tr[] = '<tr>'.join(" ",[ '<td>'.$n.'</td>',
-				    '<td>'.(empty($bt['line'])
-					    ? ''
-					    : self::var_export($bt['file']) . '&nbsp;;&nbsp;'. $bt['line']).'</td>',
-				    '<td>'.$bt['class'] . $bt['type'] . $bt['function'] . $args . '</td>',
-				    ]).'</tr>';
+	  $tr[] = '<tr>'.join(" ",array('<td>'.$n.'</td>',
+					'<td>'.(empty($bt['line'])
+						? ''
+						: self::var_export($bt['file']) . '&nbsp;;&nbsp;'. $bt['line']).'</td>',
+					'<td>'.$bt['class'] . $bt['type'] . $bt['function'] . $args . '</td>',
+					)).'</tr>';
 	}
 	$traceBack = '<table>'.'<tbody>'.join("\n",$tr).'</tbody></table>';
 	if (cnf_CLI) print str_replace('&nbsp;',' ',strip_tags("\n".$traceBack."\n"));
@@ -239,11 +239,11 @@ if (!class_exists('D8',False)){
       }
       if ($simple_output || !$is_associative){
 	if ($is_associative) $a = array_keys($a);
-	$a_filtered = [];
+	$a_filtered = array();
 	foreach($a as $item) $a_filtered[] = (is_object($item) ? 'object '.get_class($item) : $item);
 	return '['.join(', ',$a_filtered).']';
       }else{
-	$reply = [];
+	$reply = array();
       foreach($array as $k=>$v) $reply[] = "$k=".self::var_export($v);
       return join(', ',$reply);
       }

@@ -136,8 +136,8 @@ function vm_compat_update_ad_hocks(){
 }
 
 function vm_compat_update_46($only_report=False){
-  foreach(['bList_vm_accommodationOptions'=>['lm_key'],
-	   ] as $bList=>$targets){
+  foreach(array('bList_vm_accommodationOptions'=>['lm_key'],
+		) as $bList=>$targets){
     $q = myPear_db()->qquery("SELECT l_id FROM zzz_lists WHERE l_class = '$bList'");
     while($r = myPear_db()->next_record($q)){
       foreach($targets as $target){

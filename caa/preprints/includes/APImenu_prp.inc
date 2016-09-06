@@ -1,6 +1,6 @@
 <?php
 
-if    (function_exists('locateAndInclude'))    locateAndInclude('APImenu_ea');
+if    (function_exists('locateAndInclude'))    locateAndInclude('APImenu','APImenu_ea');
 elseif(function_exists('drupal_get_path'))  require_once drupal_get_path('module','ea') . '/includes/APImenu_ea.inc';
 
 foreach(array('tab_prp_see'         => (myOrg_ID ? myOrg_nameS.' ' : '').'Preprints',

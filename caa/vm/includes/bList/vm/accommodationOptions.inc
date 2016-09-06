@@ -390,12 +390,12 @@ class bList_vm_accommodationOptions extends bList_vm{
   /*
    * Get "rooms" for the build-in options
    */
-  function get_BI($Return_a_code=False){
+  function get_BI($return_a_code=False){
     $reply = array();
     $q = myPear_db()->query("SELECT a_id,a_name,a_code FROM abs_huts LEFT JOIN abs_rooms ON a_hutid = hut_id WHERE hut_code = '".HUT_BI."'");
     while($r = myPear_db()->next_record($q)){
       if(cancel_LODGING_REQ_ONLY && ($r['a_id'] == VM::$REQ_ONLY->ID)) continue;
-      if ($Return_a_code) $reply[$r['a_id']] = $r['a_code'];
+      if ($return_a_code) $reply[$r['a_id']] = $r['a_code'];
       else                $reply[$r['a_id']] = $r['a_name'];
     }
     return $reply;  

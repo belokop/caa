@@ -208,11 +208,11 @@ class b_btn{
   /*
    * Icon as <a href='$url'>$text</a>  button 
    */
-  static function submit_icon($icon, $text_action, $url, $confirm=True){
+  static function submit_icon($icon, $text_action, $url, $confirm=True,$min100='min100'){
     $text_action = strip_tags($text_action);
     return x("span class='only_online'",
              x("a href='$url'".($confirm ? " onClick='return confirm(\"Really $text_action?\");'" : ""),
-	       bIcons()->get(array('i'=>$icon,'d'=>$text_action,'class'=>'page_load_progress min100'))));
+	       bIcons()->get(array('i'=>$icon,'d'=>$text_action,'class'=>"page_load_progress $min100"))));
   }
 
   /*
@@ -3789,7 +3789,7 @@ class b_os{
 	$path = dirname($path);
       }
 
-      $virt_path = [];
+      $virt_path = array();
       $existing_path = explode(DIRECTORY_SEPARATOR,$path);
       
       // Go down the directory tree if the path is not yet created

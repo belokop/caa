@@ -44,12 +44,12 @@ function myPear_page_attachments(array &$page) {
   $scope = 'html_head';
   foreach($myPear_page_attachments as $tag=>$values){
     foreach($values as $value){
-      $page['#attached'][$scope][] = [['#type' => 'html_tag',
-				       '#tag'  => $tag,
-				       '#value'=> $value,
-				       ],
-				      'myPear_attachment'.(++$counter),
-				      ];
+      $page['#attached'][$scope][] = array(array('#type' => 'html_tag',
+						 '#tag'  => $tag,
+						 '#value'=> $value,
+						 ),
+					   'myPear_attachment'.(++$counter),
+					   );
     }
   }
 }

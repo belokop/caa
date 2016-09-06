@@ -77,7 +77,7 @@ class b_tabs_myPear {
   function __construct($tabs=array(),$selected=0){
 
     // Load the styles
-    if (function_exists('bJS')) bJS()->add_css_file('b_tabs.css');
+    bJS()->add_css_file('b_tabs.css');
     $this->ID = ++self::$NN;
 
     // Collect info about the "current tabs" (tabs on one page)

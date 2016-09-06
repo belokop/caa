@@ -435,13 +435,17 @@ class bForm_vm_Lease extends bForm_vm{
 	$block_header[] = b_btn::submit_icon('i-arrow_divide', 
 					     btn_splitLease,
 					     b_url::same("?action_once=".btn_splitLease."&function=vm_edit_accommodation&resetcache_once=1&lease_id=$this->ID&v_id=".
-							 $this->parentForm->ID));
+							 $this->parentForm->ID),
+					     $confirm=True,
+					     '');
 	
       }
       if ($nLeases > 1){
 	$block_header[] = b_btn::submit_icon('i-drop',
 					     btn_deleteLease,
-					     b_url::same("?action_once=".btn_deleteLease."&function=vm_edit_accommodation&resetcache_once=1&lease_id=$this->ID&v_id=".$this->parentForm->ID));
+					     b_url::same("?action_once=".btn_deleteLease."&function=vm_edit_accommodation&resetcache_once=1&lease_id=$this->ID&v_id=".$this->parentForm->ID),
+					     $confirm=True,
+					     '');
       }
     }
     
