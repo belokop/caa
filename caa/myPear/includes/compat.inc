@@ -8,7 +8,7 @@ require_once '../myPear/config.inc';
 
 renameColumnsToNewNames();
 
-print __FILE__. "done<br/>\n";
+print __FILE__. "... done<br/>\n";
 
 function defineNewColumnNames(){
   $mods = array('jam_applicants'  =>array('ap_posid_fixed'=>'ap_posid',

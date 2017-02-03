@@ -144,7 +144,7 @@ class bUnit_vm_endorses extends bUnit_vm{
     foreach($this->getUnitMemberIDs() as $av_id){
       $rec = $this->getMember(array('um_avid'=>$av_id));
       if (empty($rec['um_id'])) {
-	b_debug::var_dump($rec);
+	b_debug::var_dump($rec,"??? empty 'um_id' for av_id='$av_id'");
 	b_debug::traceBack("??? empty 'um_id' for av_id='$av_id'");
 	continue;
       }

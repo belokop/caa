@@ -77,18 +77,6 @@ class bForm_vm_Lease extends bForm_vm{
     if ($returnMessage) return $reply;
   }
 
-  /*
-   * Remove LODGING_REQ_ONLY requests, it was a bad idea
-   */
-  public static function cancel_LODGING_REQ_ONLY(){
-    $q = myPear_db()->qquery(sprintf("SELECT lease_id FROM abs_leases WHERE lease_aid = '%s'",VM::$REQ_ONLY->ID),cnf_dev);
-    while($r = myPear_db()->next_record($q)){
-      $l = new bForm_vm_Lease($r['lease_id']);
-      b_debug::xxx($l->__toString());
-      $l->delete();
-    }
-  }
-
   /* 
    * Get the lease_id(s) for the given lease(es)
    */
@@ -473,7 +461,7 @@ class bForm_vm_Lease extends bForm_vm{
 	$this->defineVariable(b_time::period($lease_start,$lease_end),'lease_aid');
       }
       
-      if ($this->parentForm->isVisitType_program() && ($_virt_wish=$this->parentForm->getValue('v_comment',True))){
+      if ($this->parentForm->isVisitType_program() && ($_virt_wish=$this->parentForm->getValue('v_acc_wish',True))){
 	$this->defineVariable(array('_virt_wish'=>' '),True);
 	$this->isRO['_virt_wish'] = True;
 	$this->formDB['_virt_wish'] = b_fmt::redText($_virt_wish,'greyText');;
@@ -511,7 +499,8 @@ class bForm_vm_Lease extends bForm_vm{
    */
   private static function _mayBook($hut_code,$visit_class){
     $this->hookVisit();
-    if (in_array($hut_code,array_merge(array(HUT_BI),array_values($this->parentForm->e->accommodationOptions()->get_BI())))){
+    //if (in_array($hut_code,array_merge(array(HUT_BI),array_values($this->parentForm->e->accommodationOptions()->get_BI())))){
+    if (in_array($hut_code,array_merge(array(HUT_BI),array_values(VM_accommodationOptions($this->parentForm->e)->get_BI())))){
       $reply = True;
     }elseif(!($reply = VM_manager_here)){
       switch($hut_code){
@@ -544,7 +533,7 @@ class bForm_vm_Lease extends bForm_vm{
   function hasAccommodation($exclude_OA=False){
     $reply = $lease_aid = (int)$this->getValue('lease_aid',True);
     if ($exclude_OA && (($lease_aid == VM::$OA->ID) || 
-			($lease_aid == VM::$REQ_ONLY->ID))) $reply = False;
+			($lease_aid == VM::$BR->ID))) $reply = False;
     $this->dbg($reply);
     return $reply;
   }
@@ -670,9 +659,7 @@ class bForm_vm_Lease extends bForm_vm{
   public function freeRooms($lease_start=Null,$lease_end=Null){
     if (empty($lease_start))  $lease_start = $this->getValue('lease_start'); 
     if (empty($lease_end))    $lease_end   = $this->getValue('lease_end'); 
-    return self::_freeRooms((is_object($this->parentForm->e)
-			     ? $this->parentForm->e->accommodationOptions()
-			     : bList::getListInstance(myOrg_ID,'bList_vm_accommodationOptions')),
+    return self::_freeRooms(VM_accommodationOptions($this->parentForm->e),
 			    $lease_start,
 			    $lease_end,
 			    $this->hasAccommodation(False),
@@ -722,20 +709,6 @@ class bForm_vm_Lease extends bForm_vm{
       if (!empty($hut_code) && ($ra['hut_code'] != $hut_code)) continue;
       if (bForm_vm_Room::_apIsAccessible($ra,$v_start,$v_end)) $reply[$ra['a_id']] = bForm_vm_Room::a_name($ra);
     }
-    return $reply;
-  }
-
-  /*
-   *
-   */
-  public static function LODGING_REQ_ONLY($e_id=Null){
-    if (empty($e_id) && !empty(VM::$e)) $e_id = VM::$e->ID;
-    $q = myPear_db()->query("SELECT v_id FROM abs_visits ".
-			    " LEFT JOIN abs_leases     ON abs_leases.lease_vid = abs_visits.v_id ".
-			    " LEFT JOIN abs_rooms ON abs_leases.lease_aid = abs_rooms.a_id ".
-			    " WHERE v_eid = '$e_id' AND a_name = '".LODGING_REQ_ONLY_TXT."' GROUP BY v_id");
-    $reply = array();
-    while ($r = myPear_db()->next_record($q)) $reply[] = $r['v_id'];
     return $reply;
   }
 

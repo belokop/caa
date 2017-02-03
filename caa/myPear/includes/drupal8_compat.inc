@@ -151,7 +151,7 @@ if (!class_exists('D8',False)){
 					'<td>'.(empty($bt['line'])
 						? ''
 						: self::var_export($bt['file']) . '&nbsp;;&nbsp;'. $bt['line']).'</td>',
-					'<td>'.$bt['class'] . $bt['type'] . $bt['function'] . $args . '</td>',
+					'<td>'.@$bt['class'] . @$bt['type'] . $bt['function'] . $args . '</td>',
 					)).'</tr>';
 	}
 	$traceBack = '<table>'.'<tbody>'.join("\n",$tr).'</tbody></table>';
@@ -229,6 +229,7 @@ if (!class_exists('D8',False)){
       if (empty($array)){
 	$a = array();
 	$simple_output = True;
+	$is_associative = False;
       }else{ 
 	$a_keys = array_keys($array);
 	$is_associative = !($a_keys[0] === 0 &&

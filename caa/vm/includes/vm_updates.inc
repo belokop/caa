@@ -103,10 +103,11 @@ function vm_updates(){
     }
 
     if (True){
-      // 2016-05-01
+      // 2016-05-01 - 2017-01-20
       vm_compat_update_44();
       vm_compat_update_45();
       vm_compat_update_46();
+      vm_compat_update_48();
     }
 
     myPear_logs()->doNotLog = False;
@@ -133,6 +134,40 @@ function vm_compat_update_ad_hocks(){
   // Strange... Where the empty records come from???
   vm_compat_update_46($only_report=True);
 
+  // Another strange thing...
+  vm_compat_update_47();
+
+}
+
+// Fix...
+function vm_compat_update_48(){
+  // Remove bList_vm_hutCodes records with spurious hut_code
+  $q=myPear_db()->qquery("SELECT lm_id,lm_lid,lm_key,lm_value,lm_status,lm_option FROM zzz_list_members LEFT JOIN zzz_lists on lm_lid=l_id WHERE l_class = 'bList_vm_hutCodes'",1);
+  while($r = myPear_db()->next_record($q)){
+    if (in_array($r['lm_key'],array_keys(VM::$known_hut_codes))) continue;
+    b_debug::print_r($r,"REMOVING RECORD");
+    myPear_db()->qquery("DELETE FROM zzz_list_members WHERE lm_id = $r[lm_id]",1);
+  }
+
+  // Remove unused Nordita apartments from the defaults
+  myPear_db()->qquery("UPDATE abs_huts SET hut_status='off' WHERE hut_id=247643",True);
+
+  // Remove the orphan bForm_vm_Room records 
+  myPear_db()->qquery("DELETE FROM abs_rooms WHERE a_hutid IS NULL",True);
+  myPear_db()->qquery("DELETE FROM abs_huts  WHERE hut_id = 272407",1);
+  myPear_db()->qquery("DELETE FROM zzz_list_members WHERE lm_key = 272407",1);
+
+}
+
+
+// Another strange thing...
+function vm_compat_update_47(){
+  foreach(array_merge(array(HUT_BI),array_keys(VM::$known_hut_codes)) as $code) $w[] = "hut_code != '$code'";
+  $q = myPear_db()->qquery("SELECT hut_id,hut_name,hut_code,a_id,a_name FROM abs_huts LEFT JOIN abs_rooms ON hut_id=a_hutid WHERE (".join(' AND ',$w).")",True);
+  while($r = myPear_db()->next_record($q)){
+    myPear_db()->qquery("DELETE FROM abs_rooms WHERE a_hutid = $r[hut_id]",True);
+    myPear_db()->qquery("DELETE FROM abs_huts  WHERE hut_id = $r[hut_id]",True);
+  }
 }
 
 function vm_compat_update_46($only_report=False){
@@ -148,8 +183,18 @@ function vm_compat_update_46($only_report=False){
       }
     }
   }
-}
 
+  // Remove REQ_ONLY... Was a bad idea
+  myPear_db()->qquery("DELETE FROM abs_rooms WHERE a_name = '_a request only'",True);
+
+  // Rename field  
+  if (!myPear_db()->columnExists('v_acc_wish','abs_visits') && myPear_db()->columnExists('v_comment','abs_visits')){
+    myPear_db()->qquery("ALTER TABLE `abs_visits` CHANGE `v_comment` `v_acc_wish` TEXT CHARACTER SET utf8 COLLATE utf8_unicode_ci NULL DEFAULT NULL",True); 
+  }
+  if (!myPear_db()->columnExists('v_comment','abs_visits')){
+    myPear_db()->qquery("ALTER TABLE `abs_visits` ADD `v_comment` TEXT NULL DEFAULT NULL AFTER `v_gsf`",True); 
+  }
+}
 
 function vm_compat_update_45(){
   locateAndInclude('bForm_vm_Visit');

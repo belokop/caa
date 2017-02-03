@@ -25,7 +25,7 @@ class bList_vm_hutCodes extends bList_vm{
     parent::__construct(myOrg_ID);
     if (!$this->getMembers()){
       // Populate the list with the default codes
-      foreach(VM::$default_hut_codes as $code=>$descr){
+      foreach(VM::$known_hut_codes as $code=>$descr){
 	$this->addMember(array('lm_key'   => $code,
 			       'lm_value' => $descr['prefix'].'s'));
       }
@@ -73,6 +73,15 @@ class bList_vm_hutCodes extends bList_vm{
   protected function isMemberEditable(){
     $reply = $this->isWritable();
     $this->dbg($reply);
+    return $reply;
+  }
+
+  // The hut codes (hence, the accommodation options) are not addable,
+  // I do see a reason for this.
+  // May be I am wrong...
+  function isAddable(){
+    $reply = False;
+    $this->dbg($reply,cnf_dev);
     return $reply;
   }
 

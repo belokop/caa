@@ -149,24 +149,19 @@ class bForm_vm_Hut extends bForm_vm {
     if (!(int)$this->ID){
       $reply = 'Adding new hut';
     }else{
-      $codes = @VM::$default_hut_codes[$this->getValue('hut_code')];
-      switch(@$codes['position']){
-      case 'b':
-	$reply = $codes['prefix'] . ' ' . $this->getValue('hut_name');
-	break;
-	
-      case 'a':
-	$reply = $this->getValue('hut_name') . ' ' . $codes['prefix'];
-	break;
-	
-      default:
-	$reply = $this->getValue('hut_name');
-	break;
+      $reply = $this->getValue('hut_name');
+      $codes = @VM::$known_hut_codes[$this->getValue('hut_code')];
+      if (!stripos($reply,$codes['prefix'])){
+	switch(@$codes['position']){
+	case 'a': $reply = "$reply ".$codes['prefix']; break;
+	case 'b': $reply = $codes['prefix']." $reply"; break;
+	default:
+	}
       }
     }
     return trim($reply);
   }
-
+  
   /*
    * Set this Hut as "the default one", whatever it means
    */

@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS `abs_visits` (
   `v_policy` int(11) NOT NULL DEFAULT '0',
   `v_accompaning` smallint(6) NOT NULL DEFAULT '0',
   `v_host_avid` int(11) DEFAULT NULL,
-  `v_comment` text COLLATE utf8_unicode_ci,
+  `v_acc_wish` text COLLATE utf8_unicode_ci,
   `v_gsf` text COLLATE utf8_unicode_ci,
   `v_owner_avid` int(11) DEFAULT NULL,
   `v_admin_avid` int(11) DEFAULT NULL,

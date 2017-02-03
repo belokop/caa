@@ -118,11 +118,6 @@ class bHolder_vm_Visitors extends bHolder_vm{
 								       'z'=>'pending "confirmation" letter',
 								       'd'=>'send mail "welcome to Nordita"',
 								       'i'=>'i-mail-send'),
-					     LODGING_REQ_ONLY  =>array('s'=>'fatal',
-								       'h'=>'highlightRose',
-								       'z'=>'unresolved accommodation request (_a request only)',
-								       'd'=>'unresolved accommodation request (_a request only)',
-								       'i'=>'i-avatar'),
 					     STATUS_PENDING    =>array('s'=>'fatal',
 								       'h'=>'highlightYellow',
 								       'z'=>'pending approval request',
@@ -775,11 +770,13 @@ class bHolder_vm_Visitors extends bHolder_vm{
       if (!empty($header[$header_element])){
 	ob_start();
 	if (is_object(VM::$e)){
-	  VM::$e->accommodationOptions()->show_usage($hut_code);
+	  // VM::$e->accommodationOptions()->show_usage($hut_code);
+	  VM_accommodationOptions(VM::$e)->show_usage($hut_code);
 	}else{
 	  $av_id = @$_GET['host_avid_once'];
 	  if (empty($av_id) && is_object($this->av)) $av_id = $this->av->ID;
-	  if (!empty($av_id)) bList::getListInstance(myOrg_ID,'bList_vm_accommodationOptions')->show_usage($hut_code,0,0,$av_id);
+	  //if (!empty($av_id)) bList::getListInstance(myOrg_ID,'bList_vm_accommodationOptions')->show_usage($hut_code,0,0,$av_id);
+	  if (!empty($av_id)) VM_accommodationOptions(myOrg_ID)->show_usage($hut_code,0,0,$av_id);
 	}
 	$result = ob_get_contents();
 	ob_end_clean();
@@ -901,7 +898,6 @@ class bHolder_vm_Visitors extends bHolder_vm{
   private $no_accommodation = array();
   private $fatal_fnc = array();
   private function collectFNC(){
-    static $LODGING_REQ_ONLY = Null;
 
     if (!VM_administrator_here) return;
 
@@ -909,15 +905,9 @@ class bHolder_vm_Visitors extends bHolder_vm{
     $this->fnc_beslut = bForm_vm_Visit::_formalitiesNotCompleted($this->rec);
     $this->highlight = '';
 
-    // Catch non-resolved accommodation
-    if ($LODGING_REQ_ONLY === Null) $LODGING_REQ_ONLY = bForm_vm_Lease::LODGING_REQ_ONLY();
-    $is_LODGING_REQ_ONLY = in_array($this->rec['v_id'],$LODGING_REQ_ONLY);
-    
     // Highlight the visitors where something is wrong
     if (bForm_vm_Visit::_getClashes($this->rec)){
       list($c,$d) = array('v_status',STATUS_CLASH);
-    }elseif($is_LODGING_REQ_ONLY){
-      list($c,$d) = array('fnc',     LODGING_REQ_ONLY);
     }elseif (!empty($this->fnc_beslut)){
       list($c,$d) = array('fnc',     $this->fnc_beslut);
     }else{                                      
@@ -934,10 +924,9 @@ class bHolder_vm_Visitors extends bHolder_vm{
       }
       
       // Highlight visitors without accommodation
-      $is_LODGING_REQ_ONLY = False;
-      if (($this->rec['v_status'] == STATUS_YES) && (empty($this->rec['lease_aid']) || $is_LODGING_REQ_ONLY)){
-	$action_message = ((VM::hasRightTo('book_ah') || $is_LODGING_REQ_ONLY) && $this->rec['v_end']>time()
-			   ? 'Please '.($is_LODGING_REQ_ONLY ? 'resolve' : 'select').' accommodation for '
+      if (($this->rec['v_status'] == STATUS_YES) && empty($this->rec['lease_aid'])){
+	$action_message = (VM::hasRightTo('book_ah') && $this->rec['v_end']>time()
+			   ? 'Please select accommodation for '
 			   : 'Missing accommodation for');
 	$this->no_accommodation[$action_message][] = $this->rec['name'];
       }
@@ -1254,7 +1243,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
       // Replace the host av_id by the first/last name
       if ((int)$this->rec['v_host_avid'] > 0){
 	$host = new bForm_Avatar($this->rec['v_host_avid']);
-	$this->rec['v__host'] = x('em',$host->fmtName('fl'));
+	$this->rec['_v_host'] = x('em',$host->fmtName('fl'));
       }
       
       
@@ -1519,9 +1508,9 @@ class bHolder_vm_Visitors extends bHolder_vm{
       }
       
       // Do the record formatting
-      $this->t->class['v__stay'][] = 'b_nowrap';
-      if(@$this->rec['lease_start']) $this->rec['v__stay'] = x('em',b_time::period($this->rec['lease_start'],$this->rec['lease_end']));
-      else                           $this->rec['v__stay'] = x('em',b_time::period($this->rec['v_start'],$this->rec['v_end']));
+      $this->t->class['_v_stay'][] = 'b_nowrap';
+      if(@$this->rec['lease_start']) $this->rec['_v_stay'] = x('em',b_time::period($this->rec['lease_start'],$this->rec['lease_end']));
+      else                           $this->rec['_v_stay'] = x('em',b_time::period($this->rec['v_start'],$this->rec['v_end']));
       $this->rec['_e_name'] = b_fmt::strcut($this->rec['e_name'],25,'...');
       $this->rec['_a_name'] = $this->select_accommodation();
       $this->rec['_o_name'] = @$this->rec['o_name'];
@@ -1779,7 +1768,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
     $reply = '';
     if (VM_administrator_here){
       $reply = bForm_vm_Visit::_getGSF($what,$this->rec,'li');
-      if ($include_accommodation_wish && !empty($this->rec['v_comment']))    $reply[] = x('li',$this->rec['v_comment']);
+      if ($include_accommodation_wish && !empty($this->rec['v_acc_wish']))    $reply[] = x('li',$this->rec['v_acc_wish']);
       if (empty($reply)) $reply = '';
       else $reply = x('ul style="font-size:smaller"',join(' ',$reply));
     }
@@ -1798,7 +1787,8 @@ class bHolder_vm_Visitors extends bHolder_vm{
     }elseif(bForm_vm_Visit::_getStatus($this->rec) != STATUS_YES){
       $reply = $this->getGSF('.*',VM::e_ID());
     }elseif (is_object(VM::$e) && VM::hasRightTo('book_ah')){
-      $rooms = bForm_vm_Lease::_freeRooms(VM::$e->accommodationOptions(),$this->rec['v_start'],$this->rec['v_end']);
+      //$rooms = bForm_vm_Lease::_freeRooms(VM::$e->accommodationOptions(),$this->rec['v_start'],$this->rec['v_end']);
+      $rooms = bForm_vm_Lease::_freeRooms(VM_accommodationOptions(VM::$e),$this->rec['v_start'],$this->rec['v_end']);
       if (myPear::is_empty($n_select=@$this->rec['lease_id']))  $n_select = $this->rec['v_id'];
       VM::$formDummy->submitOnChange["_a_id:$n_select"] = True;
       $reply =  x("span class='only_online'",
@@ -2371,14 +2361,18 @@ class bHolder_vm_Visitors extends bHolder_vm{
 	  if (VM::outOfScope())     return;
 	  // Initialise vm_accommodationOptions if not yet done
 	  if(is_object(VM::$e)){
-	    VM::$e->accommodationOptions()->update();
-	    VM::$e->accommodationOptions()->show();
+	    // VM::$e->accommodationOptions()->update();
+	    // VM::$e->accommodationOptions()->show();
+	    VM_accommodationOptions(VM::$e)->update();
+	    VM_accommodationOptions(VM::$e)->show();
 	  }else{
 	    $av_id = @$_GET['host_avid_once'];
 	    if (empty($av_id) && is_object($this->av)) $av_id = $this->av->ID;
 	    if (!empty($av_id)){
-	      bList::getListInstance(myOrg_ID,'bList_vm_accommodationOptions')->update();
-	      bList::getListInstance(myOrg_ID,'bList_vm_accommodationOptions')->show($av_id);
+	      //bList::getListInstance(myOrg_ID,'bList_vm_accommodationOptions')->update();
+	      //bList::getListInstance(myOrg_ID,'bList_vm_accommodationOptions')->show($av_id);
+	      VM_accommodationOptions(myOrg_ID)->update();
+	      VM_accommodationOptions(myOrg_ID)->show($av_id);
 	    }
 	  }
 	  break;
@@ -2651,23 +2645,24 @@ class bHolder_vm_Visitors extends bHolder_vm{
 			'av_institute' =>'',
 			'av_city'  =>'',
 			'av_residentship'=>'',
-			'v__stay'  =>'',
+			'_v_stay'  =>'',
 			);
 	break;
 	
       default: 
 
-	$this->clean_empty_items = False; 	// ??
+	$this->clean_empty_items = True; 	// ??
 
 	$header = array('name'     => '',
 			'_a_name'  => 'accommodation',
 			'cotenant' => '',
 			// '_o_name'  => 'office',
-			'v__stay'  => 'stay',
-			'v__host'  => 'host',
+			'_v_stay'  => 'stay',
+			'_v_host'  => 'host',
+			'v_comment'=> 'comment',
 			);
 	if (!$this->isWritable()) unset($header['_a_name']);
-	if (is_object(VM::$e))	  unset($header['v__host']);
+	if (is_object(VM::$e))	  unset($header['_v_host']);
 	if (is_object($this->av)) $header['name'] = 'event';
       }
       $this->header_cache = $header;

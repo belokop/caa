@@ -4,8 +4,12 @@
  * Keep accommodation options available for the given event AND/OR organization
  * 
  * Member format:
- *  lm_key   - Hut ID
- *  a_max    - Number of apartments available (0 if no limits)
+ *  lm_key:    Hut ID
+ *  lm_option: array
+ *   nrooms    - Number of apartments available (0 if no limits)
+ *   a_id1   - rent price
+ *   ...
+ *   a_idN   - rent price
  *  
  */
 locateAndInclude('bList_vm');
@@ -15,12 +19,14 @@ locateAndInclude('bList_vm');
  */
 class bList_vm_accommodationOptions extends bList_vm{
   
+  var $debug = True;
   var $list_quering = array('lm_key'  =>'Name',  // hut_id
                             'nrooms'  =>'Number of rooms allocated',
 			    );
   var $list_showing = array('_hut_id' => '',
                             '_nrooms' => 'N rooms<br/>available',			    
-			    '_number'  =>'<br/>N tenants',
+			    '_rate'   => '<br/>Rate',
+			    '_number' => '<br/>N tenants',
 			    );
   protected $packed_items = array('nrooms');
   protected $isReady  = True;
@@ -42,13 +48,110 @@ class bList_vm_accommodationOptions extends bList_vm{
    *
    */
   function __construct($parent_ID){
+
     parent::__construct($parent_ID);
+
+    // Workaround, TBD better
+    // Clean up ghosts
+    myPear_db()->qquery("DELETE FROM zzz_list_members WHERE lm_lid=".$this->ID." AND (lm_key ='' OR lm_key IS NULL)",True);
+
     $this->title = (($parent_ID == myOrg_ID)
 		    ? myOrg_name.' accommodation options'
 		    : $this->e->name());
     $this->dbg($this->title);
+
+    // Wipe out the list if requested
+    if (!empty($_GET['reset_once'])){
+      $this->deleteMember(array('lm_lid'=>$this->ID),$verbose=True);
+      $this->update();
+    }
+
+    // Build rent prices for the selected accommodations
+    $this->build_dynamic_packables();
   }
 
+  /*
+   * We pack array("roomID" => "room prices") for the event in this class.
+   * Since the roomID's are not known in advance, we build the list packed items on the fly. 
+   */
+  private function build_dynamic_packables(){
+    
+    // Add the dynamic packables to the list
+    if(!empty($this->e) && $this->getMembers()){
+      
+      // We do not know yet the list of packables, hence
+      // keep yet the serialized options packed and not break the unpacking procedure
+      $this->unserialize_packables = False;
+      $updates = array();
+      
+      foreach($this->getMembers() as $lm_id=>$rr){
+	
+	if (empty($rr['lm_key'])){
+	  b_debug::traceBack($m="??? empty \$rr[lm_key]");
+	  b_debug::var_dump($rr,$m);
+	  continue;
+	}
+	
+	// Loop over all the rooms in the hut
+	$q = myPear_db()->query(sprintf("SELECT a_id,a_price,a_name,hut_name FROM abs_rooms ".
+					"LEFT JOIN abs_huts ON hut_id = a_hutid".
+					" WHERE a_hutid = %s ".
+					" AND a_end >= %s ".
+					" AND ( a_start <= %s OR a_start = 0 ) ".
+					" AND hut_code != '%s' ORDER BY hut_name,a_name",
+					$rr['lm_key'],$this->e->getValue('e_end'),$this->e->getValue('e_start'),HUT_BI));
+	$lm_option = b_fmt::safe_decode($rr['lm_option'],True);
+	while ($r = myPear_db()->next_record($q)){
+	  // Add the a_id to the packables list
+	  $id = self::id2x($r['a_id']);
+	  $this->packed_items[] = $id;
+	  // Pack the rent price into the acc.options 
+	  if (!in_array($id,array_keys($lm_option))){
+	    $this->dbg("add '$id' to lm_option");
+	    $updates[$lm_id][$id] = $r['a_price'];
+	    if ($r['hut_name'] != @$hut_name){
+	      myPear::MESSAGE(x('strong',sprintf("Setting up %s",$r['hut_name'])));
+	      $hut_name = $r['hut_name'];
+	    }
+	    myPear::MESSAGE(x('em','&nbsp;&nbsp;&nbsp;'.$r['a_name']));
+	  }
+	}
+      }	  
+      
+      
+      // Update the list, fill the prices
+      $this->unserialize_packables = True;
+      foreach($updates as $lm_id=>$update){
+	$this->updateMember(array('lm_option'=>serialize($update)),$lm_id,False);
+      }
+    }
+  }
+
+  private static $id2x_prefix = 'r';
+  private static function id2x($a_id){
+    $reply = self::$id2x_prefix . $a_id;
+    return $reply;
+  }
+
+  public function get_a_price($a_id,$hut_id){
+    if (!($this->e instanceof bForm_vm_Event)) b_debug::internalError($this->e . ' not instanceof bForm_vm_Event');
+    if (!(int)$a_id || !(int)$hut_id)          b_debug::internalError("Empty input argument(s)");
+    $r = $this->getMember(array('lm_key'=>$hut_id));
+    //    b_debug::print_r($r);
+    $a_price = @$r[self::id2x($a_id)];
+    if (empty($a_price)) $a_price = 0;  // Build-in objects presumably
+    $this->dbg(@$a_price);
+    return @$a_price;
+  }
+
+  public function set_a_price($a_price,$a_id,$hut_id){
+    if (!($this->e instanceof bForm_vm_Event)) b_debug::internalError($this->e . ' not instanceof bForm_vm_Event');
+    $r = $this->getMember(array('lm_key'=>$hut_id));
+    $update = array(self::id2x($a_id) => $a_price);
+    $this->updateMember($update,$r['lm_id'],False);
+    $this->dbg($update);
+  }
+  
   /*
    *
    */
@@ -63,9 +166,9 @@ class bList_vm_accommodationOptions extends bList_vm{
     if ($this->parent_ID != myOrg_ID){
       $see_here = x(sprintf('a href="%s"',b_url::same('?q=/vm/1110161754/3055031512')),'(see_here)');;
       $see_here = '';
-      myPear::INFO(["Select the accommodation option, click <em>\"continue ...\"</em>, after that select the bulding.",
+      myPear::INFO(["Select the accommodation option, click <em>\"continue ...\"</em>, after that select the building.",
 		    "Note, you can select only buildings defined by the ".myOrg_name." accommodation $see_here, ".
-		    "so a new buiding should be first added to the  ".myOrg_name." list."]);
+		    "so a new building should be first added to the  ".myOrg_name." list."]);
     }
     
     $lm_id    = $this->getValue('lm_id');
@@ -86,6 +189,7 @@ class bList_vm_accommodationOptions extends bList_vm{
   private function adjust_nRooms($lm_id,$hut_id,$reset_ifChanged){
     $capacity = $this->getHutInfo($hut_id,'capacity');
     $n = ($reset_ifChanged ? $this->getMemberValue($lm_id,'nrooms') : @$this->r['nrooms']);
+    if ($n != $capacity) b_debug::xxx("lm_id=$lm_id n=$n capacity=$capacity");
     if ($n > $capacity){
       if ($reset_ifChanged) myPear::WARNING($msg="$n exceeds the maximum capacity of \"".$this->getHutInfo($hut_id)."\" ($capacity rooms)");
       $nrooms = $capacity;
@@ -202,7 +306,7 @@ class bList_vm_accommodationOptions extends bList_vm{
    */
   public function hutSelectMenu($hut_code,$show_menu=True){
     
-    // Remove existing huts from the selection
+    // Remove already used huts from the selection
     $excludes = array(); 
     foreach($this->getMembers() as $lm_id=>$r){
       $hut_id = $this->getMemberValue($this->getValue('lm_id'),'lm_key');
@@ -278,9 +382,10 @@ class bList_vm_accommodationOptions extends bList_vm{
   }
 
   /*
-   * Print a simple table of 2 columns
+   * Print a simple table of 2 columns showing usage of the acc. option
    */
   function show_usage($hut_code,$lease_start=Null,$lease_end=Null,$v_host_avid=Null){
+    //    b_debug::traceBack($hut_code);
     foreach($this->getMembers() as $lm_id=>$r){
       if(($n = count($this->get_occupiedRooms($r['lm_key'],$lease_start,$lease_end,$v_host_avid))) == 0) continue;
       if($hut_code != $this->getHutInfo($r['lm_key'],'hut_code'))   continue;
@@ -306,6 +411,9 @@ class bList_vm_accommodationOptions extends bList_vm{
     //    $huts = $this->hutSelectMenu(Null,True);
     //    if (!empty($huts)) 
     $reply = parent::draw_buttons();
+    if (!empty($this->e)) $reply[] = b_btn::submit('reset to default',
+						   b_url::same('?reset_once=y'),
+						   $confirm=True);
     return $reply;
   }
 
@@ -335,21 +443,23 @@ class bList_vm_accommodationOptions extends bList_vm{
 	return;
       }
       $this->t->showLineCounter = False;
-      print $this->t->tr(x('strong',VM::$default_hut_codes[$ao_now]['prefix'].'s'),'colspan=3');
+      print $this->t->tr(x('strong',VM::$known_hut_codes[$ao_now]['prefix'].'s'),'colspan=3');
       $ao_was = $ao_now;
     }
 
     $this->adjust_nRooms($this->r['lm_id'],$this->r['lm_key'],False);
-    $this->r['_hut_id'] = $this->getHutInfo($this->r['lm_key']);
-
+    $this->r['_hut_id'] = x(sprintf("a href='%s'",b_url::same(sprintf("?function=bHolder_vm_Rooms::list_hut&arg_once=%s&arg2_once=%s",$this->r['lm_key'],$this->e->ID))),
+			    $this->getHutInfo($this->r['lm_key']));
+    
     $_number  = count($this->get_occupiedRooms($this->r['lm_key']));
+    $this->r['_rate']   = $this->r['lm_option'];
     $this->r['_number'] = (empty($_number)
 			   ? ' '
 			   : ' '.$_number);
   }
   
   /*
-   * Update list of accommodation options (or available huts) for a given event
+   * Update list of accommodation options (or available huts) for the given event
    */
   public function update(){
     $this->dbg();    
@@ -358,10 +468,10 @@ class bList_vm_accommodationOptions extends bList_vm{
     $list_empty = !$this->getMembers();
     
     locateAndInclude('b_checkBox.inc');
-    foreach(b_checkBox::$ON as $on) $s[] = "hut_status = '$on'";
+    foreach(b_checkBox::$ON as $on) $s_isON[] = "hut_status = '$on'";
     foreach(array(
-		  // first select the huts where the participants already allocated
-		  'hut_capacity,hut_id'.(($this->parent_ID == myOrg_ID)?'':',e_end') => 'FROM abs_visits '.
+		  // first select the huts where participants already accommodated
+		  'hut_id,hut_capacity'.(($this->parent_ID == myOrg_ID)?'':',e_end') => 'FROM abs_visits '.
 		  ' LEFT JOIN abs_leases ON v_id = lease_vid '. 
 		  ' LEFT JOIN abs_rooms ON a_id = lease_aid '.
 		  ' LEFT JOIN abs_huts ON hut_id = a_hutid '. 
@@ -370,21 +480,22 @@ class bList_vm_accommodationOptions extends bList_vm{
 		   : ' LEFT JOIN abs_events ON e_id = v_eid WHERE v_eid = "'.$this->parent_ID.'"'),
 		  
 		  // then get the default huts and include them in the event list
-		  'hut_id,hut_capacity' => 'FROM abs_huts WHERE ('.join(' OR ',$s).') '
+		  'hut_id,hut_capacity' => 'FROM abs_huts WHERE ('.join(' OR ',$s_isON).') '
 		  ) as $items=>$query){
       $event_completed = False;
       $q = myPear_db()->query("SELECT $items $query AND hut_code != '".HUT_BI."' GROUP BY hut_id");
       while($r = myPear_db()->next_record($q)){
 	$lm_id = $this->addMember(array('lm_key'=>$r['hut_id']));
-	$member= $this->getMember($lm_id);
-	if (empty($member['nrooms'])){
-	  $this->updateMember(array('nrooms'=>$this->adjust_nRooms($lm_id,$r['hut_id'],'no')),$lm_id);
-	}
-	if (!empty($r['e_end']) && ($r['e_end'] < time())) $event_completed = True;
+	$m = $this->getMember($lm_id);
+	if (empty($m['nrooms'])) $this->updateMember(array('nrooms'=>$r['hut_capacity']),$lm_id);
+	if(!empty($r['e_end']) && ($r['e_end'] < time())) $event_completed = True;
       }
       // get the default huts only when the list is empty!
       if (!$list_empty || $event_completed) break;
     }
+
+    // (re)build rent prices for the selected accommodations
+    $this->build_dynamic_packables();
   }
   
   /*
@@ -394,7 +505,6 @@ class bList_vm_accommodationOptions extends bList_vm{
     $reply = array();
     $q = myPear_db()->query("SELECT a_id,a_name,a_code FROM abs_huts LEFT JOIN abs_rooms ON a_hutid = hut_id WHERE hut_code = '".HUT_BI."'");
     while($r = myPear_db()->next_record($q)){
-      if(cancel_LODGING_REQ_ONLY && ($r['a_id'] == VM::$REQ_ONLY->ID)) continue;
       if ($return_a_code) $reply[$r['a_id']] = $r['a_code'];
       else                $reply[$r['a_id']] = $r['a_name'];
     }

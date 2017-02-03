@@ -153,7 +153,8 @@ function myPear_update31(){
 			   'NULL');
   myPear_update_DBdefaults(array('zzz_units'        =>array('varchar(128)'=>array('u_name','u_class','u_member_title')),
 				 'zzz_list_members' =>array('varchar(128)'=>array('lm_key','lm_value','lm_status')),
-				 'zzz_logs'         =>array('varchar(128)'=>array('log_ip','log_type','log_api','log_comment','log_org'))),
+				 'zzz_logs'         =>array('varchar(128)'=>array('log_ip','log_type','log_api','log_org'),
+							    'tinytext'    =>array('log_comment'))),
 			   'NULL');
   
 }
@@ -330,7 +331,7 @@ function myPear_update28(){
 							    'tinytext'    =>array('org_signature_dir'))),'NULL');
   myPear_update_DBdefaults(array('zzz_units'        =>array('varchar(128)'=>array('u_name','u_class','u_member_title')),
 				 'zzz_list_members' =>array('varchar(128)'=>array('lm_key','lm_value','lm_status')),
-				 'zzz_logs'         =>array('varchar(128)'=>array('log_ip','log_type','log_api','log_comment','log_org'),
+				 'zzz_logs'         =>array('varchar(128)'=>array('log_ip','log_type','log_api','log_org'),
 							    'int(11)'     =>array('log_avid','log_form','log_time'))));
   //
   // Optimization

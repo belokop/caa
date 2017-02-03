@@ -50,7 +50,7 @@ class bList_vm_agendaEvents extends bList_vm{
     if (empty($cats[$catID])){
       $url = sprintf("%s/tools/getConf.py?catinfo=%s",agenda_url,$catID);
       $xml = `curl $url`; 
-      b_debug::var_dump($xml);
+      b_debug::var_dump($xml,"xml output");
       $xml = simplexml_load_string($xml);
       $json= json_encode($xml);
       

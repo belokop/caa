@@ -63,7 +63,7 @@ class bForm_vm_Event extends bForm_vm {
       }
 
       $on_off = $this->getPolicy($policy);
-      $t->extraTD[] = ($this->show_policies_writable($policy)
+      $t->extraTD[] = ($this->show_policies_isWritable($policy)
 		       /*
 		       ? b_btn::submit(($on_off ? 'YES' : 'NO').", click to change",
 				       $url=b_url::same("?confirm_yes&resetcache_once=1&toggle_once=$policy"), 
@@ -88,15 +88,16 @@ class bForm_vm_Event extends bForm_vm {
   /*
    * Helper for show_policies
    */
-  private function show_policies_writable($policy){
+  private function show_policies_isWritable($policy){
     if ($this->getValue('e_start') < time()) return VM_manager_here;
     switch($policy){
-    case VM_E_endorsed:        return $this->mightBeEndorced(True);
-    case VM_E_archived:        return superUser_here; 
+    case VM_E_endorsed:          return $this->mightBeEndorced(True);
+    case VM_E_archived:          return superUser_here; 
+    case VM_E_letOrgSetAccPrices:return VM_administrator_here;
     case VM_E_payTrip:
     case VM_E_provideOffice:   
     case VM_E_provideLunches:
-    case VM_E_conferenceDinner:return !$this->getPolicy(VM_E_endorsed) && VM_administrator_here;
+    case VM_E_conferenceDinner:  return !$this->getPolicy(VM_E_endorsed) && VM_administrator_here;
     default:
       b_debug::internalError("Unknown option '$policy'");
     }
@@ -154,18 +155,6 @@ class bForm_vm_Event extends bForm_vm {
     return $this->reimbursementRates;
   }
 
-  /*
-   *
-   */
-  private $accommodationOptions = Null;
-  function accommodationOptions(){
-    if ($this->accommodationOptions === Null){
-      locateAndInclude('bList_vm_accommodationOptions');
-      $this->accommodationOptions = new bList_vm_accommodationOptions($this);
-      $this->accommodationOptions->update();
-    }
-    return $this->accommodationOptions;
-  }
 
   /*
    *
@@ -407,7 +396,6 @@ class bForm_vm_Event extends bForm_vm {
     }
     
     $isChanged = $this->setBitMask($policy,'e_policy',$value);
-    b_debug::var_dump($isChanged);
 
     if ($isChanged){
       if ($verbose) myPear::MESSAGE(x('i',$this->name().": ").VM::$e_policies[$policy]['d']."  ".($value?'YES':'NO'));

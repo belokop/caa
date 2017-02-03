@@ -137,7 +137,7 @@ class APIaccess_jam  extends  APIaccess{
     bForm_Avatar::set_context(bAuth::$av,JAM_MODULE);
     $av_id = bAuth::$av->ID;
     
-    if (empty($_SESSION[myPear_cache][__METHOD__])){
+    if (1||empty($_SESSION[myPear_cache][__METHOD__])){
       $_SESSION[myPear_cache][__METHOD__] = array();
 
       // Get all the position for the Organization

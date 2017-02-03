@@ -568,7 +568,7 @@ class bForm_vm_Visit extends bForm_vm {
        break;
 
      case VM_visit_whatElse:
-       if ($this->isDenied() || $this->visitOutOfScope()){
+       if (!parent::formBlock_isVisible($block_ID,$fields) || $this->isDenied() || $this->visitOutOfScope()){
 	 $reply = False;
 	 break;
        }
@@ -733,7 +733,8 @@ class bForm_vm_Visit extends bForm_vm {
 				'virt_host'           => 'Host',
 				'v_accompaning'       => 'Accompanying persons',
 				'v_chance'            => 'Probability of visit',
-				'v_comment'           => 'Details (purpose of visit, lecture title, etc.)',
+				'v_comment'           => 'Comment (purpose of visit, lecture title, etc.)',
+				'v_acc_wish'          => 'Accommodation wish',
 				'v_created'           => 'Request date',
 				'v_group'             => 'Research group',
 				'v_oid'               => 'Office number',
@@ -756,8 +757,10 @@ class bForm_vm_Visit extends bForm_vm {
 				),True);
 
     $this->defineTypes(array(//'submitOnChange'=>array('v_status'),
+			     'isADMIN'       =>array('v_comment'),
 			     'isMBE'         =>array('v_projectid', 
 						     'v_accompaning',
+						     'v_acc_wish',
 						     'v_comment',
 						     'v_chance',
 						     'v_oid',
@@ -776,7 +779,7 @@ class bForm_vm_Visit extends bForm_vm {
 			     'isPRIVATE'     =>array('v_owner_avid',
 						     'v_accompaning',
 						     'v_type',
-						     'v_comment',
+						     'v_acc_wish',
 						     '_virt_updated_by',
 						     '_virt_owner'),
 			     'isVITAL'       =>array('v_start',
@@ -790,7 +793,7 @@ class bForm_vm_Visit extends bForm_vm {
      */
     $this->isMBE['v_host_avid'] = ($this->getValue('v_type',1) != VISIT_TYPE_COLLABORATION);
     if ($this->isVisitType_program()){
-      foreach(array('v_start','v_end','v_type','v_comment') as $f){
+      foreach(array('v_start','v_end','v_type','v_acc_wish') as $f){
 	$this->isRO[$f] = $this->isMBE[$f] = True; 
       }
     }
@@ -860,14 +863,15 @@ class bForm_vm_Visit extends bForm_vm {
   /*
    *
    */
-  public static function _hut_codes($buffer,$without_BI=False){
+  private static function _hut_codes($buffer,$without_BI=False){
     $reply = array_values(self::_v_get_allLeases($buffer['v_id']));
     if ($without_BI){
       if (empty($buffer['v_eid'])){
 	$reply = array();
       }else{
 	$e = myPear::getInstance_new('bForm_vm_Event',$buffer['v_eid'],'fatal');
-	$reply = array_diff($reply,array(HUT_BI),array_values($e->accommodationOptions()->get_BI(True)));
+	//$reply = array_diff($reply,array(HUT_BI),array_values($e->accommodationOptions()->get_BI(True)));
+	$reply = array_diff($reply,array(HUT_BI),array_values(VM_accommodationOptions($e)->get_BI(True)));
       }
     }
     if ($reply === array(Null)) $reply = array();
@@ -1044,6 +1048,7 @@ class bForm_vm_Visit extends bForm_vm {
 	
       case 'av_email': // workaround... Should find where it comes from
       case 'v_comment':
+      case 'v_acc_wish':
 	$err_msg = '';
 	break;
       default:
@@ -1090,7 +1095,7 @@ class bForm_vm_Visit extends bForm_vm {
     if ($v_gsf = $this->getValue('v_gsf',True)){    
       $dialog = array();
       $v_gsf = unSerialize($v_gsf);
-      $accommodation = ($c = $this->getValue('v_comment',True)) ? array('Accommodation' => $c) : array();
+      $accommodation = ($c = $this->getValue('v_acc_wish',True)) ? array('Accommodation' => $c) : array();
       foreach(array_merge($accommodation,$v_gsf) as $q=>$a){
 	$this->defineVariable($q,$f='_virt_'.b_crypt::hash($q));
 	$this->isRO[$f] = True;
@@ -1243,8 +1248,10 @@ class bForm_vm_Visit extends bForm_vm {
    */
   private function whatElseBlock(){
     $this->formBlock(VM_visit_whatElse,
-		     'What else can we get from the visit',
-		     array('v_comment' =>'textArea'));
+		     'Comments', // 'What else can we get from the visit',
+		     array('v_comment' =>'textArea'),
+		     array('i'=>'i-user4_edit',
+			   'l'=>$this->sameURL_but(array('mode'=>'RW'))));
     
   }
 
@@ -1276,7 +1283,7 @@ class bForm_vm_Visit extends bForm_vm {
     $this->submitOnChange['v_group'] = !myPear::is_empty($this->getValue('v_group',1));
     $dialog = array(
 		    'v_group'    => array('selectMenu', myOrg()->orgGroups()->get_groups()),
-		    'v_comment'  => array('textArea'),
+		    'v_acc_wish' => array('textArea'),
 		    'v_host_avid'=> array('selectMenu',$valid_hosts),
 		    '_virt_owner'=> array('textField'),
 		    );
@@ -1308,12 +1315,10 @@ class bForm_vm_Visit extends bForm_vm {
    * Small helper
    */
   function virt_updated_by(){
-    $av = myPear::getInstance_new('bForm_Avatar_vm',$this->getValue('v_admin_avid',1,1),'strict');
-    if (!empty($av)){
+    if ($av = myPear::getInstance_new('bForm_Avatar_vm',$this->getValue('v_admin_avid',1,1),'strict')){
       $this->formDB['_virt_updated_by'] = $av->fmtName('fl',0).', '.b_time::medium_date($this->getValue('v_timestamp'));
-      return $this->formDB['_virt_updated_by'];
+      $this->textField('_virt_updated_by');
     }
-    return False;
   }
 
   /*
@@ -1379,17 +1384,18 @@ class bForm_vm_Visit extends bForm_vm {
 	$this->officeBlock();
 	if (empty($_GET['block_once'])) $this->expensesBlock();
 	$this->projectBlock();
+	$this->whatElseBlock();
       case VISIT_TYPE_RENT:
 	break;
+      }
 	
-	if ($date = $this->getValue('v_created',1)){
-	  if ($av = myPear::getInstance_new('bForm_Avatar_vm',$this->getValue('v_owner_avid',1),'fatal')){
-	    $this->formDB['_virt_owner'] = $av->fmtName('fl').' '.b_time::medium_date($date);
-	  }
+      if ($date = $this->getValue('v_created',1)){
+	if ($av = myPear::getInstance_new('bForm_Avatar_vm',$this->getValue('v_owner_avid',1),'fatal')){
+	  $this->formDB['_virt_owner'] = $av->fmtName('fl').' '.b_time::medium_date($date);
 	}
       }
       
-      if ($this->virt_updated_by()) $this->textField('_virt_updated_by');
+      $this->virt_updated_by();
 
     }elseif($this->MODE == 'RW'){
       /*

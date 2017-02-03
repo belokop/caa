@@ -190,7 +190,7 @@ class APImenu_vm extends APImenu_ea{
 						       tab_vm_ogz_vmatrix,tab_vm_ogz_omatrix,tab_vm_ogz_amatrix,
 						       //tab_vm_adm_acl,tab_vm_adm_fixClashes,   // too early...
 						       ),
-			     tab_vm_ap        => array(tab_vm_ap_assign, tab_vm_ap_aps, tab_vm_ap_huts, 
+			     tab_vm_ap        => array(tab_vm_ap_assign, tab_vm_ap_aps, // tab_vm_ap_huts, 
 						       // tab_vm_ap_add, tab_vm_ap_sok, tab_vm_ap_usage
 						       ),
 			     tab_vm_vis       => array(tab_vm_vis_mails,tab_vm_vis_badges, tab_vm_vis_photos, // tab_vm_vis_welcome, // tab_vm_vis_sok, 
@@ -400,10 +400,6 @@ class APImenu_vm extends APImenu_ea{
 
       case tab_vm_adm_sync:
 	$reply = (VM_program_coordinator_here || VM_organizer_here);
-	break;
-
-	// Probably not needed
-      case tab_vm_ap_sok:
 	break;
 
       case tab_vm_adm_acl:
@@ -617,9 +613,10 @@ class APImenu_vm extends APImenu_ea{
       break;
       
     case tab_vm_vis_acc:
-      VM::$e->accommodationOptions()->update();
-      VM::$e->accommodationOptions()->show();
-    case tab_vm_ap:
+	//VM::$e->accommodationOptions()->update();
+	//VM::$e->accommodationOptions()->show();
+	VM_accommodationOptions(VM::$e)->update();
+	VM_accommodationOptions(VM::$e)->show();
       break;
       
     case 'login':
@@ -808,11 +805,11 @@ class APImenu_vm extends APImenu_ea{
       
     case tab_vm_ap_sok:
       myPear_search()->getForm(array('_lookFor' => '',
-				       '_header'  => 'Search accommodation database',
-				       '_button'  => 'show accommodation',
-				       '_after_search'=> 'tab_force=tab_vm_tenants&av_id=AV_ID',
-				       '_join'    => 'abs_visits on av_id:v_avid',
-				       '_where'   => 'v_avid>0'));
+				     '_header'  => 'Search accommodation database',
+				     '_button'  => 'show accommodation',
+				     '_after_search'=> 'tab_force=tab_vm_tenants&av_id=AV_ID',
+				     '_join'    => 'abs_visits on av_id:v_avid',
+				     '_where'   => 'v_avid>0'));
       break;
       
     case tab_vm_vis_sok: 
@@ -895,6 +892,17 @@ class APImenu_vm extends APImenu_ea{
       $holder->listEntries();
       break;
 
+      // Probably not needed
+    case tab_vm_ap_sok:
+      break;
+
+    case tab_vm_ap:
+    case tab_vm_ap_huts:
+      locateAndInclude('bHolder_vm_Huts');
+      $holder = new bHolder_vm_Huts();
+      $holder->listEntries();
+      break;
+      
     case tab_vm_ap_usage:
       $doing = 'usage';
       $title = 'Rooms balance';
@@ -903,12 +911,6 @@ class APImenu_vm extends APImenu_ea{
       if (empty($title))  $title = 'All apartments';
       locateAndInclude('bHolder_vm_Rooms');
       $holder = new bHolder_vm_Rooms($doing,$title);
-      $holder->listEntries();
-      break;
-      
-    case tab_vm_ap_huts:
-      locateAndInclude('bHolder_vm_Huts');
-      $holder = new bHolder_vm_Huts();
       $holder->listEntries();
       break;
       

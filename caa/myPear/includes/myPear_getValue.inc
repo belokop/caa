@@ -48,7 +48,7 @@ class myPear_getValue extends myPear_base{
   var $isRW_ifMissing=array(); // fields to stay RW when the whole block is RO 
   var $isRW_forced  = array(); // exceptionally writable field, has precedence over the other flags
   var $isRO         = array('id'=>True); // list of RO fields
-  var $isADMIN      = array('av_ssn');   // Fields shown to the managers only
+  var $isADMIN      = array('av_ssn');   // Fields shown to the administrator only
 
   public    $keepRW = array(); // the form does not become RO if this field changes
   protected $keepRW_changed = 0;
@@ -88,10 +88,23 @@ class myPear_getValue extends myPear_base{
 
   /*
    * Is manager here?
+   * Rating (from high to low):
+   * - superUser
+   * - manager
+   * - admin
    */
   function isManager(){
-    if (method_exists(myPear_access(),'isManager')) $reply = myPear_access()->isManager();
-    else                                              $reply = False;
+    $reply = (method_exists(myPear_access(),'isManager')
+	      ? myPear_access()->isManager()
+	      : False);
+    return $reply;
+  }
+
+  /*
+   *
+   */
+  function isAdmin(){
+    $reply = $this->isManager();
     return $reply;
   }
   
@@ -135,9 +148,9 @@ class myPear_getValue extends myPear_base{
 	$this->dbg("No \$_POST, hence no '$name'",cnf_dev);
 	$hint = 'empty _POST';
       }else{
-	$this->dbg($msg="???? not found '$name'",cnf_dev);
+	$this->dbg($msg="???? not found name '$name'",cnf_dev);
+	if (cnf_dev) b_debug::traceBack($msg);
 	$hint = '???';
-	//	b_debug::traceBack($msg);
       }
       return $this->getValue_return($hint,Null);
     }      

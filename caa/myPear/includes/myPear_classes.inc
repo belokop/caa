@@ -1056,13 +1056,15 @@ class b_fmt{
   /*
    *
    */
-  static function isArrayAssociative($array){
+  static function isArrayAssociative(&$array){
     $reply = False;
     if (is_object($array)){
       $reply = True;
     }elseif(is_array($array)){
-      $n = 0;
-      foreach(array_keys($array) as $key) if ($key != (string)$n++) $reply = True;
+      //	$n = 0;
+      //	foreach(array_keys($array) as $key) if ($key != (string)$n++) $reply = True;
+      $reply = !empty($array) && ($array !== array_values($array));
+      //     var_dump($reply,$array);
     }else{
       b_debug::internalError("$array in not an array",$array);
     }
@@ -1710,7 +1712,7 @@ class b_debug{
 	print bAuth::$av->fmtName('Lf')."\n";
       }
       print "\n<h2>---__SERVER</h2>\n";
-      foreach(array('REQUEST_URI','REMOTE_ADDR','HTTP_REFERER','HTTP_USER_AGENT','PATH_TRANSLATED') as $k){
+      foreach(array('HTTP_HOST','REQUEST_URI','REMOTE_ADDR','HTTP_REFERER','HTTP_USER_AGENT','PATH_TRANSLATED') as $k){
 	if (!empty($_SERVER[$k])) printf("<code>%s = %s</code><br>\n",$k,$_SERVER[$k]); 
       }
 

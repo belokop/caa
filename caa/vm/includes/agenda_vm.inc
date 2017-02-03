@@ -249,7 +249,7 @@ class agenda_vm extends agenda{
 			'v_end'   => $time2,
 			'v_gsf'   => serialize($this->gsf),
 			);
-	  if (($v_type == VISIT_TYPE_PROGRAM) && ($reg['accommodation'] != dummy_OA)) $data['v_comment'] = $reg['accommodation'];
+	  if (($v_type == VISIT_TYPE_PROGRAM) && ($reg['accommodation'] != dummy_OA)) $data['v_acc_wish'] = $reg['accommodation'];
 
 	  $this->updateIfChanged($data,$v_code);
 	  $this->v->hookAvatar();
@@ -298,12 +298,6 @@ class agenda_vm extends agenda{
 		    $this->v->setBooking(VM::$OA->ID,$verbose);
 		  }
 		  break;
-		case LODGING_REQ_ONLY:
-		  if (empty($accommodation_now)){
-		    $this->printInfo('');
-		    $this->v->setBooking(VM::$REQ_ONLY->ID,$verbose);
-		  }
-		  break;
 		default:
 		  b_debug::internalError("??? unexpected wish \"$wish\"");
 		}
@@ -326,12 +320,6 @@ class agenda_vm extends agenda{
 		$this->printInfo('');
 		$this->v->setBooking(VM::$OA->ID,$verbose);
 	      }
-	      break;
-	    case LODGING_REQ_ONLY:
-	      if (0) if (empty($accommodation_now)){
-		  $this->printInfo('');
-		  $this->v->setBooking(VM::$REQ_ONLY->ID,$verbose);
-		}
 	      break;
 	    default:
 	      if (0) b_debug::internalError("??? unexpected wish \"$wish\"");
@@ -446,7 +434,6 @@ class agenda_vm extends agenda{
        $this->nUpdates++;
        $this->v->updateDB($newData);
      }
-     // ?????     if (!empty($r['v_comment'])) $this->v->updateDB(array('v_comment'=>''));
    }
 
    private function unix2txt($column,$value){

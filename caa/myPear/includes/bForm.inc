@@ -245,6 +245,7 @@ class bForm extends myPear_getValue{
   
   function formBlock_isWritable($block_ID){ 
     $reply = $this->isWritable_default();
+    $this->dbg($reply,cnf_show_w);
     return $reply;
   }
   
@@ -706,9 +707,8 @@ class bForm extends myPear_getValue{
 	if (!myPear::is_empty($g=@$_GET[$keep])) $myGet[$keep] = $g;
       }
 
-      print "\n<form action='".$this->bForm_action($myGet, array('updatedb')).
-	"' method='post' enctype='multipart/form-data' name='$this->formName'>\n".
-	"  <!-- form(".bForm::$formOpened.") $this->formName -->\n";
+      printf("\n<form action='%s' method='post' enctype='multipart/form-data' name='%s'>\n  <!-- form(%s) %s -->\n",
+	     $this->bForm_action($myGet, array('updatedb')),$this->formName,bForm::$formOpened,$this->formName);
       foreach($hidden as $k=>$v) $this->textHidden($k,$v);
 
       //
@@ -1158,7 +1158,7 @@ class bForm extends myPear_getValue{
     
     $this->dbg(starting);
     bTiming()->cpu(get_class($this).'.'.__FUNCTION__);
-    if ($this->debug||cnf_dev) b_debug::print_r($data,$this.'[updateDB] input:');
+    if ($this->debug) b_debug::print_r($data,$this.'[updateDB] input:');
 
     $pars = array();
     foreach ($data as $k=>$v) {
@@ -1335,7 +1335,7 @@ class bForm extends myPear_getValue{
     }
     
     // Sanity
-    $this->dbg(($reply ? join(', ',$reply) : False),(bool)($this->debug || cnf_dev));
+    if (!empty($reply))        $this->dbg(($reply ? join(', ',$reply) : False),(bool)($this->debug || cnf_dev));
     if($this->errorsInTheForm) $this->dbg("errorsInTheForm: ".b_fmt::joinX(',',$this->errorsInTheForm),(bool)($this->debug));
     return $reply;
   }
@@ -1377,9 +1377,7 @@ class bForm extends myPear_getValue{
   }
 
   public static function _checkBoxIsOn($name,$formDB=array()){
-    $v = strToLower(@$formDB[$name]);
-    $reply = !empty($v) && (in_array($v,b_checkBox::$ON) || (is_numeric($v) && ($v > 0)));
-    // myPear::DEBUG(__FUNCTION__."($name,$v): ".var_export($reply,True));
+    $reply = !((bool)b_checkBox::isOff(@$formDB[$name]));
     return $reply;
   }
 
@@ -1679,34 +1677,35 @@ class bForm extends myPear_getValue{
 
       // set description and the year limits
       $include_notConsidered = False;
-      switch($column_name){
-      case 'av_ms_year':
+      // switch($column_name){
+      if (stripos($column_name,'ms_year') !== False){
+	// case 'av_ms_year':
 	if ($this->getValue($column_name,True) == CONST_year_not_considered) unset($date);
 	$descr = ($this->MODE == 'RW' ? 'Date of award' : ' ');  
 	$include_notConsidered = True;
 	list($from,$to) = ($av_birthdate // MS at the age of 15 years 
 			   ? array($av_birthdate  + 15*365*24*3600, max_date($av_birthdate,$av_ddate,+5))
 			   : array(time() - 15*365*24*3600,         max_date($av_birthdate,$av_ddate,+5)));
-	break;
-      case 'av_phd_year':
+      }elseif (stripos($column_name,'phd_year') !== False){
+	// case 'av_phd_year':
 	if ($this->getValue($column_name,True) == CONST_year_not_considered) unset($date);
  	$descr = ($this->MODE == 'RW' ? 'Date of award' : ' ');  
 	$include_notConsidered = True;
 	list($from,$to) = ($av_birthdate // PhD at the age of 20 years 
 			   ? array($av_birthdate + 20*365*24*3600, max_date($av_birthdate,$av_ddate,+5))
 			   : array(time() - 20*365*24*3600,        max_date($av_birthdate,$av_ddate,+5)));
-	break;
-      case 'av_ddate':
-	$descr = 'Death date';
-      case 'av_birthdate':
-	if (!isset($descr)) 	$descr = 'Birth date';
+      }elseif(preg_match('/ddate|birth/i',$column_name)){
+      	$descr = (stripos($column_name,'birth') !== False
+		  ? 'Birth date'
+		  : 'Death date');
 	list($from,$to) = array(time()-100*365*24*3600,time());  // from 0 to <max_age> years old....
       }
+      if (!isset($from)) \D8::traceBack();
       list($from,$to) = array(date('Y',$from),date('Y',$to));
-
+      
       // should we ask for the year or for the date? 
       $dialog = array();
-      switch(b_time::is_valid($date)){
+      switch(b_time::is_valid(@$date)){
       case -2:
 	// ask for the year
 	$dialog = array('selectMenu',$this->list_of_years($from,$to,$include_notConsidered));
@@ -2190,9 +2189,10 @@ class bForm extends myPear_getValue{
     $reply = False;
     if (!is_array($fields)) $fields = array($fields);
     foreach($fields as $k=>$f){
-      if (is_array($f))         $field = $k; 
-      elseif ((int)$k || $k==0) $field = $f;
-      else                      $field = $k; 
+      if (is_array($f))                $field = $k; 
+      elseif (is_numeric($k) || $k===0)$field = $f;
+      else                             $field = $k; 
+
       if (is_array($f) && in_array('textHidden',$f))continue;
       if (strpos($field,'_debug') !== False)        continue;
 
@@ -2201,7 +2201,7 @@ class bForm extends myPear_getValue{
 	break;
       }
     }
-    $this->dbg($reply,cnf_show_v);
+    $this->dbg($reply,cnf_show_v||$this->debug);
     return $reply;
   }
 
@@ -2212,7 +2212,7 @@ class bForm extends myPear_getValue{
     if ($value === Null) $value = $this->getValue($field,True);
     $spacer = (stripos($field,'spacer') !== False);
     $reply = b_cnf::check_conditions(array(True =>array('debug'  => (stripos($field,'_debug') !== False),
-							'vitalA' => (@$this->isVITAL_ifADMIN[$field] && $this->isManager()),
+							'vitalA' => ((@$this->isADMIN[$field] || @$this->isVITAL_ifADMIN[$field]) && $this->isAdmin()),
 							'vital'  =>  @$this->isVITAL[$field],
 							'notMBE' => !@$this->isMBE[$field] && !$spacer,
 							),
@@ -2424,10 +2424,11 @@ class bForm extends myPear_getValue{
     // Check if the block was not yet filled, let it then to be filled
     $allFields_empty = ($this->MODE == 'RW');
 
-    foreach(array_keys($fields) as $k){
+    //    foreach(array_keys($fields) as $k){
+    foreach((b_fmt::isArrayAssociative($fields) ? array_keys($fields) : $fields) as $k){
       if ((bool)$this->getValue($k,True))  $allFields_empty = False; 
     }
-
+    
     $isVisible = b_cnf::check_conditions(array(False=>array('empty'   => ( empty($fields) || !$this->isReadable()), 
 							    'not_vsbl'=> (!$this->visible_group($fields) && !$this->isWritable()),  
 							    'b_only'  => (!empty($block_only) && stripos($block_ID,$block_only) === False)),
@@ -2435,7 +2436,7 @@ class bForm extends myPear_getValue{
 							    'noname'  =>   empty($block_ID),
 							    'nyfiled' =>  $allFields_empty),
 					       'default' => True),
-					 $this);
+					 $this,cnf_show_v);
     if ($isVisible && $block_only) $this->MODE = 'RW';
     $this->dbg($isVisible,cnf_show_v);
     return $isVisible;

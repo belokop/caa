@@ -303,7 +303,7 @@ class APImenu{
 
       case 'function_form':	  
 	if (function_exists($_GET[$t])){
-	  $f=call_user_func($_GET[$t],$_GET['arg_once']);
+	  $f=call_user_func($_GET[$t],$_GET['arg_once'],@$_GET['arg2_once']);
 	  $f->getForm();
 	  return Null;
 	}
@@ -323,12 +323,12 @@ class APImenu{
 	    $c = $m = 'not set';
 	  }
 	  if (function_exists($f) || method_exists($c,$m)){
-	    // myPear::WARNING_T("call_user_func($f)");
+	    myPear::WARNING_T("call_user_func($f)");
 	    if (strpos($f,'--') !== False){
 	      $object = new $c();
-	      $object->$m(@$_GET['arg_once']);
+	      $object->$m(@$_GET['arg_once'],@$_GET['arg2_once']);
 	    }else{
-	      call_user_func($f);
+	      call_user_func($f,@$_GET['arg_once'],@$_GET['arg2_once']);
 	    }
 	    return Null;
 	  }

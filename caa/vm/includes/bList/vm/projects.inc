@@ -131,10 +131,10 @@ class bList_vm_projects extends bList_vm{
   }
 
   function is_projectActive($rec){
-    $reply = (in_array($rec['lm_option'],b_checkBox::$OFF) ? '' : 'checked');
+    $reply = (b_checkBox::isOff($rec['lm_option']) ? '' : 'checked');
     return $reply;
   }
-
+  
   function set_projectActivity($id,$value=True){
     myPear_db()->query("UPDATE zzz_list_members SET lm_option = '".($value?'yes':'no')."' WHERE lm_id = $id");
   }

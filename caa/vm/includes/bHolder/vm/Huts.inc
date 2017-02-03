@@ -68,22 +68,28 @@ class bHolder_vm_Huts extends bHolder_vm{
    */
   function format() {
     if (empty($this->rec['hut_name']))  $this->rec['hut_name'] = $this->rec['hut_street'];
+    $this->rec['hut_name'] = x(sprintf("a href='%s'",b_url::same("?function=bHolder_vm_Rooms::list_hut&arg_once=".$this->rec['hut_id'])),
+			       $this->rec['hut_name']);
 
     $this->rec['hut_address'] = self::address($this->rec);
     $this->rec['hut_code']    = x('em',VM_hutCodes()->getName($this->rec['hut_code']));
 
-    if (in_array($this->rec['hut_status'],b_checkBox::$ON)) $this->rec['hut_status'] = bIcons()->get('ok');
+    $this->rec['hut_status'] = (b_checkBox::isOff($this->rec['hut_status']) ? '' : bIcons()->get('ok'));
 
     $hut = myPear::getInstance_new('bForm_vm_Hut',$this->rec['hut_id'],'fatal');
-    if (!empty($this->rec['hut_url'])) $this->rec['hut_url'] = bJS()->modal_iframe($this->rec['hut_url'],x('em',x('span style="text-sice:smaller"','See web page')),'');
+    if (!empty($this->rec['hut_url'])) $this->rec['hut_url'] = bJS()->modal_iframe($this->rec['hut_url'],x('em',x('span style="text-size:smaller"','See web page')),'');
 
-    if ($W=$hut->isWritable())$this->t->extraTD[]=bIcons()->getButton(array('l'=>b_url::same("?form=vm_Hut&id=".$hut->ID),
-									    'd'=>'modify',
-									    'i'=>'i-edit'));
-    else                    $this->t->extraTD[]='';
-    if (0 &&   $W)          $this->t->extraTD[]=bIcons()->getButton(array('l'=>b_url::same("?form=vm_Hut&id=".$hut->ID),
-									  'd'=>btn_deleteAp,
-									  'i'=>'drop'));
+    $isWritable = $hut->isWritable();
+    if ($hut->isWritable()){
+      $this->t->extraTD[]=bIcons()->getButton(array('l'=>b_url::same("?form=vm_Hut&id=".$hut->ID),
+						    'd'=>'modify',
+						    'i'=>'i-edit'));
+      if(0)$this->t->extraTD[]=bIcons()->getButton(array('l'=>b_url::same("?form=vm_Hut&id=".$hut->ID),
+							 'd'=>btn_deleteAp,
+							 'i'=>'drop'));
+    }else{
+      $this->t->extraTD[]='';
+    }
   }
   
   function getAllEvents(){

@@ -54,7 +54,7 @@ function axel($rec,$n){
   system("echo $line>>/tmp/axel.txt");
   $q = myPear_db()->query("SELECT * FROM registrants WHERE v_eid = $rec[e_id]");
   while ($r = myPear_db()->next_record($q)){
-    if (preg_match("/(will arrange|my way|my own|other)/",$r['v_comment']))
+    if (preg_match("/(will arrange|my way|my own|other)/",$r['v_acc_wish']))
       $flag = 'local';
     else $flag = 'external';
     $line = 

@@ -65,8 +65,8 @@ e_reg_end:  ".date('Y-m-d',$r['e_reg_end'])."
 	//	if ($r['e_code'] != 4682) continue;
 	continue;
       }
-      printf($fmt,str_repeat('-',19),date('Y-m-d',$r['e_start']),(int)$r['e_code'],$r['e_name']);
-      printf($fmt,str_repeat(' ',19),str_repeat(' ',8),          (int)$entry['attenders'],$entry['title']);
+      printf($fmt,str_repeat('-',19),date('Y-m-d',$r['e_start']),(int)@$r['e_code'],$r['e_name']);
+      printf($fmt,str_repeat(' ',19),str_repeat(' ',8),          (int)@$entry['attenders'],$entry['title']);
       // Show organizers & Registrants
       //      show_avatars($r['e_id'],'Registrants');
       //      show_avatars($r['e_id'],'Organizers');

@@ -3,7 +3,7 @@ set_time_limit(0);
 /**
  * Visitors Manager (VM) configuration file
  */
-$releaseDate = '2016-08-28';
+$releaseDate = '2017-02-03';
 define('VM_MODULE'   , 'vm');
 define('VM_VERSION','5.78');
 
@@ -39,8 +39,6 @@ define('VISIT_TYPE_POSSIBLE',     '_VIRT');
 define('VISIT_TYPE_RENT',         '_RENT');
 define('VISIT_TYPE_OTHER',        '_OTHER');
 
-// Old convention, to be removed...
-define('cancel_LODGING_REQ_ONLY',True);
 define('reimbursement_email','reimbursement@nordita.org');
 
 /*
@@ -70,6 +68,7 @@ define('VM_E_provideLunches',16);  // Flag 'provide lunches'
 define('VM_E_payTrip',64);         // Flag 'pay trip'
 define('VM_E_conferenceDinner',32);// Flag 'dinner'
 define('VM_E_endorsmentSent',8);   // Flag 'mail to organizers "event is endorsed" is sent'
+define('VM_E_letOrgSetAccPrices',128); // Flag 'let organizers to change the accommodation cost'
 
 define('VM_V_payPerdiem' ,1);           // Flag 'pay per-diem'
 define('VM_V_payTrip',2);               // Flag 'pay trip'
@@ -173,12 +172,10 @@ define('HUT_AH', 'AH');  // apartment hotels
  */
 define('LODGING_RM',      '_RM'); // remove accommodation
 define('LODGING_RM_TXT',  '_remove accommodation');
-define('LODGING_BR',	  '_BR'); // break in the visit
-define('LODGING_BR_TXT',  '_break in visit');
+define('LODGING_BR',	  '_BR'); // gap in the visit
+define('LODGING_BR_TXT',  '_gap in visit');
 define('LODGING_OA',      '_OA'); // own accommodation
 define('LODGING_OA_TXT',  '_own accommodation');
-define('LODGING_REQ_ONLY','_UA'); // request only (unspecified accommodation)
-define('LODGING_REQ_ONLY_TXT', '_a request only'); 
 
 //
 // Parse the agenda's "accommodation wish"
@@ -186,16 +183,15 @@ define('LODGING_REQ_ONLY_TXT', '_a request only');
 // Note, the order of the search matters!
 //?? how to parse this?
 //   "I will ask Nordita to book on my behalf, but pay myself"
-$GLOBALS['LODGING_FINDER'] = array(LODGING_REQ_ONLY =>('preselected|indicated by.*organi.ers|my behalf'),
+$GLOBALS['LODGING_FINDER'] = array(
 				   LODGING_OA       =>('do not need|will arrange|my way|on my own'
 						       .'|I will book a room'
-						 //.'|myself|accommodation arranged|other|made accommodation request upon'
-						 ),
+						       //.'|myself|accommodation arranged|other|made accommodation request upon'
+						       ),
 				   // 'shared_lodging' =>('shared accommodation'),
 				   'default_lodging'=>join('|',array('(apartment|accommodation) paid.*by |arrange.*for me|organizers.*arrange my accommodation|'
 								     )),
 				   );
-if (cancel_LODGING_REQ_ONLY) unset($GLOBALS['LODGING_FINDER'][LODGING_REQ_ONLY]);
 
 //
 //
@@ -233,7 +229,7 @@ define('VM_visit_policy'  , 'vPolicy');
 define('VM_visit_expenses', 'vExp');
 define('VM_visit_project' , 'vProject');
 define('VM_visit_lease'   , 'vLease');
-define('VM_visit_whatElse', 'vElse');
+define('VM_visit_whatElse', 'v_comment');
 
 /*
  * Duties which VM administrators might have
@@ -272,7 +268,7 @@ b_reg::add_module(VM_MODULE,
 			'classes'=>array('bForm_vm_Hut'              =>array('i'=>'hut_id',
 									     't'=>'abs_huts',   
 									     ),
-					 'bForm_vm_Room'        =>array('i'=>'a_id',
+					 'bForm_vm_Room'             =>array('i'=>'a_id',
 									     't'=>'abs_rooms',
 									     ),
 					 'bForm_vm_Expenses'         =>array('i'=>'exp_id',
@@ -368,12 +364,12 @@ class VM extends myPear{
   /*
    *
    */
-  static $default_hut_codes = array(HUT_H => array('prefix' =>'Hotel',
+  static $known_hut_codes = array(HUT_H => array('prefix' =>'Hotel',
 						   'position'=>'b'), // 'hotel' before the name
 				    HUT_A => array('prefix' =>'Apartment',
 						   'position'=>'a'), // 'Apartment' after the name
 				    HUT_AH=> array('prefix' =>'Apartment hotel',
-						   'position'=>''),  // not printed
+						   'position'=>''),  // Accommodation type is not printed
 				    ); 
   
   
@@ -448,9 +444,9 @@ class VM extends myPear{
 								'i'=> VM_wordPerdiem),
 				 VM_V_payTrip          => array('d'=>'To pay the trip?',
 								'i'=>'trip'),
-				 VM_V_provideLunches       => array('d'=>'To pay the lunches?',
+				 VM_V_provideLunches   => array('d'=>'To pay the lunches?',
 								'i'=>'i-burger'),
-				 VM_V_conferenceDinner     => array('d'=>'To pay the conference dinner?',
+				 VM_V_conferenceDinner => array('d'=>'To pay the conference dinner?',
 								'i'=>'i-drink'),
 				 VM_V_payOther         => array('d'=>'To cover other expenses?'
 								),
@@ -483,20 +479,22 @@ class VM extends myPear{
   /*
    * Event policies
    */  
-  static $e_policies   = array(VM_E_provideOffice  => array('d'=>'Provide offices for attenders?',
-							    'i'=>'i-office'),
-			       VM_E_provideLunches => array('d'=>'Provide lunch tickets for attenders?',
-							    'i'=>'i-burger'),
-			       VM_E_payTrip        => array('d'=>'Reimburse travel expenses for some attenders/speakers?',
-							    'i'=>'plane'),
-			       VM_E_conferenceDinner=>array('d'=>'Organize a conference dinner?',
-							    'i'=>'i-drink'),
-			       VM_E_endorsed       => array('d'=>'Is the event endorsed & changes are locked?',
-							    'i'=>'i-lock'),
-			       VM_E_endorsmentSent => array('d'=>'Was the endorsement communicated?',
-							    't'=> auto_maintained),
-//			       VM_E_archived       => array('d'=>'Is the event archived?',
-//							    'i'=>'i-lock'),
+  static $e_policies   = array(VM_E_provideOffice     => array('d'=>'Provide offices for attenders?',
+							       'i'=>'i-office'),
+			       VM_E_provideLunches    => array('d'=>'Provide lunch tickets for attenders?',
+							       'i'=>'i-burger'),
+			       VM_E_payTrip           => array('d'=>'Reimburse travel expenses for some attenders/speakers?',
+							       'i'=>'plane'),
+			       VM_E_conferenceDinner  =>array('d'=>'Organize a conference dinner?',
+							      'i'=>'i-drink'),
+			       VM_E_endorsed          => array('d'=>'Is the event endorsed & changes are locked?',
+							       'i'=>'i-lock'),
+			       VM_E_letOrgSetAccPrices=> array('d'=>'Can organizers set the accommodation prices?',
+							       'i'=>'money_on'),
+			       VM_E_endorsmentSent    => array('d'=>'Was the endorsement communicated?',
+							       't'=> auto_maintained),
+			       //VM_E_archived        => array('d'=>'Is the event archived?',
+			       //                              'i'=>'i-lock'),
 			       );
   
   /*
@@ -538,7 +536,7 @@ class VM extends myPear{
 
 				   // Accommodation options
 				   LODGING_OA              =>array('d'=>'Own accommodation, no fin. support', 'p'=>array()),
-				   LODGING_BR              =>array('d'=>'Break in the visit, no fin. support','p'=>array()),
+				   LODGING_BR              =>array('d'=>'Gap in the visit, no fin. support','p'=>array()),
 				   );
 
   static public $visit_status = array(STATUS_PENDING => 'pending',
@@ -558,12 +556,12 @@ class VM extends myPear{
 							    'i'=>'mail'),
 				   ICON_see_agenda => array('d'=>'see the event in the agenda system',
 							    'i'=>'nordita'));
-  static public $e         = Null;       // Selected event class
   static public $visitTypes=array();
+  static public $e         = Null;    // Selected event class
   static public $formDummy = Null;
   static public $hut_bi    = 'hut_bi';   // "Built-in" hut
-  static public $REQ_ONLY  = 'REQ_ONLY'; // "request only" room
   static public $OA        = 'OA';       // "own accommodation" room
+  static public $BR        = 'BR';       // "break in the visit" room (a placeholder)
 
   static public $auto_maintained = array(); // Helper, filled from the previous array
   static public $when_approved   = array(); // Helper, filled from the previous array
@@ -577,6 +575,7 @@ class VM extends myPear{
     static $dejaVu = 0;
     if (!$dejaVu++){
       
+      // 'include_payLunch_dinner' is not yet fully debugged
       if (!include_payLunch_dinner){
 	foreach(array(VM_V_conferenceDinner, VM_E_conferenceDinner,
 		      VM_V_provideLunches,   VM_E_provideLunches) as $item){ 
@@ -633,35 +632,45 @@ class VM extends myPear{
    */
   static function start_HUT_BI(){
     if (!is_object(self::$hut_bi)){
-      foreach(array(// "the build-in hut" 
-		    self::$hut_bi  =>array('class' =>'bForm_vm_Hut',
-					   'key'   =>'hut_code',
-					   'fields'=>array('hut_name'=>'Built-in',
-							   'hut_code'=>HUT_BI)),
+      foreach(array(
+		    // "the build-in hut" 
+		    self::$hut_bi  =>array('class' =>'bForm_vm_Hut'),
+		    
 		    // "own accommodation" 
 		    self::$OA      =>array('class' =>'bForm_vm_Room',
-					   'key'   =>'a_name',
-					   'fields'=>array('a_name'    => LODGING_OA_TXT,
-							   'a_price'   => 0.01,
-							   'a_capacity'=> 999)),
-		    // request-only 
-		    self::$REQ_ONLY=>array('class' =>'bForm_vm_Room',
-					   'key'   =>'a_name',
-					   'fields'=>array('a_name'     => LODGING_REQ_ONLY_TXT,
-							   'a_price'    => 0.001,
-							   'a_capacity' => 999))) as $instance=>$args){
-	locateAndInclude($class_name=$args['class'],'fatal');
+					   'a_code'=> LODGING_OA,
+					   'a_name'=> LODGING_OA_TXT),
+		    // gap in the visit
+		    self::$BR      =>array('class' =>'bForm_vm_Room',
+					   'a_code'=> LODGING_BR,					   
+					   'a_name'=> LODGING_BR_TXT),
+		    ) as $instance=>$args){
 	
-	// Hook the "build-in rooms" to the "build-in hut"
-	if ($class_name == 'bForm_vm_Room') $args['fields']['a_hutid'] = self::$hut_bi->ID;
+	$class_name = $args['class'];
+	locateAndInclude($class_name,'fatal');
+	
+	if ($class_name == 'bForm_vm_Hut'){
+	  // Instantiate "build-in hut" 
+	  $args['keys']  = array('hut_code'=>HUT_BI);
+	  $args['fields']= array_merge($args['keys'],
+				       array('hut_name'=>HUT_BI));
+	}else{
+	  // Hook the "build-in rooms" to the "build-in hut"
+	  $args['keys']  = array('a_hutid'    => self::$hut_bi->ID,
+				 'a_code'     => $args['a_code']);
+	  $args['fields']= array_merge($args['keys'],
+				       array('a_price'    => 0.000001,
+					     'a_area'     => 1,
+					     'a_capacity' => 999,
+					     'a_name'     => $args['a_name'],
+					     ));
+	}
 	
 	// Instantiate the build-in class
-	self::$$instance = new $class_name(b_fmt::joinX(' AND ',$args['fields'],"'"));
+	self::$$instance = new $class_name(b_fmt::joinX(' AND ',$args['keys'],"'"));
 	self::$$instance->defineVariables();
-	if (!(int)self::$$instance->ID){
-	  self::$$instance->debug = True;
-	  self::$$instance->updateDB($args['fields']);
-	}
+	self::$$instance->updateDB($args['fields']);
+	
 	if (False && cnf_dev){
 	  b_debug::xxx(self::$$instance->__toString());
 	  self::$$instance->show_gv = True;
@@ -670,11 +679,6 @@ class VM extends myPear{
 	}
       }
     }	      
-
-    if (cancel_LODGING_REQ_ONLY){
-      locateAndInclude('bForm_vm_Lease');
-      bForm_vm_Lease::cancel_LODGING_REQ_ONLY();
-    }
   }
   
   
@@ -1007,6 +1011,12 @@ function VM_socialEventRates($id) {
   else                return bList::getListInstance($id,'bList_vm_socialEventRates'); 
 }
 
+function VM_accommodationOptions($parent) {
+  if (empty($parent) || (!is_object($parent) && !is_numeric($parent))) $parent = myOrg_ID;
+  $reply = bList::getListInstance($parent,'bList_vm_accommodationOptions',$createIfMissing=True); 
+  return $reply;
+}
+
 
 /*
  * Triggers for caching the web page
@@ -1030,7 +1040,7 @@ function vm_b_cache_file(){
  * The VM module is specific for Nordita (see http://www.nordita.org), for the time being we don't see other customers...
  */
 function vm_used_by_myOrg(){
-  $reply = ['nordita'];
+  $reply = array('nordita');
   return $reply;
 }
 

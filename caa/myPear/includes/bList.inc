@@ -45,11 +45,16 @@ class bList extends myPear_getValue{
    * Scan the list members for the given arguments, get back the parent list class.
    * @param return  the list class instance or Null
    */
-  static public function getListInstance($argsP=array(),$bList=''){
+  static public function getListInstance($argsP,$bList='',$createIfMissing=False){
 
-    if    (is_numeric($argsP) && (strpos($bList,'bList')!==False)) $argsP = array('l_parent'=>$argsP);
-    elseif(is_numeric($argsP) && (strpos($bList,'bUnit')!==False)) $argsP = array('u_parent'=>$argsP);
-
+    if (strpos($bList,'bList')!==False){
+      if (is_numeric($argsP))  $argsP = array('l_parent'=>$argsP);
+      elseif(is_object($argsP))$argsP = array('l_parent'=>$argsP->ID);
+      $parent_ID = @$argsP['l_parent'];
+    }else{
+      if (is_numeric($argsP))  $argsP = array('u_parent'=>$argsP);
+    }
+      
     $instance_ID = b_crypt::hash(serialize(array_merge(array('list'=>$bList),$argsP)));
 
     static $instances = array();
@@ -91,13 +96,13 @@ class bList extends myPear_getValue{
 	  if ($bList)          $args["${l}_class"] = $bList;
 
 	  $tables = join(' LEFT JOIN ',$vars['t']);
-	  $q = myPear_db()->query("SELECT * FROM $tables ON ${l}_id = ${lm}_${l}id WHERE ".
+	  $q = myPear_db()->query($qq="SELECT * FROM $tables ON ${l}_id = ${lm}_${l}id WHERE ".
 				  join(' AND ',$where=self::args2select($args,$vars['t'],"${lm}_option")).
 				  " GROUP BY ${l}_class");
 	  if ($alarm=((($n=myPear_db()->num_rows($q)) > 1)&&cnf_dev)){
 	    b_debug::print_r($where,__METHOD__." !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! $n records for 'where'");
 	  }
-	  
+
 	  while($r = myPear_db()->next_record($q)){
 	    if ($alarm)b_debug::var_dump($r);
 	    if (empty($bList)) $bList = $r["${l}_class"];
@@ -111,12 +116,16 @@ class bList extends myPear_getValue{
 	}
       }
     }
+
     if (isset($instances[$instance_ID])){
-      if (cnf_dev) b_debug::xxx($instances[$instance_ID]->__toString());
-      return $instances[$instance_ID];     
+      $reply = $instances[$instance_ID];     
+    }elseif($createIfMissing && $parent_ID && locateAndInclude($bList)){
+      $reply = $instances[$instance_ID] = new $bList($parent_ID);
     }else{
-      return Null;
+      $reply = Null;
     }
+    b_debug::xxx($reply);
+    return $reply;
   }
 
   /*
@@ -470,7 +479,7 @@ class bList extends myPear_getValue{
     // Then delete 
     if ($n_toBeDeleted > 0){
       $this->reset_cache_bList_getMembers();
-      myPear_db()->query("DELETE FROM ".$this->TABLE_member." WHERE ".join(' AND ',$w));
+      myPear_db()->qquery("DELETE FROM ".$this->TABLE_member." WHERE ".join(' AND ',$w),cnf_dev);
       $this->report_changes('delete',$w);
     }
     if (!empty($deleted_record)) return $deleted_record;
@@ -492,12 +501,12 @@ class bList extends myPear_getValue{
     
     if (!myPear::is_empty($records = $this->getMembers($args))){
       if (($n=count($ids=array_keys($records))) > 1) b_debug::traceBack("expect 1, got $n"); 
-      //$reply = $r[$this->TABLEID_member];
       $reply = array_pop($ids);
     }else{
       $reply = $this->updateMember($args,$member_ID=Null,$set_as_current_member=False);
       $this->message_addMember($this->getMember($reply));
     }
+
     // Sanity...
     if (empty($reply)) b_debug::internalError("??? Empty reply: member_ID='$reply'");
     return ($this->member_ID = $reply);
@@ -997,8 +1006,10 @@ class bList extends myPear_getValue{
   /*
    *
    */
+  protected $unserialize_packables = True;
   protected function repack_packables($buffer,$updates){
     
+    if ($this->unserialize_packables){
     // unpack only the packed items in both "current array" & "updates"
     $packables = array_merge($this->unserialize($buffer), $this->unserialize($updates));
     
@@ -1012,6 +1023,9 @@ class bList extends myPear_getValue{
 								 str_replace("\r",'--CR--',
 									     str_replace("\r\n",'--CRLF--',$v)));
       $reply[$this->serialized] = serialize($packables);
+    }
+    }else{
+      $reply = $buffer;
     }
     ksort($reply);
     return $reply;
