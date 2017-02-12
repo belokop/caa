@@ -1,7 +1,7 @@
 <?php
-$releaseDate = '2016-08-15';
+$releaseDate = '2017-02-12';
 define('WIW_MODULE'   , 'wiw');
-define('WIW_VERSION','5.13.rc');
+define('WIW_VERSION','5.16.rc');
 
 define('wiw_acl_public',   'public');
 define('wiw_acl_protected','protected');

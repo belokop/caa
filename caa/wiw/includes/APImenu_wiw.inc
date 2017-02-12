@@ -33,17 +33,11 @@ class APImenu_wiw extends APImenu{
   
   var $title  = 'Who Is Where';
   var $q      = WIW_MODULE;
-  var $static_menu = array(tab_wiw_adm    =>array(tab_wiw_admTT),
-			   // tab_wiw_sok    =>array(),
-			   tab_wiw_myTrips=>array(),
+  var $static_menu = array(
 			   tab_wiw_reg    =>array(),
-			   );
-
-  var $tabWeight   = array(tab_wiw        => -90,
-			   tab_wiw_reg    => -20,
-			   tab_wiw_myTrips=> -10,
-			   tab_wiw_adm    =>   0,
-			   tab_wiw_admTT  =>  30,
+			   tab_wiw_myTrips=>array(),
+			   tab_wiw_adm    =>array(tab_wiw_admTT),
+			   // tab_wiw_sok    =>array(),
 			   );
   
   function __construct(){
