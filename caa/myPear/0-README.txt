@@ -1,29 +1,13 @@
 Changes log                                                                                                                                                             
                                                                                                                                                                                  
+2017-02-12, Version 5.148,
+                                                                                                                                                                                 
+2017-02-12, Version 5.147,
+                                                                                                                                                                                 
+2017-02-12, Version 5.146,
+                                                                                                                                                                                 
 2017-02-12, Version 5.145,
-A       myPear/_drupal-8/src/components/RouteSubscriber.php
-A       myPear/sql/zzz_variables.sql
-
-2017-02-11, Version 5.144, Update myPear (menu system), VM (accommodation options)
-M       myPear/_drupal-6/myPear.module
-M       myPear/_drupal-8/myPear.info.yml
-A       myPear/_drupal-8/src/components/RouteSubscriber.php
-M       myPear/includes/APIaccess.inc
-M       myPear/includes/APImenu.inc
-M       myPear/includes/bForm.inc
-M       myPear/includes/myPear_base.inc
-M       myPear/includes/myPear_getValue.inc
-A       myPear/sql/zzz_variables.sql
-
-2017-02-11, Version 5.143, Update myPear (menu system), VM (accommodation options)
-M       myPear/_drupal-6/myPear.module
-A       myPear/_drupal-8/src/components/RouteSubscriber.php
-M       myPear/includes/APIaccess.inc
-M       myPear/includes/APImenu.inc
-M       myPear/includes/bForm.inc
-M       myPear/includes/myPear_base.inc
-M       myPear/includes/myPear_getValue.inc
-A       myPear/sql/zzz_variables.sql
+  * Update myPear menu system
 
 2016-06-21, Version 5.142
   * Fix EA employment records

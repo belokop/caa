@@ -1,0 +1,95 @@
+<?php
+/**
+ * @file
+ *
+ */
+
+/**
+ * Implementation of hook_init()
+ */
+function prp_init(){
+  myPear_init();
+  require_once drupal_get_path('module','prp') . '/config.inc';
+  drupal_add_css('./'.drupal_get_path('module','prp').'/css/preprints.css');
+}
+
+function _prp_access_callback($tab){
+  prp_init();
+  locateAndInclude('APImenu_prp');
+  return PRP::_MENU()->access($tab);
+}
+
+/**
+ * Implementation of hook_menu()
+ */
+function prp_menu(){
+  prp_init();
+  return PRP::_MENU()->build_menuTree('_prp_output');
+}
+
+/*
+ * Display output
+ */
+function _prp_output($arg=Null,$arg2=Null){
+  prp_init();
+  $file_cache = new b_cache_file();
+  if ($file_cache->notYetReady())    PRP::_MENU()->process($arg,$arg2);
+  return $file_cache->get();
+}
+
+/*
+ * Drupal 6
+ */
+function prp_footer(){
+  prp_init();
+  ob_start();
+  bJS()->flush(); 
+  $output = ob_get_contents();
+  ob_end_clean();
+  return $output;
+}
+
+/**
+ * Implements hook_page_alter(), drupal7 replace-mt of hook_footer
+ */
+function prp_page_alter(&$page) {
+  prp_init();
+  $page['page_bottom']['devel']=array('#type' => 'markup',
+				      '#markup' => prp_footer());
+}
+
+
+if (class_exists('Drupal',False)){
+  /*
+  function prp_user_login($account) {
+    prp_init();
+    // Reset static cache of default variables in template_preprocess() to reflect the new user.
+    drupal_static_reset('template_preprocess');
+    // Authenticate to myPear
+    locateAndInclude('bAuth');
+    bAuth::drupal_hook_user($account);
+  }
+  
+  function prp_user_logout($account) {
+    // Reset static cache of default variables in template_preprocess() to reflect the new user.
+    drupal_static_reset('template_preprocess');
+  }
+  */
+}else{
+  /*
+   * Implements hook_user
+   */
+  /*
+  function prp_user($type, $array, $account, $category){
+    prp_init();
+    locateAndInclude('bAuth');
+    bAuth::drupal_hook_user($account);
+  }
+
+  function prp_user_login($edit, $account) {
+    prp_init();
+    locateAndInclude('bAuth');
+    bAuth::drupal_hook_user($account);
+  }
+  */
+}
