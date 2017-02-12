@@ -2032,6 +2032,7 @@ class bForm_vm_Visit extends bForm_vm {
       $v_end = $this->getValue('v_end',True);
       if (empty($v_end)) $v_end = time()+AUTO_EXPIRATION*86400;
       $this->isWritable = (bool)b_cnf::check_conditions(array(False => array(//'pending'    => !$this->isApproved(),
+									     'archived'   => (is_object($this->e) ? $this->e->isArchived() : False),
 									     'too late'   => ($v_end + AUTO_EXPIRATION*86400 < time()) && !VM_manager_here),
 							      True  => array('endorser'   => (is_object(bAuth::$av) && 
 											      in_array(bAuth::$av->ID,VM_endorsers()->getEndorsers($this->getValue('v_group',1)))),

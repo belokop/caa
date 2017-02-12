@@ -1,500 +1,192 @@
-Changes log
+Changes log                                                                                                                                                             
+                                                                                                                                                                                 
+2017-02-12, Version 5.80,
+A       vm/_drupal-8/src
+A       vm/_drupal-8/src/components
+A       vm/_drupal-8/src/components/RouteBuilder.php
 
-2015-04-19, Version 5.78,
-M       vm/includes/bForm/vm/Expenses.inc
-M       vm/includes/bForm/vm/Visit.inc
-M       vm/includes/vm_updates.inc
+2017-02-11, Version 5.80, Update myPear (menu system), VM (accommodation options)
 
-2015-04-18, Version 5.77,
-M       vm/includes/bForm/vm/Visit.inc
+2017-02-10, Version 5.79
+  * Redesign/regroup Menu, introduce item dividers
+  * Redesign bList_vm_accommodationOptions class, keep rent prices for the each program 
+    locally.
+  * Remove "request only" accommodation optional
+  * Redesign "break in the visit" accommodation optional
 
-2015-04-18, Version 5.76, Fix cotenants list
-M       vm/includes/bForm/vm/Expenses.inc
-M       vm/includes/bForm/vm/Lease.inc
-M       vm/includes/bForm/vm/Visit.inc
-M       vm/includes/bList/vm/cotenants.inc
-M       vm/includes/vm_updates.inc
+2015-04-19, Version 5.78
 
-2015-04-16, Version 5.75,
-M       vm/includes/bForm/vm/Expenses.inc
-M       vm/includes/bForm/vm/Visit.inc
+2015-04-05, Version 5.70
 
-2015-04-09, Version 5.74,
-M       vm/includes/APImenu_vm.inc
-M       vm/includes/bMailer_vm.inc
-M       vm/v2v.sh
+2015-04-03, Version 5.68
 
-2015-04-09, Version 5.73,
-M       vm/v2v.sh
+2015-04-01, Version 5.67
 
-2015-04-08, Version 5.72,
-M       vm/includes/bForm/vm/Visit.inc
-M       vm/includes/bUnit/vm/endorses.inc
+2015-03-16, Version 5.66
+  * Transactions & InnoDB
 
-2015-04-07, Version 5.71,
-M       vm/includes/bForm/vm/Visit.inc
-M       vm/includes/bMailer_vm.inc
-M       vm/includes/vm_editAccommodation.inc
+2015-03-14, Version 5.65
+  * Introducing database transactions
 
-2015-04-05, Version 5.70,
-M       vm/includes/bList/vm/agendaEvents.inc
-
-2015-04-03, Version 5.69,
-M       vm/includes/bForm/Avatar/vm.inc
-M       vm/includes/bForm/vm/Visit.inc
-M       vm/includes/bList/vm/reimbursementRates.inc
-
-2015-04-03, Version 5.68,
-M       vm/includes/bForm/Avatar/vm.inc
-M       vm/includes/bForm/vm/Visit.inc
-M       vm/includes/bList/vm/reimbursementRates.inc
-
-2015-04-01, Version 5.67,
-M       vm/includes/bForm/vm/Visit.inc
-M       vm/tools/dev2pro.sh
-M       vm/v2v.sh
-
-2015-03-16, Version 5.66, Transactions & InnoDB
-M       vm/includes/agenda_vm.inc
-
-2015-03-14, Version 5.65, introdicing database transactions
-M       vm/includes/APImenu_vm.inc
-M       vm/includes/agenda_vm.inc
-M       vm/includes/bForm/vm/Event.inc
-M       vm/includes/bForm/vm/Expenses.inc
-M       vm/includes/bForm/vm/Visit.inc
-M       vm/includes/bHolder/vm/Visitors.inc
-M       vm/includes/bIcal_matrix_visits.inc
-M       vm/includes/bList/vm/reimbursementRates.inc
-M       vm/includes/bList/vm.inc
-M       vm/includes/bMailer_vm.inc
-M       vm/includes/vm_updates.inc
-M       vm/sql/abs_events.sql
-M       vm/sql/abs_huts.sql
-M       vm/tools/dev2pro.sh
-
-2015-03-10, Version 5.64,
-M       vm/includes/APImenu_vm.inc
-M       vm/includes/bIcal_matrix_visits.inc
-M       vm/includes/bList/vm/socialEventRates.inc
+2015-03-10, Version 5.64
 
 2015-03-01, Version 5.63, bug fixing, "easy approve"
-M       vm/includes/APImenu_vm.inc
-M       vm/includes/bForm/Avatar/vm.inc
-M       vm/includes/bForm/vm/Event.inc
-M       vm/includes/bForm/vm/Expenses.inc
-M       vm/includes/bForm/vm/Visit.inc
-M       vm/includes/bHolder/vm/Visitors.inc
-M       vm/includes/bList/vm/accommodationOptions.inc
-M       vm/includes/bList/vm/budgetSource.inc
-M       vm/includes/bList/vm/cotenants.inc
-M       vm/includes/bList/vm/hutCodes.inc
-M       vm/includes/bList/vm/projects.inc
 A       vm/includes/bList/vm/reimbursementRates.inc
 D       vm/includes/bList/vm/scholarshipRates.inc
-M       vm/includes/bList/vm/socialEventRates.inc
-M       vm/includes/bList/vm/socialEvents.inc
-M       vm/includes/bList/vm.inc
-M       vm/includes/bMailer_vm.inc
-M       vm/includes/vm_functions.inc
-M       vm/includes/vm_updates.inc
 
-2015-02-28, Version 5.62,
-M       vm/includes/bForm/Avatar/vm.inc
-M       vm/includes/bForm/vm/Event.inc
-M       vm/includes/bForm/vm/Expenses.inc
-M       vm/includes/bForm/vm/Visit.inc
-M       vm/includes/bHolder/Avatar/vm.inc
-M       vm/includes/bHolder/vm/Visitors.inc
-M       vm/includes/bList/vm/reimbursementRates.inc
+2015-02-28, Version 5.62
 
-2015-02-27, Version 5.61,
-M       vm/includes/APImenu_vm.inc
-M       vm/includes/bList/vm/socialEventRates.inc
-M       vm/includes/bList/vm/socialEvents.inc
+2015-02-27, Version 5.61
 
-2015-02-26, Version 5.60,
-M       vm/includes/bHolder/vm/Visitors.inc
-M       vm/includes/bList/vm/accommodationOptions.inc
-M       vm/includes/bList/vm/reimbursementRates.inc
+2015-02-26, Version 5.60
 
-2015-02-26, Version 5.59, fix budget estimation
-M       vm/includes/bHolder/vm/Visitors.inc
-M       vm/includes/bList/vm/socialEventRates.inc
-M       vm/includes/bList/vm/socialEvents.inc
+2015-02-26, Version 5.59
+  * Fix budget estimation
 
-2015-02-25, Version 5.58,
-M       vm/includes/bList/vm/socialEvents.inc
+2015-02-25, Version 5.58
 
-2015-02-23, Version 5.57,
-M       vm/includes/APImenu_vm.inc
+2015-02-23, Version 5.57
 
-2015-02-22, Version 5.56, still scholarhips...
-M       vm/includes/bForm/vm/Expenses.inc
-M       vm/includes/bForm/vm/Visit.inc
+2015-02-22, Version 5.56
+  * Still scholarships...
 
-2015-02-22, Version 5.55, still scholarhips...
+2015-02-22, Version 5.55
+  * Still scholarships...
 
-2015-02-22, Version 5.54, still scholarhips...
-M       vm/includes/bForm/vm/Expenses.inc
-M       vm/includes/bList/vm/reimbursementRates.inc
+2015-02-22, Version 5.54
+  * Still scholarships...
 
-2015-02-22, Version 5.53, still scholarhips...
-M       vm/includes/APImenu_vm.inc
-M       vm/includes/agenda_vm.inc
-M       vm/includes/bForm/vm/Apartment.inc
-M       vm/includes/bForm/vm/Event.inc
-M       vm/includes/bForm/vm/Expenses.inc
-M       vm/includes/bForm/vm/Visit.inc
-M       vm/includes/bHolder/vm/Apartments.inc
-M       vm/includes/bHolder/vm/Visitors.inc
-M       vm/includes/bList/vm/accommodationOptions.inc
-M       vm/includes/bList/vm/reimbursementRates.inc
-M       vm/includes/bList/vm/socialEventRates.inc
-M       vm/includes/bList/vm/socialEvents.inc
-M       vm/includes/bMailer_vm.inc
-M       vm/includes/vm_updates.inc
+2015-02-22, Version 5.53
+  * Still scholarships...
 
-2015-02-16, Version 5.52, Finalizing visit policies treatment
-M       vm/includes/APIaccess_vm.inc
-M       vm/includes/APImenu_vm.inc
-M       vm/includes/agenda_vm.inc
-M       vm/includes/bForm/vm/Apartment.inc
-M       vm/includes/bForm/vm/Event.inc
-M       vm/includes/bForm/vm/Expenses.inc
-M       vm/includes/bForm/vm/Office.inc
-M       vm/includes/bForm/vm/Visit.inc
-M       vm/includes/bHolder/vm/Visitors.inc
-M       vm/includes/bHolder/vm/Visits.inc
-M       vm/includes/bIcal_matrix_visits.inc
-M       vm/includes/bList/vm/budgetSource.inc
-M       vm/includes/bList/vm/projects.inc
-M       vm/includes/bList/vm/reimbursementRates.inc
-M       vm/includes/vm_updates.inc
+2015-02-16, Version 5.52
 
-2015-02-15, Version 5.51, Make "request only" accommodation optional, not active by default.
-M       vm/includes/APImenu_vm.inc
-M       vm/includes/agenda_vm.inc
-M       vm/includes/bForm/vm/Event.inc
-M       vm/includes/bForm/vm/Lease.inc
-M       vm/includes/bForm/vm/Visit.inc
-M       vm/includes/bHolder/Avatar/vm.inc
-M       vm/includes/bHolder/vm/Visitors.inc
-M       vm/includes/bList/vm/accommodationOptions.inc
-M       vm/includes/bList/vm/reimbursementRates.inc
-M       vm/includes/vm_functions.inc
-M       vm/includes/vm_updates.inc
+2015-02-15, Version 5.51
+  * Make "request only" accommodation optional, not active by default.
 
-2015-02-14, Version 5.50, Introducing class b_vars
-M       vm/includes/APImenu_vm.inc
-M       vm/includes/bForm/vm/Event.inc
-M       vm/includes/bForm/vm/Visit.inc
-M       vm/includes/bHolder/vm/Visitors.inc
-M       vm/includes/bList/vm/hutCodes.inc
-M       vm/includes/bList/vm/reimbursementRates.inc
-M       vm/includes/bMailer_vm.inc
-M       vm/includes/vm_updates.inc
+2015-02-14, Version 5.50
+  * Introducing class b_vars
 
-2015-02-14, Version 5.49, further scholarship integration
-M       vm/_drupal-6/vm.module
-M       vm/_joomla/com_vm.xml
-M       vm/_joomla/vm.php
-M       vm/includes/APImenu_vm.inc
-M       vm/includes/bForm/vm/Apartment.inc
-M       vm/includes/bForm/vm/Event.inc
-M       vm/includes/bForm/vm/Expenses.inc
-M       vm/includes/bForm/vm/Lease.inc
-M       vm/includes/bForm/vm/Office.inc
-M       vm/includes/bForm/vm/Visit.inc
-M       vm/includes/bHolder/vm/Huts.inc
-M       vm/includes/bHolder/vm/Visitors.inc
-M       vm/includes/bList/vm/agendaEvents.inc
-M       vm/includes/bList/vm/budgetSource.inc
-M       vm/includes/bList/vm/hutCodes.inc
-M       vm/includes/bList/vm/projects.inc
-M       vm/includes/bList/vm/reimbursementRates.inc
-M       vm/includes/bList/vm/socialEventRates.inc
-M       vm/includes/bMailer_vm.inc
-M       vm/includes/bUnit/vm/bookers.inc
-M       vm/includes/bUnit/vm/endorses.inc
-M       vm/includes/bUnit/vm/organizers.inc
-M       vm/includes/vm_functions.inc
-M       vm/includes/vm_updates.inc
+2015-02-14, Version 5.49
+  * Further scholarship integration
 
-2015-02-13, Version 5.48, Integrate visit policies to bList_vm_reimbursementRates
-M       vm/includes/bForm/vm/Expenses.inc
-M       vm/includes/bForm/vm/Lease.inc
-M       vm/includes/bForm/vm/Visit.inc
-M       vm/includes/bForm/vm.inc
-M       vm/includes/bHolder/vm/Visitors.inc
-M       vm/includes/bList/vm/accommodationOptions.inc
-M       vm/includes/bList/vm/agendaEvents.inc
-M       vm/includes/bList/vm/hutCodes.inc
-M       vm/includes/bList/vm/reimbursementRates.inc
-M       vm/includes/bList/vm/socialEventRates.inc
-M       vm/includes/bList/vm/socialEvents.inc
-M       vm/includes/bList/vm.inc
-M       vm/includes/bUnit/vm/bookers.inc
-M       vm/includes/vm_functions.inc
-M       vm/includes/vm_updates.inc
+2015-02-13, Version 5.48
+  * Integrate visit policies to bList_vm_reimbursementRates
 
-2015-02-11, Version 5.47, fix VM budget reading problem
-M       vm/includes/bHolder/vm/Visitors.inc
-M       vm/includes/vm_updates.inc
+2015-02-11, Version 5.47
+  *  Fix VM budget reading problem
 
-2015-02-11, Version 5.46,
-M       vm/includes/bList/vm/socialEventRates.inc
-M       vm/includes/bList/vm/socialEvents.inc
-M       vm/includes/vm_updates.inc
+2015-02-11, Version 5.46
 
-2015-02-11, Version 5.45,
-M       vm/includes/bList/vm/reimbursementRates.inc
+2015-02-11, Version 5.45
 
-2015-02-11, Version 5.44,
-M       vm/includes/bHolder/vm/Visitors.inc
-M       vm/includes/bList/vm/reimbursementRates.inc
+2015-02-11, Version 5.44
 
-2015-02-11, Version 5.43,
-M       vm/includes/bHolder/vm/Visitors.inc
-M       vm/includes/bList/vm/socialEvents.inc
+2015-02-11, Version 5.43
 
-2015-02-10, Version 5.42,
-M       vm/includes/bList/vm/cotenants.inc
-M       vm/includes/bList/vm/reimbursementRates.inc
-M       vm/includes/bList/vm/socialEventRates.inc
-M       vm/includes/bList/vm/socialEvents.inc
-M       vm/includes/vm_updates.inc
+2015-02-10, Version 5.42
 
-2015-02-10, Version 5.41,
-M       vm/includes/bList/vm/cotenants.inc
-M       vm/includes/bList/vm/reimbursementRates.inc
-M       vm/includes/bList/vm/socialEventRates.inc
+2015-02-10, Version 5.41
 
-2015-02-10, Version 5.40,
-M       vm/includes/bList/vm/socialEvents.inc
+2015-02-10, Version 5.40
 
-2015-02-10, Version 5.39,
-M       vm/includes/APImenu_vm.inc
-M       vm/includes/bList/vm/reimbursementRates.inc
-M       vm/includes/bList/vm/socialEvents.inc
+2015-02-10, Version 5.39
 
-2015-02-10, Version 5.38,
-M       vm/includes/APImenu_vm.inc
-M       vm/includes/bList/vm/reimbursementRates.inc
-M       vm/includes/bList/vm/socialEvents.inc
+2015-02-10, Version 5.38
 
-2015-02-10, Version 5.37, Improve bList usage
-M       vm/includes/APImenu_vm.inc
-M       vm/includes/agenda_vm.inc
-M       vm/includes/bForm/vm/Event.inc
-M       vm/includes/bForm/vm/Lease.inc
-M       vm/includes/bHolder/vm/Visitors.inc
-M       vm/includes/bList/vm/reimbursementRates.inc
-M       vm/includes/bList/vm/socialEventRates.inc
-M       vm/includes/bList/vm/socialEvents.inc
+2015-02-10, Version 5.37
+  * Improve bList usage
 
-2015-02-08, Version 5.36, Optimizing the performance
-M       vm/includes/bList/vm/socialEventRates.inc
+2015-02-08, Version 5.36
+  * Optimizing the performance
 
-2015-02-08, Version 5.35, Optimizing the performance
-M       vm/includes/APImenu_vm.inc
-M       vm/includes/agenda_vm.inc
-M       vm/includes/bForm/vm.inc
-M       vm/includes/bHolder/vm/Visitors.inc
-M       vm/includes/bList/vm/projects.inc
-M       vm/includes/bList/vm.inc
-M       vm/includes/bMailer_vm.inc
-M       vm/includes/bUnit/vm/organizers.inc
-M       vm/includes/bUnit/vm.inc
-M       vm/includes/vm_editAccommodation.inc
-M       vm/includes/vm_functions.inc
+2015-02-08, Version 5.35
+  * Optimizing the performance
 
-2015-02-08, Version 5.34, Optimizing the performance
-M       vm/includes/APImenu_vm.inc
-M       vm/includes/agenda_vm.inc
-M       vm/includes/bForm/vm.inc
-M       vm/includes/bHolder/vm/Visitors.inc
-M       vm/includes/bList/vm.inc
-M       vm/includes/bMailer_vm.inc
-M       vm/includes/bUnit/vm.inc
+2015-02-08, Version 5.34
+  * Optimizing the performance
 
-2015-02-08, Version 5.33, Optimizing the performance
-M       vm/includes/bHolder/vm/Visitors.inc
-M       vm/includes/bList/vm/socialEventRates.inc
+2015-02-08, Version 5.33
+  * Optimizing the performance
 
-2015-02-08, Version 5.32, Optimizing the performance
-M       vm/includes/bList/vm/socialEventRates.inc
-M       vm/includes/bList/vm/socialEvents.inc
+2015-02-08, Version 5.32
+  * Optimizing the performance
 
-2015-02-05, Version 5.31,
-M       vm/includes/bForm/vm/Lease.inc
-M       vm/includes/bForm/vm/Visit.inc
-M       vm/includes/bHolder/vm/Visitors.inc
-M       vm/includes/bList/vm/socialEventRates.inc
-M       vm/includes/bMailer_vm.inc
-M       vm/includes/vm_functions.inc
+2015-02-05, Version 5.31
 
-2015-02-05, Version 5.30,
-M       vm/includes/bForm/vm/Lease.inc
-M       vm/includes/bForm/vm/Visit.inc
-M       vm/includes/bHolder/vm/Visitors.inc
-M       vm/includes/bList/vm/socialEventRates.inc
-M       vm/includes/bMailer_vm.inc
-M       vm/includes/vm_functions.inc
+2015-02-05, Version 5.30
 
-2015-02-05, Version 5.29,
-M       vm/includes/bForm/vm/Lease.inc
-M       vm/includes/bForm/vm/Visit.inc
-M       vm/includes/bHolder/vm/Visitors.inc
-M       vm/includes/bMailer_vm.inc
-M       vm/includes/vm_functions.inc
+2015-02-05, Version 5.29
 
-2015-02-04, Version 5.28,
-M       vm/includes/bForm/vm/Visit.inc
+2015-02-04, Version 5.28
 
-2015-02-04, Version 5.27,
-M       vm/includes/vm_updates.inc
+2015-02-04, Version 5.27
 
-2015-02-04, Version 5.26,
-M       vm/includes/APImenu_vm.inc
-M       vm/includes/bList/vm/socialEvents.inc
+2015-02-04, Version 5.26
 
-2015-02-04, Version 5.25,
-M       vm/includes/APImenu_vm.inc
-M       vm/includes/agenda_vm.inc
-M       vm/includes/bForm/vm/Visit.inc
-M       vm/includes/bHolder/vm/Visitors.inc
-M       vm/includes/bList/vm/socialEvents.inc
-M       vm/includes/bList/vm/socialEventRates.inc
-M       vm/includes/bList/vm.inc
-M       vm/includes/vm_updates.inc
+2015-02-04, Version 5.25
 
 2015-02-02, Version 5.24, VM fixes
-M       vm/includes/bHolder/vm/Visitors.inc
-M       vm/includes/bList/vm/socialEvents.inc
 
-2015-02-02, Version 5.23,
-M       vm/includes/APImenu_vm.inc
-M       vm/v2v.sh
+2015-02-02, Version 5.23
 
-2015-02-01, Version 5.22, workaround - problem with getValue for the list members
-M       vm/includes/APImenu_vm.inc
-M       vm/includes/bList/vm/socialEvents.inc
-M       vm/includes/bList/vm/socialEventRates.inc
+2015-02-01, Version 5.22
+  * Workaround - problem with getValue for the list members
 
-2015-01-30, Version 5.21, VM bugs fixes
-M       vm/includes/APImenu_vm.inc
-M       vm/includes/bHolder/vm/Visitors.inc
-M       vm/includes/bList/vm/accommodationOptions.inc
-M       vm/includes/bList/vm/budgetSource.inc
-M       vm/includes/bList/vm/projects.inc
-M       vm/includes/bList/vm/reimbursementRates.inc
-M       vm/includes/bList/vm/socialEvents.inc
-M       vm/includes/bList/vm/socialEventRates.inc
-M       vm/includes/vm_functions.inc
+2015-01-30, Version 5.21
+  * VM bugs fixes
 
-2015-01-29, Version 5.20,
-M       vm/includes/agenda_vm.inc
+2015-01-29, Version 5.20
 
-2015-01-28, Version 5.19,
-M       vm/includes/bForm/vm/Visit.inc
-M       vm/v2v.sh
+2015-01-28, Version 5.19
 
-2015-01-26, Version 5.18, clean SQL indices
-M       vm/includes/bMailer_vm.inc
+2015-01-26, Version 5.18
+  * clean SQL indices
 
-2015-01-25, Version 5.17, release 2015-01-25
-M       vm/sql/abs_rooms.sql
-M       vm/sql/abs_events.sql
-M       vm/sql/abs_expenses.sql
-M       vm/sql/abs_huts.sql
-M       vm/sql/abs_leases.sql
-M       vm/sql/abs_offices.sql
-M       vm/sql/abs_visits.sql
+2015-01-25, Version 5.17
+  * production release 2015-01-25
 
-2015-01-24, Version 5.16, minor cleanup
-M       vm/includes/bHolder/vm/Apartments.inc
-M       vm/includes/bList/vm/socialEvents.inc
-M       vm/includes/bList/vm/socialEventRates.inc
+2015-01-24, Version 5.16
+  * minor cleanup
 
-2015-01-24, Version 5.15, minor cleanup
-M       vm/includes/bHolder/Avatar/vm.inc
+2015-01-24, Version 5.15
+  * minor cleanup
 
-2015-01-24, Version 5.14, minor bugs fixing
-M       vm/includes/APIaccess_vm.inc
-M       vm/includes/bForm/vm/Event.inc
-M       vm/includes/bForm/vm/Visit.inc
-M       vm/includes/bMailer_vm.inc
+2015-01-24, Version 5.14
+  * minor bugs fixing
 
-2015-01-24, Version 5.13, fix Avatar search
-M       vm/includes/APImenu_vm.inc
-M       vm/includes/bForm/vm/Visit.inc
-M       vm/includes/bHolder/Avatar/vm.inc
-M       vm/includes/bHolder/vm/Visitors.inc
-M       vm/includes/bList/vm/accommodationOptions.inc
-M       vm/includes/bMailer_vm.inc
+2015-01-24, Version 5.13
+  * fix Avatar search
 
-2015-01-23, Version 5.12,
-M       vm/includes/APImenu_vm.inc
+2015-01-23, Version 5.12
 
-2015-01-23, Version 5.11,
-M       vm/includes/vm_updates.inc
+2015-01-23, Version 5.11
 
-2015-01-23, Version 5.10, fix bList options packing
-M       vm/includes/APIaccess_vm.inc
-M       vm/includes/APImenu_vm.inc
-M       vm/includes/bForm/vm/Expenses.inc
-M       vm/includes/bForm/vm/Hut.inc
-M       vm/includes/bForm/vm/Lease.inc
-M       vm/includes/bForm/vm/Visit.inc
-M       vm/includes/bHolder/vm/Apartments.inc
-M       vm/includes/bHolder/vm/Huts.inc
-M       vm/includes/bHolder/vm/Visitors.inc
-M       vm/includes/bList/vm/accommodationOptions.inc
-M       vm/includes/bList/vm/agendaEvents.inc
-M       vm/includes/bList/vm/budgetSource.inc
-M       vm/includes/bList/vm/cotenants.inc
-M       vm/includes/bList/vm/reimbursementRates.inc
-M       vm/includes/bList/vm/socialEvents.inc
-M       vm/includes/bList/vm/socialEventRates.inc
-M       vm/includes/bList/vm.inc
-M       vm/includes/vm_updates.inc
+2015-01-23, Version 5.10
+  * fix bList options packing
 
-2015-01-20, Version 5.9, Fix strict MySQL warnings & avatar merging problems
-M       vm/includes/agenda_vm.inc
-M       vm/includes/bHolder/vm/Visitors.inc
-M       vm/includes/vm_updates.inc
-M       vm/sql/abs_rooms.sql
-D       vm/tools/fix_local_users.php
+2015-01-20, Version 5.9
+  * Fix strict MySQL warnings & avatar merging problems
 
-2015-01-16, Version 5.8, code cleanup
-M       vm/includes/bForm/vm/Lease.inc
-M       vm/includes/vm_editAccommodation.inc
+2015-01-16, Version 5.8
+  * code cleanup
 
 2015-01-16, Version 5.7, fix accommodation selection
-M       vm/_joomla/com_vm.xml
-M       vm/includes/agenda_vm.inc
-M       vm/includes/bForm/vm/Apartment.inc
-M       vm/includes/bForm/vm/Lease.inc
-M       vm/includes/bForm/vm/Visit.inc
-M       vm/includes/bHolder/vm/Visitors.inc
-M       vm/includes/bHolder/vm/Visits.inc
-M       vm/includes/bIcal_matrix_abs.inc
 A       vm/includes/vm_editAccommodation.inc
 D       vm/includes/vm_editVisit.inc
-M       vm/includes/vm_functions.inc
 
-2015-01-14, Version 5.6, Fix EmpRecords order
+2015-01-14, Version 5.6
+  * Fix Emp-Records order
 
 2014-03-01 4.3.1
-  * New bForm_vm_Hut
-  * New bList_vm_hutCodes
+  * New class bForm_vm_Hut
+  * New class bList_vm_hutCodes
 
 2012-12-20 4.2
   * Milestone release
 
 2012-11-03 4.1.3
-  * Bug fixes in "sending endorser mail" & "has right to"  
+  * Bug fixes in "sending endorser mail" & "has right to" 
 
 2012-08-30 4.1.2
   * Bug fix in function "mayBook"
@@ -514,7 +206,7 @@ M       vm/includes/vm_functions.inc
   * Set budget on the week basis rather then on the day basis
 
 2012-05-20 4.0.23
-  * setup mail reminders for the event organizers 
+  * setup mail reminders for the event organizers
 
 2012-05-15 4.0.22
   * introduce RANK_vm_manager
@@ -545,10 +237,10 @@ M       vm/includes/vm_functions.inc
 
 2012-04-21 4.0.10
   * Rewrite the accommodation dialog after fixing bug/feature in myPear
-    concerning complicated bForm dialog with embedded forms 
+    concerning complicated bForm dialog with embedded forms
 
 2012-04-19 4.0.9
-  * Split may_accommodate => may_boo + may_boo_biz, not to be tighten to "selected event" 
+  * Split may_accommodate => may_boo + may_boo_biz, not to be tighten to "selected event"
 
 2012-04-18 4.0.8
   * introduce auto-generated policies
@@ -564,7 +256,7 @@ M       vm/includes/vm_functions.inc
   * Clean the residential address, introduce the ZIP code
   * Introduce "early information mail" to the attenders.
   * Make the accept/deny mail automatically sent when the event is endorsed and/or
-    when the tenants list is exported 
+    when the tenants list is exported
 
 2012-04-05 4.0.3
 
@@ -602,13 +294,13 @@ M       vm/includes/vm_functions.inc
 2011-09-21 version 3.3-m1 (production milestone release)
   * add class bList_vm_reimbursementRates
   * add list of photos for the event attenders
-  * agenda_vm: fix leases when OA toggles 
+  * agenda_vm: fix leases when OA toggles
 
 2011-09-12 version 3.2-m1 (milestone release)
   * Optimize the budget pages for event organizers, let them accommodation rights
 
 2011-09-10 version 3.1-m4 (milestone release)
-  * Change the budget pages for event organizers according to new rules 
+  * Change the budget pages for event organizers according to new rules
     (новая метла по новому метет...):
    - introduce class bList_vm_budgetSource
    - modify  class bHolder_vm_Visitors
@@ -622,7 +314,7 @@ M       vm/includes/vm_functions.inc
 
 2011-06-01 version 3.1-m1 (milestone release)
   * starting vm-3.1 with the registrant portal
-  
+ 
 2011-05-11 version 3.0-rc6
   * add class bList_vm_socialEventRates, hence rewrite bList_vm_socialEvents
 
@@ -644,12 +336,12 @@ M       vm/includes/vm_functions.inc
 
 2011-02-07 version 2.20
   * create class bMailer_vm with edit-able templates
-  * introduce new roles 
+  * introduce new roles
     - event organizer (approval of the attenders & other things)
-    - event attender 
+    - event attender
 
 2010-10-10 version 2.12
-  * module is baptized VM - Visitors Manager 
+  * module is baptized VM - Visitors Manager
 
 2010-Autumn, maintenance/bug fixing releases
  - 2.11.8 fix bug in bUnit::isWritable()
@@ -682,6 +374,6 @@ M       vm/includes/vm_functions.inc
 
 2010-05-31 version 2.5
  - New module "offices".
-   Automatic office allocation via bCover algorithm is still dummy,
-   the latter should be upgraded to handle the "room capacity".
+   Automatic office allocation via bCover algorithm is still dummy
+   The latter should be upgraded to handle the "room capacity".
 

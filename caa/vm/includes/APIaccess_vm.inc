@@ -1,6 +1,8 @@
 <?php
 locateAndInclude('APIaccess');
 class APIaccess_vm extends APIaccess{
+
+  var $debug = True;
   
   /*
    * Construct the privileges
@@ -46,7 +48,9 @@ class APIaccess_vm extends APIaccess{
    *
    */
   public function isManager(){
-    return VM_manager_here;
+    $reply = VM_manager_here;
+    $this->dbg($reply);
+    return $reply;
   }
 
   /*
@@ -57,6 +61,7 @@ class APIaccess_vm extends APIaccess{
       $reply = ($this->getRank() > RANK_vm_registrant) || VM::hasRightTo('request_visits');
     }
     $this->getTitle();
+    $this->dbg($reply);
     return $reply;
   }
   
@@ -70,6 +75,7 @@ class APIaccess_vm extends APIaccess{
       if ($reply == RANK__authenticated){
 	foreach ($this->getRanks_matrix() as $e_id=>$r) $reply = max($r,$reply);
       }
+      $this->dbg($reply);
     }
     return $reply;
   }
@@ -84,6 +90,7 @@ class APIaccess_vm extends APIaccess{
       else               $av = myPear::getInstance_new('bForm_Avatar_vm',$av_id,'fatal');
       $reply = superUser_here || $av->isObserver();
     }
+    $this->dbg($reply);
     return $reply;
   }
   

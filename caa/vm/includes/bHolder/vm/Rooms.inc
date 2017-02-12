@@ -184,7 +184,7 @@ class bHolder_vm_Rooms extends bHolder_vm{
     
     $s = @$this->rec['a_status'];
 
-    if     ($s == AP_SHARABLE)           $extraTD = $this->t->extraTD[] = bIcons()->get(array('i'=>'bb-2users',  'd'=>$s));
+    if     ($s == AP_SHARABLE)         $extraTD = $this->t->extraTD[] = bIcons()->get(array('i'=>'bb-2users',  'd'=>$s));
     elseif ($s == AP_AUTO_ALLOCATABLE) $extraTD = $this->t->extraTD[] = bIcons()->get(array('i'=>'i-pc_edit','d'=>$s));
     else                               $extraTD = $this->t->extraTD[] = '';
     

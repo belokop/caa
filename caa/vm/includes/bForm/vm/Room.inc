@@ -135,12 +135,16 @@ class bForm_vm_Room extends bForm_vm {
   public static function getReceipt($formDB=array(),$nDays){
     $a_id = @$formDB['a_id'];
     $extraApFee = 0;
+    $e = (empty($formDB['e_id'])
+	  ? Null
+	  : myPear::getInstance_new('bForm_vm_Event',$formDB['e_id'],'strict'));
+    b_debug::xxx(''.$e);
     if ($a_id == VM::$OA->ID){
       self::$receiptFormula  = '('.LODGING_OA_TXT.')';
-      return self::_daily_a_price($formDB,$this->e);
+      return self::_daily_a_price($formDB,$e);
     }else{
       //if ($ap = myPear::getInstance_new('bForm_vm_Room',$a_id,'strict')) $extraApFee = $ap->fee();
-      $p =  self::_daily_a_price($formDB,$this->e); 
+      $p = self::_daily_a_price($formDB,$e); 
       self::$receiptFormula = (($ip=(int)$p)?"($ip":'(???')."*$nDays".($extraApFee?"+$extraApFee)":')');
       return (int)($p * $nDays + $extraApFee);
     }

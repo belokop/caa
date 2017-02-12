@@ -6,6 +6,12 @@ class bHolder_vm_Events extends bHolder_vm{
   var $showLineCounter = False;
 
   public function __construct(){
+    if (!empty($_REQUEST['vm_eventSelector'])){
+      b_url::header(b_url::same(sprintf('?q=%s/%s&vm_eventSelector=%s',
+					VM_MODULE,
+					APImenu::tab_code(tab_vm_vis),
+					$_REQUEST['vm_eventSelector'])));
+    }
     parent::__construct();
   }
   
@@ -33,7 +39,7 @@ class bHolder_vm_Events extends bHolder_vm{
       $this->rec['e_start'] = x('code',date('d M - ', $this->rec['e_start']));
       $this->rec['e_end']   = x('code',date('d M Y',$this->rec['e_end']));
     }
-    $this->rec['name'] = $e->name($includeDate=True,$max_length=66);
+    $this->rec['name'] = x("a href=".b_url::same(sprintf("?vm_eventSelector=%s",$e->ID)),$e->name($includeDate=True,$max_length=66));
     if (False){
       if ($e->isWritable())       $this->t->extraTD[] = b_btn::link('',
 								    $e->sameURL_but(),

@@ -102,6 +102,32 @@ replaced by a simple config.priv.php file...
   return $menu;
 }
 
+/**
+ * Implementation of hook_menu_link_alter()
+ */
+function template_hook_menu_link_alter(&$item, $menu) {
+  global $dividers;
+  if (empty($dividers)) $dividers = array();
+  foreach(array_unique($dividers) as $divider){
+    if (in_array($divider,$item['page arguments'])){
+      $item['options'][] = divider;
+      //      print '<pre>';print_r($item);print'</pre>';
+    }
+  }
+}
+
+/**
+ * Implementation of hook_preprocess_menu_link()
+ */
+function template_hook_preprocess_menu_link(&$variables) {
+  if (in_array(divider,$variables['element']['#localized_options'])){
+    $variables['element']['#attributes']['class'][] = divider;
+  }
+}
+
+/*
+ *
+ */
 function myPear__menu_access($module){
   myPear_init();
   $reply = ($module === b_reg::$current_module);

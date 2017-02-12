@@ -25,8 +25,6 @@ class myPear_getValue extends myPear_base{
 
   public $show_gv         = False;
 
-  protected $dbg_color = 'blackText';
-
   static    $getValue_cache_counter = array();
   protected $getValue_recursion = array();
   private   $getValue_cache = array();

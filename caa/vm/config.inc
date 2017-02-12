@@ -3,9 +3,9 @@ set_time_limit(0);
 /**
  * Visitors Manager (VM) configuration file
  */
-$releaseDate = '2017-02-03';
+$releaseDate = '2017-02-12';
 define('VM_MODULE'   , 'vm');
-define('VM_VERSION','5.78');
+define('VM_VERSION','5.80');
 
 //
 // transition problems...
@@ -727,10 +727,13 @@ class VM extends myPear{
    * Currently selected event ID
    */
   static function e_ID($e_ID=Null){
+    if (isset($_REQUEST['vm_eventSelector'])){
+      $e_ID = $_GET['vm_eventSelector'] = $_POST['vm_eventSelector'] = $_REQUEST['vm_eventSelector'];
+      b_cnf::set('vm_eventSelector'.$e_ID);
+    }
+
     start_VM();
-    if ($e_ID===Null) $e_ID = (isset($_REQUEST['vm_eventSelector'])
-			       ? $_REQUEST['vm_eventSelector'] 
-			       : (int)b_cnf::get('vm_eventSelector'));
+    if ($e_ID===Null) $e_ID = (int)b_cnf::get('vm_eventSelector');
     
     if ((int)$e_ID > 0){
       if (!is_object(self::$e))	self::$e = myPear::getInstance_new('bForm_vm_Event',$e_ID,'strict');

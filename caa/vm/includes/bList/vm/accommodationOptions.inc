@@ -25,7 +25,7 @@ class bList_vm_accommodationOptions extends bList_vm{
 			    );
   var $list_showing = array('_hut_id' => '',
                             '_nrooms' => 'N rooms<br/>available',			    
-			    '_rate'   => '<br/>Rate',
+			    // '_rate'   => '<br/>Rate',
 			    '_number' => '<br/>N tenants',
 			    );
   protected $packed_items = array('nrooms');
@@ -411,9 +411,9 @@ class bList_vm_accommodationOptions extends bList_vm{
     //    $huts = $this->hutSelectMenu(Null,True);
     //    if (!empty($huts)) 
     $reply = parent::draw_buttons();
-    if (!empty($this->e)) $reply[] = b_btn::submit('reset to default',
-						   b_url::same('?reset_once=y'),
-						   $confirm=True);
+    if (!empty($this->e) && $this->isWritable()) $reply[] = b_btn::submit('reset to default',
+									  b_url::same('?reset_once=y'),
+									  $confirm=True);
     return $reply;
   }
 

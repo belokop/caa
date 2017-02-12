@@ -1,4 +1,7 @@
 <?php
+/*
+ * Event class
+ */
 locateAndInclude('bForm_vm');
 
 class bForm_vm_Event extends bForm_vm {
@@ -435,11 +438,17 @@ class bForm_vm_Event extends bForm_vm {
 			    $includeDate,$max_length);
   }
 
+  /*
+   * Return the event start/end dates
+   */
   function period($formatted=False,$margin=0){
-    if ($formatted) return array(date('d M Y',$this->formDB['e_start']-$margin*86400),date('d M Y',$this->formDB['e_end']+$margin*86400));
-    else            return array($this->formDB['e_start']-$margin*86400,$this->formDB['e_end']+$margin*86400);
+    return ($formatted
+	    ? array(date('d M Y',$this->formDB['e_start']-$margin*86400),
+		    date('d M Y',$this->formDB['e_end']  +$margin*86400))
+	    : array($this->formDB['e_start']-$margin*86400,
+		    $this->formDB['e_end']  +$margin*86400));
   }
-
+  
   // the agenda events are not writable
   function isWritable() {
     return False;

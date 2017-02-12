@@ -61,7 +61,6 @@ class bForm extends myPear_getValue{
   protected static $bForm_uploads = Null;
   protected $normalLine = 66;
   protected $bForm_isJustCreated = False;
-  protected $dbg_color = 'blackText';
   protected $arrayToCheck = array();
 
   // List of all RW fields for the current form. Used to decide about printing "update it" button

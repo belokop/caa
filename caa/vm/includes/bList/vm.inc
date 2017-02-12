@@ -70,6 +70,7 @@ class bList_vm extends bList{
       if ($this instanceof bForm_vm_Event) $e =  $this;
       else                                 $e = @$this->e;
       $this->isWritable_vm = (bool)b_cnf::check_conditions(array(False=> array('fb'      => cnf_inside_fb,
+									       'archived'=> (is_object($e) ? $e->isArchived() : False),
                                                                                'too late'=> !VM_manager_here && (is_object($e) &&
                                                                                                                  ($e->getValue('e_end') < time() ||
                                                                                                                   $e->isArchived() ||

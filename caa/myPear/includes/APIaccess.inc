@@ -1,10 +1,10 @@
 <?php
-class APIaccess{
+class APIaccess extends myPear_base{
   
   public static $cache  = Null;
   public     $roles      = array();
   protected  $RANK_privs = array();
-  var        $debug  = False;
+  protected  $dbg_color  = 'redText';
 
   public function __construct(){
     //    locateAndInclude('b_cache');
@@ -89,7 +89,7 @@ class APIaccess{
     myPear::WARNING_T("TBD");
   }
 
-  public function dbg($id=Null,$YesNo='not set'){
+  public function ZZZdbg($id=Null,$YesNo='not set'){
     if (func_num_args() == 1) b_debug::xxx($id,array(3,'AA',$this));
     else                      b_debug::xxx(($YesNo==='not set'?'&nbsp;':(empty($YesNo) ? 'NO' : $YesNo)),array(3,'AA',$id));
   }

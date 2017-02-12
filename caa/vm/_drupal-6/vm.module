@@ -38,6 +38,20 @@ function vm_menu(){
   return $menu;
 }
 
+/**
+ * Implementation of hook_menu_link_alter()
+ */
+function vm_menu_link_alter(&$item, $menu) {
+  return template_hook_menu_link_alter($item, $menu);
+}
+
+/**
+ * Implementation of hook_preprocess_menu_link()
+ */
+function vm_preprocess_menu_link(&$variables) {
+  template_hook_preprocess_menu_link($variables);
+}
+
 /*
  * Display output
  */

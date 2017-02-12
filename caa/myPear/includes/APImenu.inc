@@ -8,24 +8,26 @@ if (function_exists('locateAndInclude')){
 /*
  * Define tabs of "a general interest"
  */
+define('divider','divider'); // Menu divider
+
 function APItabs_init(){
-  foreach(array('tab__empty'    =>'emptytab',
-		'tab__bText'    =>'Dictionary',
-		'tab__syslog'   =>'Syslog',
-		'tab__tasks'    =>'Task Manager',
-		'tab__login'    =>'Login',
-		'tab__search'   =>'Search',
-		'tab__update'   =>'Check for updates',
-		'tab__templates'=>'Edit templates',
-		'tab__descr'    =>'Edit forms',
-		'tab__units'    =>'See All units',
-		'tab__lists'    =>'See All lists',
-		'tab__cleanup'  =>'Clean-up the database',
-		'tab__configure'=>'Configure myPear',
-		'tab__fixes'    =>'Fix database',
-		'tab__mergeAV'  =>'Merge avatars',
-		'tab__fixes_bList'=> 'bList(s)',
-		) as $code=>$text) APItabs::define_tab($code,$text);
+  APItabs::define_tabs(array('tab__empty'    =>'emptytab',
+			     'tab__bText'    =>'Dictionary',
+			     'tab__syslog'   =>'Syslog',
+			     'tab__tasks'    =>'Task Manager',
+			     'tab__login'    =>'Login',
+			     'tab__search'   =>'Search',
+			     'tab__update'   =>'Check for updates',
+			     'tab__templates'=>'Edit templates',
+			     'tab__descr'    =>'Edit forms',
+			     'tab__units'    =>'See All units',
+			     'tab__lists'    =>'See All lists',
+			     'tab__cleanup'  =>'Clean-up the database',
+			     'tab__configure'=>'Configure myPear',
+			     'tab__fixes'    =>'Fix database',
+			     'tab__mergeAV'  =>'Merge avatars',
+			     'tab__fixes_bList'=> 'bList(s)',
+			     ));
 }
 APItabs_init();
 
@@ -44,6 +46,21 @@ class APItabs{
 
   public  static $tab_definition = array();
   
+  public static function define_tabs($tabs){
+    foreach($tabs as $code=>$text) APItabs::define_tab($code,$text);
+
+    // Convert url tab codes to human readable values
+    $ok = True;
+    foreach(explode('/',$_GET['q']) as $k=>$v){
+      $hr = ($k > 0
+	     ? @$GLOBALS["code2tab"][$v]
+	     : $v);
+      if (empty($hr)) $ok = False;
+      else $q[] = $hr;
+    }
+    if ($ok) myPear::DEBUG("q = ".join('/',$q));
+  }
+
   public static function define_tab($tab,$text){
     if (!defined($tab)){
       define($tab,$tab);
@@ -81,13 +98,14 @@ class APItabs{
 }
 
 
-class APImenu{
+class APImenu extends myPear_base{
   var $q           = myPear_MODULE;
   var $sqlBackend  = True;
   var $debug       = False;
   var $editPages   = array();
   var $static_menu = array();
   var $dynamic_menu= array();
+  protected $dbg_color = 'redText';
 
 
   var $myPear_menu = array(
@@ -104,17 +122,14 @@ class APImenu{
 			   tab__fixes  => array(tab__fixes_bList,
 						tab__cleanup),
 			   );
-  var $tabWeight  = array();
+  protected $tabWeight  = array();
   var $defaultTabs= array(tab__search);
   
   private $title_callback = Null;
   private $access_callback= Null;
   private $hash_parent    = Null;
 
-  function __construct($defaultTab=Null){
-    foreach(array(tab__update    => 999,
-		  ) as $t=>$w) $this->tabWeight[$t] = $w;
-  }
+  function __construct($defaultTab=Null){}
   
   /*
    * Make sure that the proper Avatar class are used
@@ -200,7 +215,7 @@ class APImenu{
     default:
       $reply = Null;
     }
-    if ($reply === Null)    $this->dbg($reply,cnf_show_m);
+    if ($reply !== Null)    $this->dbg($reply);
     return $reply;
    }
 
@@ -576,7 +591,33 @@ class APImenu{
   /*
    *
    */
-  function get_lowLevelMenu($tab_top,$b='strong'){
+  private function build_tabWeight(){
+    // Build the weights
+    if (empty($this->tabWeight)){
+      $w_l1 = 0;
+      foreach($this->static_menu as $l1=>$l2_array){
+	$this->tabWeight[$l1] = ++$w_l1;
+	$w_l2 = $w_l1 * 100;
+	foreach($l2_array as $k=>$l2){
+	  if ($l2 == divider) $l2 = $k;
+	  $this->tabWeight[$l2] = ++$w_l2;
+	}
+      }
+
+      // Add the "update" menu item
+      if (empty($this->tabWeight[tab__update]))	$this->tabWeight[tab__update] = 99999;
+      
+    }
+  }
+
+  /*
+   *
+   */
+  protected function get_lowLevelMenu($tab_top,$b='strong'){
+
+    $this->build_tabWeight();
+
+    // Build low level menu
     foreach(array_values($this->static_menu[$tab_top]) as $tab){
       if ($this->access($tab)){
 	$weight = (myPear::is_empty($w=$this->tabWeight[$tab]) 
@@ -607,6 +648,7 @@ class APImenu{
    * The function is written for drupal in mind, but might be used for any environment
    */
   public function build_menuTree($page_callback,$access_callback='') {
+    global $dividers;
     global $bred;    if (empty($bred)) $bred = 13;
     bTiming()->cpu(get_class($this).'.'.__FUNCTION__);
 
@@ -655,6 +697,14 @@ class APImenu{
 		      'dt'=>$this->dynamic_menu));
     foreach ($menus as $id=>$menu_tree){
       foreach($menu_tree as $tab=>$secondary){
+	if ($tab == divider){
+	  $divider_here = True;
+	  continue;
+	}
+	if (@$divider_here) $dividers[] = $tab;
+	//printf("%stab=$tab secondary=(%s)<br>\n",(@$divider_here?'DIVIDER ':''),join(',',$secondary));
+	$divider_here = False;
+
 	if (empty($tab)) b_debug::internalError("empty tab");
 	if ($id=='dt' && !is_array($secondary)){ // dynamic tab without children
 	  $dTab = $tab;
@@ -680,16 +730,28 @@ class APImenu{
     }
     bTiming()->cpu();
     if (cnf_show_m) b_debug::print_r($menu,'menu');
+    if (!empty($dividers)){
+      $dividers = array_unique($dividers);
+      sort($dividers);
+      b_debug::print_r($dividers,'dividers');
+    }
     return $menu;
   }  
 
   private function build_menuTree_2(&$menu, $id, $page_callback, $secondary){
+    global $dividers;
     global $bred;    if (empty($bred)) $bred = 13;
     
     $deftabSet = False;
     if (is_array($secondary)){
       //      foreach (array_merge($secondary) as $id_2=>$tab_2){
       foreach ($secondary as $id_2=>$tab_2){
+	if ($tab_2 === divider){
+	  $tab_2 = $id_2;
+	  $dividers[] = $tab_2;
+	  //printf("%stab_2=$tab_2 <br>\n",(@$divider_here?'DIVIDER ':''));
+	}
+
 	$dTab_2 = ($id==='dt' ? $id_2 : '');	    // treat the dynamic tabs
 	$hash   = self::tab_code($tab_2.$dTab_2);
 	$menu[join('/',array($this->q,
@@ -714,6 +776,7 @@ class APImenu{
   }
   
   private function weight($tab,$dTab){
+    $this->build_tabWeight();
     $reply = (isset(  $this->tabWeight[(string)$tab]) ? $this->tabWeight[(string)$tab]
 	      :(isset($this->tabWeight[(string)$dTab])? $this->tabWeight[(string)$dTab]
 		: 0));
@@ -722,7 +785,7 @@ class APImenu{
 
   function __toString() { return get_class($this); }
 
-  protected function dbg($txt=' ',$force=False){
+  protected function ZZZdbg($txt=' ',$force=False){
     if ($this->debug||$force) b_debug::xxx($txt,array(3,'orangeText',$this));
   }
 }

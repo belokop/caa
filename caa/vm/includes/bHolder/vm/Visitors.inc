@@ -399,7 +399,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
       if (!defined('vm_day1')) b_debug::internalError("'vm_day1' is not defined");
 
     case 'myguests':
-      VM::$e = Null;
+      // ????????????????????      VM::$e = Null;
       myPear::H1('People I invite','reset');
       
     case 'show_mails_exchange':
@@ -1060,7 +1060,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
   private function boss_button_endorse($fnc_message=''){
 
     static $dejaVu = 0;
-    if ($dejaVu++) return;
+    if ($dejaVu++ || VM::$e->isArchived()) return;
 
     // Show button "Release lock"
     if (VM::$e->isEventEndorsed()){ 
