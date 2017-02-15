@@ -14,7 +14,8 @@
 }
 
 .page-load-progress-spinner {
-  background-image: url('../images/loader.gif');
+/*  background-image: url('../images/loader.gif'); */
+  background-image: url('../images/page_load_progress.gif'); 
   background-repeat: no-repeat;
   height: 128px;
   left: 45%;
