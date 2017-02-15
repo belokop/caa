@@ -3,9 +3,9 @@ set_time_limit(0);
 /**
  * Visitors Manager (VM) configuration file
  */
-$releaseDate = '2017-02-12';
+$releaseDate = '2017-02-15';
 define('VM_MODULE'   , 'vm');
-define('VM_VERSION','5.80');
+define('VM_VERSION','5.81');
 
 //
 // transition problems...
@@ -493,8 +493,8 @@ class VM extends myPear{
 							       'i'=>'money_on'),
 			       VM_E_endorsmentSent    => array('d'=>'Was the endorsement communicated?',
 							       't'=> auto_maintained),
-			       //VM_E_archived        => array('d'=>'Is the event archived?',
-			       //                              'i'=>'i-lock'),
+			       VM_E_archived          => array('d'=>'Is the event archived?',
+							       'i'=>'i-lock'),
 			       );
   
   /*
@@ -574,7 +574,7 @@ class VM extends myPear{
   static function start(){
     static $dejaVu = 0;
     if (!$dejaVu++){
-      
+
       // 'include_payLunch_dinner' is not yet fully debugged
       if (!include_payLunch_dinner){
 	foreach(array(VM_V_conferenceDinner, VM_E_conferenceDinner,
@@ -729,7 +729,7 @@ class VM extends myPear{
   static function e_ID($e_ID=Null){
     if (isset($_REQUEST['vm_eventSelector'])){
       $e_ID = $_GET['vm_eventSelector'] = $_POST['vm_eventSelector'] = $_REQUEST['vm_eventSelector'];
-      b_cnf::set('vm_eventSelector'.$e_ID);
+      b_cnf::set('vm_eventSelector',$e_ID);
     }
 
     start_VM();

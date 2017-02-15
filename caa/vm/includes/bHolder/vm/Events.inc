@@ -13,6 +13,19 @@ class bHolder_vm_Events extends bHolder_vm{
 					$_REQUEST['vm_eventSelector'])));
     }
     parent::__construct();
+
+    // Set "archived" bit for the old events
+    if (!@$_SESSION['auto_archive']++){
+      locateAndInclude('bForm_vm_Event');
+      foreach(bForm_vm_Event::getEvents() as $e_id){
+	$e = new bForm_vm_Event($e_id);
+	if ((time() - AUTO_EXPIRATION*86400) > $e->getValue('e_end',1)){
+	  $e->setPolicy(VM_E_archived,1,$verbose=True);
+	}else{
+	  if (cnf_dev) myPear::MESSAGE(sprintf("KEEP %s",$e->name()));
+	}
+      }
+    }
   }
   
   function query(){

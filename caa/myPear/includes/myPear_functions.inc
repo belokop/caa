@@ -533,7 +533,7 @@ function set_cb_expected(&$data,$name='',$value_to_set='off'){
 function start_myPear(){
 
   bTiming()->cpu(__FUNCTION__);
-  if (cnf_localhost) b_debug::xxx(starting,array(2,'fuchsiaText',cnf_dev));
+  b_debug::xxx(starting,array(2,'fuchsiaText',cnf_dev));
 
   // Decode $_SERVER["QUERY_STRING"];
   b_crypt::decodeURL();
@@ -659,5 +659,5 @@ function start_myPear(){
   locateAndInclude('bMailer');
   myPear_taskManager_queue();
   */
-  if (cnf_localhost) b_debug::xxx(exiting,array(2,'fuchsiaText',cnf_dev));
+  b_debug::xxx(exiting,array(2,'fuchsiaText',cnf_dev));
 }

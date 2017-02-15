@@ -389,8 +389,7 @@ class bForm_vm_Event extends bForm_vm {
       if ($value) $this->setPolicy(VM_E_endorsed,1,False);
       if ($value) $this->setPolicy(VM_E_endorsmentSent,1,False);
       break;
-      //    case VM_E_endorsed:
-      //    case VM_E_endorsmentSent:
+
     case VM_E_provideOffice:
       if ($this->isEventEndorsed()){
 	myPear::WARNING(x('i',$this->name()."'s record is LOCKED, \"".VM::$e_policies[$policy]['d']."\" was not changed"));

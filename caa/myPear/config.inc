@@ -3,8 +3,8 @@ ini_set("allow_url_fopen", true);
 //var_dump(file_get_contents('php://input'));
 
 // myPear module 
-$releaseDate = '2017-02-12';
-define('myPear_VERSION','5.148');
+$releaseDate = '2017-02-15';
+define('myPear_VERSION','5.149');
 define('myPear_MODULE', 'myPear');
 define('myPear_DATE',    $releaseDate);
 
@@ -76,11 +76,11 @@ $GLOBALS['imapServers'] = array('kth.se'     => array('imap'=>array('ssl://webma
 // 
 
 // set flag "invoked as a script by the CLI interpreter, no httpd server"
-if (!defined('cnf_CLI'))          define('cnf_CLI',empty($_SERVER["HTTP_USER_AGENT"]));
+if (!defined('cnf_CLI'))       define('cnf_CLI',empty($_SERVER["HTTP_USER_AGENT"]));
 
 //  set flag "running locally, without a network on a Ryan-air jet"
 if (!defined('cnf_localhost')) define('cnf_localhost',
-				      (bool)(preg_match('/^((.*)?::1$|127.0.0.1|local|192.168.)/',trim(@$_SERVER["REMOTE_ADDR"])) &&
+				      (bool)(preg_match('/^((.*)?::1$|127.0.0.1|local)/',trim(@$_SERVER["REMOTE_ADDR"])) &&
 					     strpos(__FILE__,'/trunk/')!==False));
 
 // Set a shortcut "Processing task manager queue", see class "myPear_taskManager"
@@ -128,7 +128,6 @@ define('exiting', 'Готово, барин...'); // Means "Ready, Sir..."
 define('missing_value', 'missing value');
 
 if (!isset($_GET['showe'])) { $_REQUEST['showe'] = $_GET['showe'] = 1; define('cnf_show_e',True); }
-// if (!isset($_GET['noCompactMessages'])) $_REQUEST['noCompactMessages'] = $_GET['noCompactMessages'] = (int)cnf_localhost;
 
 // $_GET['debug'] = $_GET['nodrupal'] = $_GET['showl'] = 1; define('cnf_show_l',True);
 // $_GET['authdebug'] = $_GET['warnings'] = $_GET['debug'] = $_GET['showi'] = $_GET['nodrupal'] = $_GET['YBhere'] = $_GET['dev'] = 0;

@@ -314,6 +314,11 @@ function get_clean_url(){
     D8::dbg(['getcwd()'=>getcwd()]);
   }
   $drupal_clean_url = variable_get('clean_url','???');
+
+  /////////////////  Force "non clean url" for Drupal7
+  if (HOSTED_BY_CMS_vrsn == 7) {  $clean_url = $drupal_clean_url = 0;  variable_set('clean_url',($clean_url ? 1 : 0)); } //workaround....
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
   if ($clean_url === $drupal_clean_url){
     D8::dbg($clean_url);
   }else{

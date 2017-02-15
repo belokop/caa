@@ -596,15 +596,16 @@ class APImenu extends myPear_base{
     if (empty($this->tabWeight)){
       $w_l1 = 0;
       foreach($this->static_menu as $l1=>$l2_array){
+	if ($l2_array === divider) continue;
 	$this->tabWeight[$l1] = ++$w_l1;
 	$w_l2 = $w_l1 * 100;
 	foreach($l2_array as $k=>$l2){
-	  if ($l2 == divider) $l2 = $k;
+	  if ($l2 === divider) $l2 = $k;
 	  $this->tabWeight[$l2] = ++$w_l2;
 	}
       }
 
-      // Add the "update" menu item
+      // Add the "update" menu item at the bottom
       if (empty($this->tabWeight[tab__update]))	$this->tabWeight[tab__update] = 99999;
       
     }
@@ -697,7 +698,7 @@ class APImenu extends myPear_base{
 		      'dt'=>$this->dynamic_menu));
     foreach ($menus as $id=>$menu_tree){
       foreach($menu_tree as $tab=>$secondary){
-	if ($tab == divider){
+	if ($secondary === divider){
 	  $divider_here = True;
 	  continue;
 	}

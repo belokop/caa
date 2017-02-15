@@ -112,6 +112,7 @@ class APImenu_vm extends APImenu_ea{
   var $q      = VM_MODULE;
   
   var $static_menu   = array(
+			     divider,
 			     tab_vm_guests    => array(tab_vm_guests_to_approve,
 						       tab_vm_guests_addVisit,
 						       tab_vm_guests_budget,
@@ -119,6 +120,7 @@ class APImenu_vm extends APImenu_ea{
 						       ),
 			     tab_vm_home      => array(),
 			     tab_vm_reg       => array(),
+			     divider,
 			     tab_vm_vis       => array(tab_vm_ogz_vmatrix,
 						       tab_vm_ogz_omatrix,
 						       tab_vm_ogz_amatrix,
@@ -135,6 +137,7 @@ class APImenu_vm extends APImenu_ea{
 						       tab_vm_ogz_dup,
 						       // tab_vm_vis_welcome, // tab_vm_vis_sok,
 						       ),
+			     divider,
 			     tab_vm_end       => array(tab_vm_end_vlist,
 						       tab_vm_end_mails,
 						       tab_vm_end_budget,
@@ -170,6 +173,7 @@ class APImenu_vm extends APImenu_ea{
 						       tab_ea_off_wipe, 
 						       ),
 			     tab_vm_vmatrix   => array(),
+			     divider,
 			     tab_vm_adm       => array(
 						       tab_vm_acc,
 						       tab_vm_adm_se_setup,
