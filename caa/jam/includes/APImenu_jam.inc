@@ -37,7 +37,7 @@ class APImenu_jam extends APImenu{
 			 tab_jam_myApplications=>array(),
 			 tab_jam_quickStatus  => array(),
 			 );
-  var $tabWeight  =array(tab_jam_home         => -999,
+  protected $tabWeight  =array(tab_jam_home         => -999,
          		 //tab_jam_quickStatus  => -800,
 
 			 tab_jam_administer   => +99,

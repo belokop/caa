@@ -1,4 +1,29 @@
-Changes log
+Changes log                                                                                                                                                             
+                                                                                                                                                                                 
+2017-02-15, Version 5.28,
+A       ea/_drupal-8/src
+A       ea/_drupal-8/src/components
+A       ea/_drupal-8/src/components/RouteBuilder.php
+
+2017-02-11, Version 5.27, Update myPear (menu system), VM (accommodation options)
+M       ea/_drupal-8/ea.info.yml
+A       ea/_drupal-8/src
+A       ea/_drupal-8/src/components
+A       ea/_drupal-8/src/components/RouteBuilder.php
+M       ea/includes/APImenu_ea.inc
+
+2017-02-11, Version 5.26, Update myPear (menu system), VM (accommodation options)
+M       ea/_drupal-8/ea.info.yml
+A       ea/_drupal-8/src
+A       ea/_drupal-8/src/components
+A       ea/_drupal-8/src/components/RouteBuilder.php
+M       ea/includes/APImenu_ea.inc
+
+2017-02-11, Version 5.25, Update myPear (menu system), VM (accommodation options)
+A       ea/_drupal-8/src
+A       ea/_drupal-8/src/components
+A       ea/_drupal-8/src/components/RouteBuilder.php
+M       ea/includes/APImenu_ea.inc
 
 2016-06-19, Version 5.24, EA fixes
 M       ea/includes/ea_updates.inc

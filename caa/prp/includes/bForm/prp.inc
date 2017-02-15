@@ -212,9 +212,10 @@ class bForm_prp extends bForm{
        * Preprint location
        */
       if (($this->MODE == 'RW') && (int)$this->ID){
-	myPear::MESSAGE("You may store the preprint in a ".
-			"<br/>&nbsp;* external world-wide archive AND/OR".
-			"<br/>&nbsp;* ".myOrg_name." local archive<br/>");
+	// Do not offer "local storage"
+	if (False) myPear::MESSAGE("You may store the preprint in a ".
+				   "<br/>&nbsp;* external world-wide archive AND/OR".
+				   "<br/>&nbsp;* ".myOrg_name." local archive<br/>");
 	myPear::MESSAGE("Please don't forget to update \"".$this->vars['prp_publisher']."\" field when the preprint is published");
       }
       
@@ -223,6 +224,9 @@ class bForm_prp extends bForm{
 		      'prp_doi'      =>array('textField'),
 		      'prp_archive'  =>array('textField'),
 		      'prp_local'    =>array('uploadFile'));
+      // Do not offer the "local copy", not used any more
+      if (!$this->getValue('prp_local')) unset($dialog['prp_local']);
+
       if ((int)$this->ID) $this->formBlock('p2',
 					   'Preprint location',
 					   $dialog,

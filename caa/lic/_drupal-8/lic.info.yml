@@ -3,7 +3,7 @@ description: Monitoring the FlexNet Publisher (formerly known as FLEXlm) license
 package: myPear
 project: YB
 core: 8.x
-version: 8.x-5.8
+version: 8.x-5.12
 dependencies:
   - myPear
 type: module

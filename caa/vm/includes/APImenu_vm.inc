@@ -448,11 +448,12 @@ class APImenu_vm extends APImenu_ea{
 	
       case tab_vm_adm_sc_setup:
       case tab_vm_adm_se_setup:
-	$reply = VM_observer_here;
+	$reply = (!VM::outOfScope() && VM_manager_here);
 	break;
 
+      case tab_vm_vis_se_setup:
       case tab_vm_ogz_se_setup:
-	$reply = (!VM::outOfScope() && VM_manager_here);
+	$reply = (!VM::outOfScope() && VM_administrator_here);
 	break;
 	
       case tab_vm_guests_budget:
@@ -476,7 +477,7 @@ class APImenu_vm extends APImenu_ea{
 	break;
 
       default:
-	if (!empty($tab)) myPear::WARNING_T("unpredicted tab");
+	if (!empty($tab)) b_debug::internalError("unpredicted tab \"$tab\"");
 	$reply = False;
       }
     }
@@ -613,8 +614,6 @@ class APImenu_vm extends APImenu_ea{
       break;
       
     case tab_vm_vis_acc:
-	//VM::$e->accommodationOptions()->update();
-	//VM::$e->accommodationOptions()->show();
 	VM_accommodationOptions(VM::$e)->update();
 	VM_accommodationOptions(VM::$e)->show();
       break;
@@ -1087,7 +1086,7 @@ class APImenu_vm extends APImenu_ea{
     //    if (cnf_dev) b_debug::print_r($reply,__FUNCTION__.' '.@$events[$closest_eID],'nosort');
     if (!defined('vm_day1') || $need_only_one_event)      $events = array();
 
-    b_debug::print_r($events,'events','nosort');    
+    // b_debug::print_r($events,'events','nosort');    
     return $reply;
   }
   

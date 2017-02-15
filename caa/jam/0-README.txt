@@ -1,4 +1,17 @@
-Changes log
+Changes log                                                                                                                                                             
+                                                                                                                                                                                 
+2017-02-15, Version 5.53.rc,
+
+2017-02-11, Version 5.52.rc, Update myPear (menu system), VM (accommodation options)
+M       jam/_drupal-8/jam.info.yml
+M       jam/includes/APImenu_jam.inc
+
+2017-02-11, Version 5.51.rc, Update myPear (menu system), VM (accommodation options)
+M       jam/_drupal-8/jam.info.yml
+M       jam/includes/APImenu_jam.inc
+
+2017-02-11, Version 5.50.rc, Update myPear (menu system), VM (accommodation options)
+M       jam/includes/APImenu_jam.inc
 
 2015-04-21, Version 5.49.rc,
 M       jam/includes/jam_updates.inc

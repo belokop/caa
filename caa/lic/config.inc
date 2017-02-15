@@ -1,7 +1,7 @@
 <?php
 
-$releaseDate = '2016-08-15';
-define('LIC_VERSION','5.8');
+$releaseDate = '2017-02-15';
+define('LIC_VERSION','5.12');
 define('LIC_MODULE'  , 'lic');
 
 b_cnf::variable_set('LIC_mathlmPort',16286);

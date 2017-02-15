@@ -7,18 +7,18 @@ if (function_exists('locateAndInclude')){
 /*
  * define all the menu tabs
  */
-foreach(array('tab_ea'              => 'People at '.(defined('myOrg_name' ? myOrg_name : 'here')),
-              'tab_ea_home'         => 'Home',
+foreach(array('tab_ea'              => 'People at '.(defined('myOrg_name') ? myOrg_name : 'here'),
+              'tab_ea_home'         => 'My account',
               'tab_ea_home_contacts'=> 'My Contact Persons',
               'tab_ea_a'            => 'Alumni',
               'tab_ea_a_years'      => 'As the years pass...',
               'tab_ea_e'            => 'Staff',
               'tab_ea_e_cv'         => 'CV\'s',
               'tab_ea_e_groups'     => 'Groups',
-              'tab_ea_admin'        => 'Administer',
+              'tab_ea_admin'        => 'Administer Organization',
               'tab_ea_admin_rb'     => 'Rebuild EA',
               'tab_ea_admin_dup'    => 'Find duplicate avatars',
-              'tab_ea_admin_org'    => 'Organization structure',
+              'tab_ea_admin_org'    => (defined('myOrg_nameS') ? myOrg_nameS : 'Organization').' structure',
               'tab_ea_admin_org_mngr'=> 'Organization managers',
               'tab_ea_admin_org_structure'=> 'Employee types&groups',
               'tab_ea_admin_orgs'         => 'All Organizations',
@@ -37,37 +37,27 @@ class APImenu_ea extends APImenu{
   var $title= 'Employees&Alumni';
   var $static_menu   = array(
 			     tab_ea_home  => array(), // (tab_ea_home_contacts),
-			     tab_ea_e     => array(tab_ea_e_groups,tab_ea_e_cv,tab_ea_off_door_labels,tab_ea_off_list),
+			     divider,
+			     tab_ea_e     => array(tab_ea_e_groups,
+						   tab_ea_e_cv,
+						   tab_ea_off_list,
+						   tab_ea_off_door_labels,
+						   ),
 			     tab_ea_a     => array(tab_ea_a_years),
-			     tab_ea_admin => array(tab__mergeAV,tab_ea_admin_dup,tab_ea_admin_rb,
-						   // tab_ea_admin_org_mngr,
-						   tab_ea_admin_org_structure,
+			     divider,
+			     tab_ea_admin => array(
 						   tab_ea_admin_org,
+						   tab_ea_admin_org_structure,
+						   tab__mergeAV=>divider,
+						   tab_ea_admin_dup,
+						   tab_ea_admin_rb    => divider,
 						   tab_ea_admin_orgs,
-						   tab__syslog),
+						   tab__syslog        => divider,
+						   // tab_ea_admin_org_mngr,
+						   ),
 			     // tab_ea_a_years=> array(),
 			     // tab_ea_admin_org  => array(tab_ea_admin_org_mngr,tab_ea_admin_org_structure),
 			     // tab_ea_admin_orgs => array(),
-			     );
-  var $tabWeight     = array(
-
-			     tab_ea_home      => 10,
-			     tab_ea_e         => 20,
-			     tab_ea_e_groups  => 21,
-			     tab_ea_e_cv      => 22,
-			     tab_ea_a         => 30,
-			     tab_ea_a_years   => 31,
-			     tab_ea_admin     => 40,
-			     tab__mergeAV     => 41,
-			     tab_ea_admin_dup => 42,
-			     tab_ea_admin_rb  => 43,
-			     tab_ea_admin_org => 44,
-			     tab_ea_admin_org_structure => 45,
-			     tab_ea_admin_orgs=> 46,
-			     tab_ea_off_list   => 88,
-			     tab_ea_off_door_labels=>90,
-			     tab__syslog      => 99,
-
 			     );
 
   function __construct(){
@@ -339,10 +329,10 @@ function _ea_title_callback($tab, $dTab=Null,$returnText=False){
       $menuItem = 'People at '.myOrg_nameS;
       break;
     case tab_ea_a: 
-      $menuItem = 'Alumni'; 
+      $menuItem = myOrg_nameS.' Alumni'; 
       break;
     case tab_ea_e: 
-      $menuItem = "Staff members";
+      $menuItem = myOrg_nameS." Staff members";
       break;
     case tab_ea_admin:
       $menuItem = 'Administer '.myOrg_nameS;

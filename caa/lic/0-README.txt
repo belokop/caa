@@ -1,4 +1,26 @@
-Changes log
+Changes log                                                                                                                                                             
+                                                                                                                                                                                 
+2017-02-15, Version 5.12,
+A       lic/_drupal-8/src
+A       lic/_drupal-8/src/components
+A       lic/_drupal-8/src/components/RouteBuilder.php
+
+2017-02-11, Version 5.11, Update myPear (menu system), VM (accommodation options)
+M       lic/_drupal-8/lic.info.yml
+A       lic/_drupal-8/src
+A       lic/_drupal-8/src/components
+A       lic/_drupal-8/src/components/RouteBuilder.php
+
+2017-02-11, Version 5.10, Update myPear (menu system), VM (accommodation options)
+M       lic/_drupal-8/lic.info.yml
+A       lic/_drupal-8/src
+A       lic/_drupal-8/src/components
+A       lic/_drupal-8/src/components/RouteBuilder.php
+
+2017-02-11, Version 5.9, Update myPear (menu system), VM (accommodation options)
+A       lic/_drupal-8/src
+A       lic/_drupal-8/src/components
+A       lic/_drupal-8/src/components/RouteBuilder.php
 
 2015-04-07, Version 5.8,
 M       lic/bin/collector.php

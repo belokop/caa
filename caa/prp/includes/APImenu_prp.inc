@@ -8,7 +8,7 @@ foreach(array('tab_prp_see'         => (myOrg_ID ? myOrg_nameS.' ' : '').'Prepri
               'tab_prp_pending'     => 'Manage pending preprints',
               'tab_prp_update'      => 'Update preprints',
               'tab_prp_new'         => 'Register new preprint',
-              'tab_prp_adm'         => 'Administer preprints',
+              'tab_prp_adm'         => 'Preprints censors',
               ) as $name=>$descr) APItabs::define_tab($name,$descr);
 
 /*
@@ -21,9 +21,13 @@ class APImenu_prp extends APImenu{
 			    //tab_prp_see => array(tab_prp_pending,tab_prp_new,tab_prp_update), 
 			    tab_prp_new     => array(),
 			    //tab_prp_mng => array(tab_prp_pending,tab_prp_new,tab_prp_update), 
+			    divider,
 			    tab_prp_pending => array(),
 			    tab_prp_update  => array(),
-			    tab_prp_adm     => array(tab__mergeAV),
+			    divider,
+			    tab_prp_adm     => array(
+						     // tab__mergeAV
+						     ),
 			    );
   
   function __construct(){
