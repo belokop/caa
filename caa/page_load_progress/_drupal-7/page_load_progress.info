@@ -5,8 +5,8 @@ stylesheets[all][] = css/page_load_progress.css
 configure = admin/config/user-interface/page-load-progress
 
 ; Information added by Drupal.org packaging script on 2016-08-11
-version = "7.x-1.3"
-core = "7.x"
+version = 7.x-1.3
+core = 7.x
 project = "page_load_progress"
 datestamp = "1470907740"
 

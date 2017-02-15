@@ -29,7 +29,7 @@ function page_load_progress_settings($form, &$form_state) {
     '#type' => 'textfield',
     '#title' => t('Elements that will trigger the throbber'),
     '#description' => t('Enter the elements that will trigger the effect separated by commas. Classes should have their leading dot and ids their leading hashes.'),
-    '#default_value' => variable_get('page_load_progress_elements', '.form-submit,.page_load_progress'),
+    '#default_value' => variable_get('page_load_progress_elements','.form-submit,.page_load_progress'),
   );
 
   return system_settings_form($form);
