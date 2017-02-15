@@ -1,0 +1,12 @@
+name = "Page load Progress"
+description = "Locks the screen and adds a progress icon to indicate progress when a page takes a long time to reload"
+core = 7.x
+stylesheets[all][] = css/page_load_progress.css
+configure = admin/config/user-interface/page-load-progress
+
+; Information added by Drupal.org packaging script on 2016-08-11
+version = "7.x-1.3"
+core = "7.x"
+project = "page_load_progress"
+datestamp = "1470907740"
+
