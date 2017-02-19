@@ -42,8 +42,8 @@ class bIcal_matrix extends bIcal {
   function __construct(){
     $this->collapseDate = (int)@$_GET['collapse_once'];
     $this->nDaysToShow  = CONST_ical_cells_to_show * $this->step;
-    $this->day1 = b_cnf::get(b_reg::$current_module.'_day1');
-    $this->day9 = b_cnf::get(b_reg::$current_module.'_day9');
+    $this->day1 = b_time::txt2unix(b_cnf::get(b_reg::$current_module.'_day1'));
+    $this->day9 = b_time::txt2unix(b_cnf::get(b_reg::$current_module.'_day9'));
     if (empty($this->day1))    $this->day1 = $this->f_sunday(time());
     if (empty($this->day9))    $this->day9 = $this->day1 + $this->nDaysToShow * 86400;
     if ($this->day1 >= $this->day9){

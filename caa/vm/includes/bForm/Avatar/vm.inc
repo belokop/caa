@@ -229,15 +229,17 @@ class bForm_Avatar_vm extends bForm_Avatar_ea{
 
     $reply = array();
     $q = myPear_db()->query("SELECT * FROM abs_events WHERE ".
-			      " e_start   > ".time() ." AND ".
-			      " e_reg_end < ".time().
-			      " ORDER BY e_start ASC");
+			    " e_start   > ".time() ." AND ".
+			    " e_reg_end < ".time().
+			    " ORDER BY e_start ASC");
     while($r = myPear_db()->next_record($q)){
       // b_debug::xxx(date('Y-m-d , ',$r['e_reg_end']).bForm_vm_Event::_name($r));
       if ($only_ifApplicantsExist && !bForm_vm_Event::_attenders($r['e_id'])) continue;
+      // Skip if the event is already endorsed
+      if (bForm_vm_Event::_getPolicy(VM_E_endorsed,$r,True)) continue;
       $reply[$r['e_id']] = bForm_vm_Event::_name($r);
     }
-    //    b_debug::xxx('<br>'.join('<br>',array_values($reply)));
+        b_debug::xxx('<br>'.join('<br>',array_values($reply)));
     return $reply;
   }
 

@@ -17,6 +17,15 @@
  */ 
 .ui-autocomplete,
 #ui-datepicker-div{ z-index:99999!important; }
+
+.hasDatepicker{
+    text-align:center;
+}
+
+h1 .hasDatepicker{ 
+    font-size:x-large; 
+}
+
 #fancybox-outer{
     background:#fff url("img/loading.gif") no-repeat 50% 50% !important;
 }

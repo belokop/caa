@@ -45,6 +45,7 @@ function _myPear_access_callback($menuItem){
 class APItabs{
 
   public  static $tab_definition = array();
+  public  static $_ = '';
   
   public static function define_tabs($tabs){
     foreach($tabs as $code=>$text) APItabs::define_tab($code,$text);
@@ -55,8 +56,13 @@ class APItabs{
       $hr = ($k > 0
 	     ? @$GLOBALS["code2tab"][$v]
 	     : $v);
-      if (empty($hr)) $ok = False;
-      else $q[] = $hr;
+      if (empty($hr)){
+	$ok = False;
+      }else{
+	$q[] = $hr;
+	// Keep the decoded tab for future use
+	self::$_ = $hr;
+      }
     }
     if ($ok) myPear::DEBUG("q = ".join('/',$q));
   }

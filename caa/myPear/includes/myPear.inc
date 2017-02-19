@@ -173,9 +173,9 @@ class myPear{
   /*
    *
    */
-  static function set_main_selector($input,$noPrint=False,$add_form=False){
+  static function set_main_selector($input,$noPrint=False){
     static $n = 0;
-
+    
     $li = array('');
     $enctype = (1 ? 'application/x-www-form-urlencoded' : 'multipart/form-data');
     foreach($input as $label=>$selection){

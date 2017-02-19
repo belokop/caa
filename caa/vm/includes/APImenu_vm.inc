@@ -12,71 +12,75 @@ if (function_exists('locateAndInclude')){
 /*
  * Define all the tabs/menus used in VM module
  */
-APItabs::define_tabs(array('tab_vm_home'              => 'Home',
-			   
+APItabs::define_tabs(array(
+			   'tab_vm_home'              => 'My account',
 			   'tab_vm_reg'               => 'My visit',
-			   
-			   'tab_vm_end'               => 'Events to endorse',
-			   'tab_vm_ogz'               => 'Events I organize',
-			   'tab_vm_end_vlist'         => 'A-Z applicant lists',
-			   'tab_vm_ogz_vlist'         => 'Approve & Accommodate applicants',
-			   'tab_vm_end_budget'        => 'See/Approve budget',
-			   'tab_vm_ogz_budget'        => 'Budget estimation',
-			   'tab_vm_end_mails'         => 'Mails exchange with applicants',
-			   'tab_vm_ogz_mails'         => 'Mails exchange with applicants',
-			   'tab_vm_end_vmatrix'       => 'Who arrives when',
-			   'tab_vm_ogz_vmatrix'       => 'Who arrives when',
-			   'tab_vm_vis_vmatrix'       => 'Who arrives when',
-			   'tab_vm_end_amatrix'       => 'Who lives where',
-			   'tab_vm_ogz_amatrix'       => 'Who lives where',
-			   'tab_vm_end_omatrix'       => 'Who sits where Matrix',
-			   'tab_vm_ogz_omatrix'       => 'Who sits where Matrix',
-			   'tab_vm_ogz_se_setup'      => 'Social events',
-			   'tab_vm_vis_se_setup'      => 'Social events',
-			   'tab_vm_ogz_photos'        => 'Photos of attenders',
-			   'tab_vm_ogz_dup'           => 'Duplicate applications',
-			   
+			   'tab_vm_vmatrix'           => 'Visits',
+			   'tab_vm_tenants'           => 'Cotenants',
+			   'tab_vm_vis_allVisits'     => 'Visits',
+
+			   'tab_vm_acc'               => 'Accommodation', 
+			   'tab_vm_acc_add'           => 'Add apartment',
+			   'tab_vm_acc_assign'        => 'Auto accommodate homeless',
+			   'tab_vm_acc_huts'          => 'Buildings',
+			   'tab_vm_acc_rooms'         => 'Rooms',
+			   'tab_vm_acc_usage'         => 'Apartments usage',
+
 			   'tab_vm_adm'               => 'Administer VM',
+			   'tab_vm_adm_acc'           => myOrg_nameS.' accommodation', 
 			   'tab_vm_adm_projects'      => myOrg_nameS.' financial projects',
-			   'tab_vm_adm_se_setup'      => myOrg_nameS.' social events',
 			   'tab_vm_adm_sc_setup'      => myOrg_nameS.' reimbursement rates',
+			   'tab_vm_adm_se_setup'      => myOrg_nameS.' social events',
 			   'tab_vm_adm_unitOrganizers'=> myOrg_nameS.' event organizers',
 			   'tab_vm_adm_acl'           => 'ACL',
 			   'tab_vm_adm_agendaList'    => 'Edit agenda list',
-			   'tab_vm_adm_sync'          => 'Agenda sync',
-			   'tab_vm_adm_fixClashes'    => 'Fix clashes',
 			   'tab_vm_adm_dup'           => 'Duplicate avatars',
-			   
-			   'tab_vm_acc'               => myOrg_nameS.' accommodation', 
-			   'tab_vm_acc_assign'        => 'Auto accommodate homeless',
-			   'tab_vm_acc_add'           => 'Add apartment',
-			   'tab_vm_acc_rooms'         => 'Rooms',
-			   'tab_vm_acc_huts'          => 'Buildings',
-			   'tab_vm_acc_sok'           => 'Search',
-			   'tab_vm_acc_usage'         => 'Apartments usage',
-			   
+			   'tab_vm_adm_fixClashes'    => 'Fix clashes',
+			   'tab_vm_adm_sync'          => 'Agenda sync',
+
+			   'tab_vm_end'               => 'Events to endorse',
+			   'tab_vm_end_amatrix'       => 'Who lives where',
+			   'tab_vm_end_budget'        => 'See/Approve budget',
+			   'tab_vm_end_mails'         => 'Mails exchange with applicants',
+			   'tab_vm_end_omatrix'       => 'Who sits where Matrix',
+			   'tab_vm_end_vlist'         => 'A-Z applicant lists',
+			   'tab_vm_end_vmatrix'       => 'Who arrives when',
+
 			   'tab_vm_events'            => myOrg_nameS.' events',
 			   'tab_vm_events_see'        => myOrg_nameS.' events',
 			   'tab_vm_events_add'        => 'Add event',
-			   
-			   'tab_vm_vis'               => 'Visits within events',
-			   'tab_vm_vis_acc'           => 'Accommodation options',
-			   'tab_vm_vis_photos'        => 'Print photos',
-			   'tab_vm_vis_badges'        => 'Print badges',
-			   'tab_vm_vis_sok'           => 'Search',
-			   'tab_vm_vis_welcome'       => 'Welcome visitor',
-			   'tab_vm_vis_list'          => 'List of attenders',
-			   'tab_vm_vis_budget'        => 'Budget estimation',
-			   'tab_vm_vis_mails'         => 'Mails exchange with attenders',
-			   'tab_vm_vis_export'        => 'Export tenants Excel files',
-			   
+
 			   'tab_vm_guests'            => 'Visits outside '.myOrg_nameS.' events',
-			   'tab_vm_guests_to_approve' => 'Resolve pending approvals',
+			   'tab_vm_guests_addVisit'   => 'Register new guest',
 			   'tab_vm_guests_budget'     => 'People I invite',
 			   'tab_vm_guests_budgetBP'   => 'Visits budget summary (by projects)',
-			   'tab_vm_guests_addVisit'   => 'Register new guest',
-			   
-			   'tab_vm_vmatrix'           => 'Visits',
+			   'tab_vm_guests_to_approve' => 'Resolve pending approvals',
+
+			   'tab_vm_ogz'               => 'Events I organize',
+			   'tab_vm_ogz_acc'           => 'Accommodation options',
+			   'tab_vm_ogz_amatrix'       => 'Who lives where',
+			   'tab_vm_ogz_budget'        => 'Budget estimation',
+			   'tab_vm_ogz_dup'           => 'Duplicate applications',
+			   'tab_vm_ogz_mails'         => 'Mails exchange with applicants',
+			   'tab_vm_ogz_omatrix'       => 'Who sits where Matrix',
+			   'tab_vm_ogz_photos'        => 'Photos of attenders',
+			   'tab_vm_ogz_se_setup'      => 'Social events',
+			   'tab_vm_ogz_sync'          => 'Synchronize my events with "Agenda"',
+			   'tab_vm_ogz_vlist'         => 'Approve & Accommodate applicants',
+			   'tab_vm_ogz_vmatrix'       => 'Who arrives when',
+
+			   'tab_vm_vis'               => 'Visits within events',
+			   'tab_vm_vis_acc'           => 'Accommodation options',
+			   'tab_vm_vis_badges'        => 'Print badges',
+			   'tab_vm_vis_budget'        => 'Budget estimation',
+			   'tab_vm_vis_export'        => 'Export tenants Excel files',
+			   'tab_vm_vis_list'          => 'List of attenders',
+			   'tab_vm_vis_mails'         => 'Mails exchange with attenders',
+			   'tab_vm_vis_photos'        => 'Print photos',
+			   'tab_vm_vis_se_setup'      => 'Social events',
+			   'tab_vm_vis_sok'           => 'Search',
+			   'tab_vm_vis_vmatrix'       => 'Who arrives when',
+			   'tab_vm_vis_welcome'       => 'Welcome visitor',
 			   ));
 
 /*
@@ -115,7 +119,7 @@ class APImenu_vm extends APImenu_ea{
 			     divider,
 			     tab_vm_guests    => array(tab_vm_guests_to_approve,
 						       tab_vm_guests_addVisit,
-						       tab_vm_guests_budget,
+						       tab_vm_guests_budget =>divider,
 						       tab_vm_guests_budgetBP,
 						       ),
 			     tab_vm_home      => array(),
@@ -134,7 +138,6 @@ class APImenu_vm extends APImenu_ea{
 						       tab_vm_vis_export,
 						       tab_vm_vis_badges, 
 						       tab_vm_vis_photos,
-						       tab_vm_ogz_dup,
 						       // tab_vm_vis_welcome, // tab_vm_vis_sok,
 						       ),
 			     divider,
@@ -145,25 +148,24 @@ class APImenu_vm extends APImenu_ea{
 						       tab_vm_end_omatrix,
 						       tab_vm_end_amatrix,
 						       ),
+			     divider,
 			     tab_vm_ogz       => array(tab_vm_ogz_vlist,
 						       tab_vm_ogz_budget,
-						       tab_vm_ogz_mails,
-						       						       
-						       tab_vm_ogz_se_setup=>divider,
-						       tab_vm_adm_sync,
 
+						       tab_vm_ogz_se_setup=>divider,
+						       tab_vm_ogz_acc,
+
+						       tab_vm_ogz_mails=>divider,
+						       						       
+						       tab_vm_ogz_sync,
+
+						       tab_vm_ogz_photos,
 						       tab_vm_ogz_vmatrix,
 						       tab_vm_ogz_amatrix,
 						       tab_vm_ogz_omatrix,
 
-						       tab_vm_ogz_photos  =>divider,
 						       tab_vm_ogz_dup,
 						       ),
-			     //tab_vm_acc       => array(           // Replace this tree by one button...
-			     //			       tab_vm_acc_rooms,
-			     //			       tab_vm_acc_assign, 
-			     //			       // tab_vm_acc_huts, tab_vm_acc_add, tab_vm_acc_sok, tab_vm_acc_usage,
-			     //			       ),
 			     tab_ea_off       => array(
 						       tab_ea_off_omatrix,
 						       tab_ea_off_list,
@@ -174,8 +176,12 @@ class APImenu_vm extends APImenu_ea{
 						       ),
 			     tab_vm_vmatrix   => array(),
 			     divider,
+			     // Replace this whole tree by one button "tab_vm_adm_acc" below...
+			     //tab_vm_acc       => array(      
+			     //			       tab_vm_acc_rooms, tab_vm_acc_assign, tab_vm_acc_huts, tab_vm_acc_add, tab_vm_acc_usage,
+			     //			       ),
 			     tab_vm_adm       => array(
-						       tab_vm_acc,
+						       tab_vm_adm_acc,
 						       tab_vm_adm_se_setup,
 						       tab_vm_adm_sc_setup,
 						       tab_vm_adm_projects, 
@@ -307,27 +313,30 @@ class APImenu_vm extends APImenu_ea{
 	$reply = VM_manager_here;
 	break;
 
-      case tab_vm_acc:
+      case tab_vm_acc:  // ========================================================================================================= tab_vm_acc
       case tab_vm_acc_add:
       case tab_vm_acc_huts:
       case tab_vm_acc_rooms:
       case tab_vm_acc_usage:
-      case tab_vm_adm_agendaList:
-	$reply = VM_program_coordinator_here;
+	$reply = False;
+	break;
+
+      case tab_vm_adm:  // ========================================================================================================= tab_vm_adm
+	$reply = VM_observer_here;
 	break;
 	
       case tab__tasks:
 	$reply = superUser_here;
 	break;
 
-      case tab_vm_adm:
-	$reply = VM_observer_here;
+      case tab_vm_adm_acc: 
+      case tab_vm_adm_agendaList:
+	$reply = VM_program_coordinator_here;
 	break;
 	
       case tab_vm_adm_projects:
       case tab_vm_adm_unitOrganizers:
       case tab_vm_vis_welcome:
-      case tab_vm_vis_list:
 	$reply = !VM::outOfScope() && VM_observer_here;
 	break;
 
@@ -336,34 +345,39 @@ class APImenu_vm extends APImenu_ea{
 	$reply = False;
 	break;
 
-      case tab_vm_ogz_mails:
-	if (!see_mails_exchange_with_attenders || cnf_dontSendMails_Point){
-	  $reply = cnf_dev;
-	  break;
-	}
-      case tab_vm_ogz_amatrix:
-      case tab_vm_ogz_omatrix:
-      case tab_vm_ogz_budget:
+      case tab_vm_ogz:  // ========================================================================================================= tab_vm_ogz
+	$reply = VM_organizer_here;
+	break;
+
       case tab_vm_ogz_vlist:
-	if (VM::outOfScope()){
+	if (VM::outOfScope() || VM::$e->isArchived()){
 	  $reply = False;
 	  break;
 	}
-      case tab_vm_ogz:
+
+      case tab_vm_ogz_mails:
+	$reply = cnf_dev || (!VM::outOfScope() && 
+			     VM::$e->isArchived() && 
+			     VM::$e->attenders() && see_mails_exchange_with_attenders && !cnf_dontSendMails_Point);
+	break;
+
+      case tab_vm_ogz_photos:
+      case tab_vm_ogz_budget:
+	$reply = VM::$e->attenders();
+	break;
+
+      case tab_vm_ogz_amatrix:
       case tab_vm_ogz_vmatrix:
       case tab_vm_ogz_omatrix:
-      case tab_vm_ogz_photos:
-	$reply = (bAuth::authenticated() &&  bAuth::$av->isOrganizer());
+      case tab_vm_ogz_se_setup:
+	$reply = (!VM::$e->isArchived() && VM::$e->attenders() && !VM::outOfScope());
 	break;
 
       case tab_vm_ogz_dup:
 	$reply = (VM::e_ID() > 0) && cnf_dev && bForm_Avatar::findDuplicates(" LEFT JOIN abs_visits ON v_avid=av_id WHERE v_eid=".VM::e_ID(),True);
 	break;
 	
-      case  tab_vm_vis_photos:    
-	$reply = (bAuth::authenticated() && !bAuth::$av->isOrganizer());
-	break;
-	
+      case tab_vm_ogz:  // ========================================================================================================= tab_vm_ogz
       case tab_vm_end_mails:
 	if (!see_mails_exchange_with_attenders || cnf_dontSendMails_Point){
 	  $reply = False;
@@ -383,7 +397,6 @@ class APImenu_vm extends APImenu_ea{
 	  is_object(bAuth::$av) &&
 	  !myPear::is_empty(bAuth::$av->eventsToEndorse()) &&
        	  bAuth::$av->isEndorser(VISIT_TYPE_PROGRAM);
-	//$reply = False;
 	break;
 	
       case tab_vm_vis_mails:
@@ -399,6 +412,8 @@ class APImenu_vm extends APImenu_ea{
 	break;
 
       case tab_vm_adm_sync:
+      case tab_vm_ogz_sync:
+      case tab_vm_ogz_acc:
 	$reply = (VM_program_coordinator_here || VM_organizer_here);
 	break;
 
@@ -407,7 +422,7 @@ class APImenu_vm extends APImenu_ea{
 	$reply = False;
 	break;
 
-      case tab_ea_off:
+      case tab_ea_off:  // ========================================================================================================= tab_vm_off
       case tab_ea_off_list:
       case tab_ea_off_omatrix:
       case tab_ea_off_door_labels:
@@ -417,8 +432,20 @@ class APImenu_vm extends APImenu_ea{
 	$reply = allocate_offices && VM_administrator_here && !VM::outOfScope() && (VM::e_ID()>0) && VM::$e->getPolicy(VM_E_provideOffice);
 	break;
 
-      case tab_vm_vis_acc:
+      case tab_vm_vis:  // ========================================================================================================= tab_vm_off
+	$reply = (bAuth::authenticated() && !bAuth::$av->isOrganizer());
+	break;
+
+      case  tab_vm_vis_photos:    
+	$reply = True;
+	break;
+	
+      case tab_vm_vis_list:
       case tab_vm_vis_export:
+      case tab_vm_vis_acc:
+	$reply = !VM::$e->isArchived();
+	  break;
+
       case tab_vm_vis_sok:
       case tab_vm_vis_budget:
 	$reply = is_object(VM::$e) && VM_observer_here && !VM::outOfScope();
@@ -440,7 +467,6 @@ class APImenu_vm extends APImenu_ea{
 	$reply = bAuth::authenticated();
 	break;
       
-      case tab_vm_vis:
       case tab_vm_vis_vmatrix:
       //$reply = (bAuth::authenticated() && !bAuth::$av->isOrganizer() && !bAuth::$av->isEndorser(VISIT_TYPE_PROGRAM));
 	$reply = (bAuth::authenticated() && !bAuth::$av->isOrganizer());
@@ -448,17 +474,16 @@ class APImenu_vm extends APImenu_ea{
 	
       case tab_vm_adm_sc_setup:
       case tab_vm_adm_se_setup:
-	$reply = (!VM::outOfScope() && VM_manager_here);
+	$reply = (!VM::$e->isArchived() && !VM::outOfScope() && VM_manager_here);
 	break;
 
       case tab_vm_vis_se_setup:
-      case tab_vm_ogz_se_setup:
-	$reply = (!VM::outOfScope() && VM_administrator_here);
+	$reply = (!VM::$e->isArchived() && !VM::outOfScope() && VM_administrator_here);
 	break;
 	
       case tab_vm_guests_budget:
 	if ($reply = VM::hasRightTo('request_visits')){
-	  $q = myPear_db()->query("SELECT * FROM abs_visits WHERE v_host_avid = '".bAuth::$av->ID."'");
+	  $q = myPear_db()->qquery("SELECT * FROM abs_visits WHERE (v_eid = 0 OR v_eid IS NULL) AND v_host_avid = '".bAuth::$av->ID."'",cnf_dev);
 	  $reply = (myPear_db()->num_rows($q) > 0);
 	}
 	break;
@@ -613,6 +638,7 @@ class APImenu_vm extends APImenu_ea{
       $m->show();
       break;
       
+    case tab_vm_ogz_acc:
     case tab_vm_vis_acc:
 	VM_accommodationOptions(VM::$e)->update();
 	VM_accommodationOptions(VM::$e)->show();
@@ -721,8 +747,8 @@ class APImenu_vm extends APImenu_ea{
       $holder->listEntries();
       break;
       
-    case 'tab_vm_tenants':   // printing search results
-    case 'tab_vm_vis_allVisits':
+    case tab_vm_tenants:   // printing search results
+    case tab_vm_vis_allVisits:
       locateAndInclude('bHolder_vm_Visitors');
       $holder = new bHolder_vm_Visitors();
       $holder->listEntries();
@@ -733,16 +759,13 @@ class APImenu_vm extends APImenu_ea{
       break;
       
     case  tab_vm_adm_sc_setup:
-    case 'tab_vm_adm_sc_setup':
       bList::getListInstance(myOrg_ID,'bList_vm_reimbursementRates')->getForm();
       break;
       
-    case 'tab_vm_adm_se_setup':
     case  tab_vm_adm_se_setup:
       VM_socialEventRates(myOrg_ID)->getForm();
       break;
 
-    case 'tab_vm_ogz_se_setup':
     case  tab_vm_ogz_se_setup:
     case  tab_vm_vis_se_setup:
       VM::$e->socialEvents()->getForm();
@@ -757,9 +780,7 @@ class APImenu_vm extends APImenu_ea{
       bUnit::b_tabs_bUnits(VM_MODULE,myOrg_ID,array(RANK_vm_organizer));
       break;
       
-    case 'tab_vm_adm_unitOrganizers':
     case  tab_vm_adm_unitOrganizers:
-
       locateAndInclude('bUnit_vm_organizers');
       $units = bUnit_vm_organizers::get_all_events(@$_GET['avid_once']);
       b_fmt::accordion('open',bUnit_vm_organizers::$e_index);
@@ -803,11 +824,11 @@ class APImenu_vm extends APImenu_ea{
       break;
       
       
-    case tab_vm_acc_sok:
+    case 'tab_vm_acc_sok': // tab is not used any more, keep for reference
       myPear_search()->getForm(array('_lookFor' => '',
 				     '_header'  => 'Search accommodation database',
 				     '_button'  => 'show accommodation',
-				     '_after_search'=> 'tab_force=tab_vm_tenants&av_id=AV_ID',
+				     '_after_search'=> 'tab_force='.tab_vm_tenants.'&av_id=AV_ID',
 				     '_join'    => 'abs_visits on av_id:v_avid',
 				     '_where'   => 'v_avid>0'));
       break;
@@ -826,6 +847,7 @@ class APImenu_vm extends APImenu_ea{
       break;
       
     case tab_vm_adm_sync:
+    case tab_vm_ogz_sync:
       locateAndInclude('agenda_vm',
 		       'bUnit_vm_organizers',
 		       'b_cache_file');
@@ -890,10 +912,6 @@ class APImenu_vm extends APImenu_ea{
       locateAndInclude('bHolder_vm_Offices');
       $holder = new bHolder_vm_Offices();
       $holder->listEntries();
-      break;
-
-      // Probably not needed
-    case tab_vm_acc_sok:
       break;
 
     case tab_vm_acc:
@@ -1001,8 +1019,8 @@ class APImenu_vm extends APImenu_ea{
       // See which menu item was pressed and decide the action
       switch(APItabs::code2tab(b_cms::_(1))){
       case tab_vm_guests:	// Only "any event"
-	if (defined('vm_day1'))  $events[EVT_ANY] = 'All visits '.date('Y-m-d',vm_day1) .' - '. date('Y-m-d',vm_day9);
-	else                     $events[EVT_ANY] = 'All visits';      
+	if (defined('vm_day1'))  $events[EVT_ANY] = myOrg_nameS.' guests '.date('Y-m-d',vm_day1) .' - '. date('Y-m-d',vm_day9);
+	else                     $events[EVT_ANY] = myOrg_nameS.' guests';      
 	break;
 	
       case tab_vm_end:
@@ -1117,12 +1135,17 @@ class APImenu_vm extends APImenu_ea{
       bDatePicker()->message = ' ';
       bDatePicker()->imposeConversion = True;
       bDatePicker()->reset(); // reset to defaults
-      $GLOBALS['myPear_custom_title'] = join("\n",array(x('h1', $events[EVT_ANY]),
-							myPear::set_main_selector(bDatePicker()->get2('vm_day1',vm_day1,
-												      'vm_day9',vm_day9,
-												      True),
-										  ['<input type="submit" class="page_load_progress" value="Set new time range"/>']
-										  )));
+      
+      $GLOBALS['myPear_custom_title'] = 
+	x('h1',
+	  x("form action='".b_url::same()."' method='POST' enctype='application/x-www-form-urlencoded' class='only_online' name='X1' accept-charset='UTF-8'",
+	    myOrg_nameS.' guests ' . join(' ',array_merge(bDatePicker()->get2('vm_day1',vm_day1,
+									      'vm_day9',vm_day9,
+									      True),
+							  array('<input type="hidden" name="vm_eventSelector" value="'.EVT_ANY.'"/>',
+								'<input type="submit" class="page_load_progress" value="Set new time range"/>',
+								)))
+	    ));
       break;
       
     case False:      // Visits within events
@@ -1135,11 +1158,10 @@ class APImenu_vm extends APImenu_ea{
 	}
 	VM::$formDummy->formDB['vm_eventSelector'] = b_cnf::get('vm_eventSelector');
 	VM::$formDummy->submitOnChange['vm_eventSelector'] = True;
-	$GLOBALS['myPear_custom_title'] = myPear::set_main_selector([VM::$formDummy->selectMenu_exec('vm_eventSelector',
-												     $events,
-												     "class='evHeader'",
-												     $onlyRW=True)],
-								    True,
+	$GLOBALS['myPear_custom_title'] = myPear::set_main_selector(array(VM::$formDummy->selectMenu_exec('vm_eventSelector',
+													  $events,
+													  "class='evHeader'",
+													  $onlyRW=True)),
 								    True);
       }else{
 	if (is_object(VM::$e)) myPear::H1(VM::$e->name(True),'reset');
@@ -1223,24 +1245,18 @@ function _vm_title_callback($tab, $dTab=Null,$returnText=False){
 		 : t($tab));
   }else{
     if (is_object(bAuth::$av)){
-      if (bAuth::$av->isOrganizer())
-	switch($tab){
-	case tab_vm_adm_sync: $tab = "Synchronize my events with \"agenda\""; 
-	  APItabs::$tab_definition[$tab] = $tab;
-	  break;
-	}
       
       if (VM_external_registrant_here){
 	switch($tab){
-	case 'tab_vm_vis':         $tab = 'Event attenders';            break;
-	case 'tab_vm_home':        $tab = 'My contact information';     break;
-	case 'tab_vm_vis_vmatrix': $tab = 'Who arrives when';           break;
-	case 'tab_vm_vis_photos':  $tab = 'Photos';                     break;
+	case tab_vm_vis:         $tab = 'Event attenders';            break;
+	case tab_vm_home:        $tab = 'My contact information';     break;
+	case tab_vm_vis_vmatrix: $tab = 'Who arrives when';           break;
+	case tab_vm_vis_photos:  $tab = 'Photos';                     break;
 	default:
 	}
       }elseif(is_object(VM::$e)){
 	switch($tab){
-	  //case 'tab_vm_vis':         $tab = VM::$e->name(0);              break;
+	  //case tab_vm_vis:         $tab = VM::$e->name(0);              break;
 	default:
 	}
       }

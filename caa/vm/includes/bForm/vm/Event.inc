@@ -46,6 +46,8 @@ class bForm_vm_Event extends bForm_vm {
   public function show_policies(){
     print x('h2','Event policy');
 
+    $this->attenders(0,1);
+
     // Togle policy if requested
     if ($p = @$_GET['toggle_once']) $this->setPolicy($p,(int)!$this->getPolicy($p),True);
     
@@ -55,7 +57,9 @@ class bForm_vm_Event extends bForm_vm {
     $t->class['_i'] = 'b_transparent';
     foreach(VM::$e_policies as $policy=>$p){
       if (@$p['t'] === auto_maintained) continue;
-      if ($policy == VM_E_endorsed){
+      if ($policy  == VM_E_archived){
+	if (time() < $this->getValue('e_end')+3600*24) continue;	
+      }elseif ($policy == VM_E_endorsed){
 	if (!$this->mightBeEndorced(False)) continue;
 	$t->tr(); $t->tr();
 	$i_on  = 'i-lock_on';
@@ -63,6 +67,10 @@ class bForm_vm_Event extends bForm_vm {
       }else{
 	$i_on  = 'i-finger_up';
 	$i_off = 'i-finger_down';
+      }
+      if (($policy !== VM_E_archived) && $this->isArchived()){
+	myPear::MESSAGE("This event is arhived");
+	continue;
       }
 
       $on_off = $this->getPolicy($policy);
@@ -94,8 +102,8 @@ class bForm_vm_Event extends bForm_vm {
   private function show_policies_isWritable($policy){
     if ($this->getValue('e_start') < time()) return VM_manager_here;
     switch($policy){
-    case VM_E_endorsed:          return $this->mightBeEndorced(True);
     case VM_E_archived:          return superUser_here; 
+    case VM_E_endorsed:          return $this->mightBeEndorced(True);
     case VM_E_letOrgSetAccPrices:return VM_administrator_here;
     case VM_E_payTrip:
     case VM_E_provideOffice:   
@@ -112,7 +120,8 @@ class bForm_vm_Event extends bForm_vm {
    */
   public function mightBeEndorced($checkRights=True){
     $this->budgetSource()->get_budgetSource($default_only=False,$verbose=False);
-    $mightBeEndorced = (($this->getValue('e_reg_end') < time()) && 
+    $mightBeEndorced = (!$this->isArchived() &&
+			($this->getValue('e_reg_end') < time()) && 
 			($this->getValue('e_end') > time()) &&
 			($this->budgetSource()->total > 0) &&
 			($checkRights
@@ -193,10 +202,17 @@ class bForm_vm_Event extends bForm_vm {
   /*
    * Get list of attenders for the given date
    */
-  function attenders($only_approved=False){
-    return self::_attenders($this->ID,$only_approved);
+  private $attenders = array();
+  function attenders($only_approved=False,$warning_if_no=False){
+    if (!isset($this->attenders[$only_approved])){
+      $this->attenders[$only_approved] = self::_attenders($this->ID,$only_approved);
+    }
+    $attenders = $this->attenders[$only_approved];
+    if (empty($attenders) && $warning_if_no) myPear::WARNING(x('strong',"Note, there is no applicants for this event yet..."));
+    $this->dbg($attenders,True);
+    return $attenders; 
   }
-
+  
   /*
    * return list visits if $only_approved === 'v_id'
    * otherwise return True/False
@@ -211,6 +227,7 @@ class bForm_vm_Event extends bForm_vm {
     }else{
       $reply = myPear_db()->num_rows($q);
     }
+    b_debug::xxx($reply);
     return $reply;
   }
 
@@ -378,10 +395,10 @@ class bForm_vm_Event extends bForm_vm {
   }
 
   /*
-   *   VM_E_endorsed       Flag 'event is endorsed and locked, no changes allowed'.                                                                                                                    
-   *   VM_E_archived       Flag 'event is archived'. Has precedence over other locks                                                                                                                   
-   *   VM_E_endorsmentSent Flag 'mail to organizers "event is endorsed" is sent'                                                                                                                       
-   *   VM_E_provideOffice  Flag 'assign offices for the event'                                                                                                                                         
+   *   VM_E_endorsed       Flag 'event is endorsed and locked, no changes allowed'
+   *   VM_E_archived       Flag 'event is archived'. Has precedence over other locks
+   *   VM_E_endorsmentSent Flag 'mail to organizers "event is endorsed" is sent'
+   *   VM_E_provideOffice  Flag 'assign offices for the event'
    */
   function setPolicy($policy,$value,$verbose=True){
     switch($policy){

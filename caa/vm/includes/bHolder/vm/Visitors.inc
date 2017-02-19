@@ -203,6 +203,9 @@ class bHolder_vm_Visitors extends bHolder_vm{
     $this->dbg('split_by_huts - '.(split_by_huts ? 'YES' : 'NO')); 
     
     if (is_object(VM::$e) && !is_object($this->av)){
+
+      VM::$e->attenders(0,1);
+
       // Process pending requests
       $this->bList_parent = VM::$e->ID;
 
@@ -2036,7 +2039,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
     $reply = array();
     foreach(bForm_vm_Visit::_getPolicies($this->rec) as $p=>$descr){
       // The event policy has precedence over the visit policy
-      if (($p_e = @VM::$E_V_policies[$p]) && !VM::$e->getPolicy($p_e)) continue;
+      if (!empty(VM::$e) && ($p_e = @VM::$E_V_policies[$p]) && !VM::$e->getPolicy($p_e)) continue;
       if (empty($descr['i'])) continue; 
 
       $yes_no = (bool)bForm_vm_Visit::_getPolicy($p,$this->rec);

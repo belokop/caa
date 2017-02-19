@@ -3,9 +3,9 @@ set_time_limit(0);
 /**
  * Visitors Manager (VM) configuration file
  */
-$releaseDate = '2017-02-15';
+$releaseDate = '2017-02-19';
 define('VM_MODULE'   , 'vm');
-define('VM_VERSION','5.82');
+define('VM_VERSION','5.83');
 
 //
 // transition problems...
@@ -884,6 +884,14 @@ function start_VM(){
     b_debug::xxx(starting,array(2,'redText',cnf_dev));
     bTiming()->cpu(__FUNCTION__);
 
+    locateAndInclude('APImenu_vm');
+
+    // Set the flag "visits outside the events" if the latter is selected
+    if (APItabs::$_ === tab_vm_guests){
+      $_GET['vm_eventSelector'] = $_POST['vm_eventSelector'] = $_REQUEST['vm_eventSelector'] = EVT_ANY;
+      b_debug::xxx("force EVT_ANY");
+    }
+
     VM::start();
     VM::_MENU()->start();
 
@@ -1010,8 +1018,11 @@ function VM_cotenants()     { return bList::getListInstance(myOrg_ID,'bList_vm_c
 function VM_agendaEvents()  { return bList::getListInstance(myOrg_ID,'bList_vm_agendaEvents'); }
 
 function VM_socialEventRates($id) { 
-  if (is_object($id)) return bList::getListInstance($id->ID,'bList_vm_socialEventRates'); 
-  else                return bList::getListInstance($id,'bList_vm_socialEventRates'); 
+  locateAndInclude('bList_vm_socialEventRates');
+  $bList_vm_socialEventRates =  bList::getListInstance($arg=(is_object($id) ? $id->ID : $id),
+						       'bList_vm_socialEventRates');
+  if (empty($bList_vm_socialEventRates)) $bList_vm_socialEventRates = new bList_vm_socialEventRates($arg);
+  return $bList_vm_socialEventRates;
 }
 
 function VM_accommodationOptions($parent) {

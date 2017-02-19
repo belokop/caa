@@ -228,7 +228,7 @@ class bList_vm_socialEvents extends bList_vm{
 
   function isCompulsory($lm_id){
     return False;
-    return VM_socialEventRates($this->e->ID)->isCompulsory($lm_id);
+    return VM_socialEventRates($this->e)->isCompulsory($lm_id);
   }
   
   
