@@ -29,7 +29,7 @@ class bIcal_matrix_ea extends bIcal_matrix{
     $f->formDB['ea_year'] = ea_year;
     $f->submitOnChange['ea_year'] = True;
     $s = $f->selectMenu_exec('ea_year',$years,"class='ea-year-select'",$onlyRW=True);
-    myPear::setPageHeader(myPear::set_main_selector(array(myOrg_name.' in '=>$s),True,True),
+    myPear::setPageHeader(myPear::set_main_selector(array(myOrg_name.' in '=>$s),True),
 			  $strip_tags = False);
     if (empty($_REQUEST['ea_year'])) $_REQUEST['ea_year'] = $_POST['ea_year'] = date('Y',time());
   }
