@@ -606,4 +606,18 @@ class bForm_Organization extends bForm {
     if (empty($domain)) $domain = 'example.com';
     return $domain;
   }
+
+  function isHostTrusted($ip = Null){
+    if (empty($ip)) $ip = $_SERVER['REMOTE_ADDR'];
+    $host = gethostbyaddr($ip);
+    foreach(array_merge(myOrg()->getValue('org_domain'),
+			explode(',',myOrg()->getValue('org_trusted_domains'))) as $trusted_domain){
+      if (preg_match("/$trusted_domain$/i",$host)){
+	$reply = True;
+	b_debug::xxx("$host is trusted as \"$trusted_domain\"");
+	break;
+      }
+    }
+    return @$reply;
+  }
 }

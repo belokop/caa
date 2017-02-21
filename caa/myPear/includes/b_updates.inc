@@ -132,7 +132,7 @@ function myPear_update31(){
   // add a field
   if (!myPear_db()->columnExists('org_trusted_domains')){
     myPear_db()->qquery('ALTER TABLE `zzz_organizations` ADD `org_trusted_domains` VARCHAR(230) NULL DEFAULT NULL AFTER `org_domain`',True); 
-    myPear_db()->qquery('UPDATE `zzz_organizations` SET org_trusted_domains="su.se,kth.se" WHERE org_id=40090',True);
+    myPear_db()->qquery('UPDATE `zzz_organizations` SET org_trusted_domains="su.se,kth.se,albanova.se" WHERE org_id=40090',True);
   }
 
   // Clean bogus records

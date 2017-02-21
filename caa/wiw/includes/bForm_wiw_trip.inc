@@ -140,14 +140,7 @@ class bForm_wiw_trip extends bForm{
       b_debug::xxx('OK, authenticated');
     }else{
       // Check the client address, ok if it is from trusted domain
-      static $REMOTE_ADDR = Null;
-      if (empty($REMOTE_ADDR)) $REMOTE_ADDR = gethostbyaddr($_SERVER['REMOTE_ADDR']);
-      foreach(explode(',',myOrg()->getValue('org_trusted_domains')) as $trusted_domain){
-	if (preg_match("/$trusted_domain$/i",$REMOTE_ADDR)){
-	  $reply = True;
-	  b_debug::xxx($REMOTE_ADDR." is trusted as \"$trusted_domain\"");
-	}
-      }
+      $reply = myOrg()->isHostTrusted($_SERVER['REMOTE_ADDR']);
     }
     b_debug::xxx($reply);
     return $reply;

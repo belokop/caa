@@ -1,7 +1,7 @@
 <?php
 
 define('WIW_MODULE'   , 'wiw');
-define('WIW_VERSION','5.17.rc');
+define('WIW_VERSION','5.18.rc');
 $releaseDate = '2017-02-21';
 
 define('wiw_acl_public', 'public');
