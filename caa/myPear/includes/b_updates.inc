@@ -129,6 +129,12 @@ function myPear_set_collation(){
  */
 function myPear_update31(){
 
+  // add a field
+  if (!myPear_db()->columnExists('org_trusted_domains')){
+    myPear_db()->qquery('ALTER TABLE `zzz_organizations` ADD `org_trusted_domains` VARCHAR(230) NULL DEFAULT NULL AFTER `org_domain`',True); 
+    myPear_db()->qquery('UPDATE `zzz_organizations` SET org_trusted_domains="su.se,kth.se" WHERE org_id=40090',True);
+  }
+
   // Clean bogus records
   myPear_db()->qquery("DELETE FROM zzz_unit_members WHERE (um_avid IS NULL OR um_avid = '' OR um_avid = 0)",True);
   

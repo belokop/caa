@@ -1,10 +1,16 @@
 <?php
-$releaseDate = '2017-02-12';
-define('WIW_MODULE'   , 'wiw');
-define('WIW_VERSION','5.16.rc');
 
-define('wiw_acl_public',   'public');
+define('WIW_MODULE'   , 'wiw');
+define('WIW_VERSION','5.17.rc');
+$releaseDate = '2017-02-21';
+
+define('wiw_acl_public', 'public');
+define('wiw_acl_public_text','Anyone on the web can see the trip info');
+
 define('wiw_acl_protected','protected');
+define('wiw_acl_protected_text','Only local and/or authenticated users can see the trip info');
+
+define('wiw_acl_default',wiw_acl_protected);
 
 define('RANK_wiw_admin', 11);
 define('RANK_wiw_manager', 12);

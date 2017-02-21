@@ -22,23 +22,25 @@ class bIcal_matrix_wiw extends bIcal_matrix{
 		   "u_rank   = ". RANK__ea_member,
 		   "u_class  = 'bUnit_ea_members'",
 		   );
-    // Hide the expired members
-    $trip_acl = wiw_acl_protected;
   
     // Do the search
-    $q = myPear_db()->query("SELECT av_id,av_firstname,av_lastname,t_id,t_orgid,t_avid,t_arrival,t_departure,t_destination,t_contact,t_comment,lm_key,lm_value ".
-			    " FROM zzz_avatars ".
-			    " LEFT JOIN wiw_trips        ON av_id = t_avid".
-			    " LEFT JOIN zzz_unit_members ON av_id  = um_avid".
-			    " LEFT JOIN zzz_units        ON u_id   = um_uid".
-			    " LEFT JOIN zzz_list_members ON t_type = lm_id".
-			    " WHERE ".join(' AND ',$where).
-			    " GROUP BY t_id ".
-			    myPear_db()->orderBy('av_lastname'));
+    $q = myPear_db()->qquery("SELECT av_id,av_firstname,av_lastname,t_id,t_acl,t_orgid,t_avid,t_arrival,t_departure,t_destination,t_contact,t_comment,lm_key,lm_value ".
+			     " FROM zzz_avatars ".
+			     " LEFT JOIN wiw_trips        ON av_id = t_avid".
+			     " LEFT JOIN zzz_unit_members ON av_id  = um_avid".
+			     " LEFT JOIN zzz_units        ON u_id   = um_uid".
+			     " LEFT JOIN zzz_list_members ON t_type = lm_id".
+			     " WHERE ".join(' AND ',$where).
+			     " GROUP BY t_id ".
+			     myPear_db()->orderBy('av_lastname'),
+			     cnf_dev);
     
     $trips = array();
+    $n_trip_exists = myPear_db()->num_rows($q);
     while($r = myPear_db()->next_record($q)){
-      if (!bForm_wiw_trip::_trip_visible($r))  continue;
+      if (empty($r['t_acl'])) $r['t_acl'] = wiw_acl_default;
+      if (!bForm_wiw_trip::_trip_visible(array('t_acl'=>$r['t_acl'])))  continue;
+   
       // Leave just the first option of the trip types to limit the page width
       $lm_key = explode(',',@$r['lm_key']);
       $r['lm_key'] = $lm_key[0];
@@ -47,8 +49,8 @@ class bIcal_matrix_wiw extends bIcal_matrix{
       $nDays= (int)((min($this->day9,$r['t_arrival'])-max($this->day1,$r['t_departure']))/86400);
       $dest = b_fmt::strcut($r['t_destination'],2*$nDays,'...',$nDays>3);
       
-      if (WIW::has_rightToModifyTrips($r['av_id']))$url = "<a href='".b_url::same("?auth=no&form=wiw_trip&id=$r[t_id]")."'>$dest</a>";
-      else                                            $url = $dest;
+      if (WIW::has_rightToModifyTrips($r['av_id']))$url = "<a href='".b_url::same("?auth=no&form=wiw_trip&t_avid=$r[av_id]&id=$r[t_id]")."'>$dest</a>";
+      else                                         $url = $dest;
       
       $trips[$r['av_id']][] = array('day1' => $r['t_departure'],
 				    'day9' => $r['t_arrival'],
@@ -60,7 +62,10 @@ class bIcal_matrix_wiw extends bIcal_matrix{
 					       : $r['av_firstname'].' '.$r['av_lastname']),
 				    );
     }
-    parent::show($trips);
+    if ($n_trip_exists){
+      if (empty($trips))  bAuth()->loginPrompt();
+      else                parent::show($trips);
+    }
   }
 
   protected function IO_tip($time,$text1='in',$text2='out'){

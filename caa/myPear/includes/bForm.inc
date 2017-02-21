@@ -1036,11 +1036,11 @@ class bForm extends myPear_getValue{
    */
   public function selectMenu_exec($name,$values=array(),$extras='',$onlyRW=False) {
     $selected = $this->getValue($name,True);
+    if (!$selected)              $selected = @$values['default'];
     if (empty($values)) $values = array();
     if (!$this->isRO($name,$onlyRW)){
       $s = array();
       if (!empty($values)){
-	if (!$selected)              $selected = @$values['default'];
 	if (!$selected)                   $s[] = x("option value='NULL' selected","<-- select -->");
 	elseif (empty($values[$selected]))$s[] = x("option value='$selected' selected",$selected); // strictly speaking this is not correct...
 	foreach ($values as $k=>$v){ 

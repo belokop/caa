@@ -365,12 +365,14 @@ class APImenu_vm extends APImenu_ea{
       case tab_vm_ogz_budget:
 	$reply = VM::$e->attenders();
 	break;
-
+	
+      case tab_vm_ogz_omatrix:
+	if (empty($policy)) $policy = VM_E_provideOffice;
       case tab_vm_ogz_amatrix:
       case tab_vm_ogz_vmatrix:
-      case tab_vm_ogz_omatrix:
       case tab_vm_ogz_se_setup:
 	$reply = (!VM::$e->isArchived() && VM::$e->attenders() && !VM::outOfScope());
+	if (!empty($policy) && !VM::$e->getPolicy($policy)) $reply = False;
 	break;
 
       case tab_vm_ogz_dup:
@@ -393,10 +395,12 @@ class APImenu_vm extends APImenu_ea{
       case tab_vm_end_vmatrix:
       case tab_vm_end_amatrix:
       case tab_vm_end_omatrix:
+	if ($tab == tab_vm_end_omatrix) $policy = VM_E_provideOffice;
 	$reply = 
 	  is_object(bAuth::$av) &&
 	  !myPear::is_empty(bAuth::$av->eventsToEndorse()) &&
        	  bAuth::$av->isEndorser(VISIT_TYPE_PROGRAM);
+        if (!empty($policy) && !VM::$e->getPolicy($policy)) $reply = False;
 	break;
 	
       case tab_vm_vis_mails:

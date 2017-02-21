@@ -3,7 +3,7 @@
 if (function_exists('locateAndInclude')) locateAndInclude('APImenu');
 
 foreach(array('tab_wiw'        => 'Who Is Where?',
-              'tab_wiw_adm'    => 'Administer',
+              'tab_wiw_adm'    => 'Administer WIW',
               'tab_wiw_admTT'  => 'Edit Trip Colors',
               'tab_wiw_myTrips'=> 'My Trips',
               'tab_wiw_sok'    => 'Search Trips',
@@ -31,6 +31,7 @@ function wiw_after_search_check($av_id,$_after_search=''){
 
 class APImenu_wiw extends APImenu{
   
+  var $debug = True;
   var $title  = 'Who Is Where';
   var $q      = WIW_MODULE;
   var $static_menu = array(
@@ -154,7 +155,8 @@ class APImenu_wiw extends APImenu{
 	break;
 
       case tab_wiw_myTrips:
-	$access = WIW::has_rightToModifyTrips(@bAuth::$av->ID);
+	locateAndInclude('bForm_wiw_trip');
+	$access = WIW::has_rightToModifyTrips(@bAuth::$av->ID) && bForm_wiw_trip::getTrips(array('t_avid='.bAuth::$av->ID));
 	break;
 	
       default:
@@ -162,6 +164,7 @@ class APImenu_wiw extends APImenu{
       }
     }
     // b_debug::xxx((bool)$access , array('M',2,cnf_dev));
+    $this->dbg((bool)$access);
     return (bool)$access;
   }
 }

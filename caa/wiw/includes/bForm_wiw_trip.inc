@@ -5,6 +5,8 @@
 locateAndInclude('bForm_Avatar_wiw');
 class bForm_wiw_trip extends bForm{
   
+  public $show_gv = True;
+
   /*
    * Adjust the leave / arrival dates:
    * - set the leave / arrival time to noon
@@ -34,8 +36,9 @@ class bForm_wiw_trip extends bForm{
    */
   public static function getTrips($t_type=Null,$org_id=Null,$group=Null){
     $where[] = 1;
-    if ($t_type) $where[] = "t_type = $t_type";
-    $q = myPear_db()->query("SELECT t_id FROM wiw_trips WHERE ".join(' AND ',$where));
+    if (is_array($t_type)) $where = $t_type;
+    elseif ($t_type)       $where[] = "t_type = $t_type";
+    $q = myPear_db()->qquery("SELECT t_id FROM wiw_trips WHERE ".join(' AND ',$where),cnf_dev);
     
     $reply = array();
     while($r=myPear_db()->next_record($q)){
@@ -52,25 +55,43 @@ class bForm_wiw_trip extends bForm{
 
     // This will be redefined later
     $this->defineVariable(array('t_avid'=>'t_avid'),'only_if_not_defined');
-
+    
+    /*
     // Hook Avatar
-    foreach(array($this->getValue('t_avid',True,1),
-		  @$_GET['av_id'],
-		  ) as $av_id) if (!empty($av_id)){
-      $this->getValue_reset('t_avid',$av_id);
-      break;
+    foreach(array($this->getValue('t_avid',True,1),@$_GET['av_id'],) as $av_id){
+      if (!empty($av_id)){
+       	$this->getValue_reset('t_avid');
+	break;
+      }
     }
+    */
   }
   
   /*
-   * Set the access control
-   * - private:   only the owner sees the trip
-   * - protected: only the group members see the trip
-   * - public:    anyone on the web can see it
    *
-   * The trip is not public if
-   * - the owner explicitly sets the acl to 'protected/private'
-   * - the trip owner is not any more the group member.
+   */
+  public function getValue($name, $asIs=True, $d_MBE=False){
+    $value = parent::getValue($name,$asIs,$d_MBE);
+    //    if (($name == 't_acl') && empty($value)) $value = wiw_acl_default;
+    return $value;
+  }
+
+  /*
+   *
+   */
+  function readDefRecord(){
+    $q = myPear_db()->qquery(sprintf("SELECT * FROM %s ".
+				     " LEFT JOIN zzz_avatars ON t_avid=av_id ".
+				     " LEFT JOIN zzz_list_members  ON  t_type = lm_id ".
+				     " WHERE %s = '%s'",
+				     $this->TABLE,$this->TABLEID,$this->ID),
+			     $this->debug);
+    while ($r=myPear_db()->next_record($q))    $this->formDB = $r;
+    if (empty($this->formDB['t_acl'])) $this->formDB['t_acl'] = wiw_acl_default;
+  }
+
+  /*
+   * 
    */
   private function adjust_acl(){
     return;
@@ -80,9 +101,9 @@ class bForm_wiw_trip extends bForm{
    * The trip is not visible for the "old organization" if the traveler
    * has retired AND the travel is within the "new organization"
    */
-  public static function _trip_visible(&$formDB){
+  public static function _trip_visible($formDB){
+    /*
     $reply = True;
-
     if ($formDB['t_avid'] == @bAuth::$av->ID){
       if (cnf_dev) myPear::MESSAGE("Own trips are always visible");
     }else{
@@ -109,6 +130,26 @@ class bForm_wiw_trip extends bForm{
       // Check ACL
       $t_acl  = (($a = @$formDB['t_acl']) ? $a : wiw_acl_public);
     }
+    */
+
+    // Check ACL, ok if it is public
+    $t_acl  = (($a = $formDB['t_acl']) ? $a : wiw_acl_default);
+    if ($reply=($t_acl == wiw_acl_public)){
+      b_debug::xxx("OK, ".wiw_acl_public);
+    }elseif($reply=is_object(bAuth::$av)){
+      b_debug::xxx('OK, authenticated');
+    }else{
+      // Check the client address, ok if it is from trusted domain
+      static $REMOTE_ADDR = Null;
+      if (empty($REMOTE_ADDR)) $REMOTE_ADDR = gethostbyaddr($_SERVER['REMOTE_ADDR']);
+      foreach(explode(',',myOrg()->getValue('org_trusted_domains')) as $trusted_domain){
+	if (preg_match("/$trusted_domain$/i",$REMOTE_ADDR)){
+	  $reply = True;
+	  b_debug::xxx($REMOTE_ADDR." is trusted as \"$trusted_domain\"");
+	}
+      }
+    }
+    b_debug::xxx($reply);
     return $reply;
   }
   
@@ -116,8 +157,8 @@ class bForm_wiw_trip extends bForm{
    * Set the departure/arrival time to noon
    */
   private function adjust_dates(){
-    self::_adjust_dates($t_departure=$this->getValue('t_departure',True),
-			$t_arrival  =$this->getValue('t_arrival',True));
+    self::_adjust_dates($t_departure=$this->getValue('t_departure'),
+			$t_arrival  =$this->getValue('t_arrival'));
     $this->getValue_reset('t_departure',$t_departure);
     $this->getValue_reset('t_arrival',  $t_arrival);
   }
@@ -133,16 +174,15 @@ class bForm_wiw_trip extends bForm{
 				't_contact'    => 'How to contact -SKIP- <br/>'.x('i',nbsp('(phone number, email, etc.)')),
 				't_comment'    => 'Other info -SKIP- <br/><i>e.g.purpose of the trip<br />title of talk<br /></i>',
 				't_avid'       => 'The traveler',
-				't_acl'        => 'Visibility',
+				't_acl'        => 'Privacy',
 				),True);
     $this->defineVariable(array('_virt_period' => ($this->getDescr('t_departure').
 						   ' -> '.
 						   $this->getDescr('t_arrival'))),
 			  True);
     
-    $this->defineTypes(array('isMBE'  => array('t_acl',
-					      't_comment',
-					      't_contact'),
+    $this->defineTypes(array('isMBE'  => array('t_comment',
+					       't_contact'),
 			     'isVITAL'=> array('t_type',
 					       't_destination')));
   }
@@ -153,7 +193,7 @@ class bForm_wiw_trip extends bForm{
   private $isOwner = Null;
   function isOwner(){
     if ($this->isOwner === Null)
-      $this->isOwner = (bool)b_cnf::check_conditions(array(True => array('owner'=>($this->getValue('t_avid',True) == @bAuth::$av->ID),
+      $this->isOwner = (bool)b_cnf::check_conditions(array(True => array('owner'=>($this->getValue('t_avid') == @bAuth::$av->ID),
 									 'mngr' => WIW_manager_here),
 							   'default'=>parent::isOwner()),
 						     $this,
@@ -186,7 +226,8 @@ class bForm_wiw_trip extends bForm{
     // Open the dialog
     $this->getFormOpen();
 
-    if (WIW_manager_here && !$this->getValue('t_avid',True)){
+    if (WIW_manager_here && !$this->getValue('t_avid')){
+
       // The manager mode.
       // Ask who is the trip owner
       
@@ -213,8 +254,8 @@ class bForm_wiw_trip extends bForm{
       if ($this->MODE == 'RO') $this->showCalendar('t_departure','t_arrival');
       
       // Embed the Avatar
-      if (!$this->getValue('t_avid',True)) $this->getValue_reset('t_avid',bAuth::$av->ID);
-      $av = new bForm_Avatar_wiw($this->getValue('t_avid',True));
+      if (!$this->getValue('t_avid')) $this->getValue_reset('t_avid',bAuth::$av->ID);
+      $av = new bForm_Avatar_wiw($this->getValue('t_avid'));
       myPear::H1($av->fmtName('fl'));
       
       // Show the owner contact information
@@ -223,15 +264,26 @@ class bForm_wiw_trip extends bForm{
       $av->isLocked(True);
       $av->contactsBlock();
       
+      // Show the trip privacy
+      $this->formBlock('tp',
+		       'Privacy',
+		       array('t_acl'=>array("selectMenu",array(wiw_acl_public =>wiw_acl_public_text,
+							       wiw_acl_protected=>wiw_acl_protected_text,
+							       'default' => wiw_acl_default,
+							       ))),
+		       array('d'=>'auto',
+			     'i'=>'i-portfolio_edit',
+			     'l'=>b_url::same("?form=wiw_trip&mode=RW&id=".$this->ID)));
+      
       // Show the trip details
-      if (!$this->getValue('t_contact',1)) $this->getValue_reset('t_contact',$av->getValue('av_email',1));
+      if (!$this->getValue('t_contact')) $this->getValue_reset('t_contact',$av->getValue('av_email'));
  
       $dialog = array('_virt_period' => array('datePickerField2','t_departure','t_arrival','i-a-depart','i-a-arrive'),
 		      't_type'       => array('selectMenu_bList',WIW::_TT($this->getValue('t_orgid'))),
 		      't_destination'=> array('textField'),
 		      't_contact'    => array('textField'),
 		      't_comment'    => array('textArea'),
-		      't_avid'       => array('textHidden',$this->getValue('t_avid',True)));
+		      't_avid'       => array('textHidden',$this->getValue('t_avid')));
       if ($this->MODE == 'RO') unset($dialog['_virt_period']);
       
       $this->formBlock('ti',
@@ -259,21 +311,21 @@ class bForm_wiw_trip extends bForm{
   }
 
   function formOKspecific() { 
-    if (0) if ($this->getValue('t_departure',True) >= $this->getValue('t_arrival')) {
+    if (0) if ($this->getValue('t_departure') >= $this->getValue('t_arrival')) {
       $this->printErrorAsIs['t_arrival'] = True;
       $this->errorsInTheForm['t_arrival'] = x("'",$this->getDescr('t_departure')).
 	" must be before ".x("'",$this->getDescr('t_arrival'));
       }
-    if (0) if (($this->getValue('t_departure',True)) &&
-	($this->getValue('t_departure',True) == $this->getValue('t_arrival'))){
+    if (0) if (($this->getValue('t_departure')) &&
+	($this->getValue('t_departure') == $this->getValue('t_arrival'))){
       switch(b_btn::confirm()){
       case 'no':
-	$this->getValue_reset('t_arrival',$this->getValue('t_departure',True) + 25*3600);
+	$this->getValue_reset('t_arrival',$this->getValue('t_departure') + 25*3600);
 	break;
 	
       case 'yes':
-	$this->getValue_reset('t_departure',b_time::check_out($this->getValue('t_departure',True)));
-	$this->getValue_reset('t_arrival',  b_time::check_in ($this->getValue('t_arrival',True)));
+	$this->getValue_reset('t_departure',b_time::check_out($this->getValue('t_departure')));
+	$this->getValue_reset('t_arrival',  b_time::check_in ($this->getValue('t_arrival')));
 	break;
 	
       case Null:
@@ -282,7 +334,7 @@ class bForm_wiw_trip extends bForm{
 		      't_type',
 		      't_destination',
 		      't_contact',
-		      't_comment') as $a) $hidden_args[$a] = $this->getValue($a,True);
+		      't_comment') as $a) $hidden_args[$a] = $this->getValue($a);
 	b_btn::confirm("The departure & arrival are the same day. Are you sure you want to do this?", True, $hidden_args);
       }
     }

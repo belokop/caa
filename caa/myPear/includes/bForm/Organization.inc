@@ -17,7 +17,8 @@ class bForm_Organization extends bForm {
 
   public $debug = False;
   public $tips = array('org_code'  => 'A unique short name (like "CNN", "Harvard", etc.)&nbsp;for the Organization',
-		       'org_domain'=> 'Domain name for the Employees E-mail addresses - user\@domain',
+		       'org_domain'=> 'Internet domain name, say for the web: http://www."domain";',
+		       'org_trusted_domains' => 'Trusted domains, which have read access to some local information',
 		       );
   
   /*
@@ -231,13 +232,14 @@ class bForm_Organization extends bForm {
    *
    */
   function defineVariables() {
-    if ($this->defineVariable_counter) return;
+
     $this->defineVariable(array('_virt_favicon'    => 'Favicon',
 				'org_code'         => 'Code <SKIP> (code)',
 				'org_name'         => 'Full name of the organization',
 				'org_name_short'   => 'Short name',
 				'org_country'      => 'Country',
-				'org_domain'       => 'DNS domain name for e-mails',
+				'org_domain'       => 'DNS domain name (eg for e-mails)',
+				'org_trusted_domains' => 'Trusted domain names',
 				'org_signature_dir'=> 'Template for the signature<br/>of the Head of the Organization',
 				'org_affil'        => 'Who is affiliated with the organization',
 				'org_theme'        => 'Preferred theme (appearance)',
@@ -246,6 +248,8 @@ class bForm_Organization extends bForm {
 			     'IDV'         => array('org_domain'       => "e-mail is &lt;user&gt;@domain"),
 			     'expected_ext'=> array('_virt_favicon'    =>''),
 			     ));
+    $this->isMBE['org_trusted_domains'] = True;
+
   }
 
   /*
@@ -431,8 +435,9 @@ class bForm_Organization extends bForm {
       //
       // E-mails domain      
       $this->formBlock('InternetDomain',
-		       'E-mails',
-		       array('org_domain'=>'textField'),
+		       'DNS domains',
+		       array('org_domain'=>'textField',
+			     'org_trusted_domains'=>'textField'),
 		       array('i'=>'edit',
 			     'l'=>b_url::same(array('form' => get_class($this),
 						    'id'   => $this->ID))));
