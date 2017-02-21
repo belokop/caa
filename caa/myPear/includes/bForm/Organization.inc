@@ -610,7 +610,7 @@ class bForm_Organization extends bForm {
   function isHostTrusted($ip = Null){
     if (empty($ip)) $ip = $_SERVER['REMOTE_ADDR'];
     $host = gethostbyaddr($ip);
-    foreach(array_merge(myOrg()->getValue('org_domain'),
+    foreach(array_merge(array(myOrg()->getValue('org_domain')),
 			explode(',',myOrg()->getValue('org_trusted_domains'))) as $trusted_domain){
       if (preg_match("/$trusted_domain$/i",$host)){
 	$reply = True;
