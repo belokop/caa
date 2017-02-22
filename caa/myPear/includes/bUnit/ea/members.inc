@@ -77,6 +77,12 @@ class bUnit_ea_members extends bUnit_ea {
     return True;
   }
  
+  /*
+   *
+   */
+  function name($show_listType=False){
+    return Null;
+  }
 
   /*
    *
@@ -110,6 +116,15 @@ class bUnit_ea_members extends bUnit_ea {
   /*
    *
    */
+  protected function setPageHeader() {
+    //   if (($this->see_only === EA_role_alumnus) && !in_array(EA_role_alumnus,$role2)) $accept = False;
+    //    if (($this->see_only !== EA_role_alumnus) &&  in_array(EA_role_alumnus,$role2)) $accept = False;
+    myPear::H1($this->see_only,'reset');
+  }
+  
+  /*
+   *
+   */
   function setStatus($av_id,$status,$verbose=True){
     if ($this->isMember($av_id)){
       $current_status = $this->getUnitMemberStatus($av_id);
@@ -131,6 +146,7 @@ class bUnit_ea_members extends bUnit_ea {
    * Give back the detailed title of a EA member
    */
   function unitMemberTitle($av_id=Null){
+    $this->dbg();
     $s2t=array(EA_role_employee                   => EA_title_employee,
 	       EA_role_employee.EA_role_alumnus   => EA_title_alumnus,
 	       EA_role_lt_visitor                 => EA_title_lt_visitor,
@@ -152,6 +168,7 @@ class bUnit_ea_members extends bUnit_ea {
     }else{
       $reply = myOrg($this->myOrg_ID)->name(True) . ' ' . $reply;
     }
+    $this->dbg($reply);
     return $reply;
   }
   

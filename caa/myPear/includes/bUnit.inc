@@ -250,7 +250,7 @@ class bUnit extends bList{
   protected $bUnit_buttons_row = array();
   function getForm(){
 
-    print x('h3',$this->name());
+    if ($name=$this->name()) print x('h3',$name);
 
     // Modify the unit membership if requested
     if     ($av_id = @$_GET['del_m_once']) $wait=$this->remove_unitMember($av_id,True);

@@ -152,6 +152,7 @@ class myPear{
     static $dejaVu = array();
     static $title = Null;
 
+    b_debug::xxx();
     if ($text == 'get')   return $title;
     
     if (!empty($text) && ($text != b_reg::$current_module)){
@@ -213,18 +214,24 @@ class myPear{
 	drupal_set_title($header);
       }
     }else{
-      return "<h1>$header</h1>\n"; 
+      $header = "<h1>$header</h1>\n"; 
     }
+    b_debug::xxx($header);
+    return $header;
   }  
 
   static function H2($text,$noTranslate=False)  { 
     static $dejaVu = array();
-    return (empty($text) || @$dejaVu[mb_strToLower($text)]++ || (mb_strToLower($text) == mb_strToLower(self::H1('get')))
-	    ? ''
-	    : '<h2>'.b_fmt::escape($noTranslate?$text:bText::_($text)).'</h2>'); 
+    $reply = (empty($text) || @$dejaVu[mb_strToLower($text)]++ || (mb_strToLower($text) == mb_strToLower(self::H1('get')))
+	      ? ''
+	      : '<h2>'.b_fmt::escape($noTranslate?$text:bText::_($text)).'</h2>'); 
+    b_debug::xxx($reply);
+    return $reply;
   }
   
-  static function H3($text,$noTranslate=False)  { return '<h3>'.b_fmt::escape($noTranslate?$text:bText::_($text)).'</h3>'; }
+  static function H3($text,$noTranslate=False)  { 
+    return '<h3>'.b_fmt::escape($noTranslate?$text:bText::_($text)).'</h3>'; 
+  }
   
   function __toString()      { return get_class($this); }
   
