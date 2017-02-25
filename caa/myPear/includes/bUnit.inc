@@ -305,8 +305,9 @@ class bUnit extends bList{
   protected function format(){}
   
   protected function all_members_tidy_name(){
-    //    if ($object=myPear::getClassFromID($this->parent_ID,'class'))$p = $object->name();
-    //    else                                                            $p = '';
+    //    if ($object=myPear::getClassFromID($this->parent_ID,'class'))
+    //      $p = $object->name();
+    //    else   
     $p = '';
     return "$p ".$this->unitMemberTitle().'s';
   }
@@ -512,9 +513,10 @@ class bUnit extends bList{
     return ($this->isUnitMemberDeletable()
 	    ? bIcons()->getButton(array('X'=>1,
 					'l'=>b_url::same(array('del_m_once'=>$this->rec['av_id'],
+							       'clean_once'=> 'act_code,act_id',
 							       'ed_bList'  => get_class($this),
 							       'arg1_once' => $this->parent_ID,
-								       'arg2_once' => $this->rank),
+							       'arg2_once' => $this->rank),
 							 array()),			
 					'd'=>"remove $name from unit"),
 				  'i-drop') 
@@ -528,13 +530,15 @@ class bUnit extends bList{
     $name = bForm_Avatar::_fmtName('Lf',$this->rec);
     return ($this->isMemberEditable()
 	    ? bIcons()->getButton(array('X'=>1,
-						'l'=>b_url::same(array('edi_m_once'=>$this->rec['av_id'],
-								       'ed_bList'  => get_class($this),
-								       'arg1_once' => $this->parent_ID,
-								       'arg2_once' => $this->rank),
-								 array()),			
-						'd'=>"modify $name's membership"),
-					  'i-edit') 
+					'l'=>b_url::same(array('edi_m_once'=>$this->rec['av_id'],
+							       'ed_bList'  => get_class($this),
+							       'arg1_once' => $this->parent_ID,
+							       'arg2_once' => $this->rank,
+							       'clean_once'=> 'act_code,act_id',
+							       ),
+							 array()),			
+					'd'=>"modify $name's membership"),
+				  'i-edit') 
 	    : '');
   }
   

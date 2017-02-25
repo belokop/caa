@@ -30,7 +30,7 @@ class bUnit_ea extends bUnit{
 				'i-edit');
 
     $btn  = bIcons()->getButton(array('X'=>1,
-				      'l'=>"?q=".EA_MODULE."&function=ea_myPage&av_id=".$this->rec['av_id'],
+				      'l'=>"?q=".EA_MODULE."&function=ea_myPage&clean_once=act_code,act_id&av_id=".$this->rec['av_id'],
 				      'd'=>"modify $name's membership"),
 				'i-edit');
     return ($this->isMemberEditable() ? $btn : '');
