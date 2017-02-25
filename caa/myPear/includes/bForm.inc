@@ -408,7 +408,7 @@ class bForm extends myPear_getValue{
    * Open the form
    */
   public function getFormOpen(){
-    b_debug::xxx(starting,array(2,'fuchsiaText',cnf_dev));
+    $this->dbg(starting);
     locateAndInclude('b_table');
     bTiming()->cpu(get_class($this).'.doForm');
 
@@ -439,7 +439,7 @@ class bForm extends myPear_getValue{
     }else{
       $this->getFormOpen_execute();
     }
-    b_debug::xxx(starting,array(2,'fuchsiaText',cnf_dev));
+    $this->dbg(exiting);
   }
     
   /* 
@@ -2152,7 +2152,7 @@ class bForm extends myPear_getValue{
       $list = unserialize($data);
       if (is_array($list))       $data = x('ul',b_fmt::joinMap('li',$list));
       elseif(cnf_dev){
-	b_debug::var_dump($data,"'$name' expect serialized");
+	b_debug::var_dump($data,"'$name' expected to be serialized");
 	b_debug::traceBack();
       }
     }
