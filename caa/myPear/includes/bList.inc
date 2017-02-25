@@ -300,23 +300,30 @@ class bList extends myPear_getValue{
   /*
    * Perform the add / edit session
    */
+  protected function edit_bList_cancel(){
+    $myPost_bList = $this->myPost_bList();
+    if ($reply=(!empty($_POST) && !$myPost_bList)){
+      b_debug::traceBack("act_code=".$this->act_code.", but not myPost_bList"); 
+      $this->dbg("Cancel processing",cnf_dev);
+    }
+    return $reply;
+  }
+
   protected function edit_bList(){
 
-    if (!b_cnf::get('act_code')) return;
-    
-    //
-    // Do the editing
-    //
     if (b_cnf::get('act_id') == $this->ID){
-      $this->act_code = b_cnf::get('act_code');
+      //
+      // Do the editing
+      //
       $this->MODE = 'RW';
-      $this->dbg("act_code=$this->act_code");
+      $this->act_code = b_cnf::get('act_code');
+      $this->dbg("act_code=".$this->act_code);
       
-      $myPost_bList = $this->myPost_bList();
       switch($this->act_code){
       case 'add':  /////////////////////////////////////////////////////////////////
-	if (!empty($_POST) && !$myPost_bList) b_debug::var_dump($_POST,"adding bList member, but not myPost_bList"); 
-	if (!empty($_POST) && !$myPost_bList) b_debug::traceBack("adding bList member, but not myPost_bList"); 
+	// Return if not our case
+	if ($this->edit_bList_cancel()) return;
+
 	// Return to the dialog if the data is not complete 
 	if ($this->getFormAdd_OK()){
 	  
@@ -336,8 +343,8 @@ class bList extends myPear_getValue{
 	break;
 	
       case 'edit': ////////////////////////////////////////////////////////////////
-	if (!empty($_POST) && !$myPost_bList) b_debug::var_dump($_POST,"editing bList member, but not myPost_bList"); 
-	if (!empty($_POST) && !$myPost_bList) b_debug::traceBack("editing bList member, but not myPost_bList"); 
+	// Return if not our case
+	if ($this->edit_bList_cancel()) return;
 	$this->getMember($this->member_ID = b_cnf::get('act_lmid'), True);
 	if ($this->getFormAdd_OK()){
 	  $this->dbg("======$this->TABLEID_member=$this->member_ID applying updates from _POST");
@@ -885,7 +892,7 @@ class bList extends myPear_getValue{
     if (cnf_dev && !empty($get2post)) b_debug::print_r($get2post,'get2post');
  
     // Load the list member declared 
-    if ($id = $this->getValue($this->TABLEID_member)) $this->getMember($id,True);
+    if ($id = $this->getValue($this->TABLEID_member,True,'isMBE')) $this->getMember($id,True);
 
     if (myPear::is_empty($rr=$r)) $rr = array($this->TABLEID       =>  $this->ID,
 					      $this->TABLEID_member=> @$this->member_ID);
@@ -1049,7 +1056,7 @@ class bList extends myPear_getValue{
    */
   function getFormAdd_OK(){
     $reply = !isset($_GET['act_once']);
-    if($lm_id = $this->getValue($this->TABLEID_member)){
+    if($lm_id = $this->getValue($this->TABLEID_member,True,'isMBE')){
       foreach(array_keys($this->list_quering) as $q){
 	if ($this->getMemberValue($lm_id,$q) || @$this->isMBE[$q]) continue;
 	$this->dbg("missing '$q'",(bool)(cnf_dev || $this->debug));
@@ -1561,7 +1568,7 @@ class bList extends myPear_getValue{
    */
   function getValue($name,$asIs=True,$description_MBE=True) {
     if (!isset($this->vars[$name])) $this->defineVariable(' ',$name);
-    return parent::getValue($name,True,True);
+    return parent::getValue($name,$asIs,$description_MBE);
   }
 
   /*
