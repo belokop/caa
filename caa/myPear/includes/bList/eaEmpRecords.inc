@@ -89,11 +89,11 @@ class bList_eaEmpRecords extends bList{
   }
   
   /*
-   * The parent is an Avatar, the list name is
+   * The parent is an Avatar
    */
   private $e_org = Null;
   function __construct($parent_ID){
-    
+
     // Hook the parent Avatar
     if ($parent_ID instanceof bForm_Avatar){
       $this->av = $parent_ID;
@@ -404,7 +404,8 @@ class bList_eaEmpRecords extends bList{
     //
     // Jump to the avatar's "study dialog" for PhD / MS 
     // since those 2 blocks are stored in the zzz_avatars, and not in zzz_list_members
-    $lm_id = $this->getValue('lm_id');
+    $lm_id = $this->getValue('lm_id',True,'isMBE');
+    static $conter_shit=0;    if (empty($lm_id)) $this->dbg((++$conter_shit).' - lm_id='.var_export($lm_id,True),cnf_dev);
     $e_type = $this->getMemberValue($lm_id,'e_type');
     $this->dbg("lm_id=".var_export($lm_id,True).", e_type=".var_export($e_type,True),cnf_dev);
     if (!empty($e_type)){
@@ -412,7 +413,7 @@ class bList_eaEmpRecords extends bList{
       if (in_array($degree,array('phd','ms'))){
 	if (!empty($lm_id)) $this->deleteMember($lm_id);
 	// Break the processing and go directly to edit the Avatar class
-	b_url::header(b_url::same("?form=Avatar_ea&id=".$this->av->ID."&mode=RW&block_once=edu_$degree"));
+	b_url::header(b_url::same("?form=Avatar_ea&id=".$this->av->ID."&mode=RW&act_ER=1&block_once=edu_$degree"));
       }
     }      
 
@@ -548,7 +549,7 @@ class bList_eaEmpRecords extends bList{
    *
    */
   function getValue($name,$asIs=True,$description_MBE=True) {
-    $lm_id = parent::getValue('lm_id');
+    $lm_id = parent::getValue('lm_id',True,'isMBE');
     if ($name == 'lm_id') return $lm_id;
 
     $value = $valueP = ((strpos($name,'lm_') === 0) || (strpos($name,'e_') === 0)
@@ -688,7 +689,7 @@ class bList_eaEmpRecords extends bList{
       if (($n==0) && !empty($photo)) $this->t->pendingObject = array($photo);
       $this->t->extraTD[] = ($this->isMemberEditable()
 			     ? b_btn::link('ICON_edit',
-					   b_url::same("?form=Avatar_ea&id=".$this->av->ID."&mode=RW&block_once=av_birth_block"))
+					   b_url::same("?&act_ER=1&form=Avatar_ea&id=".$this->av->ID."&mode=RW&block_once=av_birth_block"))
 			     : '');
       
       $this->t->extraTD[] = '';
@@ -717,7 +718,7 @@ class bList_eaEmpRecords extends bList{
 	  $this->r['edit_what'] = $c;
 	  $this->t->extraTD[] = ($this->isMemberEditable()
 				 ? b_btn::link('ICON_edit',
-					       b_url::same("?form=Avatar_ea&id=".$this->av->ID."&mode=RW&block_once=edu_$c"))
+					       b_url::same("?form=Avatar_ea&id=".$this->av->ID."&act_ER=1&mode=RW&block_once=edu_$c"))
 				 : '');
 	  $this->t->extraTD[]='';
 	  $this->t->prt($this->r);
