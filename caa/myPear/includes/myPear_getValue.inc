@@ -145,6 +145,9 @@ class myPear_getValue extends myPear_base{
       }elseif(($name == 'lm_id') && empty($_POST)){
 	$this->dbg("No \$_POST, hence no '$name'",cnf_dev);
 	$hint = 'empty _POST';
+      }elseif($d_MBE === 'isMBE'){
+	static $isMBE_case = 0;
+	$this->dbg(($isMBE_case++)." - ???? not found name '$name', but this was predicted",cnf_dev);
       }else{
 	$this->dbg($msg="???? not found name '$name'",cnf_dev);
 	if (cnf_dev) b_debug::traceBack($msg);

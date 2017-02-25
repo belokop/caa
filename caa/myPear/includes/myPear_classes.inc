@@ -1526,12 +1526,14 @@ class b_debug{
       $s_e_s = (strpos($s_e_text,starting) !== False);
       $s_e_e = (strpos($s_e_text,exiting)  !== False);
       if ($starting_exiting = ($s_e_s || $s_e_e)){
-	$toPrint = True;
 	if ($s_e_e) self::$s_e_depth--;
-	if (empty($flags)) $flags = array(3,'fuchsiaText',True); // always print 
+	$toPrint = True;
+	$color = 'fuchsiaText';
+	$color = 'orangeText';
       }
     }
     
+    if (!$starting_exiting){
     // Object
     if (is_object($text)) $text = (method_exists($text,'__toString')
 				   ? $text->__toString()
@@ -1608,12 +1610,11 @@ class b_debug{
 	}
       }
     }
+    }
 
     if ($toPrint || cnf_debug){    
       $caller =  self::__((isset($level)?$level:3) , @$class);
-      if    ($text === True)  $text = 'True';
-      elseif($text === False) $text = 'False';
-      elseif($text === Null)  $text = 'NULL';
+      if (($text === True) || ($text === Null) || ($text === False))  $text = var_export($text,True);
       $text   = preg_replace(';/[a-zA-Z/]*/trunk/;','&lt;trunk&gt;/',str_replace(getcwd(),'&lt;cwd&gt;',$text));
       $text   = x('em',b_fmt::strcut($text,222,'...'));
 
@@ -1630,6 +1631,7 @@ class b_debug{
       }
 
       $dbgString = self::s_e_depth() . "<span class='$color'>$dbgString</span>";
+      // if ($starting_exiting) var_dump(str_ireplace('&nbsp;',' ',self::s_e_depth() . $text));
       if ($starting_exiting || !@self::$xxx_cache[b_crypt::hash($dbgString)]++){
 	if (isset($class) && is_object($class) && (bool)@$class->nodrupal){
 	  print "<br/>$dbgString";
