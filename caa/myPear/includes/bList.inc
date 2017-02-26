@@ -913,16 +913,20 @@ class bList extends myPear_getValue{
       $reply = False;
     }elseif ($lm_id === 'new'){
       $reply = True;
-    }elseif (@$_POST['_post_bList_classID'] === $l_id){
+    }elseif (@$_POST['_post_bList_classID'] == $l_id){
       $reply = True;
       // OK, but check the list member
       if (is_numeric($lm_id)){
 	if (empty($r)){ // Accept the _POST if the current member is not setup yet
-	  if (!($reply=empty($this->formDB_member)))  $reply = ($lm_id == $member_ID);
+	  $reply = (empty($this->formDB_member)
+		    ? True
+		    : ((int)$lm_id == (int)$member_ID));
 	}else{
 	  $reply = ((int)$lm_id == (int)$member_ID);
 	}
       }
+    }else{
+      $reply = False;
     }
     
     // Set the current member ID from the post if it is "mine"
@@ -1055,15 +1059,25 @@ class bList extends myPear_getValue{
    *   False - the input data is NOT complete, fatal 
    */
   function getFormAdd_OK(){
+    $this->dbg(starting);
     $reply = !isset($_GET['act_once']);
-    if($lm_id = $this->getValue($this->TABLEID_member,True,'isMBE')){
+    $lm_id = $this->getValue($this->TABLEID_member,True,'isMBE');
+    if (empty($lm_id)){
+      $this->dbg("missing '$lm_id'",(bool)(cnf_dev || $this->debug));
+    }elseif($lm_id === 'new'){
+      $reply = 'new';
+    }else{
       foreach(array_keys($this->list_quering) as $q){
-	if ($this->getMemberValue($lm_id,$q) || @$this->isMBE[$q]) continue;
-	$this->dbg("missing '$q'",(bool)(cnf_dev || $this->debug));
-	$reply = False;
+	if (@$this->isMBE[$q]) continue;
+	$value = $this->getMemberValue($lm_id,$q);
+	if (empty($value)){
+	  $this->dbg("missing '$q'",(bool)(cnf_dev || $this->debug));
+	  $reply = False;
+	}
       }
     }
     $this->dbg($reply,(bool)(cnf_dev || $this->debug));
+    $this->dbg(exiting);
     return $reply;
   }
 

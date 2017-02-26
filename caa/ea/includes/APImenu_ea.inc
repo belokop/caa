@@ -36,14 +36,14 @@ class APImenu_ea extends APImenu{
   var $q    = EA_MODULE;
   var $title= 'Employees&Alumni';
   var $static_menu   = array(
-			     tab_ea_home  => array(), // (tab_ea_home_contacts),
-			     divider,
 			     tab_ea_e     => array(tab_ea_e_groups,
 						   tab_ea_e_cv,
 						   tab_ea_off_list,
 						   tab_ea_off_door_labels,
 						   ),
 			     tab_ea_a     => array(tab_ea_a_years),
+			     divider,
+			     tab_ea_home  => array(), // (tab_ea_home_contacts),
 			     divider,
 			     tab_ea_admin => array(
 						   tab_ea_admin_org,
@@ -254,21 +254,20 @@ class APImenu_ea extends APImenu{
       $c->getForm();
       break;
 
-    case tab_ea_a:
-      $see_only = EA_role_alumnus;
 
     case EA_MODULE:
     case tab__empty:
-      //      if (!empty($_GET['z']) || !empty($_GET['x'])) b_url::header(b_url::same('?q='.join('/',array(EA_MODULE,APImenu::tab_code(tab_ea_home)))));
     case tab_ea:
     case tab_ea_e:
-      
+      if (empty($see_only))$see_only = EA_role_employee;
+    case tab_ea_a:
+      if (empty($see_only))$see_only = EA_role_alumnus;
+
       if ($av_id = @$_GET['act_parent']){
 	locateAndInclude('bForm_Avatar_ea');
 	$av = new bForm_Avatar_ea($av_id);
 	$av->getForm();
       }else{
-	if (empty($see_only))$see_only = EA_role_employee;
 	myOrg()->eaMembers()->see_only = $see_only;
 	myOrg()->eaMembers()->getForm();
       }

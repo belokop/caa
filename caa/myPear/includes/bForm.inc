@@ -821,9 +821,12 @@ class bForm extends myPear_getValue{
     if (!b_btn::$confirm_waiting){
 
       // optionally clean and/or reformat the error messages
-      $this->dbg((($n=count($this->errorsInTheForm))==0 ? 'No' : $n).' errors BEFORE displayErrors_preflight');
+      $this->dbg(starting);
+      $this->dbg((($n=count($this->errorsInTheForm))==0 ? 'No' : $n).' errors BEFORE displayErrors_preflight'.($n?":<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;":'').
+		 b_fmt::joinX('<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;',$this->errorsInTheForm));
       $errors = $this->displayErrors_preflight();
       $this->dbg((($n=count($errors))==0 ? 'No' : $n).' errors AFTER displayErrors_preflight');
+      $this->dbg(exiting);
 
       // Sanity
       $this->clean_outOfScopeMissingValues($errors);
@@ -1335,7 +1338,8 @@ class bForm extends myPear_getValue{
     
     // Sanity
     if (!empty($reply))        $this->dbg(($reply ? join(', ',$reply) : False),(bool)($this->debug || cnf_dev));
-    if($this->errorsInTheForm) $this->dbg("errorsInTheForm: ".b_fmt::joinX(',',$this->errorsInTheForm),(bool)($this->debug));
+    if($this->errorsInTheForm) $this->dbg("errorsInTheForm: ".b_fmt::joinX(',',$this->errorsInTheForm),(bool)($this->debug||cnf_dev));
+    $this->dbg((bool)!empty($reply),cnf_dev);
     return $reply;
   }
   

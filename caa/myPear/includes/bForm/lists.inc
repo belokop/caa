@@ -65,7 +65,7 @@ class bForm_lists extends bForm {
    */
   public $displayErrors_NO = False;
   protected function displayErrors_preflight(){
-
+    
     // get the eventual report from the lists
     $this->bList->getFormAdd_OK();
 
@@ -77,6 +77,7 @@ class bForm_lists extends bForm {
       }
     }
     
+    $this->dbg('something_exists: '.(empty($something_exists)?"NO":"$something_exists list member(s)"));
     if ($this->displayErrors_NO || empty($something_exists)) $errors = array();
     else                                                     $errors = parent::displayErrors_preflight();
     return $errors;

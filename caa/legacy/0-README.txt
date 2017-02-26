@@ -1,4 +1,8 @@
-Changes log
+Changes log                                                                                                                                                             
+                                                                                                                                                                                 
+2017-02-26, Version 5.13,
+                                                                                                                                                                                 
+2017-02-26, Version 5.12,
 
 2015-04-09, Version 5.11,
 M       legacy/bin/update_etc_passwd.sh

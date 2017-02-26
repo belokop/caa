@@ -50,6 +50,8 @@ class legacy_maildb{
    */
   function __construct(&$parent_AV){
 
+    if (maildb_RO) myPear::WARNING("DEMO version, maildb command is in read-only mode");
+
     // Include accounts into possible hooks
     foreach(array_keys($this->possible_logins) as $acc){
       $this->possible_hooks[$acc] = $this->possible_logins[$acc];
@@ -198,7 +200,7 @@ class legacy_maildb{
 									: "-set $key=".str_replace(' ','#',$new_value)));
       if ($update_maildb){
 	$this->dbg($cmd_add);
-	if (maildb_RO || empty($_SESSION[__class__])) myPear::MESSAGE($cmd_human_readable);
+	if (maildb_RO || empty($_SESSION[__class__])) myPear::WARNING("Command to be executed:</br><code>$cmd_human_readable</code>");
 	else	                                      b_os::exec($cmd_add,'>>>');
       }else{
 	$this->dbg("Command ignored: $cmd_human_readable",cnf_dev||$this->debug);
@@ -284,10 +286,13 @@ class legacy_maildb{
   private function update_etc_passwd(){
     $acc_kth = $this->maildb($this->parent_AV->ID,'acc_kth');
     if (!empty($acc_kth) && !posix_getpwnam($acc_kth)){
-      b_os::exec(sprintf(dirname(__file__)."/../bin/update_etc_passwd.sh '%s' '%s' '%s' ",
-			 $acc_kth,
-			 $this->parent_AV->fmtName('f'),
-			 $this->parent_AV->fmtName('l')));
+      $cmd = sprintf("%s '%s' '%s' '%s' ",
+		     realpath(dirname(__file__)."/../bin/update_etc_passwd.sh"),
+		     $acc_kth,
+		     $this->parent_AV->fmtName('f'),
+		     $this->parent_AV->fmtName('l'));
+      if (maildb_RO) myPear::WARNING("Script to be executed:<br/><code>$cmd</code>");
+      else           b_os::exec($exec);
     }
   }
     
@@ -407,7 +412,7 @@ class legacy_maildb{
 								    b_fmt::joinX(' ',$updates),
 								    join(' ',$unsets)));
       $this->dbg($cmd_human_readable);
-      if (maildb_RO || empty($_SESSION[__class__]))  myPear::MESSAGE($cmd_human_readable);
+      if (maildb_RO || empty($_SESSION[__class__]))  myPear::WARNING("Command to be executed:</br><code>$cmd_human_readable</code>");
       else                                           b_os::exec($cmd,'>>>');
     }
   }

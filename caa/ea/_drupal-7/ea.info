@@ -3,4 +3,4 @@ description = Managing the employees & alumni
 package = myPear
 core = 7.x
 dependencies[] = myPear
-version = 7.x-5.28
+version = 7.x-5.31

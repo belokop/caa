@@ -5,7 +5,7 @@ class bHolder_Avatar_ea extends bHolder_Avatar{
 
   public $av_ids;
 
-  var $debug = False;
+  var $debug = True;
 
   /*
    * Constructor
@@ -19,7 +19,7 @@ class bHolder_Avatar_ea extends bHolder_Avatar{
    *
    */
   protected function avatar_anker($av_id){
-    $reply = sprintf("?function=ea_myPage&av_id=%s&q=%s",$av_id,EA_MODULE);
+    $reply = sprintf("?function=ea_myPage&clean_once=>act_code,act_id&av_id=%s&q=%s",$av_id,EA_MODULE);
     $this->dbg($reply);
     return $reply;
   }

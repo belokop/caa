@@ -1,5 +1,11 @@
 Changes log                                                                                                                                                             
                                                                                                                                                                                  
+2017-02-26, Version 5.31,
+                                                                                                                                                                                 
+2017-02-26, Version 5.30,
+                                                                                                                                                                                 
+2017-02-22, Version 5.29,
+                                                                                                                                                                                 
 2017-02-15, Version 5.28,
 A       ea/_drupal-8/src
 A       ea/_drupal-8/src/components

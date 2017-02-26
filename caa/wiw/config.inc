@@ -1,8 +1,8 @@
 <?php
 
 define('WIW_MODULE'   , 'wiw');
-define('WIW_VERSION','5.18.rc');
-$releaseDate = '2017-02-21';
+define('WIW_VERSION','5.22.rc');
+$releaseDate = '2017-02-26';
 
 define('wiw_acl_public', 'public');
 define('wiw_acl_public_text','Anyone on the web can see the trip info');
@@ -42,11 +42,6 @@ b_reg::add_module(WIW_MODULE,
 								'd' => 'WIW manager',
 								'i' => 'i-user1'))));
 
-myOrg()->setMyNetworks(array('130.242',      // KTH
-			     '130.237',      // SU
-			     '77.238',       // eduroam
-			     ));
-			     
 /*
  * WIW dispatching class
  */

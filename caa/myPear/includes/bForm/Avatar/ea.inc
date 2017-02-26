@@ -176,8 +176,8 @@ class bForm_Avatar_ea extends bForm_Avatar{
    * Update the 'av_position' & 'av_institute' field in the avatar record from the current EA record(s)
    */
   function update_AVpos_AVinst($what){
-    $this->dbg(starting);
     if ($this->isEA() && !empty(self::$av2er[$what])){
+      $this->dbg(starting);
       $this->hook_employment();
       $this->isMBE['av_birthdate']    = !$this->isE();
       $this->isMBE['av_birthcountry'] = !$this->isE();
@@ -210,8 +210,8 @@ class bForm_Avatar_ea extends bForm_Avatar{
 	$this->getValue_reset_forced($what,$ea_value);
 	myPear::MESSAGE_add($this->name()." - set current ".self::$av2er[$what]['d']." '$ea_value'");
       }
+      $this->dbg(exiting);
     }
-    $this->dbg(exiting);
   }
 
   /*
@@ -561,27 +561,28 @@ class bForm_Avatar_ea extends bForm_Avatar{
 
     }else{
 
-      // Switch to the bForm dialog if a block is requested
+      // Switch to the bForm dialog if an Avatar block is requested
       if (!empty($_GET['block_once'])) b_cnf::set('see_myinfo','yes');
       
+      // update EA records
       $this->update_AVpos_AVinst('av_institute');
       $this->update_AVpos_AVinst('av_position');
-
-      // apply updates
       $this->update_EA();
 
-      // and go to the dialog
-      switch($this->MODE){
-      case 'RO': 
-        //
-        // show the employment records
-        //
-        if (!b_cnf::get('see_myinfo')){
-          $this->eaRecords->getForm();
+      //
+      // Show the employment records instead of Avatar form, if the referer is bList_EArecords and the form is complete
+      //
+      if (($act_ER=(bool)b_cnf::get('act_ER')) || !b_cnf::get('see_myinfo')){
+	$this->dbg('act_ER='.var_export($act_ER,True),cnf_dev);
+	$this->formOK();
+	if ($this->MODE == 'RO'){
+	  $this->eaRecords->getForm();
 	  return;
-        }
-
-      case 'RW':
+	}
+      }
+      
+      /*
+Seem to be useless....
 	if (!empty($_REQUEST['action_once']) && preg_match('/'.myOrg_name.' employment/',$_REQUEST['action_once']) && ($ea = $this->hook_employment())){
 	  $records = $ea->get_currentEmploementRecords(array('e_org'=>myOrg_ID),999,$this->getValue('av_ddate',True));
 	  foreach($records as $r){
@@ -599,34 +600,35 @@ class bForm_Avatar_ea extends bForm_Avatar{
 							      'resetcache_once'=>1,
 							      )));
 	}
+      */
 	
-        //
-        // show the Avatar dialog
-        //
-	// Header
-	$this->getFormHeader();
-	$this->getFormOpen();
-	// Information blocks
-	$this->avInfoBlock();
-	$this->studyBlock();
-	$this->officeBlock();
-	$this->residentshipBlock();
-	
-	// Hook the "legacy software" block if available
-	if ($this->connect_legacy_maildb()){
-	  $lm = new legacy_maildb($this);
-	  $lm->getForm('legacy_maildb');
-	}
-	
-        if ($this->MODE == 'RO'){
-	  $this->closeForm('');
-	  locateAndInclude('b_tabs');
-	  if (!cnf_inside_fb && ! b_tabs::$inside) 
-	    print b_btn::UL_buttons(array(b_btn::submit('update employment records',
-							b_url::same("?see_myinfo=0&mode=RO&form=Avatar_ea&av_id=$this->ID&id=$this->ID"))));
-        }else{
-	  $this->closeForm();
-	}
+      //
+      // Show the Avatar dialog
+      //
+      // Header
+      $this->getFormHeader();
+      $this->getFormOpen();
+      
+      // Information blocks
+      $this->avInfoBlock();
+      $this->studyBlock();
+      $this->officeBlock();
+      $this->residentshipBlock();
+      
+      // Hook the "legacy software" block if available
+      if ($this->connect_legacy_maildb()){
+	$lm = new legacy_maildb($this);
+	$lm->getForm('legacy_maildb');
+      }
+      
+      if ($this->MODE == 'RO'){
+	$this->closeForm('');
+	locateAndInclude('b_tabs');
+	if (!cnf_inside_fb && ! b_tabs::$inside) 
+	  print b_btn::UL_buttons(array(b_btn::submit('update employment records',
+						      b_url::same("?see_myinfo=0&mode=RO&form=Avatar_ea&av_id=$this->ID&id=$this->ID&&clean_once=act_ER,act_code,act_id"))));
+      }else{
+	$this->closeForm();
       }
     }
   }

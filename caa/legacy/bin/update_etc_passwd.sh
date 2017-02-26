@@ -3,14 +3,14 @@
 # Script to update the /etc/password file 
 #
 
-##### Not used since the end of 2015
-# repository=https://plushkin.googlecode.com/svn/trunk/setup/maintenance/mail/2leif
+# In production since 2016-04-01
+repository=https://svn.csc.kth.se/~iourib/setup/registration
 
 ##### Not used since the spring 2016
 # repository=https://svn.csc.kth.se/~iourib/setup/maintenance/mail/2leif
 
-# In production since 2016-04-01
-repository=https://svn.csc.kth.se/~iourib/setup/registration
+##### Not used since the end of 2015
+# repository=https://plushkin.googlecode.com/svn/trunk/setup/maintenance/mail/2leif
 
 function usage(){
     msg="$1"

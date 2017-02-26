@@ -872,12 +872,13 @@ class myPear{
       static $zzz=array(); if (empty($zzz[$msg_id])) $zzz[$msg_id] = 0;
       if (b_cnf::get('noCompactMessages')) { self::$MESSAGE_dejaVu = array(); } // $zzz = array($msg_id => 0); 
 
-      if (!$zzz[$msg_id]++) if (self::$always_print || !@self::$MESSAGE_dejaVu[$msg_id]++){
-	  if ($id=='message_bottom')  $_SESSION['message_bottom'][] = $text; 
-	  elseif (function_exists('drupal_set_message') && !b_cnf::get('nodrupal')) drupal_set_message($text,$css_class);
-	  elseif (cnf_CLI) b_fmt::printt($text);
-	  else   print "<div class='messages $css_class'>$text</div>\n";
-	}
+      //      if (!$zzz[$msg_id]++) if (self::$always_print || !@self::$MESSAGE_dejaVu[$msg_id]++){
+      if (self::$always_print || !@self::$MESSAGE_dejaVu[$msg_id]++ || !$zzz[$msg_id]++){
+	if ($id=='message_bottom')  $_SESSION['message_bottom'][] = $text; 
+	elseif (function_exists('drupal_set_message') && !b_cnf::get('nodrupal')) drupal_set_message($text,$css_class);
+	elseif (cnf_CLI) b_fmt::printt($text);
+	else   print "<div class='messages $css_class'>$text</div>\n";
+      }
     }
   }
   

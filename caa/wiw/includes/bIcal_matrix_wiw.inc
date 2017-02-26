@@ -62,12 +62,16 @@ class bIcal_matrix_wiw extends bIcal_matrix{
 					       : $r['av_firstname'].' '.$r['av_lastname']),
 				    );
     }
-    if ($n_trip_exists){
-      if (empty($trips))  bAuth()->loginPrompt();
-      else                parent::show($trips);
+
+    // Show the selected entries
+    if (1 || empty($trips)){
+      myPear::INFO('At the time there is no entries to show','Thank you for your interest in '.myOrg_name);
+    // bAuth()->loginPrompt();
+  }else{
+      parent::show($trips);
     }
   }
-
+  
   protected function IO_tip($time,$text1='in',$text2='out'){
     return nbsp(formatTime($time).': from '.strip_tags($text1).' / to '.strip_tags($text2));
   }

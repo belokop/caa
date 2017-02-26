@@ -918,6 +918,7 @@ class APImenu_vm extends APImenu_ea{
       $holder->listEntries();
       break;
 
+    case tab_vm_adm_acc:
     case tab_vm_acc:
     case tab_vm_acc_huts:
       locateAndInclude('bHolder_vm_Huts');
@@ -975,7 +976,8 @@ class APImenu_vm extends APImenu_ea{
       break;
       
     default:
-      myPear::WARNING_T(bIcons()->get('32-p_pc')." '$tab' is not yet implemented, work in progress");
+      myPear::WARNING(sprintf('%s %s(%s) is not yet implemented, work in progress',
+			      bIcons()->get('32-p_pc'),$tab,APItabs::$tab_definition[$tab]));
     }
     
     // Avoid infinite loop;
@@ -1250,26 +1252,27 @@ function _vm_title_callback($tab, $dTab=Null,$returnText=False){
   }else{
     if (is_object(bAuth::$av)){
       
+      if(isset(APItabs::$tab_definition[$tab]))  $text = APItabs::$tab_definition[$tab];
+      else myPear::ERROR(sprintf("??? %s: undefined tab \"%s\"\n",__METHOD__,$tab));
+
       if (VM_external_registrant_here){
 	switch($tab){
-	case tab_vm_vis:         $tab = 'Event attenders';            break;
-	case tab_vm_home:        $tab = 'My contact information';     break;
-	case tab_vm_vis_vmatrix: $tab = 'Who arrives when';           break;
-	case tab_vm_vis_photos:  $tab = 'Photos';                     break;
+	case tab_vm_vis:         $text = 'Event attenders';            break;
+	case tab_vm_home:        $text = 'My contact information';     break;
+	case tab_vm_vis_vmatrix: $text = 'Who arrives when';           break;
+	case tab_vm_vis_photos:  $text = 'Photos';                     break;
 	default:
 	}
       }elseif(is_object(VM::$e)){
 	switch($tab){
-	  //case tab_vm_vis:         $tab = VM::$e->name(0);              break;
+	  //case tab_vm_vis:         $text = VM::$e->name(0);              break;
 	default:
 	}
       }
     }
-    if(isset(APItabs::$tab_definition[$tab]))  $tab = APItabs::$tab_definition[$tab];
-    else myPear::ERROR(sprintf("??? undefined tab \"%s\"\n",$tab));
     $menuItem = ($returnText
-		 ? $tab
-		 : t(bText::_(array('key' => "MENU_$tab",'item'=> $tab))));
+		 ? $text
+		 : t(bText::_(array('key' => "MENU_$tab",'item'=> $text))));
   }
   return $menuItem;
 }

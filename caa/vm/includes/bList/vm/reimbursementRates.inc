@@ -368,7 +368,7 @@ class bList_vm_reimbursementRates extends bList_vm{
   }
 
   function getFormAdd_OK(){
-    $reply = empty($_GET['act_code']) || ($_GET['act_code'] !== 'edit');
+    $reply = (@$_GET['act_code'] !== 'edit');
     if ($this->myPost_bList()){
       //      if (isset($_POST['s_rate']) && empty($_POST['s_rate'])) $_POST['s_rate'] = 'no';
       //      if (@$_POST['s_rate'] === 'on' ) $_POST['s_rate'] = 1;
