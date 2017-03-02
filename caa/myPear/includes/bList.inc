@@ -670,6 +670,13 @@ class bList extends myPear_getValue{
   function getMember($args,$set_as_current_member=False){
 
     $reply = array();
+
+    // Sanity
+    if (empty($args)){
+      b_debug::traceBack('$args === '.var_export($args,True));
+      return $reply;
+    }
+
     if($args === 'new'){
       // Well... Request for a new empty member record...
       // Check then, maybe there is already an empty record available
@@ -1063,7 +1070,8 @@ class bList extends myPear_getValue{
     $reply = !isset($_GET['act_once']);
     $lm_id = $this->getValue($this->TABLEID_member,True,'isMBE');
     if (empty($lm_id)){
-      $this->dbg("missing '$lm_id'",(bool)(cnf_dev || $this->debug));
+      $this->dbg("missing 'lm_id' - ".var_export($lm_id,True),(bool)(cnf_dev || $this->debug));
+      $reply = False;
     }elseif($lm_id === 'new'){
       $reply = 'new';
     }else{
@@ -1085,6 +1093,9 @@ class bList extends myPear_getValue{
     return $this->name();
   }
 
+  /*
+   *
+   */
   public function getForm(){
 
     // Sanity. Clean the garbage
@@ -1096,21 +1107,17 @@ class bList extends myPear_getValue{
     $this->setPageHeader();
     
     print myPear::H2($this->getFormHeader());
-
+    
     $this->dbg('act_code='.$this->act_code,(bool)cnf_dev||$this->debug);
-    if (empty($this->act_code)){
+    switch($this->act_code){
+    case 'add':
+    case 'edit':
+      $this->getFormAdd();
+      break;
+      
+    case 'drop':
+    default:
       $this->show();
-    }else{
-      switch($this->act_code){
-      case 'add':
-      case 'edit':
-	$this->getFormAdd();
-	break;
-	
-      case 'drop':
-      default:
-	$this->show();
-      }
     }
   }
   
@@ -1125,7 +1132,7 @@ class bList extends myPear_getValue{
   /*
    * Terminate action by cleaning the "act_<xxx>" session variables
    */
-  private function declare_action_completed($message=''){
+  protected function declare_action_completed($message=''){
     $this->dbg($this->act_code,(bool)($this->debug||cnf_dev));
     $this->MODE     = 'RO';
     $this->act_code = Null;
@@ -1366,7 +1373,9 @@ class bList extends myPear_getValue{
 			       $this->get_action('add'),
 			       $confirm=True);
     }
-    return array_merge($reply,$this->extra_buttons);
+    $reply = array_merge($reply,$this->extra_buttons);
+    $this->dbg($reply,cnf_dev);
+    return $reply;
   }
   
   /*
@@ -1484,6 +1493,9 @@ class bList extends myPear_getValue{
     $this->dbg('done');
   }
 
+  /*
+   *
+   */
   protected function getFormAdd(){
 
     $this->bForm(array('name'               =>'lm_key',
@@ -1493,6 +1505,9 @@ class bList extends myPear_getValue{
     $this->f->closeForm();
   }
 
+  /*
+   *
+   */
   function getMemberID($key=Null,$value=Null){
     $reply = Null;
     if (!is_null($key))  $args['lm_key']   = $key;

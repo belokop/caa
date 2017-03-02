@@ -375,6 +375,7 @@ class bForm extends myPear_getValue{
   private $reply_myP = Null;
   function myPost_bForm($id=Null){
 
+
     // Reset the cache if requested
     // This is done from "updateDB()" to set the record ID to the ID of the newly created database record
     if ($id !== Null){
@@ -565,6 +566,7 @@ class bForm extends myPear_getValue{
 	$this->t->td(x("div style='margin:${margin}px;text-align:center'",
 		       b_btn::UL_buttons($this->closeForm_buttons($buttons))),'colspan=5');
 	$this->t->trc();
+	//	b_debug::traceBack(b_fmt::escape($buttons[0]));
       }
     }
 
@@ -741,7 +743,9 @@ class bForm extends myPear_getValue{
 
       if (!empty(bForm::$formOpened)){
         $this->dbg('ZZZ closeForm '.bForm::$formOpened);
+	foreach($this->hidden_inputs as $field) print $field; 
         print "</form> <!-- end $this->formName -->\n";
+	$this->hidden_inputs = array();
 	bForm::$formOpened = Null;
       }
     }
@@ -763,7 +767,7 @@ class bForm extends myPear_getValue{
       $this->formOKspecific();
       
       // Save the data collected so far to the database, UNLESS a vital field is missing
-      if (!$this->vitalFieldMissing()){
+      if ($reply = !$this->vitalFieldMissing()){
 	
 	$this->updateDB($this->formDB_modified);    
 	
@@ -789,6 +793,7 @@ class bForm extends myPear_getValue{
 	  //
 	  if ($_after_create=b_cnf::get('_after_create')){
 	    b_cnf::_unset('_after_create');
+	    $this->dbg(exiting);
 	    b_url::header(b_url::same(array('function'         =>'bForm_Avatar_Search::show_selection',
 					    'firstname_search_once' => $this->getValue('av_firstname',True),
 					    'lastname_search_once'  => $this->getValue('av_lastname',True),
@@ -802,9 +807,11 @@ class bForm extends myPear_getValue{
 	}
       }
     }else{
-      $this->vitalFieldMissing();
+      $reply = myPear::is_empty($this->vitalFieldMissing());
     }
+    $this->dbg($reply,cnf_dev||$this->debug);
     $this->dbg(exiting);
+    return $reply;
   }
   
   /*
@@ -1780,7 +1787,7 @@ class bForm extends myPear_getValue{
     $country = b_cc::getName($this->getValue($name,True,True));
     if ($this->MODE == 'RW'){
       b_cc::autocomplete($name);
-      $country = "<input id='$name' name='$name' size='40' value='$country' maxlength='99' type='text'/>";
+      $country = "<input id='$name' name='$name' size='40' value='$country' maxlength='99' type='text'/> <!-- textFieldCountry -->";
     }
     $this->getFormRow($name, $country);
   }
@@ -1826,6 +1833,7 @@ class bForm extends myPear_getValue{
   /*
    * Show a hidden value
    */  
+  private $hidden_inputs = array();
   function textHidden($name,$value=Null,$printNow=True) {
     if (bForm::$formOpened === $this->ID){
       $show_it = ($value === 'show_it');
@@ -1836,7 +1844,7 @@ class bForm extends myPear_getValue{
 	$this->getFormRow($name, $value);
       }
       $reply = "<input type='hidden' name='$name' value='".strip_tags($value)."'/>\n";
-      if ($printNow) print $reply;
+      if ($printNow) $this->hidden_inputs[] = $reply;
       else          return $reply;
     }
   }

@@ -126,12 +126,21 @@ function _hw_body() {
   if (function_exists('x')){
     print "<h2>Example of autocomplete (countries)</h2>";
     $name = 'testCC';
-    b_cc::autocomplete($name);
-    $value   = @$_POST[$name];
-    b_cc::getCC($value);
-    $country = "<input id='$name' name='$name' size='40' value='$value' maxlength='99' type='text'/>";
-    $submitt = "<input name='_s' type='submit' class='form-submit page_load_progress'/>";
-    print x('form action="'.b_url::same().'" method="post"',$country.'<br/>'.$submitt);
+    if (True){
+      locateAndInclude('bForm');
+      $f = new bForm('new');
+      $f->defineVariable(array('Country'=>$name));
+      $f->getFormOpen();
+      $f->textFieldCountry($name);
+      $f->getFormFooter();
+    }else{
+      b_cc::autocomplete($name);
+      $value   = @$_POST[$name];
+      b_cc::getCC($value);
+      $country = "<input id='$name' name='$name' size='40' value='$value' maxlength='99' type='text'/>";
+      $submitt = "<input name='_s' type='submit' class='form-submit page_load_progress'/>";
+      print x('form action="'.b_url::same().'" method="post"',$country.'<br/>'.$submitt);
+    }
   }
   
   /*

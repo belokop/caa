@@ -362,6 +362,7 @@ class myPear_getValue extends myPear_base{
    * Same, but with the enforced DB update
    */
   public function getValue_reset_forced($name,$value=Null){
+    $this->dbg(starting);
     if ((int)$this->ID && method_exists($this,'updateDB')){
       $isVITAL = $this->isVITAL;
       $this->isVITAL = array();
@@ -369,6 +370,7 @@ class myPear_getValue extends myPear_base{
       $this->isVITAL = $isVITAL;
     }
     $this->getValue_reset($name,$value);
+    $this->dbg(exiting);
   }
 
   

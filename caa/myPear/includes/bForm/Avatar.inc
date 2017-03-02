@@ -79,9 +79,9 @@ class SSN{
 
     self::$ssn_country = 'SE';
     $ssn = preg_replace('/^(......)-[pP0]000$/','\\1'.'-P123',(string)$ssn);
-    $reply = !empty($ssn) && (self::checkPnr10($ssn) || preg_match('/^(\d\d)?\d\d\d\d\d\d-[pP]\d\d\d$/',$ssn));
-
-    /*						  
+    $reply = !empty($ssn) && (strpos((string)$ssn,'000') === False) && (self::checkPnr10($ssn) || preg_match('/^(\d\d)?\d\d\d\d\d\d-[pP]\d\d\d$/',$ssn));
+  
+  /*						  
     $reply = False;
     if (strpos((string)$ssn,'000') === False){
       foreach(self::known() as $country=>$patterns){

@@ -40,7 +40,6 @@ class bList_eaEmpRecords extends bList{
 			   'e_inst'     =>'Institute',
 			   'e_cc'       =>'Country',
 			   'lm_value'   =>'Position',
-			   'e_rate'     =>'Employee Type',
 			   'lm_key'     =>'Start of position',
 			   'lm_status'  =>'End of position',
 			   );
@@ -116,21 +115,16 @@ class bList_eaEmpRecords extends bList{
     case '40_va_org':
       // "Position within organization" = "Major position" + "Organization number" 
       $this->e_org = myOrg_ID;
-      $this->reset_POST('e_type',str_replace('_org','',$_POST['e_type']));
-      $this->reset_POST('e_org',$this->e_org);
+      $this->getValue_reset('e_type',str_replace('_org','',$_POST['e_type']));
+      $this->getValue_reset('e_org',$this->e_org);
       break;
     case '10_cp':
       // "Current position" is an endless "Major position"
-      $this->reset_POST('e_type','20_mp');
-      $this->reset_POST('lm_status',CONST_eternity);
+      $this->getValue_reset('e_type','20_mp');
+      $this->getValue_reset('lm_status',CONST_eternity);
       break;
     default:
     }
-  }
-
-  private function reset_POST($name,$value){
-    $this->getValue_reset($name,$value);
-    //    if (isset($_POST[$name])) $_REQUEST[$name] = $_POST[$name] = $value;
   }
   
   /*
@@ -353,7 +347,7 @@ class bList_eaEmpRecords extends bList{
   private function adjust_list_quering(){
     $this->dbg(starting);
     $was = $this->list_quering;
-    switch($this->getMemberValue(0,'e_type')){
+    switch($e_type=$this->getMemberValue(0,'e_type')){
     case '50_ah':
       $this->list_quering['lm_value'] = 'Award / Honor';
       unset($this->list_quering['e_inst']);
@@ -372,26 +366,63 @@ class bList_eaEmpRecords extends bList{
     }
     
     if ($this->getMemberValue(0,'e_org')){
+      // Do not ask country/institute for myOrg
       unset($this->list_quering['e_cc']);
       unset($this->list_quering['e_inst']);
-    }else{
-      unset($this->list_quering['e_rate']);
+      // Ask for the e_rate if not yet done
+      if (in_array($e_type,array('20_mp','40_va'))) $this->list_quering['e_rate'] =  bForm_Avatar_ea::$av2er['e_rate']['d'] ;
     }
-    if ($was !== $this->list_quering) b_debug::xxx($this->list_quering);
+
+    if ($was !== $this->list_quering) $this->dbg(array_diff($was,$this->list_quering));
     $this->dbg(exiting);
   }
 
   /*
-   *
+   * Update the Avatar if nessesary
+   * In fact only av_institute & av_position are updated 
+   */
+  protected function declare_action_completed($message=''){
+
+    $this->dbg(starting);
+
+    // If the record is "current", copy the data to AV block
+    $e_start = @$_POST[bForm_Avatar_ea::$av2er['e_start']['k']];
+    $e_end   = @$_POST[bForm_Avatar_ea::$av2er['e_end']['k']];
+    if (empty($e_start)) $e_start = time()-2;
+    if (empty($e_end))   $e_end = $e_start;
+    if (b_time::inInterval(time(),time(),b_time::txt2unix($e_start),b_time::txt2unix($e_end))){
+      foreach(array_intersect(array_keys(bForm_Avatar_ea::$er2av),array_keys($_POST)) as $ea){
+	list($key,$value) = array(bForm_Avatar_ea::$er2av[$ea],$_POST[$ea]);
+	if (myPear_db()->columnExists($key,$this->av->TABLE)){
+	  $this->dbg(sprintf("ACCEPT %s => %s",$key,$value));
+	  $this->av->updateDB(array($key=>$value));
+	}else{
+	  $this->dbg(sprintf("SKIP %s => %s",$key,$value));
+	}
+
+      }
+    }
+
+    // Apply the parental actions
+    parent::declare_action_completed($message);
+    $this->dbg(exiting);
+  }
+
+  /*
+   * Check also that the EA vital keys (start/end of position, title) present
    */
   function getFormAdd_OK(){
+    static $vital_fields = array('lm_key','lm_value','lm_status');
+
     $this->dbg(starting);
-    if ($reply = parent::getFormAdd_OK()){
-      if (($reply !== 'new') && ((!$this->getValue('lm_key') || 
-				  !$this->getValue('lm_value') || 
-				  !$this->getValue('lm_status')))) $reply = False;
+    if (($reply = parent::getFormAdd_OK()) && ($reply !== 'new')){ 
+      foreach(array_intersect($this->list_quering,$vital_fields) as $f){
+	if ($this->getValue($f)) continue;
+	$this->dbg("missing '$f'",$this->debug||cnf_dev);
+	$reply = False;
+      }
     }
-    $this->dbg($reply);
+    $this->dbg($reply,$this->debug||cnf_dev);
     $this->dbg(exiting);
     return $reply;
   }
@@ -408,7 +439,7 @@ class bList_eaEmpRecords extends bList{
     }
 
     //
-    // Jump to the avatar's "study dialog" for PhD / MS 
+    // For PhD & MS break the processing and redirect to the avatar's "study dialog" 
     // since those 2 blocks are stored in the zzz_avatars, and not in zzz_list_members
     $lm_id = $this->getValue('lm_id',True,'isMBE');
     static $conter_shit=0;    if (empty($lm_id)) $this->dbg((++$conter_shit).' - lm_id='.var_export($lm_id,True),cnf_dev);
@@ -419,7 +450,7 @@ class bList_eaEmpRecords extends bList{
       if (in_array($degree,array('phd','ms'))){
 	if (!empty($lm_id)) $this->deleteMember($lm_id);
 	// Break the processing and go directly to edit the Avatar class
-	b_url::header(b_url::same("?act_ER=1&form=Avatar_ea&id=".$this->av->ID."&mode=RW&block_once=edu_$degree"));
+	b_url::header(b_url::same("?from_bList=1&form=Avatar_ea&id=".$this->av->ID."&mode=RW&block_once=edu_$degree"));
       }
     }      
 
@@ -452,21 +483,19 @@ class bList_eaEmpRecords extends bList{
     
     // Build the form  
     foreach(array_keys($this->list_quering) as $item){
-      if (empty($e_type) && $item != 'e_type') continue;
+
+      if (empty($e_type) && ($item != 'e_type')) continue;
+
       $ask_for_period = (!empty($this->list_quering['lm_status']) && ($e_type != '10_cp'));
       switch($item){
 
-      case 'e_rate':
-	if ($trades=myOrg()->orgTrades()->get_trades()) $this->f->selectMenu('e_rate',$trades);
-	break;
-	
       case 'e_type':
 	if (in_array($e_type,array('20_mp'))){
 	  $this->f->selectMenu('e_type',array('20_mp' => $this->e_type_menu['20_mp'],
 					      '40_va' => $this->e_type_menu['40_va'],
 					      '22_op' => $this->e_type_menu['22_op']));
 	}else{
-	  if (!($this->f->isRO['e_type'] = !empty($e_type)))  $this->f->keepRW[] = 'e_type';
+	  //	  if (!($this->f->isRO['e_type'] = !empty($e_type)))  $this->f->keepRW[] = 'e_type';
 	  $this->f->selectMenu('e_type',$this->e_type_menu); 
 	}
 	break;  
@@ -477,7 +506,7 @@ class bList_eaEmpRecords extends bList{
 	break;
 	
       case 'e_cc':       
-	if (empty($this->e_org))       $this->f->textFieldCountry($item);   
+	if (empty($this->e_org)) $this->f->textFieldCountry($item);   
 	break; 
 	
       case 'lm_key':    
@@ -495,6 +524,10 @@ class bList_eaEmpRecords extends bList{
 	else                     $this->f->textField('e_inst_virtual');
 	break;
 	
+      case 'e_rate':
+	if ($trades=myOrg()->orgTrades()->get_trades()) $this->f->selectMenu('e_rate',$trades);
+	break;
+
       default:  
 	$this->f->textField($item);
       }
@@ -505,6 +538,7 @@ class bList_eaEmpRecords extends bList{
       $this->f->textField('memberID');
     }
     $this->f->closeForm();
+    $this->dbg(sprintf('$this->MODE="%s" $this->f->MODE="%s"',$this->MODE,$this->f->MODE));
     $this->MODE = $this->f->MODE;
   }
 
@@ -514,12 +548,14 @@ class bList_eaEmpRecords extends bList{
   protected function draw_buttons(){
     static $dejaVu = 0;
     if ($reply = parent::draw_buttons()){
-      if ($this->MODE == 'RO'){
+      $this->dbg('MODE = '.$this->MODE);
+      $this->dbg('$this->av->MODE = '.$this->av->MODE);
+      if (($this->MODE == 'RO') || (b_cnf::get('from_bList') && ($this->av->MODE == 'RO'))){
 	// Print a button to update the parent Avatar record
 	locateAndInclude('b_tabs');
 	if ($this->av->isWritable() && ! b_tabs::$inside){
 	  $reply[] = b_btn::submit('update personal data',
-				   b_url::same("?see_myinfo=yes&act_ER=0&mode=RO&form=Avatar_ea&av_id=".$this->av->ID."&id=".$this->av->ID));
+				   b_url::same("?from_bList=0&mode=RO&form=Avatar_ea&av_id=".$this->av->ID."&id=".$this->av->ID));
 	}
 	
 	// Let the record to be public                                                                                                                                                                       
@@ -527,16 +563,17 @@ class bList_eaEmpRecords extends bList{
 	  if ($this->av->isE(True)){
 	    myOrg()->eaMembers()->setMemberAccess($this->av->ID,EA_acl_public);
 	  }elseif (!$dejaVu++){
-	    $msg = 'Make this information public';
+	    $make_public = 'Make this information public';
 	    myPear::INFO("The information on this page is password protected, i.e. only the authorized persons might see it. ".
 			 "<br/>".
-			 "You can make it public by pushing the button \"$msg\"");
-	    $reply[] = b_btn::submit($msg,
+			 "You can make it public by pushing the button \"$make_public\"");
+	    $reply[] = b_btn::submit($make_public,
 				     b_url::same("?set_access_once=".EA_acl_public."&mode=RO&form=Avatar_ea&av_id=".$this->av->ID."&id=".$this->av->ID));
 	  }
 	}
       }
     }
+    $this->dbg('$reply',cnf_dev);
     return $reply;
   }
 
@@ -667,15 +704,26 @@ class bList_eaEmpRecords extends bList{
     }
     return $r;
   }
+  
+  /*
+   *
+   */
+  function get_action($code,$myGet=array()){
+    $reply = parent::get_action($code,array('from_bList'=>1,'from_bForm'=>0));
+    $this->dbg($reply,cnf_dev);
+    return $reply;
+  }
 
   /*
    *
    */
   function show($arg1=''){
     $this->dbg();
-    locateAndInclude('b_tabs');
 
     if(!$this->av->isEA()) b_debug::internalError("$av is not EA");
+    if (b_cnf::get('from_bForm')){
+      $this->av->getForm();
+    }else{
     bTiming()->cpu(get_class($this).__FUNCTION__);
 
     $photo = $this->av->getPhoto();
@@ -694,8 +742,7 @@ class bList_eaEmpRecords extends bList{
       $this->r['edit_what'] = $n;
       if (($n==0) && !empty($photo)) $this->t->pendingObject = array($photo);
       $this->t->extraTD[] = ($this->isMemberEditable()
-			     ? b_btn::link('ICON_edit',
-					   b_url::same("?act_ER=1&form=Avatar_ea&id=".$this->av->ID."&mode=RW&block_once=av_birth_block"))
+			     ? b_btn::link('ICON_edit',b_url::same("?from_bList=1&from_bForm=0&form=Avatar_ea&id=".$this->av->ID."&mode=RW&block_once=av_birth_block"))
 			     : '');
       
       $this->t->extraTD[] = '';
@@ -708,11 +755,12 @@ class bList_eaEmpRecords extends bList{
     //
     // First Habilitation
     foreach($this->getMembers() as $this->r){
-      if (!empty($this->r)){
-	if (in_array(@$this->r['e_type'],$this->emp_groups[emp_education])){
-	  $this->format();
-	  $this->t->prt($this->r);
-	}
+      if (!empty($this->r) && in_array(@$this->r['e_type'],$this->emp_groups[emp_education])){
+	$this->format();
+	$this->t->extraTD[] = $this->button_editListMember();
+	$this->t->extraTD[] = $this->button_deleteListMember();
+	$this->t->extraTD[]='';
+	$this->t->prt($this->r);
       }
     }
     
@@ -724,7 +772,7 @@ class bList_eaEmpRecords extends bList{
 	  $this->r['edit_what'] = $c;
 	  $this->t->extraTD[] = ($this->isMemberEditable()
 				 ? b_btn::link('ICON_edit',
-					       b_url::same("?act_ER=1&form=Avatar_ea&id=".$this->av->ID."&mode=RW&block_once=edu_$c"))
+					       b_url::same("?from_bList=1&from_bForm=0&&form=Avatar_ea&id=".$this->av->ID."&mode=RW&block_once=edu_$c"))
 				 : '');
 	  $this->t->extraTD[]='';
 	  $this->t->prt($this->r);
@@ -732,7 +780,7 @@ class bList_eaEmpRecords extends bList{
       }
     }
 
-      // Save the groups as the b_tabs prefix
+    // Save the groups as the b_tabs prefix
     $content = ob_get_contents();
     ob_end_clean();
 
@@ -741,6 +789,7 @@ class bList_eaEmpRecords extends bList{
     parent::show($content);
     
     bTiming()->cpu();
+    }
   }
 
   /*
@@ -800,7 +849,7 @@ class bList_eaEmpRecords extends bList{
 	$this->r['_emp_period'] = date('M Y',b_time::txt2unix($this->r['lm_key'])).' -> present'; 
       }else{
 	$this->r['_emp_period'] = b_time::period(b_time::txt2unix($this->r['lm_key']), 
-						b_time::txt2unix($this->r['lm_status']),True);
+						 b_time::txt2unix($this->r['lm_status']),True);
       }
     }
     if (cnf_show_dp && !empty($this->r['_emp_period'])){
