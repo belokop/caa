@@ -101,7 +101,7 @@ class bUnit_vm_endorses extends bUnit_vm{
                        array('v_types'));
   }
   
-  protected function header(){
+  protected function header($arg=Null){
     return array('name'=>'', 'v_types'=>'Endorser for','virt_group'=>'');
   }
 

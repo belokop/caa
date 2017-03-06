@@ -277,7 +277,6 @@ class bAuth{ // extends myPear_base{
    */
   private function _autoLogout(){
     if (!empty($_SESSION['bAuth']) && $this->autoLogoutActive){
-      if ($dt = @$_GET['autologout_once']) myPear::WARNING("Logged out after ".b_time::delta($dt)." of inactivity");
       if (self::_authenticated() && ($ts=@$_SESSION['bAuth']['auth_timestamp'])) {
 	if (($dt = time()-$ts) > myPear_autoLogoutTime) {
 	  $this->logout();

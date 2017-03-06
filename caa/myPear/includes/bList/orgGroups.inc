@@ -40,7 +40,7 @@ class bList_orgGroups extends bList{
    */
   function isManager(){
     myPear_access(EA_MODULE);
-    return EA_manager_here;
+    return EA_ORG_manager_here;
   }
 
   /*
@@ -207,7 +207,7 @@ class bList_orgGroups extends bList{
   /*
    * Header for the department records listing
    */
-  protected function header(){
+  protected function header($arg=Null){
     return $this->list_showing;
   }
 
@@ -240,7 +240,7 @@ class bList_orgGroups extends bList{
 	// List the group members, but instead of SQL query
 	// provide the list of av_id to be listed
 	$holder = new bHolder_Avatar_ea();
-	$holder->show_icons = superUser_here || (defined('EA_manager_here') && EA_manager_here);
+	$holder->show_icons = superUser_here || (defined('EA_ORG_manager_here') && EA_ORG_manager_here);
 	$holder->custom_header = array('icon_nosort_afirst' => ' ',
 				       'name'               => 'Name',
 				       'av_email'           => 'Email',

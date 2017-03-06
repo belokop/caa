@@ -68,12 +68,14 @@ class APIaccess_vm extends APIaccess{
   /*
    *
    */
-  function getRank(){
+  function getRank($av_id=Null){
+    if (empty($av_id)) $av_id = @bAuth::$av->ID;
+
     static $reply = Null;
     if ($reply === Null){
-      $reply = parent::getRank();
+      $reply = parent::getRank($av_id);
       if ($reply == RANK__authenticated){
-	foreach ($this->getRanks_matrix() as $e_id=>$r) $reply = max($r,$reply);
+	foreach ($this->getRanks_matrix($av_id) as $e_id=>$r) $reply = max($r,$reply);
       }
       $this->dbg($reply);
     }

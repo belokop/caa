@@ -209,7 +209,7 @@ class APImenu extends myPear_base{
       return Null;
 
     case tab__syslog:
-      $reply = (defined('EA_manager_here') && EA_manager_here);
+      $reply = (defined('EA_ORG_manager_here') && EA_ORG_manager_here);
       break;
       
     case 'bred':

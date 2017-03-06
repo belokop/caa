@@ -1454,7 +1454,7 @@ class bForm_Avatar extends bForm {
 		    );
 
     // Fine tuning...
-    if (!EA_manager_here && $this->MODE == 'RW') unset($whoAmI['av_ddate']);
+    if (!EA_ORG_manager_here && $this->MODE == 'RW') unset($whoAmI['av_ddate']);
     $passed_away = $this->passed_away($whoAmI);
 
     if (!$this->isWritable() || $this->MODE == 'RO'){
@@ -1503,7 +1503,7 @@ class bForm_Avatar extends bForm {
 
     if (!$this->askInstitute()){    unset($contactInfo['av_institute']);  unset($contactInfo['av_position']); }
     if (self::$inputToPDF)          unset($contactInfo['av_http']); 
-    if (!$passed_away || EA_manager_here) $this->formBlock('av_contact',
+    if (!$passed_away || EA_ORG_manager_here) $this->formBlock('av_contact',
 							   ($passed_away ? 'Assistant' : 'Contact information'),
 							   $contactInfo,
 							   array('i'=>($icon='i-mobile-phone'),

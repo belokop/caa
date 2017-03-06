@@ -51,8 +51,10 @@ class APIaccess_jam  extends  APIaccess{
   /*
    * Get the rank of the currently logged in user
    */
-  function getRank(){
-    $reply = parent::getRank();
+  function getRank($av_id=Null){
+    if (empty($av_id)) $av_id = bAuth::$av->ID;
+
+    $reply = parent::getRank($av_id);
     if ($reply == RANK__authenticated){
       foreach ($this->getRanks_matrix('ranks') as $pos_id=>$r){ 
 	if    (!JAM_posID())            $reply = max($reply,$r);

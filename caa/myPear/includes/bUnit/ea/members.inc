@@ -249,7 +249,7 @@ class bUnit_ea_members extends bUnit_ea {
     return $accept;
   }
 
-  protected function header(){
+  protected function header($arg=null){
     return array('name'=>'', 'av_institute'=>'','av_position'=>'');
   }
 

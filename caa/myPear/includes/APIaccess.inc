@@ -9,10 +9,10 @@ class APIaccess extends myPear_base{
   public function __construct(){
     //    locateAndInclude('b_cache');
     //    APIaccess::$cache = new b_cache_S(get_class($this));
-    $this->who_is_here(array('EA_manager_here'      => array('rank'=> 'RANK__ea_manager',
+    $this->who_is_here(array('EA_ORG_manager_here'  => array('rank'=> 'RANK__ea_org_manager',
 							     'def' => 'superUser_here'),
                              'EA_administrator_here'=> array('rank'=> 'RANK__ea_admin',
-							     'def' => 'EA_manager_here'),
+							     'def' => 'EA_ORG_manager_here'),
 			     'EA_member_here'       => array('IF'  => myOrg()->eaMembers()->isMember()),
 			     ));
   }
@@ -65,11 +65,15 @@ class APIaccess extends myPear_base{
   /*
    * Get the Avatar rank
    */
-  public function getRank(){
+  public function getRank($av_id=Null){
+
     if (!myPear::$isReady){
       myPear_startup_queue(__function__);
     }else{
-      if (superUser_here){
+      if (empty($av_id)) $av_id = @bAuth::$av->ID;
+      if (empty($av_id) || empty(bAuth::$av) || ($av_id !== bAuth::$av->ID)){
+	$reply = RANK__anonymous;
+      }elseif (superUser_here){
 	$reply = RANK__superuser;
       }else{    
 	$reply = (bAuth::authenticated()
@@ -81,7 +85,7 @@ class APIaccess extends myPear_base{
   }
 
   public function isRank($rank){
-    return $this->getRank() >= $rank;
+    return $this->getRank($rank) >= $rank;
   }
   
   public function show(){

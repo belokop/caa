@@ -3,8 +3,8 @@ ini_set("allow_url_fopen", true);
 //var_dump(file_get_contents('php://input'));
 
 // myPear module 
-$releaseDate = '2017-03-02';
-define('myPear_VERSION','5.162');
+$releaseDate = '2017-03-06';
+define('myPear_VERSION','5.3.164');
 define('myPear_MODULE', 'myPear');
 define('myPear_DATE',    $releaseDate);
 
@@ -123,8 +123,8 @@ define('b_crypt_no' ,'nocrypt_once');
 //
 // Developer debugging
 //
-define('starting','Ну, тронули...');   // Means "Let's go..."
-define('exiting', 'Готово, барин...'); // Means "Ready, Sir..."
+define('starting','Тронули, барин...');   // Means "Let's go..."
+define('exiting', 'Приехали, барин...');  // Means "Ready, Sir..."
 define('missing_value', 'missing value');
 
 if (!isset($_GET['showe'])) { $_REQUEST['showe'] = $_GET['showe'] = 1; define('cnf_show_e',True); }
@@ -187,7 +187,7 @@ define('CONST_dp_format' , 'yy-mm-dd');
  * The extra roles/ranks are might be defined by APIs
  */
 define('RANK__superuser'     , 99);
-define('RANK__ea_manager'    ,  8);
+define('RANK__ea_org_manager',  8);
 define('RANK__ea_admin'      ,  6); // Employees & Alumni
 define('RANK__ea_member'     ,  4); // Employees & Alumni
 define('RANK__authenticated' ,  2);
@@ -367,7 +367,7 @@ myPear_set_roles('roles',
                                                                         'd'=>'Authenticated'),
                                             RANK__anonymous    => array('i'=>'user-silhouette',
                                                                         'd'=>'Anonymous')),
-                       EA_MODULE    =>array(RANK__ea_manager   => array('class' => 'bUnit',
+                       EA_MODULE    =>array(RANK__ea_org_manager   => array('class' => 'bUnit',
                                                                         'i'=>'bb-phone',
                                                                         'd'=>'Organization Manager'),
                                             RANK__ea_admin     => array('class' =>'bUnit_ea_admins',

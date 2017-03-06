@@ -82,7 +82,7 @@ class bList_jam_subPositions extends bList_jam{
     $this->f->closeForm();
   }
 
-  protected function header(){
+  protected function header($arg=Null){
     unset($this->list_quering['lm_value']);
     return $this->list_quering;
   }

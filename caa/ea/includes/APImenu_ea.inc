@@ -10,7 +10,7 @@ if (function_exists('locateAndInclude')){
 foreach(array('tab_ea'              => 'People at '.(defined('myOrg_name') ? myOrg_name : 'here'),
               'tab_ea_home'         => 'My account',
               'tab_ea_home_contacts'=> 'My Contact Persons',
-              'tab_ea_a'            => 'Alumni',
+              'tab_ea_a'            => (defined('myOrg_nameS') ? myOrg_nameS : '').' alumni',
               'tab_ea_a_years'      => 'As the years pass...',
               'tab_ea_e'            => 'Staff',
               'tab_ea_e_cv'         => 'CV\'s',
@@ -21,7 +21,7 @@ foreach(array('tab_ea'              => 'People at '.(defined('myOrg_name') ? myO
               'tab_ea_admin_org'    => (defined('myOrg_nameS') ? myOrg_nameS : 'Organization').' structure',
               'tab_ea_admin_org_mngr'=> 'Organization managers',
               'tab_ea_admin_org_structure'=> 'Employee types&groups',
-              'tab_ea_admin_orgs'         => 'All Organizations',
+              'tab_ea_admin_orgs'         => 'Other Organizations',
 	      
               'tab_ea_off'               => 'Offices',
               'tab_ea_off_assign'        => 'Allocate offices',
@@ -48,10 +48,10 @@ class APImenu_ea extends APImenu{
 			     tab_ea_admin => array(
 						   tab_ea_admin_org,
 						   tab_ea_admin_org_structure,
-						   tab__mergeAV=>divider,
+						   tab_ea_admin_orgs  => divider,
+						   tab__mergeAV       =>divider,
 						   tab_ea_admin_dup,
 						   tab_ea_admin_rb    => divider,
-						   tab_ea_admin_orgs,
 						   tab__syslog        => divider,
 						   // tab_ea_admin_org_mngr,
 						   ),
@@ -97,7 +97,7 @@ class APImenu_ea extends APImenu{
 	$reply = is_object(bAuth::$av) && RANK__ea_member;
 	break;
       case tab_ea_home_contacts:
-	$reply = $ea_members && !EA_manager_here;
+	$reply = $ea_members && !EA_ORG_manager_here;
 	break;
 
       case tab_ea_admin_orgs:
@@ -110,7 +110,7 @@ class APImenu_ea extends APImenu{
 	  break;
 	}
 	myPear_access(EA_MODULE);
-	$reply = EA_manager_here;
+	$reply = EA_ORG_manager_here;
 	break;
 
       case tab_ea_e_cv:
@@ -126,7 +126,7 @@ class APImenu_ea extends APImenu{
       case tab__mergeAV:
       case tab__syslog:
 	myPear_access(EA_MODULE);
-	$reply = EA_manager_here;
+	$reply = EA_ORG_manager_here;
 	break;
 
       case tab_ea_off_list:
@@ -134,7 +134,7 @@ class APImenu_ea extends APImenu{
 	break;
 
       case tab_ea_off_door_labels:
-	$reply = EA_manager_here;
+	$reply = EA_ORG_manager_here;
 	break;
 
       case tab_ea_e_groups:
@@ -321,15 +321,11 @@ function _ea_title_callback($tab, $dTab=Null,$returnText=False){
 		 : t($tab));
   }else{
     switch($tab){
-    case EA_MODULE:
-      $menuItem = myOrg_nameS .' '. EA::_MENU()->title_callback();
-      break;
-    case tab_ea:
-      $menuItem = 'People at '.myOrg_nameS;
-      break;
     case tab_ea_a: 
       $menuItem = myOrg_nameS.' Alumni'; 
       break;
+    case EA_MODULE:
+    case tab_ea:
     case tab_ea_e: 
       $menuItem = myOrg_nameS." Staff members";
       break;

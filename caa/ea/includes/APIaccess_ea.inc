@@ -8,7 +8,7 @@ class APIaccess_ea extends APIaccess{
   }
   
   function isManager(){
-    return EA_manager_here;    
+    return EA_ORG_manager_here;    
   }
   
   /*
@@ -24,22 +24,24 @@ class APIaccess_ea extends APIaccess{
   /*
    * Get the EA rank
    */
-  function getRank(){
-    static $reply = Null;
-    if ($reply === Null){
-      $reply = parent::getRank();
-      if ($reply == RANK__authenticated){
+  function getRank($av_id=Null){
+    if (empty($av_id)) $av_id = @bAuth::$av->ID;
+
+    static $reply = array();
+    if (!isset($reply[$av_id])){
+      $reply[$av_id] = parent::getRank($av_id);
+      if ($reply[$av_id] == RANK__authenticated){
 	locateAndInclude('bUnit');
 	foreach(bUnit::get_unitsMembership(myOrg_ID,
-					   array(RANK__ea_manager,
+					   array(RANK__ea_org_manager,
 						 RANK__ea_admin,
 						 RANK__ea_member),
-					   bAuth::$av->ID) as $av_id=>$rr){
-	  foreach($rr as $r)  $reply = max($reply,$r['u_rank']);
+					   $av_id) as $id=>$rr){
+	  foreach($rr as $r)  $reply[$av_id] = max($reply[$av_id],$r['u_rank']);
 	}
       }
     }
-    return $reply;
+    return $reply[$av_id];
   }
 
   function mayUpdate($av_id=Null){

@@ -614,7 +614,7 @@ class bList_eaEmpRecords extends bList{
   /*
    * Header for the employment records listing
    */
-  protected function header(){
+  protected function header($arg=Null){
     return $this->list_showing;
   }
 

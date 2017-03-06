@@ -378,7 +378,7 @@ class b_fmt{
 			  'degli'),   // Common names
       
       // specific words like PhD
-      $specific   = array('PhD', 'I', 'II', 'III','CERN','MIT','IHEP','CNRS','EPFL','MIPT','HR','CERN','NBI'),
+      $specific   = array('PhD', 'I', 'II', 'III','ETH','CERN','MIT','IHEP','CNRS','EPFL','MIPT','HR','CERN','NBI'),
       // d'Artagnan
       $sustr      = array("/\\bD'/i"=>"d'", "/\\bDe'/i"=>"de'");
     
@@ -1514,6 +1514,7 @@ class b_debug{
    */
   private static $xxx_cache = array();
   public  static $s_e_depth = 0;
+  public  static $starting_exiting = False;
   static function xxx($text=' ',$flags=array()){
     static $default_flags = array('fuchsiaText',2);
     
@@ -1522,10 +1523,10 @@ class b_debug{
     
     // Start / End a block
     $s_e_text = $text;
-    if ($starting_exiting = is_string($s_e_text)){
+    if (self::$starting_exiting = is_string($s_e_text)){
       $s_e_s = (strpos($s_e_text,starting) !== False);
       $s_e_e = (strpos($s_e_text,exiting)  !== False);
-      if ($starting_exiting = ($s_e_s || $s_e_e)){
+      if (self::$starting_exiting = ($s_e_s || $s_e_e)){
 	if ($s_e_e) self::$s_e_depth--;
 	$toPrint = True;
 	$color = 'fuchsiaText';
@@ -1533,7 +1534,7 @@ class b_debug{
       }
     }
     
-    if (!$starting_exiting){
+    if (!self::$starting_exiting){
     // Object
     if (is_object($text)) $text = (method_exists($text,'__toString')
 				   ? $text->__toString()
@@ -1631,19 +1632,17 @@ class b_debug{
       }
 
       $dbgString = self::s_e_depth() . "<span class='$color'>$dbgString</span>";
-      // if ($starting_exiting) var_dump(str_ireplace('&nbsp;',' ',self::s_e_depth() . $text));
-      if ($starting_exiting || !@self::$xxx_cache[b_crypt::hash($dbgString)]++){
+      if (self::$starting_exiting || !@self::$xxx_cache[b_crypt::hash($dbgString)]++){
 	if (isset($class) && is_object($class) && (bool)@$class->nodrupal){
 	  print "<br/>$dbgString";
 	}else{
-	  $s_e_depth = self::$s_e_depth;	  $always_print = myPear::$always_print;
-	  self::$s_e_depth = 0;	          myPear::$always_print = True;
+	  $s_e_depth = self::$s_e_depth;	  
 	  myPear::DEBUG($dbgString);
-	  self::$s_e_depth = $s_e_depth;  myPear::$always_print = $always_print;
+	  self::$s_e_depth = $s_e_depth;  
 	}
       }
     }
-    if ($starting_exiting && $s_e_s) self::$s_e_depth++;
+    if (self::$starting_exiting && $s_e_s) self::$s_e_depth++;
   }
 
   public static function s_e_depth(){
@@ -4131,6 +4130,7 @@ class b_cnf{
     if (stripos($keyL,'_once') !== False) unset($_SESSION[CONST_cnfOptions][$keyL]); 
     $inside = 0;
 
+    if (defined('cnf_dev')) if (cnf_dev) if (($key == 'noCompactMessages') && @$reply) { var_dump($key,$reply);echo'<pre>';debug_print_backtrace();echo'</pre>';}
     if (isset($reply))      return $reply;
     else                    return Null;
   }

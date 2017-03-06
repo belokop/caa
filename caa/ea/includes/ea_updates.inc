@@ -38,6 +38,7 @@ function ea_updates(){
     // 2015-01-15
     if (True){
       ea_update15();
+      ea_update16();
     }
     myPear_db()->noAutoCommit('end');
     bTiming()->cpu();
@@ -106,7 +107,7 @@ function ea_update15(){
     foreach(array('umich','yale','kth','gu') as $org){
       if (!bForm_Organization::org_code_2_org_id($org,False)) continue;
       if (is_object($av)){
-	$u = new bUnit(myOrg($org)->ID,RANK__ea_manager);
+	$u = new bUnit(myOrg($org)->ID,RANK__ea_org_manager);
 	$u->add_unitMember($av->ID);
       }
       foreach(myOrg($org)->orgGroups()->getMembers() as $um_id=>$r){
@@ -152,7 +153,7 @@ function ea_update11(){
   if (myOrg_nameS != 'Nordita') return;
   locateAndInclude('bForm_Avatar');
   if ($av=bForm_Avatar::hook(array('av_identity'=>'hvzm'))){
-    $u = new bUnit(myOrg('nordita')->ID,RANK__ea_manager);
+    $u = new bUnit(myOrg('nordita')->ID,RANK__ea_org_manager);
     $u->add_unitMember($av->ID);
   }
 

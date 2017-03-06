@@ -293,7 +293,7 @@ class bForm_Organization extends bForm {
   function isManager(){
     if ($reply = defined('myOrg_ID')){
       myPear_access(EA_MODULE);
-      $reply = EA_manager_here;
+      $reply = EA_ORG_manager_here;
       $this->dbg($reply);
     }
     return $reply;

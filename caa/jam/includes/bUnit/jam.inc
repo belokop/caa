@@ -101,7 +101,7 @@ class bUnit_jam extends bUnit{
   /*
    *
    */
-  protected function header(){
+  protected function header($arg=Null){
     $header = parent::header();
     if ($this->rank==RANK_jam_SC1 || 
 	$this->rank==RANK_jam_SC2){

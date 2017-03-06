@@ -1,8 +1,8 @@
 <?php
 
 define('WIW_MODULE'   , 'wiw');
-define('WIW_VERSION','5.22.rc');
-$releaseDate = '2017-02-26';
+define('WIW_VERSION','5.2.rc3');
+$releaseDate = '2017-03-06';
 
 define('wiw_acl_public', 'public');
 define('wiw_acl_public_text','Anyone on the web can see the trip info');
@@ -75,4 +75,16 @@ class WIW extends myPear{
     $reply = (bAuth::authenticated() && (WIW_manager_here || ($t_avid == bAuth::$av->ID)));
     return $reply;
   }
+}
+
+/*
+ *
+ */
+function WIW_managers(){
+  static $unit = Null;
+  if ($unit === Null){
+    locateAndInclude('bUnit');
+    $unit = new bUnit(myOrg_ID,RANK_wiw_manager);
+  }
+  return $unit;
 }

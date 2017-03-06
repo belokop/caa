@@ -20,10 +20,10 @@
  * Auxiliary function
  */
 function _ea_getAV($av_id=Null){
-
+  
   // Sanity
   b_cnf::_unset('act_',True);
-  b_cnf::_unset(array('ed_bList','edi_m_once','action_once'));
+  b_cnf::_unset(array('ed_bList','edi_m_once','action_once','from_bForm','from_bList'));
   
   if (empty($av_id)) $av_id = $_GET['av_id'];
   if (is_object($av_id)) $av = (($av_id instanceof bForm_Avatar_ea)
@@ -50,6 +50,7 @@ function ea_updateER($av_id=Null){
 function ea_myPage($av_id=Null){
 
   $av = _ea_getAV($av_id);
+
 
   if ($av->isE() || $av->isV()){
     //
@@ -188,6 +189,10 @@ class bForm_Avatar_ea extends bForm_Avatar{
 	}
       }
     }
+
+    // Update avatar av_institute & av_position.
+    // We do it on the fly since "myOrg" might change since the previous invication 
+    $this->update_AVpos_AVinst();    
   }
   
   function __clean_cache(){
@@ -202,43 +207,27 @@ class bForm_Avatar_ea extends bForm_Avatar{
   /*
    * Update the 'av_position' & 'av_institute' field in the avatar record from the current EA record(s)
    */
-  function update_AVpos_AVinst($what){
-    if ($this->isEA() && !empty(self::$av2er[$what])){
-      $this->dbg(starting);
+  function update_AVpos_AVinst(){
+    if ($this->isEA()){
       $this->hook_employment();
       $this->isMBE['av_birthdate']    = !$this->isE();
       $this->isMBE['av_birthcountry'] = !$this->isE();
-  
-      $eaRecords = $this->eaRecords->get_currentItem(self::$av2er[$what]['k'],array(),2,$this->getValue('av_ddate',True));
-      foreach(explode(',',$eaRecords) as $v){
-	if (empty($ea_value_a))                                                                    $ea_value_a[] = $v;
-	elseif (!preg_grep("/$v/i",$ea_value_a) && !preg_match("/".join('|',$ea_value_a)."/i",$v)) $ea_value_a[] = $v;
-      }
-      // Compact "current position"
-      if (($what == 'av_position') && !empty($ea_value_a)){
-	foreach($ea_value_a as $pp){
-	  $positions[] = explode(' ',str_replace('  ',' ',b_fmt::ucwords($pp)));
+      
+      foreach(array('av_institute','av_position') as $what){
+	
+	// Get the current employment from eaRecords
+	$currentItem = $this->eaRecords->get_currentItem(self::$av2er[$what]['k'],
+							 array('e_org'=>myOrg_ID),
+							 2,
+							 $this->getValue('av_ddate',True));
+	$elements = preg_split(";( |/|,);",str_replace('  ',' ',strToLower($currentItem)));
+	$currentItem_compressed = b_fmt::ucwords(join(' ',array_unique($elements)));
+
+	if ($this->getValue($what,1) != $currentItem_compressed){
+	  $this->getValue_reset_forced($what,$currentItem_compressed);
+	  myPear::MESSAGE_add($this->name()." - set current ".self::$av2er[$what]['d']." '$currentItem_compressed'");
 	}
-	switch(count($positions)){
-	case 1:
-	  $p = $ea_value_a;	  break;
-	case 2:
-	  $p = array_intersect($positions[0],$positions[1]);	  break;
-	case 3:
-	  $p = array_intersect($positions[0],$positions[1],$positions[2]);	  break;
-	case 4:
-	default:
-	  $p = array_intersect($positions[0],$positions[1],$positions[2],$positions[3]);	  break;
-	}
-	if (!empty($p)) $ea_value_a = array(join(' ',$p));
       }
-      $ea_value = empty($ea_value_a) ? '' : join(',',$ea_value_a);
-      if (!empty($ea_value) && (mb_strToLower($ea_value) != mb_strToLower($this->getValue($what,1)))){
-	$this->dbg(array($this->getValue($what,1),$ea_value),True);
-	$this->getValue_reset_forced($what,$ea_value);
-	myPear::MESSAGE_add($this->name()." - set current ".self::$av2er[$what]['d']." '$ea_value'");
-      }
-      $this->dbg(exiting);
     }
   }
 
@@ -310,10 +299,10 @@ class bForm_Avatar_ea extends bForm_Avatar{
   function isV($av_id=Null){
     return $this->is($av_id,EA_role_lt_visitor);
   }
-
+  
   /*
    * am i "$role"?
-   */  
+   */
   private function is($av_id=Null,$role=Null,$exact_match=True){
     $reply = False;
     if (myPear::is_int($this->ID)){
@@ -578,6 +567,7 @@ class bForm_Avatar_ea extends bForm_Avatar{
     }else{
 
       // update EA records
+      // (however, I am not sure that this is needed....)
       $this->update_EA();
 
       //
@@ -587,9 +577,9 @@ class bForm_Avatar_ea extends bForm_Avatar{
       $from_bForm = (bool)b_cnf::get('from_bForm');
       $block_once = @$_GET['block_once'];
 
+      // We are called from "update EA dialog" to update Phd/MS/Birth blocks.
+      // Update the Avatar record and then show the EA records (as the user expects)
       if ($from_bList || $block_once){
-	// We are called from "update EA dialog" to update Phd/MS/Birth blocks, put them to the Avatar record and
-	// show the EA records (as the user expects)
 	$this->dbg(sprintf('from_bForm=%s from_bList=%s block_once=%s',var_export($from_bForm,True),var_export($from_bList,True),$block_once),cnf_dev);
 	$this->formOK();
 	if ($this->MODE == 'RO'){
@@ -598,10 +588,9 @@ class bForm_Avatar_ea extends bForm_Avatar{
 	}
       }
 
+      // An "inversed" case. We are called from the "Avatar dialog", but will query an EA record. 
+      // The results will go both to the EA & Avatar records
       if (($block_once === 'office_contract') && ($this->MODE == 'RW')){
-
-	// An "inversed" case. We are called from the "Avatar dialog", but will query an EA record. 
-	// The results will go both to the EA & Avatar records
 	$records = $this->eaRecords->get_currentEmploementRecords(($this->isE(True) 
 								   ? array('e_org'=>myOrg_ID)
 								   : array()),
@@ -612,7 +601,6 @@ class bForm_Avatar_ea extends bForm_Avatar{
 			'act_code'   => 'edit',
 			'act_id'     => $r['l_id'],  
 			'act_lmid'   => $r['lm_id'], 
-			//		'act_once'   => 1,
 			'act_parent' => $this->ID,
 			'lm_id'      => $r['lm_id'], 
 			) as $k=>$v) $_POST[$k] = $_GET[$k] = $_REQUEST[$k] = $v;
@@ -621,7 +609,6 @@ class bForm_Avatar_ea extends bForm_Avatar{
 			'act_code'   => 'add',
 			'act_id'     => $this->eaRecords->ID,
 			'act_lmid'   => 'new',
-			//			'act_once'   => 1,
 			'act_parent' => $this->ID,
 			'lm_id'      => 'new',
 			) as $k=>$v) $_POST[$k] = $_GET[$k] = $_REQUEST[$k] = $v;
@@ -654,12 +641,6 @@ Seem to be useless....
 	}
       */
 	
-	/*
-	// Update avatar av_institute & av_position 
-	$this->update_AVpos_AVinst('av_institute');
-	$this->update_AVpos_AVinst('av_position');
-	*/
-
       //
       // Show the Avatar dialog
       //
@@ -708,7 +689,7 @@ Seem to be useless....
       $reply = (function_exists('module_exists') && defined('LEGACY_MODULE') && module_exists(LEGACY_MODULE) && 
 		locateAndInclude('legacy_maildb'));
       if ($reply){
-	$reply = (bool)(EA_manager_here && ($this->isE(True) || $this->isV(True)) && !$this->getValue('av_ddate',True,1));
+	$reply = (bool)(EA_ORG_manager_here && ($this->isE(True) || $this->isV(True)) && !$this->getValue('av_ddate',True,1));
       }else{
 	myPear::WARNING("LEGACY_MODULE is not active, can't communicate with 'maildb'"); 
       }
@@ -792,7 +773,7 @@ Seem to be useless....
       myPear::WARNING_T("There are $n \"current employment\" records for ".
 			$this->name().". The result might be ambiguous...");
     }
-
+    
     $this->formDB_modified['_virt_emp_record'] = 'new';
     foreach($records as $k=>$r){
       $this->formDB_modified['_virt_emp_record'] = $r['lm_id'];
@@ -805,77 +786,80 @@ Seem to be useless....
     foreach(self::$av2er as $av=>$er){
       $this->defineVariable(array($av=>$er['d']),True);
     }
-
+    
     //
     // Employees
     //
-    $icon = myOrg()->getValue('org_code');
-
-    //
-    // Contract dates
-    //
-    $e_end = min(CONST_eternity,$this->getValue('e_end',1,1));
-    $this->formDB_modified['_emp_period'] = b_time::short_date($this->getValue('e_start')). ' -> ' .b_time::short_date($e_end);
+    if ($this->isE(True)){
+      $icon = myOrg()->getValue('org_code');
+      
+      //
+      // Contract dates
+      //
+      $e_end = min(CONST_eternity,$this->getValue('e_end',1,1));
+      $this->formDB_modified['_emp_period'] = b_time::short_date($this->getValue('e_start')). ' -> ' .b_time::short_date($e_end);
     
-    $dialog = array('_virt_emp_record'=> array('textHidden'),
-		    '_emp_period'     => array('datePickerField2','e_start','e_end'),
-		    'av_position'     => array('textField'));
-    if ($trades=myOrg()->orgTrades()->get_trades()) $dialog['e_rate'] = array('selectMenu',$trades);
-    $this->formBlock('office_contract',
-		     myOrg_name.' employment',
-		     $dialog,
-		     array('i'=>$icon,
-			   'l'=>$this->sameURL_but('RW')));
-
-    //
-    // Group
-    //    
-    if ($groups=myOrg()->orgGroups()->get_groups()){
-      $this->formBlock('office_rg',
-		       'Research group',
+      $dialog = array('_virt_emp_record'=> array('textHidden'),
+		      '_emp_period'     => array('datePickerField2','e_start','e_end'),
+		      'av_position'     => array('textField'));
+      if ($trades=myOrg()->orgTrades()->get_trades()) $dialog['e_rate'] = array('selectMenu',$trades);
+      $this->formBlock('office_contract',
+		       myOrg_name.' employment',
+		       $dialog,
+		       array('i'=>$icon,
+			     'l'=>$this->sameURL_but('RW')));
+      
+      //
+      // Group
+      //    
+      if ($groups=myOrg()->orgGroups()->get_groups()){
+	$this->formBlock('office_rg',
+			 'Research group',
 		       array('_virt_emp_record' => array('textHidden'),
 			     'e_gid'            => array('checkBoxes',$groups),
 			     ),
 		       array('i'=>$icon,
 			     'l'=>$this->sameURL_but('RW')));
-    }
-    
-    //
-    // Office
-    //
-    $dialog = array('_virt_emp_record' => array('textHidden'),
-		    'av_phone'   => array('textField'));
-    if ($groups) $dialog['e_off'] = array('textField');
-    $this->formBlock('office_off',
-		     'Office location',
-		     $dialog,
-		     array('i'=>$icon,
-			   'l'=>$this->sameURL_but('RW')));
-    
-    
+      }
+      
+      //
+      // Office
+      //
+      $dialog = array('_virt_emp_record' => array('textHidden'),
+		      'av_phone'   => array('textField'));
+      if ($groups) $dialog['e_off'] = array('textField');
+      $this->formBlock('office_off',
+		       'Office location',
+		       $dialog,
+		       array('i'=>$icon,
+			     'l'=>$this->sameURL_but('RW')));
+      
+      
       //
       // Non-employees
       //
-    $this->defineVariable('Country','av_residentship');
-    if (!$this->getValue('e_type')) $this->formDB_modified['e_type'] = '20_mp';
-    
-    if (!$this->getValue('av_ddate',True,True)){
-      $dialog = array('av_position'     => array('textField'),
-		      'av_institute'    => array('textField'),
-		      'av_city'         => array('textField'),
-		      'av_residentship' => array('textFieldCountry'),
-		      '_emp_period'     => array('datePickerField2','e_start','e_end'),
-		      '_virt_emp_record'=> array('textHidden'),
-		      'e_type'          => array('textHidden'),
-		      );
-      // All the fields are optional
-      foreach($dialog as $k=>$v)       $this->isMBE[$k] = True;
+    }else{
+      $this->defineVariable('Country','av_residentship');
+      if (!$this->getValue('e_type')) $this->formDB_modified['e_type'] = '20_mp';
       
-      $this->formBlock('recent_emp',
-		       'Recent employment',
-		       $dialog,
-		       array('i'=>'i-building',
-			     'l'=>$this->sameURL_but('RW')));
+      if (!$this->getValue('av_ddate',True,True)){
+	$dialog = array('av_position'     => array('textField'),
+			'av_institute'    => array('textField'),
+			'av_city'         => array('textField'),
+			'av_residentship' => array('textFieldCountry'),
+			'_emp_period'     => array('datePickerField2','e_start','e_end'),
+			'_virt_emp_record'=> array('textHidden'),
+			'e_type'          => array('textHidden'),
+			);
+	// All the fields are optional
+	foreach($dialog as $k=>$v)       $this->isMBE[$k] = True;
+	
+	$this->formBlock('recent_emp',
+			 'Recent employment',
+			 $dialog,
+			 array('i'=>'i-building',
+			       'l'=>$this->sameURL_but('RW')));
+      }
     }
   }
   

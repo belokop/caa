@@ -3,4 +3,4 @@ description = JAM - Job Application Manager
 package = myPear
 core = 7.x
 dependencies[] = myPear
-version = 7.x-5.53.rc
+version = 7.x-5.0.dev

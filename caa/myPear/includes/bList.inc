@@ -1397,7 +1397,7 @@ class bList extends myPear_getValue{
    */
   function isManager(){
     myPear_access(EA_MODULE);
-    return EA_manager_here;
+    return EA_ORG_manager_here;
   }
 
   function isAdmin(){
@@ -1445,7 +1445,7 @@ class bList extends myPear_getValue{
     return $this->isWritable();
   }
 
-  protected function header(){
+  protected function header($arg=Null){
     return $this->list_showing;
   }
   

@@ -264,7 +264,7 @@ class bList_vm_cotenants extends bList_vm{
     return $reply;
   }
 
-  protected function header(){
+  protected function header($arg=Null){
     return array('period'  => '',
 		 'tenants' => '');
   }

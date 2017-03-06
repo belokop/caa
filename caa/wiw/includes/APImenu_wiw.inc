@@ -81,7 +81,17 @@ class APImenu_wiw extends APImenu{
       break;
 
     case  tab_wiw_adm:
-      locateAndInclude('bUnit');
+      // Make sure that there is an administrator appointed
+      // Add ea_org_manager(s) if the unit is empty
+      if (!WIW_managers()->getMembers()){
+	$u_ea = new bUnit(myOrg_ID,RANK__ea_org_manager);
+	foreach($u_ea->getMembers() as $um_id=>$r){
+	  $this->dbg("RANK__ea_org_manager member ".$r['um_avid'],cnf_dev);
+	  WIW_managers()->add_unitMember($r['um_avid']);
+	}
+      }
+
+      // Draw the members
       bUnit::b_tabs_bUnits(WIW_MODULE,myOrg_ID);
       break;      
 

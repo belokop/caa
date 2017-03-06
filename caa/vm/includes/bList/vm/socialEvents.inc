@@ -308,7 +308,7 @@ class bList_vm_socialEvents extends bList_vm{
   /*
    * Header for the list of events
    */ 
-  protected function header(){
+  protected function header($arg=null){
     $header = $this->list_showing;
     return $header;
   }

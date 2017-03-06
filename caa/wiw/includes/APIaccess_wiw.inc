@@ -22,7 +22,7 @@ class APIaccess_wiw  extends  APIaccess{
     EA_access();
 
     $this->who_is_here(array('WIW_manager_here' => array('rank'=> 'RANK_wiw_manager',
-							 'def' => 'EA_manager_here'),
+							 'def' => 'EA_ORG_manager_here'),
 			     'WIW_admin_here'   => array('rank'=> 'RANK_wiw_admin',
 							 'def' => 'WIW_manager_here')));
   }

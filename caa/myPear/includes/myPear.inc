@@ -60,6 +60,7 @@ class myPear{
   public static $__construct_notComplited = array();
   
   public function __construct(){
+
     if (self::$isReady) b_debug::internalError("double invocation of 'myPear'");
     
     // Register the myPear module
@@ -830,8 +831,6 @@ class myPear{
   /*
    * Display the unified message.
    */
-  private static $MESSAGE_dejaVu = array();
-  public  static $always_print = False;
   static public function MESSAGE($text,$class=Null,$id='status',$heading='',$only_once=False){
 
     // By default we don't show any messages in no-user context, unless it is explicitly requested 
@@ -863,17 +862,18 @@ class myPear{
 	  $caller = b_debug::__(3,$class);
 	  $text = $caller.' '.x('strong',x('em',$text));
 	}
+	//	if ((b_debug::$s_e_depth>0) && !b_debug::$starting_exiting) $text = str_repeat('&nbsp;',5*b_debug::$s_e_depth).$text;
 	if (b_debug::$s_e_depth>0) $text = str_repeat('&nbsp;',5*b_debug::$s_e_depth).$text;
 	break;
       default:
       }
 
+      static $MESSAGE_dejaVu = array();
       $msg_id = b_crypt::hash($x=trim(str_replace('&nbsp;','',strip_tags($text . $id . (is_object($class)?@$class->ID:'x')))));
-      static $zzz=array(); if (empty($zzz[$msg_id])) $zzz[$msg_id] = 0;
-      if (b_cnf::get('noCompactMessages')) { self::$MESSAGE_dejaVu = array(); } // $zzz = array($msg_id => 0); 
+      $msg_id = b_crypt::hash($x=trim(str_replace('&nbsp;','',$text)));
 
-      //      if (!$zzz[$msg_id]++) if (self::$always_print || !@self::$MESSAGE_dejaVu[$msg_id]++){
-      if (self::$always_print || !@self::$MESSAGE_dejaVu[$msg_id]++ || !$zzz[$msg_id]++){
+      if (empty($MESSAGE_dejaVu[$msg_id])) $MESSAGE_dejaVu[$msg_id] = 0;
+      if (b_cnf::get('noCompactMessages') || b_debug::$starting_exiting || !$MESSAGE_dejaVu[$msg_id]++){
 	if ($id=='message_bottom')  $_SESSION['message_bottom'][] = $text; 
 	elseif (function_exists('drupal_set_message') && !b_cnf::get('nodrupal')) drupal_set_message($text,$css_class);
 	elseif (cnf_CLI) b_fmt::printt($text);
@@ -901,11 +901,11 @@ class myPear{
   
   static public function MESSAGE_add($text,$add_counter=False,$noCompactMessages=True){
     $noCompactMessages_sv = b_cnf::get('noCompactMessages');
-    b_cnf::set('noCompactMessages',$noCompactMessages);
+    b_cnf::set('noCompactMessages',(int)$noCompactMessages);
     if ($add_counter) $text = (++self::$MESSAGE_add_counter) . " - $text";
     if (empty($_SESSION['messages.cache']))  myPear::MESSAGE($text);
     elseif(!in_array($text,$_SESSION['messages.cache']) || b_cnf::get('noCompactMessages')) $_SESSION['messages.cache'][] = $text;
-    b_cnf::set('noCompactMessages',$noCompactMessages_sv);
+    b_cnf::set('noCompactMessages',(int)$noCompactMessages_sv);
   }
   
   static public function dbg($text,$forced=False){

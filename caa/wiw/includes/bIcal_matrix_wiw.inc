@@ -40,7 +40,7 @@ class bIcal_matrix_wiw extends bIcal_matrix{
     while($r = myPear_db()->next_record($q)){
       if (empty($r['t_acl'])) $r['t_acl'] = wiw_acl_default;
       if (!bForm_wiw_trip::_trip_visible(array('t_acl'=>$r['t_acl'])))  continue;
-   
+
       // Leave just the first option of the trip types to limit the page width
       $lm_key = explode(',',@$r['lm_key']);
       $r['lm_key'] = $lm_key[0];
@@ -64,7 +64,7 @@ class bIcal_matrix_wiw extends bIcal_matrix{
     }
 
     // Show the selected entries
-    if (1 || empty($trips)){
+    if (empty($trips)){
       myPear::INFO('At the time there is no entries to show','Thank you for your interest in '.myOrg_name);
     // bAuth()->loginPrompt();
   }else{

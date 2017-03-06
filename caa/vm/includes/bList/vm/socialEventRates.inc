@@ -387,7 +387,7 @@ class bList_vm_socialEventRates extends bList_vm{
   /*
    *
    */
-  protected function header(){
+  protected function header($arg=Null){
    $header = $this->list_showing;
    if ($this->parent_ID != myOrg_ID) unset($header['_used']);
    return $header;

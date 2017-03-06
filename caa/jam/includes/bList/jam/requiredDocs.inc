@@ -87,7 +87,7 @@ class bList_jam_requiredDocs extends bList_jam{
     $this->f->closeForm();
   }
 
-  protected function header(){
+  protected function header($arg=Null){
     $header = $this->list_quering;
     return $header;
   }

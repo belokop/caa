@@ -129,7 +129,7 @@ class bUnit_vm_bookers extends bUnit_vm{
   /*
    *
    */
-  function header(){
+  function header($arg=Null){
     $reply = array('name'=>'');
     foreach($this->duties as $code=>$descr) $reply[$code] = str_replace(' ','<br/>',$descr['t'].'?');
     return $reply;

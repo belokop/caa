@@ -174,7 +174,7 @@ class bList_vm_budgetSource extends bList_vm{
     return $reply;
   }
 
-  protected function header(){
+  protected function header($arg=Null){
     return array('lm_key'   =>'',
 		 'lm_value' =>trim(CONST_currency),
 		 //'lm_status'=>'',

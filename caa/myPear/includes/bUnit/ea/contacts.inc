@@ -66,7 +66,7 @@ class bUnit_ea_contacts extends bUnit{
     return 'busy...';
   }
 
-  protected function header(){
+  protected function header($arg=Null){
     return array('name'=>'', 'relation'=>'relation','av_email'=>'e-mail','av_phone'=>'phone');
   }
   

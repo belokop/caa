@@ -1,5 +1,9 @@
 Changes log                                                                                                                                                             
                                                                                                                                                                                  
+2017-03-06, Version 5.2.rc3,
+                                                                                                                                                                                 
+2017-03-05, Version 5.23.rc,
+                                                                                                                                                                                 
 2017-02-26, Version 5.22.rc,
                                                                                                                                                                                  
 2017-02-26, Version 5.21.rc,

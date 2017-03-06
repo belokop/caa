@@ -1,5 +1,7 @@
 Changes log                                                                                                                                                             
                                                                                                                                                                                  
+2017-03-06, Version 5.3.13,
+                                                                                                                                                                                 
 2017-02-15, Version 5.12,
 A       lic/_drupal-8/src
 A       lic/_drupal-8/src/components

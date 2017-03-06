@@ -5,7 +5,7 @@ class APIaccess_prp extends APIaccess_ea{
   public function __construct(){
     parent::__construct();
     $this->who_is_here(array('PRP_manager_here'  => array('rank'=> 'RANK_prp_manager',
-							  'def' => 'EA_manager_here'),
+							  'def' => 'EA_ORG_manager_here'),
 			     'PRP_censor_here'   => array('rank'=> 'RANK_prp_censor',
 							  'def' => 'PRP_manager_here'),
 			     'PRP_submitter_here'=> array('rank'=> 'RANK_prp_submitter',
@@ -37,9 +37,9 @@ class APIaccess_prp extends APIaccess_ea{
     if (empty($av_id)) $av_id = @bAuth::$av->ID;
     if (($reply = parent::getRank($av_id)) == RANK__authenticated){
       if (PRP_submitters()->isMember($av_id)) $reply = RANK_prp_submitter;
-      if (PRP_censors()->isMember($av_id)) $reply = RANK_prp_censor;
+      if (PRP_censors()->isMember($av_id))    $reply = RANK_prp_censor;
     }
-    $this->dbg($reply);
+    $this->dbg($reply,cnf_dev);
     return (int)@$reply;
   }
 

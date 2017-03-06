@@ -1,6 +1,6 @@
 <?php
 
 $releaseDate = '2016-07-26';
-define('myPear_VERSION','0.1-dev');
+define('TS_VERSION','0.1-dev');
 
 

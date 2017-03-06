@@ -109,6 +109,11 @@ class bList_vm_projects extends bList_vm{
     return $reply;
   }
 
+  protected function message_addMember($r){
+    $this->dbg($r,cnf_dev);
+    return parent::message_addMember($r);
+  }
+
   protected function getFormAdd(){
     $this->bForm(array('active project?'=>'lm_option',
 		       'project name'   =>'lm_key',
@@ -124,7 +129,7 @@ class bList_vm_projects extends bList_vm{
     $this->f->closeForm();
   }
 
-  protected function header(){
+  protected function header($arg=Null){
     return array('lm_value'  =>'project<br/>number',
 		 'event_name'=>'',
 		 'lm_option' =>'active?');

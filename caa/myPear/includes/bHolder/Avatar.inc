@@ -28,7 +28,7 @@ class bHolder_Avatar extends bHolder {
 			    'av_email'           => 'Email',
 			    'av_institute'       => "Affiliation",
 			    'av_lastlogin'       => 'login');
-      if (!EA_manager_here) unset($this->header['av_ssn']);
+      if (!EA_ORG_manager_here) unset($this->header['av_ssn']);
     }else{
       $this->header = $this->custom_header;
     }
@@ -108,7 +108,7 @@ class bHolder_Avatar extends bHolder {
       $ranks = array();
       $look_for = array(RANK__ea_member,
 			RANK__ea_admin,
-			RANK__ea_manager,
+			RANK__ea_org_manager,
 			RANK__superuser);
       $look_for = array();		      
       foreach(bUnit::get_unitsMembership(myOrg_ID, $look_for, $this->rec['av_id']) as $av_id=>$rrs){
@@ -122,7 +122,7 @@ class bHolder_Avatar extends bHolder {
 	  $icon = myOrg()->eaMembers()->unitMemberIcon($this->rec['av_id']);
 	  break;
 	case RANK__ea_admin:
-	case RANK__ea_manager:
+	case RANK__ea_org_manager:
 	case RANK__superuser:
 	  $icon = b_reg_bUnit::get_icon($rank,myPear_MODULE);
 	  break;

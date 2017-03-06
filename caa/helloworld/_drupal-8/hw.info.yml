@@ -4,4 +4,4 @@ description: myPear Hello World module
 package: myPear
 project: YB
 core: 8.x
-version: 8.x-1.7
+version: 8.x-1.0.8

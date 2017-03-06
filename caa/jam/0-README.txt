@@ -1,5 +1,9 @@
 Changes log                                                                                                                                                             
                                                                                                                                                                                  
+2017-03-06, Version 5.0.dev,
+                                                                                                                                                                                 
+2017-03-05, Version 5.54.rc,
+                                                                                                                                                                                 
 2017-02-15, Version 5.53.rc,
 
 2017-02-11, Version 5.52.rc, Update myPear (menu system), VM (accommodation options)

@@ -42,13 +42,13 @@ class bUnit extends bList{
    * The method is designed to show bUnits from mupliple modules in a single invocation.
    * However, this is useful mainly for debugging
    */
-  public static function b_tabs_bUnits($modules=MyPear_MODULE,$parent_ID=myOrg_ID,$exclude=array(),$include='all'){
+  public static function b_tabs_bUnits($module=MyPear_MODULE,$parent_ID=myOrg_ID,$exclude=array(),$include='all'){
     locateAndInclude('b_tabs');
 
     // Strip out modules where this parentID does not present 
-    $modules = (empty($modules)
+    $modules = (empty($module)
 		? array_keys(b_reg_bUnit::get_description())
-		: array($modules));
+		: array($module));
     foreach($modules as $module){
       $rank_used[$module] = $rank_unused[$module] = array();
       foreach(b_reg_bUnit::get_description(Null,$module) as $rank=>$d){
@@ -75,6 +75,7 @@ class bUnit extends bList{
     }
     
     foreach($modules as $module){
+      b_debug::xxx($module);
       if (isset($tabs_modules) && !$tabs_modules->body()) continue;
 
       // Get all the wanted units for the module
@@ -98,7 +99,9 @@ class bUnit extends bList{
       foreach(array_keys($tabbs) as $rank){
 	if ($tabs_ranks->body()){
 	  locateAndInclude($class = $list[$rank]['class']);
-	  $unit = new $class(($parent_ID ? $parent_ID : $include[$rank]),$rank);
+	  $arg = ($parent_ID ? $parent_ID : $include[$rank]);
+	  b_debug::xxx("class = $class($arg,$rank)");
+	  $unit = new $class($arg,$rank);
 	  $unit->getForm();
 	}
       }
@@ -295,10 +298,12 @@ class bUnit extends bList{
   /*
    *
    */
-  protected function header(){
-    return array('name'=>'', 'av_institute'=>'');
+  protected function header($arg=Null){
+    return ($arg
+	    ? array('name'=>'')
+	    : array('name'=>'', 'av_institute'=>''));
   }
-
+  
   /*
    *
    */
@@ -454,10 +459,9 @@ class bUnit extends bList{
       if (!$this->b_tabs->body()) continue;
 
       // Show the members list      
-      if ($onlyNames) $header = array('name'=>'');
-      else            $header = $this->header();
+
       locateAndInclude('b_table');
-      $this->t = new b_table_zebra($header);
+      $this->t = new b_table_zebra($this->header($onlyNames));
       $this->t->noSort = True;
       $this->show_set_css();
       
@@ -737,8 +741,8 @@ class bUnit extends bList{
       // Update the cache
       foreach($this->membersInfo_toSelect(True) as $k){
 	if (!isset($av->vars[$k])) $av->defineVariable($k,$k);
-	if  ($k == 'sfl')                      $updates[$k] = $av->fmtName('sfl');
-	elseif($v=$av->getValue($k,True,True)) $updates[$k] = $v;
+	if  ($k == 'sfl')                         $updates[$k] = $av->fmtName('sfl');
+	elseif($v=$av->getValue($k,True,'isMBE')) $updates[$k] = $v;
       }
       $this->get_memberInfo($av->ID,$updates,'update');
 
@@ -1028,7 +1032,16 @@ class bUnit extends bList{
   }
 
   protected function isUnitMemberDeletable(){
-    return $this->isWritable();
+    return $this->isUnitMemberWritable();
+  }
+  
+  function isUnitMemberWritable(){
+    $member_rank = EA_access()->getRank($this->rec['um_avid']);
+    $reply = ($member_rank == RANK__ea_org_manager
+	      ? superUser_here
+	      : parent::isWritable());
+    $this->dbg($reply,True);
+    return $reply;
   }
   
   /*
