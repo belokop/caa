@@ -137,11 +137,11 @@ b_debug::print_r($GLOBALS['e_types'],'e_types');
 foreach($GLOBALS['e_types'] as $e_type){
     if (myOrg_code != 'nordita'){    
         if($e_type == 'admin') $e_type = 'adm';
-        myOrg()->orgTrades()->updateMember(array('lm_key' =>$e_type));
+        myOrg()->orgEmpTypes()->updateMember(array('lm_key' =>$e_type));
     }
 }
-print "<h3>myOrg()->orgTrades()->get_trades()</h3>\n";
-b_debug::print_r(myOrg()->orgTrades()->get_trades(),'myOrg()->orgTrades()->get_trades()');
+print "<h3>myOrg()->orgEmpTypes()->get_empTypes()</h3>\n";
+b_debug::print_r(myOrg()->orgEmpTypes()->get_empTypes(),'myOrg()->orgEmpTypes()->get_empTypes()');
 
 b_debug::print_r($GLOBALS['? employeeTitle'],'? employeeTitle');
 
