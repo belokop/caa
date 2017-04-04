@@ -217,7 +217,7 @@ class APImenu_ea extends APImenu{
     case tab_ea_admin_org_structure:
       locateAndInclude('bList');
       bList::b_tabs_bLists(myPear_MODULE,array('bList_orgGroups'=>myOrg_ID,
-					       'bList_orgTrades'=>myOrg_ID));
+					       'bList_orgEmpTypes'=>myOrg_ID));
       break;
       
     case  tab_ea_admin_org_mngr:

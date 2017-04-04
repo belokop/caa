@@ -3,10 +3,11 @@
  * Implement a simple list of 2-keys objects.
  */
 
-define('bList_use_membersCache',True);
 locateAndInclude('myPear_getValue');
 
 class bList extends myPear_getValue{
+
+  public static $use_membersCache = True;
 
   public static function get_all($class=Null,$parent_ID=Null,$rank=Null){ 
     $reply = array();
@@ -327,7 +328,7 @@ class bList extends myPear_getValue{
 	// Return to the dialog if the data is not complete 
 	if ($this->getFormAdd_OK()){
 	  
-	  if ($member_ID = @$_REQUEST[$this->TABLEID_member]){
+	  if ((int)($member_ID = @$_REQUEST[$this->TABLEID_member])){
 	    $this->dbg("======update member record ",cnf_dev);
 	    $this->member_ID = $member_ID;
 	    $this->updateMember($_POST,$this->member_ID,True);
@@ -459,6 +460,10 @@ class bList extends myPear_getValue{
 			join(',',array($this->hookParent(),
 				       $this->TABLEID_member.'='.$this->member_ID_lastAdded)),
 			(bool)$this->debug||cnf_show_db);
+    // ZZZZZ ?? YB 2017-03-26
+    //    if (@$_POST[$this->TABLEID_member] === 'new') $_POST[$this->TABLEID_member] = $_REQUEST[$this->TABLEID_member] = $this->member_ID_lastAdded;
+    $this->getValue_reset($this->TABLEID_member,$this->member_ID_lastAdded);
+    $this->dbg($this->TABLEID_member.'='.var_export($this->getValue($this->TABLEID_member),True),True);
     return $this->member_ID_lastAdded;
   }
   
@@ -500,7 +505,7 @@ class bList extends myPear_getValue{
   }
 
   /*
-   * Add list member if it does not exist
+   * Add list member if it does not exist, update otherwise
    */
   function addMember($args=array()){
     // Massage the agruments if needed
@@ -723,18 +728,20 @@ class bList extends myPear_getValue{
    */
   private $reset_counter = 0;
   private function reset_cache_bList_getMembers(){
-    $this->dbg('Reseting cache_bList_getMembers#'.(++$this->reset_counter));
-    unset(self::$counterL[get_class($this)]);
+    if (!empty($this->cache_bList_getMembers)){
+      $this->dbg('Reseting cache_bList_getMembers#'.(++$this->reset_counter));
+      unset(self::$counterL[get_class($this)]);
+    }
     $this->cache_bList_getMembers = array();
   }
 
   /*
-   * Return array of the list/unit entries corresponding to the set of arguments.
+   * Return array of the list members corresponding to input arguments.
    * If the argument is a number, then return one record with <primary key> == <argument>.
    */
   public static $counterL = array();
   protected $cache_bList_getMembers = array();
-  function getMembers($args=array()){
+  function getMembers($args=array(),$operation=' AND '){
 
     bTiming()->cpu(array(get_class($this),__FUNCTION__));
 
@@ -761,23 +768,25 @@ class bList extends myPear_getValue{
     
     // Build the query string
     if (empty($this->sortArgs))  $this->sortArgs = " ORDER BY $this->orderBy $this->orderByDir";
-    $query = 'SELECT * FROM '.$this->TABLE_member.$this->hookJOIN().' WHERE '.join(' AND ',$w).' '.$this->sortArgs;
+    $query = 'SELECT * FROM '.$this->TABLE_member.$this->hookJOIN().' WHERE '.join($operation,$w).' '.$this->sortArgs;
     $this->sortArgs = '';
 
     //
     // Shortcut... Get the answer from a cache if the latter exists
     //
-    $cache_hash = b_crypt::hash($query);
-    if (empty(self::$counterL[get_class($this)][$cache_hash])){
-      self::$counterL[get_class($this)][$cache_hash] = array('c'=>0);
-    }
-
-    if (!empty($this->cache_bList_getMembers[$cache_hash])){
-      self::$counterL[get_class($this)][$cache_hash]['c']++;
-      self::$counterL[get_class($this)][$cache_hash]['s'] = count($this->cache_bList_getMembers[$cache_hash],COUNT_RECURSIVE);
-      $this->dbg("reading from cache #".self::$counterL[get_class($this)][$cache_hash]['c']);
-      bTiming()->cpu();
-      return $this->cache_bList_getMembers[$cache_hash];
+    if (self::$use_membersCache){
+      $cache_hash = b_crypt::hash($query);
+      if (empty(self::$counterL[get_class($this)][$cache_hash])){
+	self::$counterL[get_class($this)][$cache_hash] = array('c'=>0);
+      }
+      
+      if (!empty($this->cache_bList_getMembers[$cache_hash])){
+	self::$counterL[get_class($this)][$cache_hash]['c']++;
+	self::$counterL[get_class($this)][$cache_hash]['s'] = count($this->cache_bList_getMembers[$cache_hash],COUNT_RECURSIVE);
+	$this->dbg("reading from cache #".self::$counterL[get_class($this)][$cache_hash]['c']);
+	bTiming()->cpu();
+	return $this->cache_bList_getMembers[$cache_hash];
+      }
     }
 
     //
@@ -807,7 +816,7 @@ class bList extends myPear_getValue{
     if (!$reply_as_one_record)    $this->dbg("$n entr".($n==1?'y':'ies'));
     
     // Optionally save the result in a cache
-    if (bList_use_membersCache){
+    if (self::$use_membersCache){
       $this->cache_bList_getMembers[$cache_hash] = $reply;
     }else{
       self::$counterL = array();
@@ -1239,10 +1248,7 @@ class bList extends myPear_getValue{
 	      $this->t->extraTD[] = $this->button_deleteListMember();
 	    }
 	    $this->format();
-	    if ($this->t instanceof b_table){
-	      if (!empty($this->r)) $this->t->prt($this->r); 
-	      $this->t->extraTD = array();
-	    }
+	    $this->prt();
 	  }
 	}
 	// $this->t might be not defined, protect
@@ -1258,6 +1264,16 @@ class bList extends myPear_getValue{
     }
     if (is_object($b_tabs)) $b_tabs->close();
     $this->show_end();
+  }
+
+  /*
+   *
+   */
+  protected function prt(){
+    if ($this->t instanceof b_table){
+      if (!empty($this->r)) $this->t->prt($this->r); 
+      $this->t->extraTD = array();
+    }
   }
 
   /*

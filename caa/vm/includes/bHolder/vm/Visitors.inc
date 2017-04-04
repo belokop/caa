@@ -909,7 +909,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
     $this->highlight = '';
 
     // Highlight the visitors where something is wrong
-    if (bForm_vm_Visit::_getClashes($this->rec)){
+    if (bForm_vm_Visit::_getClashingVisits($this->rec)){
       list($c,$d) = array('v_status',STATUS_CLASH);
     }elseif (!empty($this->fnc_beslut)){
       list($c,$d) = array('fnc',     $this->fnc_beslut);
@@ -1525,7 +1525,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
       }      
 
       if ($this->av) $this->rec['name'] = $this->rec['_e_name'];
-      if (empty($this->rec['name'])) $this->rec['name'] = VM::$description[$this->rec['v_type']]['d'];
+      if (empty($this->rec['name'])) $this->rec['name'] = @VM::$description[$this->rec['v_type']]['d'];
 
       // Save the record to the buffer
       $this->rec2buffer();
@@ -2170,7 +2170,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
 				    $this->btn_payments(),
 				    $this->btn_admin());
     if (empty(VM::$e)) array_unshift($this->t->extraTD,
-				     bIcons()->get(array('i'=>VM::$description[$this->rec['v_type']],
+				     bIcons()->get(array('i'=>@VM::$description[$this->rec['v_type']],
 							 'c'=>'only_online')));
   }
 

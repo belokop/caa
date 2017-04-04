@@ -33,6 +33,9 @@ class bForm_ea_Office extends bForm{
     $this->dbg('------------------------');
   }
 
+  /*
+   *
+   */
   function readDefRecord(){
     $q = myPear_db()->query("SELECT * FROM $this->TABLE WHERE $this->TABLEID = '$this->ID'");
     while ($r=myPear_db()->next_record($q)) $this->formDB = $r; 

@@ -1,5 +1,11 @@
 Changes log                                                                                                                                                             
                                                                                                                                                                                  
+2017-04-04, Version 5.12.rc5,
+
+  * New procedure for inviting the guest researches (invitations are accepted by default,
+    the group leaders revise them if needed) 
+
+  * New display of the guest reseachers - based on the hosting group rather then finansial project (to pay from)                                                                                                                                                                                
 2017-03-06, Version 5.12.rc3,
                                                                                                                                                                                  
 2017-03-05, Version 5.87,

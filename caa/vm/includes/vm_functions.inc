@@ -70,11 +70,15 @@ function vm_colorLegend($r){
   
   if ($e=@$r['e_name']){
     $colorLegend = $e;
-  }elseif($c=@$r['v_projectid']){
-    locateAndInclude('bForm_vm_Visit');
-    $colorLegend = bForm_vm_Visit::projectName($c,$compact=True);
+  }elseif(show_guests_by_budget){
+    if ($c=@$r['v_projectid']){
+      locateAndInclude('bForm_vm_Visit');
+      $colorLegend = bForm_vm_Visit::projectName($c,$compact=True);
+    }else{
+      $colorLegend = 'project X';
+    }
   }else{
-    $colorLegend = 'project X';
+    $colorLegend = $r['v_group'];
   }
   if (preg_match('/^[0-9]*$/',$colorLegend)) $colorLegend = "project $colorLegend";
   return $colorLegend;

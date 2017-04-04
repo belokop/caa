@@ -40,7 +40,6 @@ class bForm extends myPear_getValue{
   var $dontShowErrors= False;
   var $continueAfterErrors = False;
   var $printErrorAsIs  = array();
-  var $errorsInTheForm = array();
   var $aceptAsIs_DoNotSave = False;  // usually a form returned by 'search'
   var $leaveCommentUnformatted = False;
   var $everythingIsVital = False;
@@ -125,6 +124,7 @@ class bForm extends myPear_getValue{
 
     // Build unique form name, mainly for debug
     $this->formName = join('',array(get_class($this),($this->globalCount = ++self::$class_globalCount)));
+    $this->dbg($this->formName);
 
     if ($this->SQL_backend = $SQL_backend){
       $c = get_class($this);
@@ -149,6 +149,7 @@ class bForm extends myPear_getValue{
 			  
     // Read the form data from the database
     if ((int)$this->ID)      $this->readDefRecord();
+    $this->dbg('done readDefRecord');
     
     // Cancel the "Input Default Values" in the _POST array.
     // How they happen to get there?? Browser problem? Modal problem?
@@ -191,6 +192,7 @@ class bForm extends myPear_getValue{
       if ($this->MODE != 'RW')      $this->dbg("Force RW mode by '_post_bForm_RW_once'");
       $this->MODE = $_GET['mode'] = 'RW';
     }
+    $this->dbg('MODE = '.$this->MODE);
   }
 
 
@@ -211,7 +213,8 @@ class bForm extends myPear_getValue{
     }else{
       if ($s = @$_SESSION['DB_'.get_class($this)]) $this->formDB = $s;
     }
-    if (@$this->formDB['av_lastname'] == 'Luther')    b_debug::print_r($this->formDB,$this->__toString());
+    // if (@$this->formDB['av_lastname'] == 'Luther')    b_debug::print_r($this->formDB,$this->__toString());
+    $this->dbg('done');
   }
   
   /*
@@ -381,14 +384,15 @@ class bForm extends myPear_getValue{
     if ($id !== Null){
       $this->reply_myP == Null;
       $_POST['_post_bForm_ID_once'] = $id;
+      $this->dbg("Reset ID --> $id",True);
     }
     
     // Get the cached reply
     if  ($this->reply_myP === Null){
-      if($this->reply_myP = (isset($_POST['_post_bForm_ID_once']) && (@$_POST['_post_bForm_class_once']===get_class($this)))){
-	 $this->reply_myP = (( (int)$this->ID && ($_POST['_post_bForm_ID_once'] == $this->ID)) ||
-			     (!(int)$this->ID && ($_POST['_post_bForm_ID_once']==='new' || $_POST['_post_bForm_ID_once']==='empty')));
-      }
+      $this->reply_myP = ((isset($_POST['_post_bForm_ID_once']) && (@$_POST['_post_bForm_class_once']===get_class($this))) &&
+			  (( (int)$this->ID && ($_POST['_post_bForm_ID_once'] == $this->ID)) ||
+			   (!(int)$this->ID && ($_POST['_post_bForm_ID_once']==='new' || 
+						$_POST['_post_bForm_ID_once']==='empty'))));
       $color = (cnf_dev || ($this->dbg_color == 'blackText') ? 'oliveText' : $this->dbg_color);
       $this->dbg($this->reply_myP,array(3,$this,$color,(bool)($this->debug || (cnf_dev && $this->reply_myP))));
     }
@@ -743,9 +747,9 @@ class bForm extends myPear_getValue{
 
       if (!empty(bForm::$formOpened)){
         $this->dbg('ZZZ closeForm '.bForm::$formOpened);
-	foreach($this->hidden_inputs as $field) print $field; 
+	foreach(array_keys(self::$hidden_inputs) as $field) print $field; 
         print "</form> <!-- end $this->formName -->\n";
-	$this->hidden_inputs = array();
+	self::$hidden_inputs = array();
 	bForm::$formOpened = Null;
       }
     }
@@ -807,7 +811,7 @@ class bForm extends myPear_getValue{
 	}
       }
     }else{
-      $reply = myPear::is_empty($this->vitalFieldMissing());
+      $reply = !$this->vitalFieldMissing();
     }
     $this->dbg($reply,cnf_dev||$this->debug);
     $this->dbg(exiting);
@@ -867,8 +871,8 @@ class bForm extends myPear_getValue{
 	}
       }
       if (!empty($display)){
-	myPear::MESSAGE(x('ul',b_fmt::joinMap('li',$display)),
-			Null,
+	myPear::MESSAGE(x('ul',b_fmt::joinMap('li',$display)),  // same as myPear::ERROR, almost...
+			(cnf_dev ? $this : Null),
 			'error',
 			$this->displayErrors_heading);
 	if (cnf_dev) b_debug::print_r($this->errorsInTheForm,$this.'->errorsInTheForm');
@@ -1051,8 +1055,8 @@ class bForm extends myPear_getValue{
     if (!$this->isRO($name,$onlyRW)){
       $s = array();
       if (!empty($values)){
-	if (!$selected)                   $s[] = x("option value='NULL' selected","<-- select -->");
-	elseif (empty($values[$selected]))$s[] = x("option value='$selected' selected",$selected); // strictly speaking this is not correct...
+	if (!$selected)                    $s[] = x("option value='NULL' selected","<-- select -->");
+	elseif (empty($values[$selected])) $s[] = x("option value='$selected' selected",$selected); // strictly speaking this is not correct...
 	foreach ($values as $k=>$v){ 
 	  if(strstr($k,'separator'))$s[] = x("option value='' disabled='disabled' class='select_separator'",'');
 	  elseif($k != 'default')   $s[] = x("option value='$k'".($selected==$k?" selected='selected'":''), $v);
@@ -1150,6 +1154,7 @@ class bForm extends myPear_getValue{
   function updateDB($data=array()){
     static $ignoreFields = array('button_x','button_y','MAX_FILE_SIZE'), $call_counter = 0;
 
+    $this->dbg();
     if ($this->updateDB_recursion++){
       static $caseN = 0;
       $this->dbg($m=sprintf("Recursion depth %s, case %s",$this->updateDB_recursion,(++$caseN)),cnf_dev);
@@ -1203,21 +1208,12 @@ class bForm extends myPear_getValue{
     if ($this->SQL_backend){
       if (!empty($pars)) {
 	if ((int)$this->ID){
-	  myPear_db()->qquery($cmd="UPDATE $this->TABLE SET ".join(', ',$pars)." WHERE $this->TABLEID='$this->ID'",
+	  myPear_db()->qquery("UPDATE $this->TABLE SET ".join(', ',$pars)." WHERE $this->TABLEID='$this->ID'",
 			      ($this->debug || cnf_show_db));
 	  $this->readDefRecord();
 	  $this->_recordUpdated();
 	}else{
-	  $this->dbg("Creating $this",(bool)($this->debug || cnf_show_db));
-	  $this->bForm_isJustCreated = True;
-	  $this->formDB[$this->TABLEID] = $this->formDB_modified[$this->TABLEID] = $_GET['id'] = $this->ID = bMaster()->reserve_masterCounter();
-	  $pars[] = myPear_db()->quote($this->ID,True,$this->TABLEID);
-
-	  // Reset the "my POST" if it was not this a new record
-	  if ($this->myPost_bForm()) $this->myPost_bForm($this->ID);
-
-	  myPear_db()->qquery($cmd="INSERT INTO $this->TABLE SET ".join(', ',$pars),
-				($this->debug || cnf_show_db));
+	  $this->updateDB_createRecord($pars);
 	  $this->readDefRecord();
 	  $this->_recordCreated();
 	}
@@ -1232,6 +1228,22 @@ class bForm extends myPear_getValue{
     bTiming()->cpu();
     $this->dbg(exiting);
     return $this->ID;
+  }
+
+  /*
+   * Create a new bForm record
+   */
+  function updateDB_createRecord($pars=array()){
+    $this->dbg("Creating ".$this->__toString(),(bool)($this->debug || cnf_show_db));
+    $this->bForm_isJustCreated = True;
+    $this->formDB[$this->TABLEID] = $this->formDB_modified[$this->TABLEID] = $_GET['id'] = $this->ID = bMaster()->reserve_masterCounter();
+    $pars[] = myPear_db()->quote($this->ID,True,$this->TABLEID);
+    
+    // Reset the "my POST" if it was not this a new record
+    if ($this->myPost_bForm()) $this->myPost_bForm($this->ID);
+    
+    myPear_db()->qquery("INSERT INTO $this->TABLE SET ".join(', ',$pars),($this->debug || cnf_show_db));
+    $this->dbg('New record is created',True);
   }
   
   protected function _recordUpdated() {}
@@ -1282,14 +1294,15 @@ class bForm extends myPear_getValue{
     }
     $this->inside_errorless--;
 
-    $this->dbg($reply);
+    $this->dbg($reply,True);
     return $reply;
   }
 
   /*
-   * Cancel errors for the values which we NOT in the dialog
+   * Cancel errors for the values which are NOT in the dialog
    */
   protected function clean_outOfScopeMissingValues(&$errors_list=Null){
+    b_debug::xxx();
     // Check that the missing values were asked, skip if not
     if (!empty($_POST) && !$this->myPost_bForm()) return;
     
@@ -1300,7 +1313,7 @@ class bForm extends myPear_getValue{
       foreach($arg as $field=>$msg){
 	//	if ($msg != missing_value) continue;
 	if (!in_array($field,array_keys($_POST))){
-	  if (cnf_dev) myPear::DEBUG(sprintf("%s - Cancel error '%s' for %s[%s]",__FUNCTION__,$msg,$type,$field));
+	  if (cnf_dev) myPear::DEBUG(sprintf(" - Cancel error '%s' for %s[%s]",$msg,$type,$field),$this);
 	  if ($type == 'errorsInTheForm') unset($this->errorsInTheForm[$field]);
 	  else                            unset($errors_list[$field]);
 	}
@@ -1346,7 +1359,11 @@ class bForm extends myPear_getValue{
     // Sanity
     if (!empty($reply))        $this->dbg(($reply ? join(', ',$reply) : False),(bool)($this->debug || cnf_dev));
     if($this->errorsInTheForm) $this->dbg("errorsInTheForm: ".b_fmt::joinX(',',$this->errorsInTheForm),(bool)($this->debug||cnf_dev));
-    $this->dbg((bool)!empty($reply),cnf_dev);
+    //    if($this->errorsInTheForm) {
+    //      b_debug::print_r($this->isMBE);
+    //      b_debug::traceBack("errorsInTheForm: ".b_fmt::joinX(',',$this->errorsInTheForm));
+    //    }
+    $this->dbg((bool)!empty($reply));
     return $reply;
   }
   
@@ -1833,7 +1850,7 @@ class bForm extends myPear_getValue{
   /*
    * Show a hidden value
    */  
-  private $hidden_inputs = array();
+  private static $hidden_inputs = array();
   function textHidden($name,$value=Null,$printNow=True) {
     if (bForm::$formOpened === $this->ID){
       $show_it = ($value === 'show_it');
@@ -1844,8 +1861,12 @@ class bForm extends myPear_getValue{
 	$this->getFormRow($name, $value);
       }
       $reply = "<input type='hidden' name='$name' value='".strip_tags($value)."'/>\n";
-      if ($printNow) $this->hidden_inputs[] = $reply;
-      else          return $reply;
+      if ($printNow){
+	// The array must be static, otherwise fields from other classes will be lost :-/
+	@self::$hidden_inputs[$reply]++;
+      }else{
+	return $reply;
+      }
     }
   }
   
@@ -2144,11 +2165,10 @@ class bForm extends myPear_getValue{
   }
 
   /*
-   * Check is the field (sql column) writable
+   * Check is the field (sql column) is ReadOnly
    */
   protected function isRO($name,$onlyRW=False){
     $reply = ((($this->MODE == 'RO') || @$this->isRO[$name]) && !@$this->isRW_forced[$name] && !$onlyRW);
-    $this->dbg($reply);
     return $reply;
   }
 
@@ -2301,7 +2321,8 @@ class bForm extends myPear_getValue{
       // Show the block
       $this->isRO[$a['field']] = True;
       $this->isUL[$a['field']] = True;
-      $this->formBlock($list_name,
+      if (empty($this->listCounter[$list_name])) $this->listCounter[$list_name] = 0;
+      $this->formBlock($list_name.(++$this->listCounter[$list_name]),
 		       $btit,
 		       array($a['field']),
 		       array('d'=>$btit,
@@ -2310,6 +2331,7 @@ class bForm extends myPear_getValue{
 		       );
     }
   }
+	private $listCounter = array();
     
   /**
    * Display bForm block - group of fields with a title

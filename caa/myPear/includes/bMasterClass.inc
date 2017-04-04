@@ -89,8 +89,8 @@ class bMasterClass{
 	$this->_update_masterCounter();
 	myPear_db()->transaction('end');
       }
-    }catch (Exception $e) {
-      b_debug::internalError("Exception $e");
+    }catch(Exception $e){
+      b_debug::internalError(x('pre',$e->xdebug_message));
     }
     $this->dbg('reserve');
     return $this->masterCounter;
@@ -247,7 +247,7 @@ class bMasterClass{
 	myPear::DEBUG($msg);
       }
     }catch (Exception $e) {
-      b_debug::internalError("Exception $e");
+      b_debug::internalError(x('pre',$e->xdebug_message));
     }
   }
   

@@ -36,6 +36,8 @@ class bUnit extends bList{
 			       'class'  => 'u_class',
 			       'name'   => 'u_name',
 			       'memberT'=> 'u_member_title');
+  // by default the tabs are of the "myPear style"
+  public $b_tabs_Engine = 'b_tabs_myPear';
 
   /*
    * Present the units for the module as tabs.
@@ -299,9 +301,9 @@ class bUnit extends bList{
    *
    */
   protected function header($arg=Null){
-    return ($arg
-	    ? array('name'=>'')
-	    : array('name'=>'', 'av_institute'=>''));
+    return (empty($arg)
+	    ? array('name'=>'', 'av_institute'=>'')
+	    : array('name'=>''));
   }
   
   /*
@@ -452,7 +454,9 @@ class bUnit extends bList{
     // Open the preselected tab
     $selected = $this->detect_selectedTab($tabs);
     locateAndInclude('b_tabs');
-    $this->b_tabs = new b_tabs(array_values($tabs),$selected);
+    $this->b_tabs = ($this->b_tabs_Engine == 'b_tabs_myPear'
+		     ? new b_tabs_myPear(array_values($tabs),$selected)
+		     : new b_tabs_JQ(array_values($tabs),$selected));
     
     // Fill the entries
     foreach ($tabs as $tab_search=>$tab){

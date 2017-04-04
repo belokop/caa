@@ -368,10 +368,10 @@ class legacy_maildb{
       case 'name':            $maildb_array[$field] = $this->parent_AV->getValue('av_firstname',True);    break;
       case 'namefam':         $maildb_array[$field] = $this->parent_AV->getValue('av_lastname',True);     break;
       case 'country':         $maildb_array[$field] = $this->parent_AV->getValue('av_residentship',True); break;
-      case 'position':        $maildb_array[$field] = $emp->get_currentItem('lm_value');       break;
+      case 'employeeType':    $maildb_array[$field] = myOrg()->orgEmpTypes()->code2text($emp->get_currentItem('e_rate'));break;
+      case 'employeeTitle':   $maildb_array[$field] = $this->parent_AV->getValue('av_position',True);     break; // $emp->get_currentItem('lm_value');       break;
+      case 'position':        $maildb_array[$field] = $this->parent_AV->getValue('av_position',True);     break; // $emp->get_currentItem('lm_value');       break;
       case 'office':          $maildb_array[$field] = $emp->get_currentItem('e_off');          break;
-      case 'employeeType':    $maildb_array[$field] = $emp->get_currentItem('e_rate');         break;
-      case 'employeeTitle':   $maildb_array[$field] = $emp->get_currentItem('lm_value');       break;
       case 'groupid':         $maildb_array[$field] = $emp->get_currentItem('e_gid');          break;
       case 'norPeriodOfStay': $maildb_array[$field] = b_time::period($day1,$day9,'short');     break;
       case 'expiration':      $maildb_array[$field] = ($day9 ? date('Y-m-d',$day9) : '');      break;

@@ -3,8 +3,10 @@
 # Script to update the /etc/password file 
 #
 
+whoami
+
 # In production since 2016-04-01
-repository=https://svn.csc.kth.se/~iourib/setup/registration
+repository='https://svn.csc.kth.se/~iourib/setup/registration'
 
 ##### Not used since the spring 2016
 # repository=https://svn.csc.kth.se/~iourib/setup/maintenance/mail/2leif
@@ -51,16 +53,16 @@ home=/afs/kth.se/home/$l1/$l2/$user
 tmp_passwd=$tmp/`basename $repository`/passwd
 
 if [ -s $tmp_passwd ]; then
-    [ -w $tmp_passwd ] ||  usage "You don\'t have enougth priviliges to add user" 
+    [ -w $tmp_passwd ] ||  usage "You don't have enougth priviliges to add user" 
     cd `dirname $tmp_passwd`
-    svn up --config-dir $tmp/.subversion --trust-server-cert --non-interactive >/dev/null
+    svn up --config-dir $tmp/.subversion --trust-server-cert --non-interactive >/dev/null || usage "You don't have enougth priviliges to add user" 
 else
     rm -rf $tmp
     mkdir -p $tmp
     cd $tmp
     
     which svn>/dev/null || usage "can't find  'svn' command"
-    svn co --config-dir $tmp/.subversion --trust-server-cert --non-interactive $repository >/dev/null
+    svn co --config-dir $tmp/.subversion --trust-server-cert --non-interactive $repository >/dev/null || usage "You don't have enougth priviliges to add user" 
 fi
 
 id $user >/dev/null 2>&1 && {

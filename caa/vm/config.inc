@@ -3,9 +3,9 @@ set_time_limit(0);
 /**
  * Visitors Manager (VM) configuration file
  */
-$releaseDate = '2017-03-06';
+$releaseDate = '2017-04-04';
 define('VM_MODULE'   , 'vm');
-define('VM_VERSION','5.12.rc3');
+define('VM_VERSION','5.12.rc5');
 
 //
 // transition problems...
@@ -14,10 +14,9 @@ if (function_exists('drupal_get_path') && is_file($f=drupal_get_path('module','m
 define('modal_sendmail_dialog',cnf_dev||cnf_demo); // Doesn't want to work...
 define('include_payLunch_dinner',cnf_dev);
 
-// Office space allocation
-define('allocate_offices',True);
-
-// Automated mails to registrants
+//
+// Exclude from production version the options which under development 
+//
 define('send_infoMail_to_applicants',(cnf_dev||cnf_demo));
 define('send_welcomeMail_to_applicants',(cnf_dev||cnf_demo));
 define('send_denialMail_to_applicants',cnf_dev||cnf_demo); 
@@ -28,6 +27,15 @@ define('include_payForms_in_welcomeMail', True);
 define('see_mails_exchange_with_attenders',(send_infoMail_to_applicants ||
 					    send_welcomeMail_to_applicants ||
 					    send_denialMail_to_applicants));
+
+//
+// Define the VM policy 
+//
+define('auto_accept_guest_invitations',True); // introduced 2017-03-27
+define('dont_show_reimbursements',True);      // introduced 2017-03-27
+define('show_guests_by_group',True);
+define('show_guests_by_budget',!show_guests_by_group);
+define('allocate_offices',True);
 
 //
 // VM module "knows" about those visit types
@@ -52,7 +60,7 @@ define('VM_css',  vm_root.'css');
  */
 define('RANK_vm_manager'   , 90); // the same rights as superuser, but for VM_MODULE only
 define('RANK_vm_program_coordinator'    , 30);
-define('RANK_vm_observer'  , 28);
+//define('RANK_vm_observer'  , 28);
 define('RANK_vm_endorser'  , 27);
 define('RANK_vm_organizer' , 26);
 define('RANK_vm_visitor'   , 12); // invited guest, same rights as RANK_vm_registrant
@@ -70,21 +78,22 @@ define('VM_E_conferenceDinner',32);// Flag 'dinner'
 define('VM_E_endorsmentSent',8);   // Flag 'mail to organizers "event is endorsed" is sent'
 define('VM_E_letOrgSetAccPrices',128); // Flag 'let organizers to change the accommodation cost'
 
-define('VM_V_payPerdiem' ,1);           // Flag 'pay per-diem'
-define('VM_V_payTrip',2);               // Flag 'pay trip'
-define('VM_V_provideLunches',1024);     // Flag 'pay lunch'
-define('VM_V_payOther',2048);           // Flag 'pay other expenses, (whatever "other expenses" mean)' 
-define('VM_V_payAccommodation',64);     // Flag 'cover living expenses'
-define('VM_V_conferenceDinner',8192);   // Flag 'pay conference dinner'
-define('VM_V_provideOffice',128);       // Flag 'assign office for the visit'
-define('VM_V_infoMailSent',256);        // Flag 'informal informational mail sent'
+define('VM_V_payPerdiem' ,1);           // Flag 'to pay per-diem'
+define('VM_V_payTrip',2);               // Flag 'to pay trip'
+define('VM_V_provideLunches',1024);     // Flag 'to pay lunch'
+define('VM_V_payOther',2048);           // Flag 'to pay other expenses, (whatever "other expenses" mean)' 
+define('VM_V_payAccommodation',64);     // Flag 'to cover living expenses'
+define('VM_V_conferenceDinner',8192);   // Flag 'to pay conference dinner'
+define('VM_V_provideOffice',128);       // Flag 'to assign office for the visit'
+define('VM_V_infoMailSent',256);        // Flag 'informal informational mail sent to the applicant'
 define('VM_V_infoMailQueued',16384);    // Flag 'waiting in the queue'
 define('VM_V_infoMailNC',32768);        // Flag 'informal informational mail is Not Concerned'
 define('VM_V_denialMailSent',4);        // Flag 'application denial sent'
 define('VM_V_denialMailQueued',131072); // Flag 'waiting in the queue'
 define('VM_V_welcomeMailSent',8);       // Flag 'application approval sent'
 define('VM_V_welcomeMailQueued',65536); // Flag 'waiting in the queue'
-define('VM_V_scrtrInfoSent',32);        // Flag 'guest invitation communicated'
+define('VM_V_guestAcceptSent',32);      // Flag 'guest invitation accept communicated'
+define('VM_V_guestRejectSent',524288);  // Flag 'guest invitation reject communicated'
 define('VM_V_enMailSent',512);          // Flag '"Event is endorsed" mail to organizer sent'
 define('VM_V_enMailQueued',16);         // Flag '"Event is endorsed" mail to organizer sent'
 define('VM_V_rdlMailSent',4096);        // Flag 'registration-deadline mail to organizer sent'
@@ -95,7 +104,7 @@ define('VM_V_rdlMailQueued',262144);    // Flag '"Event is endorsed" mail to org
  * - "human defined", like "to pay OR not to pay"
  * - "auto-controlled" like "was an action executed or not"
  * - "auto-controlled, might be changed by human2, like "to allocate office or not" for a visitor
- * Those flag are set in the VM::$v_policies array - item 't' (stends for "type")
+ * Those flag are set in the VM::$v_policies array - item 't' (stands for "type")
  */
 define('auto_maintained', 'auto'); 
 define('when_approved',   'w_a'); 
@@ -324,9 +333,9 @@ b_reg::add_module(VM_MODULE,
 				       RANK_vm_program_coordinator     => array('class'=>'bUnit_vm_bookers',
 								   'd'    =>'VM booker', 
 								   'i'    =>'user_pencil'),
-				       RANK_vm_observer   => array('class'=>'bUnit_vm_observers',
-								   'd'    =>'VM observer', 
-								   'i'    =>'i-usrs'),
+				       //RANK_vm_observer   => array('class'=>'bUnit_vm_observers',
+				       //			   'd'    =>'VM observer', 
+				       //			   'i'    =>'i-usrs'),
 				       RANK_vm_organizer  => array('class'=>'bUnit_vm_organizers',
 								   'd'    =>'VM event organizer', 
 								   'i'    =>'i-usrs'),
@@ -462,7 +471,9 @@ class VM extends myPear{
 								't'=> auto_maintained),
 				 VM_V_welcomeMailSent  => array('d'=>'Was the approval letter sent?',
 								't'=> auto_maintained),
-				 VM_V_scrtrInfoSent    => array('d'=>'Was the guest invitation communicated?',
+				 VM_V_guestAcceptSent  => array('d'=>'Was the guest accept communicated?',
+								't'=> auto_maintained),
+				 VM_V_guestRejectSent  => array('d'=>'Was the guest reject communicated?',
 								't'=> auto_maintained),
 				 VM_V_rdlMailSent      => array('d'=>'Was the appl. deadline communicated?',
 								't'=> auto_maintained),
@@ -506,9 +517,11 @@ class VM extends myPear{
   static public $description=array(VISIT_TYPE_COLLABORATION=>array('d'=>'Scientific collaboration',
 								   'i'=>'a_lecture',
 								   'f'=>'debit', 
-								   'p'=>array(VM_V_payTrip,VM_V_payAccommodation,VM_V_provideLunches,VM_V_provideOffice,
+								   'p'=>array(VM_V_payTrip,VM_V_payAccommodation,
+									      VM_V_provideLunches,VM_V_provideOffice,
+									      VM_V_guestAcceptSent,VM_V_guestRejectSent,
 									      // VM_V_payPerdiem, 
-									      VM_V_scrtrInfoSent)),
+									      )),
 				   VISIT_TYPE_PROGRAM      =>array('d'=>'Program attender',
 								   'i'=>'a_conf',
 								   'f'=>'debit',
@@ -529,7 +542,7 @@ class VM extends myPear{
 								   'i'=>'a_meeting',
 								   'f'=>'debit',
 								   'p'=>array(VM_V_payTrip,VM_V_payAccommodation, // VM_V_payPerdiem,VM_V_payOther,
-									      VM_V_scrtrInfoSent)),
+									      VM_V_guestAcceptSent,VM_V_guestRejectSent)),
 				   VISIT_OUT_OF_SCOPE      =>array('d'=>'Out of VM scope',
 								   'i'=>'a_meeting',
 								   'p'=>array()),
@@ -561,7 +574,7 @@ class VM extends myPear{
   static public $formDummy = Null;
   static public $hut_bi    = 'hut_bi';   // "Built-in" hut
   static public $OA        = 'OA';       // "own accommodation" room
-  static public $BR        = 'BR';       // "break in the visit" room (a placeholder)
+  static public $BR        = 'BR';       // "break in the visit" room (a place-holder)
 
   static public $auto_maintained = array(); // Helper, filled from the previous array
   static public $when_approved   = array(); // Helper, filled from the previous array
@@ -668,7 +681,7 @@ class VM extends myPear{
 	
 	// Instantiate the build-in class
 	self::$$instance = new $class_name(b_fmt::joinX(' AND ',$args['keys'],"'"));
-	self::$$instance->defineVariables();
+	//	self::$$instance->defineVariables();
 	self::$$instance->updateDB($args['fields']);
 	
 	if (False && cnf_dev){
@@ -824,7 +837,8 @@ class VM extends myPear{
       
     case 'send_info_mail':  
       if (self::isArchived())$reply = False;
-      else                 $reply = (!self::isEventEndorsed() && (VM_observer_here || VM_organizer_here));
+      else                   $reply = (!self::isEventEndorsed() && VM_organizer_here);
+      //else                 $reply = (!self::isEventEndorsed() && (VM_observer_here || VM_organizer_here));
       break;
       
       case 'send_welcomeMail':  
@@ -969,7 +983,11 @@ function VM_mailer(){
  * the other visit types keep the policies in the database as variables
  */
 function VM_visit_policies($visit_type,$new_value=Null,$e=Null){
-  if (empty($visit_type)) b_debug::internalError("Empty visit_type arg");
+  if (empty($visit_type)){
+    b_debug::xxx("Empty visit_type arg");
+    b_debug::traceBack("Empty visit_type arg");
+    return array();
+  }
   
   if ($visit_type == VISIT_TYPE_PROGRAM){
     
@@ -1062,7 +1080,7 @@ function VM_managers()       { start_VM(); return myPear::_UNIT(RANK_vm_manager,
 
 function VM_administrators() { start_VM(); return myPear::_UNIT(RANK_vm_program_coordinator,   VM_MODULE); }
 
-function VM_observers()      { start_VM(); return myPear::_UNIT(RANK_vm_observer, VM_MODULE); }
+//function VM_observers()      { start_VM(); return myPear::_UNIT(RANK_vm_observer, VM_MODULE); }
 
 function VM_endorsers()      { start_VM(); return myPear::_UNIT(RANK_vm_endorser, VM_MODULE); }
 
@@ -1072,7 +1090,7 @@ function VM_unit($rank,$module=VM_MODULE,$org=myOrg_ID){
   switch($rank){
   case RANK_vm_manager:            return VM_managers();
   case RANK_vm_program_coordinator:return VM_administrators();
-  case RANK_vm_observer:           return VM_observers();
+//case RANK_vm_observer:           return VM_observers();
   case RANK_vm_endorser:           return VM_endorsers();
   case RANK_vm_organizer:          return VM_organizers(VM::$e);
   default:  b_debug::internalError("Unexpected rank '$rank'");

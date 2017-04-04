@@ -141,11 +141,11 @@ class bForm_Organization extends bForm {
   /*
    *
    */
-  private $default_affiations = array();
+  private $default_roles = array();
   function __construct($id, $mode='RO') {
     static $list_themes = array();
     parent::__construct($id, $mode, True);
-    $this->default_affiations = myPear_set_roles('affiliation');
+    $this->default_roles = myPear_set_roles('affiliation');
 
     // Set the theme defaulted to the "organization code"
     if (!$this->getValue('org_theme')){
@@ -159,22 +159,22 @@ class bForm_Organization extends bForm {
   }
 
   /*
-   * Set the affiliation used in the organization
+   * Set the roles used in the organization
    */
-  function setAffiliation($org_affil=array()){
+  private function setRoles($org_roles=array()){
     if ((int)$this->ID){
       
-      // Use a default affiliation if the input is empty
-      if (empty($org_affil)){
-	// Set the default affiliation as Alumni + Staff
-	if (!$this->getValue('org_affil',True)){
-	  foreach($this->default_affiations as $role=>$d) $org_affil[$role] = $d['active'];
+      // Use a default roles if the input is empty
+      if (empty($org_roles)){
+	// Set the default roles as Alumni + Staff
+	if (!$this->getValue('org_roles',True)){
+	  foreach($this->default_roles as $role=>$d) $org_roles[$role] = $d['active'];
 	}
       }
       
-      // Save the affiliation directly to the database, since the dialog uses "virtual check-boxes"
-      if (!empty($org_affil)){
-	$this->updateDB(array('org_affil'=>serialize($org_affil)));
+      // Save the roles directly to the database, since the dialog uses "virtual check-boxes"
+      if (!empty($org_roles)){
+	$this->updateDB(array('org_roles'=>serialize($org_roles)));
       }
     }
   }
@@ -185,9 +185,9 @@ class bForm_Organization extends bForm {
   function getAffiliation($only_active=False){
     $reply = array();
     if ((int)$this->ID){
-      $this->setAffiliation();
-      $org_affil = $this->getValue('org_affil',True);
-      foreach(unserialize($org_affil) as $role=>$s){
+      $this->setRoles();
+      $org_roles = $this->getValue('org_roles',True);
+      foreach(unserialize($org_roles) as $role=>$s){
 	if ($only_active){
 	  if ($s) $reply[] = $role;
 	}else{
@@ -211,7 +211,7 @@ class bForm_Organization extends bForm {
 				'org_domain'       => 'DNS domain name (eg for e-mails)',
 				'org_trusted_domains' => 'Trusted domain names',
 				'org_signature_dir'=> 'Template for the signature<br/>of the Head of the Organization',
-				'org_affil'        => 'Who is affiliated with the organization',
+				'org_roles'        => 'Who is affiliate with the organization',
 				'org_theme'        => 'Preferred theme (appearance)',
 				),True);
     $this->defineTypes(array('isRO'        => array('org_signature_dir'=> signature_as_template),
@@ -254,7 +254,7 @@ class bForm_Organization extends bForm {
   public function org_bList($blist){
     $reply = ($blist == 'orgGroups'
 	      ? $this->orgGroups()
-	      : $this->orgTrades());
+	      : $this->orgEmpTypes());
     return $reply;
   }
 
@@ -272,15 +272,15 @@ class bForm_Organization extends bForm {
   }
   
   /*
-   * Get the organizational trades
+   * Get the organizational emp. types
    */
-  private $orgTrades = Null;
-  public function orgTrades(){
-    if ($this->orgTrades === Null){
-      locateAndInclude('bList_orgTrades');
-      $this->orgTrades = new bList_orgTrades($this->ID);
+  private $orgEmpTypes = Null;
+  public function orgEmpTypes(){
+    if ($this->orgEmpTypes === Null){
+      locateAndInclude('bList_orgEmpTypes');
+      $this->orgEmpTypes = new bList_orgEmpTypes($this->ID);
     }
-    return $this->orgTrades;
+    return $this->orgEmpTypes;
   }
   
   /*
@@ -412,24 +412,25 @@ class bForm_Organization extends bForm {
 			     'l'=>b_url::same(array('form' => get_class($this),
 						    'id'   => $this->ID))));
       
+      /*
       //
-      // Affiliated. Makes sense only if EA module presents
-      $org_affil = array();
+      // Affiliate. Makes sense only if EA module presents
+      $org_roles = array();
       locateAndInclude('b_registry');
       if (b_reg::get(EA_MODULE)){
 	foreach($this->getAffiliation() as $role=>$s){
 	  $f = "_virt_aff_$role";
 	  $this->isMBE[$f] = True;
-	  $this->isRO[$f]  =  (@$this->default_affiations[$role]['mode'] === 'RO');
-	  $this->defineVariable($this->default_affiations[$role]['group'].' '.x('(',$this->default_affiations[$role]['title']),$f);
+	  $this->isRO[$f]  =  (@$this->default_roles[$role]['mode'] === 'RO');
+	  $this->defineVariable($this->default_roles[$role]['group'].' '.x('(',$this->default_roles[$role]['title']),$f);
 	  $dialog[$f] = array('checkBox');
 	  // "old" value
 	  $this->formDB[$f] = ($s ? 'on' : 'off');
 	  // "new" value
 	  $this->getValue($f);
-	  $org_affil[$role] = ($this->checkBoxIsOn($f) ? 1 : 0);
+	  $org_roles[$role] = ($this->checkBoxIsOn($f) ? 1 : 0);
 	}
-	$this->setAffiliation($org_affil);
+	$this->setRoles($org_roles);
 	$this->formBlock('Affiliates',
 			 "Affiliates to be shown on the \"Employees / Alumni\" page",
 			 $dialog,
@@ -437,28 +438,65 @@ class bForm_Organization extends bForm {
 			       'l'=>b_url::same(array('form' => get_class($this),
 						      'id'   => $this->ID))));
       }
+      */
       
       //
-      // Virtual fields - bList_orgTrades & bList_orgGroups
+      // Virtual fields - bList_orgEmpTypes & bList_orgGroups
       if ((int)$this->ID){
-	$this->tips['_virt_orgTrades']  = 'List of "Employee Types" used in the Organization';
+	$this->tips['_virt_orgEmpTypes']  = 'List of "Employee Types" used in the Organization';
 	
-	$this->defineVariable(array('_virt_orgTrades' => $this->orgTrades()->name(),
-				    '_virt_orgGroups' => $this->orgGroups()->name(),
+	$this->defineVariable(array('_virt_orgEmpTypes' => $this->orgEmpTypes()->name(),
+				    '_virt_orgGroups'   => $this->orgGroups()->name(),
 				    ),True);
 	$this->defineTypes(array('isRO'        => array('_virt_orgGroups'   => True,
-							'_virt_orgTrades'   => True),
+							'_virt_orgEmpTypes' => True),
 				 'isUL'        => array('_virt_orgGroups'   => True,
-							'_virt_orgTrades'   => True)));
-	$this->formBlock_bList(array('bList_orgTrades'=>array('method'=>'get_trades',
-							      'arg1'  => $this->ID,
-							      'field' =>'_virt_orgTrades',
-							      'icon'  =>'i_users'),
-				     'bList_orgGroups' =>array('method'=>'get_groups',
-							       'arg1'  => $this->ID,
-							       'field' =>'_virt_orgGroups',
-							       'icon'  =>'i_users')));      
+							'_virt_orgEmpTypes' => True)));
+	$this->formBlock_bList(array('bList_orgEmpTypes'=>array('method'=>'get_empTypes',
+								'arg1'  => $this->ID,
+								'field' =>'_virt_orgEmpTypes',
+								'icon'  =>'i_users'),
+				     'bList_orgGroups'  =>array('method'=>'get_groups',
+								'arg1'  => $this->ID,
+								'field' =>'_virt_orgGroups',
+								'icon'  =>'i_users')));      
+
+
+	// What to show on the employeers/alumnus list. 
+	// Makes sense only if EA module presents
+	locateAndInclude('b_registry');
+	if (b_reg::get(EA_MODULE)){
+	  $this->tips['_virt_staffList']  = 'NOT YET FINISHED...<br/>Employee Types to be listed on the "Staff page"';
+	  
+	  $this->defineVariable(array('_virt_staffList' => 'NOT YET FINISHED...<br/>Employee Types to be listed on the "Staff page"',
+				      ),True);
+	  $this->defineTypes(array('isRO'        => array('_virt_staffList'   => True),
+				   'isUL'        => array('_virt_staffList'   => True)));
+	  $empTypes = myOrg()->orgEmpTypes()->get_empTypes();
+	  if (empty($empTypes)) $empTypes = array('staff' => 'Staff');	  
+	  foreach($empTypes as $k=>$s){
+	    $this->isMBE[$k] = True;
+	    // $this->isRO[$k]  =  (@$this->default_roles[$role]['mode'] === 'RO');
+	    // $this->defineVariable($this->default_roles[$role]['group'].' '.x('(',$this->default_roles[$role]['title']),$k);
+	    $this->defineVariable(myOrg()->orgEmpTypes()->code2text($k),$k);
+	    $dialog[$k] = array('checkBox');
+	    // "old" value
+	    $this->formDB[$k] = (@$s ? 'on' : 'off');
+	    // "new" value
+	    $this->getValue($k);
+	    //	    $org_roles[$role] = ($this->checkBoxIsOn($k) ? 1 : 0);
+	  }
+	  //	  $this->setRoles($org_roles);
+	  $this->formBlock('_virt_staffList',
+			   'NOT YET FINISHED... Work in progress <br/>Employee Types to be listed on the "Staff page"',
+			   $dialog,
+			   array('i'=>'bb-group',
+				 'l'=>b_url::same(array('form' => get_class($this),
+							'id'   => $this->ID))));
+	}
+	
       }
+
       // close the form
       $this->closeForm('submit',$submit);
     }

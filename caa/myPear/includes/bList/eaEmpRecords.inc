@@ -14,8 +14,8 @@ class bList_eaEmpRecords extends bList{
   public $tips_byMode = array('RW'=>array('lm_period'  => "If you don't know the future end date of the period, type '2099-01-01'",
 					  '_emp_period'=> "If you don't know the future end date of the period, type '2099-01-01'",
 					  ));
-  var $e_type_menu = array();
-  var $e_type_menuD= array('separator00'=> '',
+  var $rec_type_menu = array();
+  var $rec_type_menuD= array('separator00'=> '',
 			   '20_mp_org'  => 'ORG employment',
 			   '40_va_org'  => 'ORG visiting appointment',
 			   '22_op_org'  => 'ORG other activity',
@@ -34,12 +34,13 @@ class bList_eaEmpRecords extends bList{
 			   );
   
   // this information is packed into the lm_option field
-  protected $packed_items = array('e_org', 'e_cc',  'e_gid', 'e_inst', 'e_off', 'e_rate','e_type');
+  protected $packed_items = array('e_org', 'e_cc',  'e_gid', 'e_inst', 'e_off', 'e_rate','rec_type');
 
-  var $list_quering= array('e_type'     =>'Type of entry',
+  var $list_quering= array('rec_type'   =>'Type of entry',
+			   'e_rate'     =>'',
 			   'e_inst'     =>'Institute',
 			   'e_cc'       =>'Country',
-			   'lm_value'   =>'Position',
+			   '_lm_value'  =>'Position',  
 			   'lm_key'     =>'Start of position',
 			   'lm_status'  =>'End of position',
 			   );
@@ -49,17 +50,17 @@ class bList_eaEmpRecords extends bList{
 			   'lm_status'  =>'End of position');
  
   var $list_showing= array('favicon'    => ' ',
-			   '_emp_period' => ' ',
+			   '_emp_period'=> ' ',
 			   'lm_value'   => ' ',
 			   'e_inst'     => ' ',
 			   'e_cc'       => ' ');
   // The order of the blocks
-  var $emp_groups   = array(emp_education  => array('30_h','34_phd','38_ms'),
-			    emp_major_pos  => array('20_mp'),
-			    emp_lt_visits  => array('40_va'),
-			    emp_awards     => array('50_ah'),
-			    emp_other      => array('22_op'),
-			    );
+  static $emp_groups   = array(emp_education  => array('30_h','34_phd','38_ms'),
+			       emp_major_pos  => array('20_mp'),
+			       emp_lt_visits  => array('40_va'),
+			       emp_awards     => array('50_ah'),
+			       emp_other      => array('22_op'),
+			       );
   var $av    = Null;
   var $MODE  = 'RO';
 
@@ -68,7 +69,7 @@ class bList_eaEmpRecords extends bList{
   private   $dejaVu = array();
 
   /*
-   * Check is the given person affiliated to the organization
+   * Check is the given person affiliate to the organization
    * @param $av_id - avatar ID
    * @param $org_id - (optional) organization ID. If missing, all the organizations are checked 
    */
@@ -105,25 +106,44 @@ class bList_eaEmpRecords extends bList{
     parent::__construct($this->av->ID);
     $this->dbg($this->av->name());
 
+    // Set the postponed naming 
+    $this->list_quering['e_rate'] = bForm_Avatar_ea::$av2er['e_rate']['d'];
+    
     // Adjust the pop-up menu to the organization name
-    foreach ($this->e_type_menuD as $k=>$v) $this->e_type_menu[$k] = str_replace('ORG',myOrg_name,$v);
+    foreach ($this->rec_type_menuD as $k=>$v) $this->rec_type_menu[$k] = str_replace('ORG',myOrg_name,$v);
     
     // Replace the virtual employment type by the real one
-    switch(@$_POST['e_type']){
+    switch(@$_POST['rec_type']){
     case '20_mp_org':
     case '22_op_org':
     case '40_va_org':
       // "Position within organization" = "Major position" + "Organization number" 
       $this->e_org = myOrg_ID;
-      $this->getValue_reset('e_type',str_replace('_org','',$_POST['e_type']));
+      $this->getValue_reset('rec_type',str_replace('_org','',$_POST['rec_type']));
       $this->getValue_reset('e_org',$this->e_org);
       break;
     case '10_cp':
       // "Current position" is an endless "Major position"
-      $this->getValue_reset('e_type','20_mp');
+      $this->getValue_reset('rec_type','20_mp');
       $this->getValue_reset('lm_status',CONST_eternity);
       break;
     default:
+    }
+
+    // Replace the position key by a text value
+    if (!empty($_POST['_lm_value'])){
+      $lm_value = myOrg()->orgEmpTypes()->code2text($_POST['_lm_value']);
+      if (empty($_POST['lm_id'])) $_POST['lm_id'] = @$_POST['memberID'];
+      if (empty($_POST['lm_id'])){
+	var_dump($_POST);
+	b_debug::internalError('??? empty "_POST[lm_id]"');
+      }
+      b_debug::xxx(sprintf("lm_id=%s lm_value=%s=>%s",
+			   $_POST['lm_id'],
+			   $_POST['_lm_value'],
+			   $lm_value));
+      myPear_db()->qquery("UPDATE zzz_list_members SET `lm_value` = '$lm_value' WHERE lm_id=$_POST[lm_id]",True);
+      //      $this->updateMember(array('lm_value'=>$lm_value),$_POST['lm_id']);
     }
   }
   
@@ -132,13 +152,13 @@ class bList_eaEmpRecords extends bList{
    */
   protected function unpack($buffer=array(), $updates=array()){
     if ($buffer = parent::unpack($buffer,$updates)){
-
-      // Capitalize the position & Institute
-      foreach(array('lm_value','e_inst') as $k){
-	if (!empty($buffer[$k])) $buffer[$k] = b_fmt::ucwords($buffer[$k]); 
-      }
       
-      if (!empty($buffer['e_org'])){
+      // Capitalize the position & Institute
+      if (empty($buffer['e_org'])){
+	foreach(array('lm_value','e_inst') as $k){
+	  if (!empty($buffer[$k])) $buffer[$k] = b_fmt::ucwords($buffer[$k]); 
+	}
+      }else{
 	$buffer['e_inst_virtual'] = myOrg($buffer['e_org'])->name(); 
 	unset($buffer['e_cc']);
 	unset($buffer['e_inst']);
@@ -154,21 +174,49 @@ class bList_eaEmpRecords extends bList{
     return $buffer;
   }
 
+  static function is_current($r,$av_ddate=null,$verbose=False){
+    $reply = False;
+    if (!empty($r['rec_type'])){
+      $e_end = ($av_ddate // end of employment period
+		? $av_ddate-30*24*3600 
+		: time());
+      $reply = (b_time::txt2unix($r['lm_status']) >= $e_end &&
+		in_array($r['rec_type'],array_merge(self::$emp_groups[emp_major_pos],
+						    self::$emp_groups[emp_lt_visits])));
+    }
+    if ($verbose)myPear::DEBUG(sprintf("%s(%s) - %s",__METHOD__,b_time::period($r['lm_key'],$r['lm_status']),var_export($reply,True)));
+    return $reply;
+  }
+
+  /*
+   *
+   */
+  function get_recentEmploementRecords($args=array(),$av_ddate=Null){
+    $reply = array();
+    foreach($this->getMembers($args) as $r){
+      if (self::is_current($r,$av_ddate)){
+	foreach($this->get_currentEmploementRecords($args,99,$av_ddate) as $cr) $reply[] = $cr;
+      }else{
+	if (!empty($reply)) continue;
+	$reply[] = $r;
+      }
+    }
+    b_debug::print_r($reply);
+    return $reply;
+  }
+
   /*
    * Extract active records of the types "Major positions" & "Long Time Visits".
    * The EA records are first in the list
    */
   function get_currentEmploementRecords($args=array(),$limit=99,$av_ddate=Null){
     $reply = array();
-    $e_end = ($av_ddate // end of employment period
-	      ? $av_ddate-30*24*3600 
-	      : time());
     foreach($this->getMembers($args) as $r){
-      if (empty($r['e_type']))                                     continue; 
-      if (($lm_status=b_time::txt2unix($r['lm_status'])) < $e_end) continue;
-      if (!in_array($r['e_type'],array_merge($this->emp_groups[emp_major_pos],
-					     $this->emp_groups[emp_lt_visits]))) continue;
-      if ($av_ddate && ($lm_status > $av_ddate)) $r['lm_status'] = date('Y-m-d',min($av_ddate,$lm_status)); 
+      if (!self::is_current($r,$av_ddate)) continue;
+      $lm_status = b_time::txt2unix($r['lm_status']);
+      if ($av_ddate && ($lm_status > $av_ddate)){
+	$r['lm_status'] = date('Y-m-d',min($av_ddate,$lm_status)); 
+      }
       if (empty($r['e_org'])){
 	$reply[] = $r;
       }else{
@@ -187,8 +235,8 @@ class bList_eaEmpRecords extends bList{
   function get_currentItem($what='e_inst',$args=array('e_org'=>myOrg_ID),$limit=999,$av_ddate=Null){
     $reply_a = array();
     foreach($this->get_currentEmploementRecords($args,$limit,$av_ddate) as $r){
-      if ($v = @$r[$what])            $reply_a[] = trim($v);
-      if ($v = @$r[$what.'_virtual']) $reply_a[] = trim($v);
+      if    ($v = @$r[$what])            $reply_a[] = trim($v);
+      elseif($v = @$r[$what.'_virtual']) $reply_a[] = trim($v);
     } 
     $reply = join(',',array_unique($reply_a));
     $this->dbg($reply);
@@ -214,20 +262,20 @@ class bList_eaEmpRecords extends bList{
     $l = array();
     foreach(array_merge($birth,$study,$this->getMembers()) as $r){
       // horizontal line
-      if (empty($r['e_type'])) $r['e_type'] = '?? type';
+      if (empty($r['rec_type'])) $r['rec_type'] = '?? type';
       $a[] = sprintf("%6d: %10s - %10s %-6s %s @ %s",
 		     $r['lm_id'],
 		     (string)@$r['lm_key'],
 		     (string)@$r['lm_status'],
-		     (string)@$r['e_type'],
+		     (string)@$r['rec_type'],
 		     (string)@$r['lm_value'],
 		     (string)@$r['e_inst']);
       // Array as is
       ksort($r);
-      $e_type = $r['e_type'];
-      foreach(array('e_type','l_locale','l_timestamp',
+      $rec_type = $r['rec_type'];
+      foreach(array('rec_type','l_locale','l_timestamp',
 		    'lm_locale','lm_lid','lm_option',) as $f) unset($r[$f]);
-      $l[] = x('td',b_debug::print_r($r,$e_type,$doNotPrint=True));
+      $l[] = x('td',b_debug::print_r($r,$rec_type,$doNotPrint=True));
     }
     myPear::DEBUG(x("table class='align_left b_table' ",x('tr',join('',$l))));
   }
@@ -264,7 +312,9 @@ class bList_eaEmpRecords extends bList{
    * Deletable ?
    */ 
   protected function isMemberDeletable(){
-    $reply = $this->isWritable();
+    $reply = (!empty($this->r['e_org']) && ($this->r['e_org'] != myOrg_ID)
+	      ? False
+	      : $this->isWritable());
     return $reply;
   }
   
@@ -274,9 +324,13 @@ class bList_eaEmpRecords extends bList{
   protected function isMemberEditable(){
     if ($reply = $this->isWritable()){
       $what = @$this->r['edit_what'];
-      if     ($what === 'phd') $reply = $this->av->askPhD();
-      elseif ($what ===  'ms') $reply = $this->av->askMS();
-      elseif ((int)$what)      $reply = False; 
+      if (!empty($this->r['e_org']) && ($this->r['e_org'] != myOrg_ID)){
+	$reply = False;
+      }else{
+	if     ($what === 'phd') $reply = $this->av->askPhD();
+	elseif ($what ===  'ms') $reply = $this->av->askMS();
+	elseif ((int)$what)      $reply = False; 
+      }
     }
     return $reply;
   }
@@ -286,13 +340,17 @@ class bList_eaEmpRecords extends bList{
    */
   protected function message_createList(){
     if (!cnf_CLI)  myPear::MESSAGE("Start ".$this->name(True)." for ".$this->av->name());
+    myPear::MESSAGE("Creating new employment record");
   }
 
   /*
    *
    */
-  protected function message_addMember($r){
-    myPear::MESSAGE("New ".$this->name()." for ".$this->av->name());
+  protected function message_createMember(){
+    return $this->message_addMember();
+  }
+  protected function message_addMember($r=array()){
+    myPear::MESSAGE("New ".$this->name().(empty($r) ? "" : " for ".$this->av->name()));
   }
 
   /*
@@ -317,11 +375,11 @@ class bList_eaEmpRecords extends bList{
     // Look for empty types
     $toRemove = array();
     foreach($reply as $r_id=>$r){
-      if (empty($r['e_type']) && empty($_POST['e_type']))  $toRemove[] = $r_id;
+      if (empty($r['rec_type']) && empty($_POST['rec_type']))  $toRemove[] = $r_id;
     }
     
     foreach($toRemove as $member_ID) {
-      $this->message_deleteMember_custom = 'empty "e_type"';
+      $this->message_deleteMember_custom = 'empty "rec_type"';
       $this->deleteMember($member_ID);
       if (cnf_dev){
 	b_debug::print_r($reply[$member_ID],get_class($this)." remove empty $member_ID");
@@ -347,9 +405,9 @@ class bList_eaEmpRecords extends bList{
   private function adjust_list_quering(){
     $this->dbg(starting);
     $was = $this->list_quering;
-    switch($e_type=$this->getMemberValue(0,'e_type')){
+    switch($rec_type=$this->getMemberValue(0,'rec_type')){
     case '50_ah':
-      $this->list_quering['lm_value'] = 'Award / Honor';
+      $this->list_quering['_lm_value'] = 'Award / Honor';
       unset($this->list_quering['e_inst']);
     case '30_h':
     case '34_phd':
@@ -365,12 +423,15 @@ class bList_eaEmpRecords extends bList{
       unset($this->list_quering['lm_status']);
     }
     
+    // Do not ask country/institute for myOrg
     if ($this->getMemberValue(0,'e_org')){
-      // Do not ask country/institute for myOrg
       unset($this->list_quering['e_cc']);
       unset($this->list_quering['e_inst']);
-      // Ask for the e_rate if not yet done
-      if (in_array($e_type,array('20_mp','40_va'))) $this->list_quering['e_rate'] =  bForm_Avatar_ea::$av2er['e_rate']['d'] ;
+    }
+
+    // Ask for the e_rate only if this is a major position
+    if (!$this->getMemberValue(0,'e_org') || !in_array($rec_type,array('20_mp','40_va'))){
+      unset($this->list_quering['e_rate']);
     }
 
     if ($was !== $this->list_quering) $this->dbg(array_diff($was,$this->list_quering));
@@ -412,7 +473,7 @@ class bList_eaEmpRecords extends bList{
    * Check also that the EA vital keys (start/end of position, title) present
    */
   function getFormAdd_OK(){
-    static $vital_fields = array('lm_key','lm_value','lm_status');
+    static $vital_fields = array('_lm_value','lm_key','lm_status');
 
     $this->dbg(starting);
     if (($reply = parent::getFormAdd_OK()) && ($reply !== 'new')){ 
@@ -435,18 +496,19 @@ class bList_eaEmpRecords extends bList{
     $this->dbg("member_ID=".$this->member_ID,cnf_dev);
     if (!myPear::is_int($this->member_ID)){
       $this->logIt();
-      $this->updateMember();
+      $this->member_ID = $this->createMember();
+      $this->getValue_reset('lm_id',$this->member_ID);
     }
-
+    
     //
     // For PhD & MS break the processing and redirect to the avatar's "study dialog" 
     // since those 2 blocks are stored in the zzz_avatars, and not in zzz_list_members
     $lm_id = $this->getValue('lm_id',True,'isMBE');
     static $conter_shit=0;    if (empty($lm_id)) $this->dbg((++$conter_shit).' - lm_id='.var_export($lm_id,True),cnf_dev);
-    $e_type = $this->getMemberValue($lm_id,'e_type');
-    $this->dbg("lm_id=".var_export($lm_id,True).", e_type=".var_export($e_type,True),cnf_dev);
-    if (!empty($e_type)){
-      list($x,$degree) = explode('_',$e_type);
+    $rec_type = $this->getMemberValue($lm_id,'rec_type');
+    $this->dbg("lm_id=".var_export($lm_id,True).", rec_type=".var_export($rec_type,True),cnf_dev);
+    if (!empty($rec_type)){
+      list($x,$degree) = explode('_',$rec_type);
       if (in_array($degree,array('phd','ms'))){
 	if (!empty($lm_id)) $this->deleteMember($lm_id);
 	// Break the processing and go directly to edit the Avatar class
@@ -460,7 +522,7 @@ class bList_eaEmpRecords extends bList{
     $this->bForm($this->list_quering,$inversed=True);
     $this->f->debug=True;
     $this->f->defineVariable('Period of stay','lm_period'); 
-    $this->f->submitOnChange['e_type'] = True;
+    $this->f->submitOnChange['rec_type'] = True;
     $this->f->isRO['lm_id'] = True;
     $this->f->formDB = $this->formDB_member;
     
@@ -469,10 +531,10 @@ class bList_eaEmpRecords extends bList{
     if (!empty($e_org)) $this->e_org = $e_org;
     if ($this->e_org){
       $e_inst_virtual = myOrg($this->e_org)->name();
-      foreach ($this->e_type_menuD as $k=>$v){
+      foreach ($this->rec_type_menuD as $k=>$v){
 	if (strpos($k,'_org')!==False){
-	  $this->e_type_menu[$k]                        = str_replace('ORG',$e_inst_virtual,$v);
-	  $this->e_type_menu[str_replace('_org','',$k)] = str_replace('ORG',$e_inst_virtual,$v);
+	  $this->rec_type_menu[$k]                        = str_replace('ORG',$e_inst_virtual,$v);
+	  $this->rec_type_menu[str_replace('_org','',$k)] = str_replace('ORG',$e_inst_virtual,$v);
 	}
       }
       $this->f->formDB['e_inst_virtual'] = $e_inst_virtual;
@@ -484,25 +546,56 @@ class bList_eaEmpRecords extends bList{
     // Build the form  
     foreach(array_keys($this->list_quering) as $item){
 
-      if (empty($e_type) && ($item != 'e_type')) continue;
+      if (empty($rec_type) && ($item != 'rec_type')) continue;
+      $ask_for_period = (!empty($this->list_quering['lm_status']) && ($rec_type != '10_cp'));
 
-      $ask_for_period = (!empty($this->list_quering['lm_status']) && ($e_type != '10_cp'));
       switch($item){
 
-      case 'e_type':
-	if (in_array($e_type,array('20_mp'))){
-	  $this->f->selectMenu('e_type',array('20_mp' => $this->e_type_menu['20_mp'],
-					      '40_va' => $this->e_type_menu['40_va'],
-					      '22_op' => $this->e_type_menu['22_op']));
-	}else{
-	  //	  if (!($this->f->isRO['e_type'] = !empty($e_type)))  $this->f->keepRW[] = 'e_type';
-	  $this->f->selectMenu('e_type',$this->e_type_menu); 
-	}
+      case 'rec_type':
+	$this->f->isRO['rec_type'] = !empty($rec_type);
+	$this->f->selectMenu('rec_type',$this->rec_type_menu); 
+	/*
+	  if (in_array($rec_type,array('20_mp'))){
+	  $this->f->selectMenu('rec_type',array('20_mp' => $this->rec_type_menu['20_mp'],
+						'40_va' => $this->rec_type_menu['40_va'],
+						'22_op' => $this->rec_type_menu['22_op']));
+						}else{
+						if (!($this->f->isRO['rec_type'] = !empty($rec_type)))  $this->f->keepRW[] = 'rec_type';
+						$this->f->selectMenu('rec_type',$this->rec_type_menu); 
+						}
+	*/
 	break;  
 	
-      case 'lm_value':       
-	if (in_array($e_type,$this->emp_groups[emp_education])) $this->f->textHidden($item,$this->code2text($e_type));
-	else                                                    $this->f->textField($item); 
+      case 'e_rate':
+	if ($e_org){
+	  if ($this->f->getValue('e_rate')) $this->f->isRO['e_rate'] = True;
+	  if ($types=myOrg()->orgEmpTypes()->get_empTypes()){
+	    $this->f->submitOnChange['e_rate'] = True;
+	    $this->f->selectMenu('e_rate',$types);
+	  }
+	}
+	break;
+
+      case '_lm_value':       
+	if (in_array($rec_type,self::$emp_groups[emp_education])){
+	  // ???? What is this ????
+	  $this->f->textHidden($item,$this->code2text($rec_type));
+	  b_debug::traceBack(__METHOD__.', strange piece of code. YB');
+	}else{
+	  if (empty($e_org)){
+	    $this->f->textField($item); 
+	  }elseif($this->f->getValue('e_rate')){
+	    // Due to historical reasons we inquire position as a pop-up menu (array of key=>value), 
+	    // and in the database we store the value, not the key as one would expect
+	    // Hence we need the following small gymnastics to extract the key from the value (see orgEmpTypes()->text2code($title)) 
+	    $lm_value  = $this->getMemberValue($lm_id,'lm_value');
+	    $_lm_value = myOrg()->orgEmpTypes()->text2code($lm_value);
+	    $titles = myOrg()->orgEmpTypes()->code2titles($this->f->getValue('e_rate'));
+	    if (empty($titles[$_lm_value])) $titles[$_lm_value] = $lm_value;
+	    $this->f->getValue_reset($item,$_lm_value);
+	    $this->f->selectMenu($item,$titles);
+	  }
+	}
 	break;
 	
       case 'e_cc':       
@@ -524,10 +617,6 @@ class bList_eaEmpRecords extends bList{
 	else                     $this->f->textField('e_inst_virtual');
 	break;
 	
-      case 'e_rate':
-	if ($trades=myOrg()->orgTrades()->get_trades()) $this->f->selectMenu('e_rate',$trades);
-	break;
-
       default:  
 	$this->f->textField($item);
       }
@@ -537,6 +626,10 @@ class bList_eaEmpRecords extends bList{
       $this->f->formDB['memberID'] = $this->member_ID;
       $this->f->textField('memberID');
     }
+    
+    if($this->member_ID)       $this->f->textHidden('lm_id',$this->member_ID);
+    elseif($lm_id)             $this->f->textHidden('lm_id',$lm_id);
+    else  b_debug::traceBack('????? empty lm_id');
     $this->f->closeForm();
     $this->dbg(sprintf('$this->MODE="%s" $this->f->MODE="%s"',$this->MODE,$this->f->MODE));
     $this->MODE = $this->f->MODE;
@@ -599,6 +692,9 @@ class bList_eaEmpRecords extends bList{
 			? $this->getMemberValue($lm_id,$name)
 			: parent::getValue($name));
     switch($name){
+      //    case 'lm_value':
+      //      $value = $this->code2text($value);
+      //      break;
     case 'lm_key':
       if (!empty($value) && is_numeric($value)) $value = date('Y-m-d',$value);
       break;
@@ -632,10 +728,10 @@ class bList_eaEmpRecords extends bList{
    */
   protected function getMembers_forListing($arg=Null){
     $reply = array();
-    foreach($this->emp_groups as $k=>$items){
+    foreach(self::$emp_groups as $k=>$items){
       if ($k != emp_education){ // see 'function show' in this class
 	foreach($this->getMembers() as $r){
-	  if (in_array(@$r['e_type'],$items)) $reply[] = $r;
+	  if (in_array(@$r['rec_type'],$items)) $reply[] = $r;
 	}
       }
     }
@@ -651,7 +747,7 @@ class bList_eaEmpRecords extends bList{
     $b = (string)$this->av->getValue('av_birthplace',True,True);
     $c = b_cc::getName($this->av->getValue('av_birthcountry',True,True));
     
-    $e_type = '0_b';
+    $rec_type = '0_b';
     if (!empty($b) || !empty($c) || !empty($y)){
       if (empty($d)){
 	$lm_key = 'Born:';
@@ -668,17 +764,17 @@ class bList_eaEmpRecords extends bList{
 		 'e_cc'     => $c,
 		 'lm_value' => x('em',$y),
 		 'lm_id'    => 0,
-		 'e_type'   => $e_type);
+		 'rec_type'   => $rec_type);
     }else{
       $r = array('lm_key'   => '',
 		 'lm_id'    => 0,
-		 'e_type'   => $e_type);
+		 'rec_type'   => $rec_type);
     }
     $reply[] = $r;
     
     // do not print the header line, set it as "already printed"
-    $this->emp_groups[$e_type] = array($e_type);
-   @$this->dejaVu[$e_type]++;
+    self::$emp_groups[$rec_type] = array($rec_type);
+    @$this->dejaVu[$rec_type]++;
     return $reply;
   }
 
@@ -698,8 +794,8 @@ class bList_eaEmpRecords extends bList{
       if ($i=$this->av->getValue("av_${av_type}_institute",True,1))$r['e_inst'] = $i;
       if (!empty($r)){
 	$r['lm_id']   = 1;
-	$r['lm_value']= $this->code2text($e_type=$a2e[$av_type]);
-	$r['e_type']  = $e_type;
+	$r['lm_value']= $this->code2text($rec_type=$a2e[$av_type]);
+	$r['rec_type']  = $rec_type;
       }
     }
     return $r;
@@ -755,7 +851,7 @@ class bList_eaEmpRecords extends bList{
     //
     // First Habilitation
     foreach($this->getMembers() as $this->r){
-      if (!empty($this->r) && in_array(@$this->r['e_type'],$this->emp_groups[emp_education])){
+      if (!empty($this->r) && in_array(@$this->r['rec_type'],self::$emp_groups[emp_education])){
 	$this->format();
 	$this->t->extraTD[] = $this->button_editListMember();
 	$this->t->extraTD[] = $this->button_deleteListMember();
@@ -810,8 +906,8 @@ class bList_eaEmpRecords extends bList{
     $this->t->class['favicon'] = 'b_transparent';
 
     // Find the appropriate "type of employment"
-    foreach($this->emp_groups as $current_emp_group=>$items){
-      if (in_array($this->r['e_type'],$items)) $title = $current_emp_group;
+    foreach(self::$emp_groups as $current_emp_group=>$items){
+      if (in_array($this->r['rec_type'],$items)) $title = $current_emp_group;
     }
     if (!@$this->dejaVu[$title]++){
       $this->t->tro();
@@ -820,7 +916,7 @@ class bList_eaEmpRecords extends bList{
     }
 
     // Unpack the packed data, massage a bit the record 
-    switch($this->r['e_type']){
+    switch($this->r['rec_type']){
     case '0_b':
       $this->r['_emp_period'] = $this->r['lm_key'];
       break;

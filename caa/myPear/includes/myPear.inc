@@ -33,7 +33,7 @@ class myPear{
 										 'i'=>'um_id'),
 						  'bList_orgGroups'      =>array('p'=>'bList',
 										 'd'=>'Groups'),
-						  'bList_orgTrades'      =>array('p'=>'bList',
+						  'bList_orgEmpTypes'      =>array('p'=>'bList',
 										 'd'=>'Employee Types'),
 						  'bList_formDescription'=>array('p'=>'bList',
 										 'd'=>'Forms descriptors'),
@@ -783,7 +783,8 @@ class myPear{
   
   static public function TBD($text='.',$class=Null)  { self::MESSAGE($text, $class, 'TBD'); }
   
-  static public function ERROR    ($text,$class=Null){
+  static public function ERROR($text,$class=Null){
+    //    b_debug::traceBack();
     if (stripos($text,'missing value')!==False)  self::mail_diagnostics(Null,strip_tags($text));
     self::MESSAGE($text, $class, 'error', 'ERROR'); 
   }
@@ -818,7 +819,7 @@ class myPear{
     if (($class === False) || (!YBhere && !cnf_dev && !$forced))  return;
     if (!is_object($class)) $class = Null;
     if ($forced) self::MESSAGE_forced($text?$text:b_debug::__(2), $class, 'debug'); 
-    else         self::MESSAGE       ($text?$text:b_debug::__(2), $class, 'debug'); 
+    else                self::MESSAGE($text?$text:b_debug::__(2), $class, 'debug'); 
   }
 
   private static $show_this_message_in_NOUSER_context = False;
@@ -832,7 +833,7 @@ class myPear{
    * Display the unified message.
    */
   static public function MESSAGE($text,$class=Null,$id='status',$heading='',$only_once=False){
-
+    
     // By default we don't show any messages in no-user context, unless it is explicitly requested 
     $drop = (!self::$show_this_message_in_NOUSER_context &&
 	     !cnf_dev && (!class_exists('bAuth',0) ||
@@ -841,6 +842,9 @@ class myPear{
     if ($drop)  return;
     if ($only_once && @$_SESSION[__METHOD__][b_crypt::hash($text.$heading)]++) return;
 
+    // Add the caller in debug mode
+    if (cnf_dev && in_array($id,array('error'))) $text = x('strong',x('em',(b_debug::__(array(3),$class).": "))) . $text;
+    
     // Go on
     $caller = '';
     if (trim(strip_tags(trim($text)))){
@@ -862,8 +866,8 @@ class myPear{
 	  $caller = b_debug::__(3,$class);
 	  $text = $caller.' '.x('strong',x('em',$text));
 	}
-	//	if ((b_debug::$s_e_depth>0) && !b_debug::$starting_exiting) $text = str_repeat('&nbsp;',5*b_debug::$s_e_depth).$text;
-	if (b_debug::$s_e_depth>0) $text = str_repeat('&nbsp;',5*b_debug::$s_e_depth).$text;
+	//if (!b_debug::$starting_exiting)
+	$text = b_debug::s_e_depth() . $text;
 	break;
       default:
       }

@@ -3,6 +3,7 @@ locateAndInclude('bUnit_vm');
 /*
  * Unit of the visit observers.
  */
+/*
 class bUnit_vm_observers extends bUnit_vm{
 
   function  __construct($parent_ID=Null,$rank=RANK_vm_observer){
@@ -11,3 +12,4 @@ class bUnit_vm_observers extends bUnit_vm{
   }
 
 }
+*/

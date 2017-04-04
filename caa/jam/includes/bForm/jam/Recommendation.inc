@@ -101,7 +101,7 @@ class bForm_jam_Recommendation extends bForm_jam {
 			    'rec_apid'=>$this->ap->ID));
     }else{
       parent::__construct($id, $mode);
-      // Hook the Applicent / Referee
+      // Hook the Applicant / Referee
       $this->hook_ap_av();
     }
   }
@@ -305,14 +305,14 @@ class bForm_jam_Recommendation extends bForm_jam {
   /*
    *
    */
-  function readDefRecord(){
+  function readDefRecord(){ // getValue is called, DANGEROUS !!! 
 
     if (myPear::is_int($this->ID)) {
       $w[] = $this->TABLEID.'='.$this->ID;
     }elseif (is_object($this->av) && is_object($this->ap)){
       $w[] = "av_id = ".$this->av->ID;
       $w[] = "ap_id = ".$this->ap->ID;
-    }elseif (($rec_avid=$this->getValue('rec_avid',1,1)) && ($rec_apid=$this->getValue('rec_apid',1,1))){
+    }elseif (($rec_avid=$this->getValue('rec_avid',1,1)) && ($rec_apid=$this->getValue('rec_apid',1,1))){ 
       $w[] = "av_id = $rec_avid";
       $w[] = "ap_id = $rec_apid";
     }
@@ -332,6 +332,9 @@ class bForm_jam_Recommendation extends bForm_jam {
     }
   }
 
+  /*
+   *
+   */
   function getInfo(){
     $this->hook_ap_av();
     $this->getFormOpen();

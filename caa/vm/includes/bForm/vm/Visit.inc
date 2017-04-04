@@ -62,7 +62,6 @@ class bForm_vm_Visit extends bForm_vm {
     return $reply;
   }
 
-
   /*
    * Constructor
    */
@@ -74,7 +73,7 @@ class bForm_vm_Visit extends bForm_vm {
     // Force status update. This should be done as early as possible, so do it now...
     if (empty($_GET['a_once']) && (($w=(string)@$this->formDB['v_status']) !== ($n=(string)$this->getValue('v_status',True,True)))){
       $_GET['a_once'] = $this->getValue('v_status',True,True);
-      $this->dbg("Force status update $w --> $n",cnf_dev);
+      $this->dbg("Force v_status update $w --> $n",cnf_dev);
     }
 
     // Follow the endorser will
@@ -88,6 +87,36 @@ class bForm_vm_Visit extends bForm_vm {
     // $this->hookDependancies();
     $this->hookAvatar();
     $this->hookEvent();
+
+    // Check the auto-accept
+    $this->auto_accept_guest_invitations();
+  }
+
+  /*
+   * Since 2017-03-20, a new head of administration...
+   * New way of inviting guest researchers - no group leader confirmation is required. 
+   */
+  private function auto_accept_guest_invitations(){
+    $reply = auto_accept_guest_invitations && ($this->getValue('v_type',1,1) === VISIT_TYPE_COLLABORATION);
+    if ($reply &&
+	$this->getValue('v_start',1) && 
+	$this->getValue('v_end',1)){      
+      // Check that the visit is not clashing with another one
+      if ($this->getClashingVisits(True)){
+	$this->getValue_reset_forced('v_status',STATUS_PENDING);
+      }else{
+	// Set status to "accept", unless the visit is already rejected
+	$v_status = $this->getValue('v_status');
+	if (($v_status != STATUS_NO) && ($v_status != STATUS_YES)){
+	  $this->hookAvatar();
+	  $this->getValue_reset_forced('v_status',STATUS_YES);
+	  if (cnf_dev) myPear::MESSAGE("Visit of ".$this->av->fmtName('fL')." is auto-accepted");
+	  b_debug::traceBack('resetting v_status to STATUS_YES');
+	}
+      }
+    }
+    $this->dbg($reply,True);
+    return $reply;
   }
   
   /*
@@ -269,9 +298,14 @@ class bForm_vm_Visit extends bForm_vm {
     $this->getValue_reset($_virt_policy);
 
     // Sanity, fix eventual mistypes of the organizers
-    if ($this->getPolicy(VM_V_denialMailSent)  && !$this->isDenied())   $this->setPolicy(VM_V_denialMailSent, 0,cnf_dev,False,True);
-    if ($this->getPolicy(VM_V_welcomeMailSent) && !$this->isApproved()) $this->setPolicy(VM_V_welcomeMailSent,0,cnf_dev,False,True);
-
+    // Temporarily commented out...
+    // ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ YB ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ
+    if ($this->getPolicy(VM_V_denialMailSent)  && !$this->isDenied())   b_debug::traceBack('$this->setPolicy(VM_V_denialMailSent, 0,cnf_dev,False,True)');
+    if ($this->getPolicy(VM_V_welcomeMailSent) && !$this->isApproved()) b_debug::traceBack('$this->setPolicy(VM_V_welcomeMailSent,0,cnf_dev,False,True);');
+    //    if ($this->getPolicy(VM_V_denialMailSent)  && !$this->isDenied())   $this->setPolicy(VM_V_denialMailSent, 0,cnf_dev,False,True);
+    //    if ($this->getPolicy(VM_V_welcomeMailSent) && !$this->isApproved()) $this->setPolicy(VM_V_welcomeMailSent,0,cnf_dev,False,True);
+    // ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ YB ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ
+    
     //
     // Cancel the visit policy if the event policy is off, say
     // no visit office allocation if the Event policy is "no office"
@@ -306,19 +340,23 @@ class bForm_vm_Visit extends bForm_vm {
     if ($isChanged = $this->setBitMask($policy,'v_policy',$value,$check_only=True)){
       $this->setBitMask($policy,'v_policy',$value);
       if ($verbose || cnf_show_pv){
-	myPear::MESSAGE_add(VM::$v_policies[$policy]['d']." ".x('em',($value?'YES':'NO')." for ".$this->av->fmtName()));
+	if ($policy == VM_V_payAccommodation){
+	  if(0)	  if (cnf_dev) b_debug::traceBack();
+	}else{
+	  myPear::MESSAGE_add(VM::$v_policies[$policy]['d']." ".x('em',($value?'YES':'NO')." for ".$this->av->fmtName()));
+	}
       }
     }
     $this->setPolicyRecursion = 0;
   }
   
-    /*
-     * Set the status
+  /*
+   * Set the status
    */
   public function setStatus($v_status=Null){
     if (!myPear::is_int($this->ID)) return;
     
-    $was = @$this->formDB['v_status'];
+    $was = $this->getValue('v_status');
     if ($was === $v_status){
       $this->dbg("Status is not changed... $v_status",cnf_show_pv || $this->debug);
       return;
@@ -334,11 +372,6 @@ class bForm_vm_Visit extends bForm_vm {
       $this->deleteLease(Null,$verbose=True);
       
     case STATUS_YES:
-      // Send informational letter to the administrators
-      foreach(VM_administrators()->membersOnDuty(VISIT_TYPE_COLLABORATION) as $s_name=>$s_email){
-	VM_mailer()->inform_secretary_about_visit($this,$s_email,$v_status,bAuth::$av->fmtName('fl'));
-      }
-
     case STATUS_PENDING:
       // cancel/set policies of "when_approved" type
       foreach(VM_visit_policies($this->getValue('v_type')) as $p){
@@ -369,7 +402,7 @@ class bForm_vm_Visit extends bForm_vm {
      $v_status = @$buffer['v_status'];
      $buffer['v_status'] = $this->getValue('v_status',True);
 
-     $reply = self::_getStatus($buffer);
+     $reply = self::_getStatus($buffer,$this);
      //??????     if ((int)$this->ID)    $this->setStatus($reply);
 
      // Set also flag 'the approval formalities are done' if the status is auto-set to 'accepted'
@@ -384,29 +417,36 @@ class bForm_vm_Visit extends bForm_vm {
    /*
     *
     */
-   static public function _getStatus($buffer=array(),$check_clashes=False){
+   static public function _getStatus($buffer=array(),$check_clashes=True){
 
      // Skip the visits which are not yet in the database
-     if ((int)@$buffer['v_id']){
-       if ($check_clashes && self::_getClashes($buffer,$verbose=False)){
-	 $v_status = STATUS_CLASH;
+     if ((int)@$buffer['v_id'] && !empty($buffer['v_type'])){
+       if (!is_object($check_clashes) && $check_clashes && self::_getClashingVisits($buffer,$verbose=False)){
+	 $v_status = STATUS_PENDING;
        }else{
 
 	 // Guess the status value if it is not defined yet,
 	 // make an auto-approval for the transition period and for the past events
-	 $v_status = $buffer['v_status'];
-	 $v_start  = $buffer['v_start'];
+	 $v_status = @$buffer['v_status'];
+	 $v_start  = @$buffer['v_start'];
 
 	 if (empty($v_status)){
 	   switch($buffer['v_type']){
 	   case VISIT_TYPE_RENT:  
 	     $v_status = STATUS_YES;   
 	     break;
+	     
 	   case VISIT_TYPE_COLLABORATION:
+	     if ($acceptIt = ($check_clashes instanceof bForm_vm_Visit
+			      ? $check_clashes->auto_accept_guest_invitations()
+			      : auto_accept_guest_invitations)){
+	       if (is_object($check_clashes)) $v_status = $check_clashes->getValue('v_status',1);
+	       elseif (($v_status != STATUS_YES) && $v_status != STATUS_NO) $v_status = STATUS_YES;   
+	       break;
+	     }
 	   case VISIT_TYPE_PROGRAM:  
 	   case VISIT_TYPE_OTHER: 
 	     $v_status = STATUS_PENDING;
-	     break; 
 	   }
 	 }
        }
@@ -422,7 +462,7 @@ class bForm_vm_Visit extends bForm_vm {
    private $status_data = array();
    private function is_status_data(){
      if ((int)$this->ID && empty($this->status_data)){
-       $this->status_data['v_id'] = $this->ID;
+       $this->status_data = array('v_id' => $this->ID);
        foreach(array('v_status',
 		     'v_start',
 		     'v_type',
@@ -434,14 +474,14 @@ class bForm_vm_Visit extends bForm_vm {
    }
 
    function isApproved(){
-     if ((int)$this->ID) $reply = self::_isApproved($this->is_status_data());
+     if ((int)$this->ID) $reply = self::_isApproved($this->is_status_data(),$this);
      else                $reply = True;
      $this->dbg($reply);
      return $reply;
    }
 
-   static function _isApproved($buffer){
-     $reply = (self::_getStatus($buffer)== STATUS_YES);
+   static function _isApproved($buffer,$class=Null){
+     $reply = (self::_getStatus($buffer,$class)== STATUS_YES);
      return $reply;
    }
 
@@ -449,13 +489,13 @@ class bForm_vm_Visit extends bForm_vm {
     *
     */
    function isDenied(){
-     $reply = self::_isDenied($this->is_status_data());
+     $reply = self::_isDenied($this->is_status_data(),$this);
      $this->dbg($reply);
      return $reply;
    }
 
-   static function _isDenied($buffer){
-     $reply = (self::_getStatus($buffer) == STATUS_NO);
+   static function _isDenied($buffer,$class=Null){
+     $reply = (self::_getStatus($buffer,$class) == STATUS_NO);
      return $reply;
    }
 
@@ -463,7 +503,7 @@ class bForm_vm_Visit extends bForm_vm {
     *
     */
    function isPending(){
-     $reply = (self::_getStatus($this->formDB)== STATUS_PENDING);
+     $reply = (self::_getStatus($this->formDB,$this)== STATUS_PENDING);
      return $reply; 
    }
 
@@ -531,7 +571,7 @@ class bForm_vm_Visit extends bForm_vm {
 	 $reply = False;
        }else{
 	 $reply = (int)$this->ID; //  && $this->isApproved();
-	 if (empty($this->clashes) && (int)$this->ID && $this->isPending()) myPear::WARNING("The visit is NOT yet approved");
+	 if (!$this->getClashingVisits(0) && (int)$this->ID && $this->isPending()) myPear::WARNING("The visit is NOT yet approved");
        }
        break;
 
@@ -607,13 +647,16 @@ class bForm_vm_Visit extends bForm_vm {
     *
     */
    function hookEvent(){
-     if (!($this->e instanceof bForm_vm_Event) && ($v_eid = $this->getValue('v_eid', True))) {
+     if ($this->isVisitType_program() &&
+	 ($v_eid = $this->getValue('v_eid', True)) &&
+	 !($this->e instanceof bForm_vm_Event)){
        $this->e = myPear::getInstance_new('bForm_vm_Event',$v_eid,'fatal');
      }
-     $this->dbg((is_object($this->e)
-		 ? $this->e->__toString()
-		 : False));
-     return is_object($this->e);
+     $reply = (is_object($this->e)
+	       ? $this->e
+	       : False);
+     $this->dbg("".$reply,True);
+     return $reply;
    }
    
    /*
@@ -730,13 +773,13 @@ class bForm_vm_Visit extends bForm_vm {
 
     $this->defineVariable(array('e_name'              => ' ',
 				'v_host_avid'         => 'Host',
-				'virt_host'           => 'Host',
+				//'virt_host'           => 'Host',
 				'v_accompaning'       => 'Accompanying persons',
 				'v_chance'            => 'Probability of visit',
 				'v_comment'           => 'Comment (purpose of visit, lecture title, etc.)',
 				'v_acc_wish'          => 'Accommodation wish',
 				'v_created'           => 'Request date',
-				'v_group'             => 'Research group',
+				'v_group'             => 'Hosting Research group',
 				'v_oid'               => 'Office number',
 				'_o_name'             => 'Office number',
 				'v_projectid'         => 'Project to pay from',
@@ -747,7 +790,7 @@ class bForm_vm_Visit extends bForm_vm {
 				'v_eid'               => 'v_eid',       
 				'v_avid'              => 'v_avid',
 				'v_code'              => 'v_code',
-				'v_owner_avid'        => 'v_owner_avid',
+				'v_owner_avid'        => 'Request owner',
 				'v_admin_avid'        => 'v_admin_avid',
 				'v_policy'            => 'v_policy',  
 				'v_gsf'               => ' ',
@@ -756,7 +799,7 @@ class bForm_vm_Visit extends bForm_vm {
 				'lease_aid'           => 'Accommodation',
 				),True);
 
-    $this->defineTypes(array(//'submitOnChange'=>array('v_status'),
+    $this->defineTypes(array('submitOnChange'=>array('v_group' => !myPear::is_empty($this->getValue('v_group',1))),
 			     'isADMIN'       =>array('v_comment'),
 			     'isMBE'         =>array('v_projectid', 
 						     'v_accompaning',
@@ -766,42 +809,39 @@ class bForm_vm_Visit extends bForm_vm {
 						     'v_oid',
 						     'v_code',
 						     'v_policy',
+						     'v_eid'      => ($this->getValue('v_type',1,1)!= VISIT_TYPE_PROGRAM),
+						     'v_host_avid'=> ($this->getValue('v_type',1,1)!= VISIT_TYPE_COLLABORATION),
 						     '_virt_owner'),
 			     'isRO'          =>array('v_status' => !VM::hasRightTo('approve_guest_invitation',$this),
+						     'v_start'  => ($this->getValue('v_type',1,1)== VISIT_TYPE_PROGRAM),
+						     'v_end'    => ($this->getValue('v_type',1,1)== VISIT_TYPE_PROGRAM),
+						     'v_type'   => ($this->getValue('v_type',1,1)== VISIT_TYPE_PROGRAM),
 						     'v_eid',						
 						     'v_gsf',					
 						     'v_owner_avid',
 						     'v_created',
 						     'v_admin_avid',						
 						     'e_name',
+						     'v_accompaning'=> !VM::hasRightTo('edit_visit',$this),
+						     'v_oid'        => !VM::hasRightTo('edit_visit',$this),
 						     '_virt_updated_by',
 						     '_virt_owner'),
 			     'isPRIVATE'     =>array('v_owner_avid',
 						     'v_accompaning',
 						     'v_type',
-						     'v_acc_wish',
+						     //'v_acc_wish',
 						     '_virt_updated_by',
 						     '_virt_owner'),
-			     'isVITAL'       =>array('v_start',
-						     'v_end',
-						     'v_type'),
+			     'isVITAL'       =>($this->visitOutOfScope()
+						? array()
+						: array('v_start',
+							'v_end',
+							'v_type',
+							'v_group'    => ($this->getValue('v_type',1,1)== VISIT_TYPE_COLLABORATION),
+							'v_host_avid'=> ($this->getValue('v_type',1,1)== VISIT_TYPE_COLLABORATION),
+							)),
 			     //'keepRW'        =>array('v_type'),
 			     ));
-    
-    /*
-     * Fine tuning of the variable types
-     */
-    $this->isMBE['v_host_avid'] = ($this->getValue('v_type',1) != VISIT_TYPE_COLLABORATION);
-    if ($this->isVisitType_program()){
-      foreach(array('v_start','v_end','v_type','v_acc_wish') as $f){
-	$this->isRO[$f] = $this->isMBE[$f] = True; 
-      }
-    }
-    
-    foreach (array('v_accompaning',
-		   'v_oid') as $item){
-      $this->isRO[$item] = !VM::hasRightTo('edit_visit',$this);
-    }
     
     $this->leaveCommentUnformatted = True;
   }
@@ -815,7 +855,6 @@ class bForm_vm_Visit extends bForm_vm {
 			    " LEFT JOIN abs_expenses ON  v_id = exp_vid ".
 			    " LEFT JOIN zzz_avatars  ON av_id = v_avid WHERE $this->TABLEID = '$this->ID'");
     while ($r=myPear_db()->next_record($q)) $this->formDB = $r;
-    if (empty($this->formDB)) $this->dbg("??? empty formDB for ".$this->TABLEID."=".$this->ID,$this->debug||cnf_dev);
   }
   
   function readCompleteDefRecord(){
@@ -1039,13 +1078,15 @@ class bForm_vm_Visit extends bForm_vm {
     if (myPear::is_empty($value)){
       $err_msg = parent::getValue_validate_empty($name,$value);
       switch($name){
+	/*
+	// better to set isMBE / isVITAL
       case 'v_host_avid':
 	if (empty($this->formDB['v_group'])) $err_msg = '';
       case 'v_group':
 	if (!in_array(@$this->formDB['v_type'],array(VISIT_TYPE_OTHER,
 						     VISIT_TYPE_COLLABORATION)))  $err_msg = '';
 	break;
-	
+	*/	
       case 'av_email': // workaround... Should find where it comes from
       case 'v_comment':
       case 'v_acc_wish':
@@ -1067,7 +1108,7 @@ class bForm_vm_Visit extends bForm_vm {
     if ($this->endorses === Null){
       $this->endorses = array();
       if (($e_id=$this->getValue('v_eid',1)) > 0){
-	// Visit for a regular event, to be approved by the event organizers
+	// Visit for a regular event (program), to be approved by the event organizers
 	$this->endorses[] = 'Event organizers:';
 	foreach(VM_organizers($e_id)->getMembers() as $um_id=>$rec){
 	  $this->endorses[$rec['um_avid']] = '&nbsp;'.bForm_Avatar::_fmtName('Lf',$rec);
@@ -1094,7 +1135,7 @@ class bForm_vm_Visit extends bForm_vm {
   private function GSFblock(){
     if ($v_gsf = $this->getValue('v_gsf',True)){    
       $dialog = array();
-      $v_gsf = unSerialize($v_gsf);
+      $v_gsf = unserialize($v_gsf);
       $accommodation = ($c = $this->getValue('v_acc_wish',True)) ? array('Accommodation' => $c) : array();
       foreach(array_merge($accommodation,$v_gsf) as $q=>$a){
 	$this->defineVariable($q,$f='_virt_'.b_crypt::hash($q));
@@ -1116,6 +1157,8 @@ class bForm_vm_Visit extends bForm_vm {
     if (!$this->formBlock_isVisible(VM_visit_policy)) return;
 
     $this->getStatus();
+    if (!$this->getValue('v_status')) $this->getValue_reset('v_status',STATUS_PENDING);
+
     $visit_status = VM::$visit_status;
     $visit_status[STATUS_PENDING] = x('strong',b_fmt::redText($visit_status[STATUS_PENDING]));
     if ($this->isRO('v_status')){ 
@@ -1170,7 +1213,12 @@ class bForm_vm_Visit extends bForm_vm {
    */
   private function accommodationBlock(){
     if (!$this->visitOutOfScope()){
-      foreach($this->get_allLeases() as $l) $l->getForm();
+      $all_leases = $this->get_allLeases();
+      if (empty($all_leases) && ($this->getValue('e_type')==VISIT_TYPE_COLLABORATION)){
+	$this->setBooking(VM::$OA->ID,$verbose);
+      }else{
+	foreach($all_leases as $l) $l->getForm();
+      }
     }
   }
   
@@ -1179,7 +1227,7 @@ class bForm_vm_Visit extends bForm_vm {
    */
   function projectBlock(){
     
-    if ($this->isApproved()){
+    if (!$this->auto_accept_guest_invitations() && $this->isApproved()){
       $where = array("lm_option != 'no'");
       if ($this->e) $where[] = "(lm_status = ".$this->e->ID." OR lm_status = 'RO')";
       else          $where[] = "(lm_status = '' OR lm_status = 0 OR lm_status = 'RO')";
@@ -1226,18 +1274,19 @@ class bForm_vm_Visit extends bForm_vm {
     if ($this->hookDependancies() && $this->isApproved()){
       $this->mergeDefinitions($this->exp);
       $this->exp->getForm();
-      if(!$this->getValue('v_projectid',True) && ($this->getValue('v_end',True) > time()-AUTO_EXPIRATION*86400)){
-	if($this->isWritable()){
-	  if(is_object($this->e) && !VM_projects()->getProjectID($this->e->ID)){
-	    myPear::WARNING("<br/><em>\"".$this->e->name(False)."\"</em> has NO budget code assigned. ".
-			    "<br/>Payment is not possible.");
-	  }
-	  if (VM::hasRightTo('select_budget',$this) && 
-	      (!$this->hookEvent() || VM_projects()->getProjectID($this->e->ID))){
-	    myPear::WARNING("Please select the budget source for the visit (<em>\"".$this->vars['v_projectid']."\"</em> below)");
-	    // Force the project selection
-	    $this->MODE = 'RW';
-	  }
+      if(!$this->auto_accept_guest_invitations() && 
+	 !$this->getValue('v_projectid',True) && 
+	 ($this->getValue('v_end',True) > time()-AUTO_EXPIRATION*86400) &&
+	 ($this->isWritable())){
+	if(is_object($this->e) && !VM_projects()->getProjectID($this->e->ID)){
+	  myPear::WARNING("<br/><em>\"".$this->e->name(False)."\"</em> has NO budget code assigned. ".
+			  "<br/>Payment is not possible.");
+	}
+	if (VM::hasRightTo('select_budget',$this) && 
+	    (!$this->hookEvent() || VM_projects()->getProjectID($this->e->ID))){
+	  myPear::WARNING("Please select the budget source for the visit (<em>\"".$this->vars['v_projectid']."\"</em> below)");
+	  // Force the project selection
+	  $this->MODE = 'RW';
 	}
       }
     }
@@ -1261,42 +1310,27 @@ class bForm_vm_Visit extends bForm_vm {
   private function hostingBlock($only_groups=False){ 
     if (!is_object(bAuth::$av)) return;
     
-    // Prepare a list of valid hosts - the group members, the owner, the enforcers
-    foreach(array(array(bAuth::$av->ID => bAuth::$av->fmtName()),
-		  myOrg()->orgGroups()->get_groupMembers($this->getValue('v_group',1)), 
-		  VM_endorsers()->getEndorsers(Null,'full'),
-		  ) as $candidates){
-      foreach($candidates as $av_id=>$av_name) $valid_hosts[$av_id] = $av_name;
-    }
-    if (($av_id = $this->getValue('v_host_avid',1)) && empty($valid_hosts[$av_id])){
-      if ((int)$av_id){
-	$av = myPear::getInstance_new('bForm_Avatar',$av_id,array('nocache','strict'));
+    // Prepare a list of valid hosts - the group members + the owner + the endorsers
+    $valid_hosts = (array(bAuth::$av->ID => bAuth::$av->fmtName()) +
+		    myOrg()->orgGroups()->get_groupMembers($this->getValue('v_group',1)));
+    if (!auto_accept_guest_invitations) $valid_hosts += VM_endorsers()->getEndorsers(Null,'full');
+
+    if (($v_host_avid = $this->getValue('v_host_avid',1)) && empty($valid_hosts[$v_host_avid])){
+      if ((int)$v_host_avid){
+	$av = myPear::getInstance_new('bForm_Avatar',$v_host_avid,array('nocache','strict'));
 	if (is_object($av)) $valid_hosts[$av->ID] = $av->fmtName();
       }else{
-	$this->getValue_reset('v_host_avid',0);
+	$this->getValue_reset('v_host_avid');
       }
     }
     asort($valid_hosts);
 
     // Dialog
-    $this->isVITAL['v_group'] = True;
-    $this->submitOnChange['v_group'] = !myPear::is_empty($this->getValue('v_group',1));
-    $dialog = array(
-		    'v_group'    => array('selectMenu', myOrg()->orgGroups()->get_groups()),
-		    'v_acc_wish' => array('textArea'),
-		    'v_host_avid'=> array('selectMenu',$valid_hosts),
-		    '_virt_owner'=> array('textField'),
-		    );
-    if ($this->MODE == 'RO'){
-      if ($av_id = (int)$this->getValue('v_host_avid',1)) $this->formDB['virt_host'] = $valid_hosts[$av_id];
-      else                                                $this->formDB['virt_host'] = 0;
-      $dialog['v_host_avid'] = array('textHidden',$this->getValue('v_host_avid'));
-      $dialog['virt_host']   = array('textField');
-    }
-
     $this->formBlock(VM_visit_host,
 		     'Visit hosting',
-		     $dialog,
+		     array('v_group'    => array('selectMenu', myOrg()->orgGroups()->get_groups()),
+			   'v_host_avid'=> array('selectMenu',$valid_hosts),
+			   '_virt_owner'=> array('textField')),
 		     array('d'=>'auto',
 			   'i'=>'i-usrshare',
 			   'l'=>$this->sameURL_but(array('mode' =>'RW'))));
@@ -1337,6 +1371,14 @@ class bForm_vm_Visit extends bForm_vm {
     $this->hookDependancies();
     $this->av->defineVariables();
 
+    // Inform the administration about new guest invitation, if any
+    if ($this->errorless() && ($this->getValue('v_type') == VISIT_TYPE_COLLABORATION)){
+      // Check the auto-accept first
+      $this->auto_accept_guest_invitations();
+      // Send the mail(s) to administrators if not yet done
+      VM_mailer()->inform_about_guest_invitation($this);
+    }       
+    
     // Start the dialog
 
     if (!$this->isApproved()){
@@ -1352,7 +1394,6 @@ class bForm_vm_Visit extends bForm_vm {
     // Do not allow any changes for the closed visits (closing is done by the finance) 
     $this->declareRO($this->exp_arePayed());
     
-
     /*
      * Open the form and put  the calendar block into "pending objects" for the table class.
      * The calendar will then be printed on the first table row
@@ -1372,6 +1413,7 @@ class bForm_vm_Visit extends bForm_vm {
      * otherwise prompt for the visit type
      */
     if ($v_type = $this->getValue('v_type',True)){
+      $this->dbg("v_type=$v_type",True);
       $this->periodBlock();
       $this->policyBlock();
       $this->accommodationBlock();
@@ -1389,8 +1431,8 @@ class bForm_vm_Visit extends bForm_vm {
 	break;
       }
 	
-      if ($date = $this->getValue('v_created',1)){
-	if ($av = myPear::getInstance_new('bForm_Avatar_vm',$this->getValue('v_owner_avid',1),'fatal')){
+      if (($date = $this->getValue('v_created',1)) && ($host=$this->getValue('v_owner_avid',1))){
+	if ($av = myPear::getInstance_new('bForm_Avatar_vm',$host,'fatal')){
 	  $this->formDB['_virt_owner'] = $av->fmtName('fl').' '.b_time::medium_date($date);
 	}
       }
@@ -1402,7 +1444,6 @@ class bForm_vm_Visit extends bForm_vm {
        * Request first the visit type,
        * since all the rest depends on it
        */
-      unset($this->submitOnChange['v_type']);
       $this->isMBE['v_group'] = False;
       $this->formBlock(VM_visit_info,
 		       'Visit information',
@@ -1414,7 +1455,7 @@ class bForm_vm_Visit extends bForm_vm {
     
     // Show optional free format fields from the application form (need for financial support, etc);
     $this->GSFblock();
-
+    
 	
     // Close the dialog
     $btn = array();
@@ -1426,29 +1467,36 @@ class bForm_vm_Visit extends bForm_vm {
 					  array('id'));
     $this->closeForm('update',$btn);
     
-    //
-    // Easy button for endorsers
-    //
-    if (!$this->visitOutOfScope() &&
-	empty($_SESSION[get_class($this).$this->ID]) &&
-	$this->isPending() &&
-	(($v_group=$this->getValue('v_group',1)) && in_array(bAuth::$av->ID,VM_endorsers()->getEndorsers($v_group)) ||
-	 (is_object($this->e) && $this->e->isOrganizer()))
-	){
-      print b_btn::UL_buttons(array(b_btn::big_button('Deny visit',      array('form'  => get_class($this),
-									       'id'    =>$this->ID,
-									       'a_once'=>STATUS_NO,
-									       'resetcache_once'=>1),
+    if ($this->getClashingVisits(False)){
+      //
+      // Propose to delete this clashing visit
+      //
+      print b_btn::UL_buttons(array(b_btn::big_button('Cancel this visit',array('function'=>'vm_cancel_visit',
+										'v_id'    =>$this->ID),
+						      'red',True)));
+    }elseif (!$this->visitOutOfScope() &&
+	     empty($_SESSION[get_class($this).$this->ID]) &&
+	     $this->isPending() &&
+	     (($v_group=$this->getValue('v_group',1)) && in_array(bAuth::$av->ID,VM_endorsers()->getEndorsers($v_group)) ||
+	      (is_object($this->e) && $this->e->isOrganizer()))
+	     ){
+      //
+      // Easy button for endorsers
+      //
+      print b_btn::UL_buttons(array(b_btn::big_button('Deny visit',        array('form'  => get_class($this),
+										 'id'    =>$this->ID,
+										 'a_once'=>STATUS_NO,
+										 'resetcache_once'=>1),
 						      'red',True),
 				    b_btn::big_button('I need to think...',array('form'  => get_class($this),
-									       'id'    =>$this->ID,
-									       'a_once'=>STATUS_PENDING,
-									       'resetcache_once'=>1),
+										 'id'    =>$this->ID,
+										 'a_once'=>STATUS_PENDING,
+										 'resetcache_once'=>1),
 						      'grey',True),
-				    b_btn::big_button('Approve visit',   array('form'  => get_class($this),
-									       'id'    =>$this->ID,
-									       'a_once'=>STATUS_YES,
-									       'resetcache_once'=>1),
+				    b_btn::big_button('Approve visit',     array('form'  => get_class($this),
+										 'id'    =>$this->ID,
+										 'a_once'=>STATUS_YES,
+										 'resetcache_once'=>1),
 						      'green',True)));
     }
     bIcons()->explain();
@@ -1561,6 +1609,7 @@ class bForm_vm_Visit extends bForm_vm {
       $types = VM::$visitTypes;
       unset($types[VISIT_TYPE_PROGRAM]);
     }
+    $this->dbg($types,True);
     return $types;
   }
 
@@ -1664,7 +1713,7 @@ class bForm_vm_Visit extends bForm_vm {
     // Sanity
     if (cnf_dev){
       if (myPear::getClassFromID($lease['lease_aid'])!='bForm_vm_Room') b_debug::internalError("setBooking($lease) is not bForm_vm_Room",$this); // sanity
-      if (!$lease['lease_start'] ||!$lease['lease_end'])                        b_debug::internalError("setBooking($lease) no start/end time") ;           
+      if (!$lease['lease_start'] ||!$lease['lease_end'])                b_debug::internalError("setBooking($lease) no start/end time") ;           
     }
     
     // Create the lease (lease) if it does not exist      
@@ -1714,95 +1763,125 @@ class bForm_vm_Visit extends bForm_vm {
    * not considered as clashes
    */ 
   static  $savedWhere = Null;
-  function getClashingVisits($start=Null,$end=Null,$searchByName=False) {
-    if (!$start) $start = $this->getValue('v_start',True);
-    if (!$end)   $end   = $this->getValue('v_end',  True);
-    $reply = self::_getClashingVisits($this->ID, $this->getValue('v_code',1), $this->getValue('v_type',1), $this->getValue('v_avid',1),
-				     $start,$end,$searchByName);
-    $this->queryString = self::$savedWhere;
+  function getClashingVisits_byDate($start,$end,$verbose=True) {
+
+    if (True){      // Since 2017-03-28
+      $reply = self::_getClashingVisits(array('v_start' => $start,
+				       'v_end'   => $end,
+				       'v_id'    => $this->getValue('v_id',True),
+				       'v_avid'  => $this->getValue('v_avid',True)),
+				 $verbose);
+      
+    }else{         // Before 2017-03-28
+      $reply = self::_getClashingVisits_byDate($this->ID, $this->getValue('v_code',1), $this->getValue('v_type',1), $this->getValue('v_avid',1),
+					       $start,$end);
+      $this->queryString = self::$savedWhere;
+    }
+    $this->dbg($reply,True);
     return $reply;
   }
 
   /*
-   *
+   * Detect clashes in visit dates (only for the invited guests, not event attenders)
    */
-  public $clashes = array();
-  function getClashes($buffer=array()){
-    $this->clashes = self::_getClashes($this->formDB,$verbose=True);
+  function getClashingVisits($verbose=True){
+    // Get the data buffer
+    foreach(array('v_id','v_start','v_end','v_avid') as $f) $buffer[$f] = $this->getValue($f,True);
+    // Call the engine
+    $clashes = self::_getClashingVisits($buffer,$verbose);
+    $this->dbg($clashes,True);
+    return $clashes;
   }
   
-  static function _getClashes($buffer=array(),$verbose=False){
-    $clashes = array();
-    $where = array("v_id != $buffer[v_id]",
-		   "v_start <= '$buffer[v_end]'",
-		   "v_end   >= '$buffer[v_start]'",
-		   myPear_db()->quote($buffer['v_eid'], 1,'v_eid'),
-		   myPear_db()->quote($buffer['v_type'],1,'v_type'),
-		   myPear_db()->quote($buffer['v_avid'],1,'v_avid'),
-		   );
-    $q = myPear_db()->query("SELECT * FROM abs_visits ".
-			    "    LEFT JOIN abs_events   ON v_eid = e_id ".
-			    "    LEFT JOIN abs_expenses ON exp_vid = v_id ".
-			    "    LEFT JOIN zzz_avatars  ON v_avid = av_id ".
-			    "    LEFT JOIN zzz_list_members ON v_projectid = lm_id ".
-			    " WHERE ".join(' AND ',$where));
-    while ($r=myPear_db()->next_record($q)){
-      if ($verbose){ 
-	if (empty($msg)){
-	  $msg = array('');
-	  $msg[] = 'Overlap in visit dates detected for '.bForm_Avatar::_fmtName('fL',$buffer).':';
-	  $msg[] = 'Current visit: '.b_time::period($buffer['v_start'],$buffer['v_end']);
+  static function _getClashingVisits($buffer=array(),$verbose=False){
+
+    $v_id = $buffer['v_id'];    
+    if (!(int)$v_id) return array();
+
+    static $clashes = array();
+    if (!isset($clashes[$v_id])){
+      $clashes[$v_id] = array('msg' => array(),
+			      'ids' => array());
+      $buffer['v_start'] = b_time::txt2unix($buffer['v_start']);
+      $buffer['v_end']   = b_time::txt2unix($buffer['v_end']);
+      
+      $where = array("v_id    !=  $v_id",
+		     "v_start <= '$buffer[v_end]'",
+		     "v_end   >= '$buffer[v_start]'",
+		     myPear_db()->quote(VISIT_TYPE_COLLABORATION,1,'v_type'),
+		     myPear_db()->quote($buffer['v_avid'],1,'v_avid'),
+		     );
+      
+      $q = myPear_db()->qquery("SELECT * FROM abs_visits ".
+			       "    LEFT JOIN zzz_avatars  ON v_avid = av_id ".
+			       // "    LEFT JOIN abs_events   ON v_eid = e_id ".
+			       // "    LEFT JOIN abs_expenses ON exp_vid = v_id ".
+			       // "    LEFT JOIN zzz_list_members ON v_projectid = lm_id ".
+			       " WHERE ".join(' AND ',$where),cnf_dev);
+      while ($r=myPear_db()->next_record($q)){
+	if (empty($clashes[$v_id]['msg'])){
+	  $clashes[$v_id]['msg'][] = x('strong','Overlap in visit dates detected:');
+	  $clashes[$v_id]['msg'][] = 'Current visit: '.b_time::period($buffer['v_start'],$buffer['v_end']);
 	  
-	  static $dejaVu = array();
-	  if (!@$dejaVu[$buffer['v_id']]++){
-	    locateAndInclude('bIcal_matrix_visits');
-	    $m = new bIcal_matrix_visits();
-	    $m->showLegend = False;
-	    $m->day1 = $buffer['v_start']-3*86400;
-	    $m->day9 = $buffer['v_end']  +3*86400;
-	    $m->imposedEntries[] = $buffer;
-	  }
+	  locateAndInclude('bIcal_matrix_visits');
+	  ob_start();
+	  $bIcal = new bIcal_matrix_visits();
+	  $bIcal->showLegend = False;
+	  $bIcal->graphTitle = ''; // 'Clashing visits';
+	  $bIcal->day1 = $buffer['v_start']-3*86400;
+	  $bIcal->day9 = $buffer['v_end']  +3*86400;
+	  $bIcal->imposedEntries[] = $buffer;
 	}
-	if (is_object($m)){
-	  $dejaVu[$r['v_id']]++;
-	  $m->imposedEntries[] = $r;
-	  $m->day1 = min($buffer['v_start']-3*86400,$m->day1);
-	  $m->day9 = max($buffer['v_end']  +3*86400,$m->day9);
-	}
+
+	$bIcal->imposedEntries[] = $r;
+	$bIcal->day1 = min($buffer['v_start']-3*86400,$bIcal->day1);
+	$bIcal->day9 = max($buffer['v_end']  +3*86400,$bIcal->day9);
+	
+	$clashes[$v_id]['msg'][] = 'Clashing visit: '.b_time::period($r['v_start'],$r['v_end']);
+	$clashes[$v_id]['ids'][] = $r['v_id'];
       }
-      $msg[] = 'Clashing visit: '.b_time::period($r['v_start'],$r['v_end']);
-      $clashes[] = $r['v_id'];
+      
+      if (!empty($clashes[$v_id]['msg'])){
+	// complete the bIcal graph
+	$bIcal->show('<hr/><br/>');
+	$bIcal_visits = ob_get_contents();
+	ob_end_clean();
+
+	$clashes[$v_id]['msg'][] = '&nbsp;';
+	$clashes[$v_id]['msg'][] = x('strong','Please resolve the ambiguity.');
+	$clashes[$v_id]['msg'][] = '&nbsp;';
+	$clashes[$v_id]['msg'][] = $bIcal_visits;
+      }
+    }else{
+      //b_debug::var_dump($clashes[$v_id],"dejaVu...");
     }
 
-    // Print an error message if the visit is clashing
-    if (!empty($clashes) && $verbose){
-      $msg[] = x('strong','Please resolve the ambiguity.');
-      myPear::ERROR(join('<br/>',$msg));
-      if ($verbose && is_object($m))  $m->show('<hr/><br/>');
+    // print the messages, but only once
+    if ($verbose && !empty($clashes[$v_id]['msg'])){
+      myPear::WARNING(join('<br/>',$clashes[$v_id]['msg']));
+      $clashes[$v_id]['msg'] = array();
     }
-    return $clashes;
+
+    // return the list of clashing visit IDs
+    $reply = $clashes[$v_id]['ids'];
+    if ($reply) myPear::DEBUG(__METHOD__."($v_id): ".join(', ',$reply)); 
+    return $reply;
   }
   
   /*
    * Check that the visit does clash with other visits
    */ 
   static  $savedQuery = Null;
-  public static function _getClashingVisits($v_id, $v_code, $v_type, $v_avid, $start,$end,$searchByName=False) {
+  private static function _getClashingVisits_byDate($v_id, $v_code, $v_type, $v_avid, $start,$end) {
     $clashes = array();
     if ($av = bForm_Avatar::hook($v_avid)){
       $where = array("v_id    != '$v_id'",
 		     "v_type   = '$v_type'",
 		     "v_start <= '$end'",
-		     "v_end   >= '$start'");
+		     "v_end   >= '$start'",
+		     "v_avid   = '$av->ID'");
       if ($v_code>0) $where[] = "(v_code <= 0 OR v_code IS NULL)";
-      if ($searchByName){
-	$where[] = ($avSelect='('.join(' OR ',array(myPear_db()->quote($av->getValue('av_email',True,True),1,'av_email'),
-						    "v_avid='$av->ID'",
-						    '('.    myPear_db()->quote($av->getValue('av_firstname',1,1),'R','av_firstname').
-						    ' AND '.myPear_db()->quote($av->getValue('av_lastname', 1,1),'R','av_lastname').')')).')');
-      }else{       
-	$where[] = "v_avid='$av->ID'";
-      }
+      
       locateAndInclude('bHolder_vm_Visits');
       $holder = new bHolder_vm_Visits();
       self::$savedWhere = $holder->where = array(join(' AND ',$where));
@@ -1925,12 +2004,14 @@ class bForm_vm_Visit extends bForm_vm {
       }
       break;
 
+    default:
+      b_debug::xxx("??? status=".var_export($status,True));
+      b_debug::print_r($buffer);
+      //      b_debug::internalError("??? status=".var_export($status,True));
     case STATUS_PENDING:
       $reply = STATUS_PENDING;
       break;
 
-    default:
-      b_debug::internalError('???');
     }
 
     //    if (cnf_show_pv && !empty($reply))  myPear::DEBUG(__FUNCTION__."($buffer[v_id]) <em>".(empty($reply) ? '&lt;OK&gt;' : $reply)."</em>");
@@ -1943,28 +2024,30 @@ class bForm_vm_Visit extends bForm_vm {
   function formOKspecific(){
     if (!$this->hookAvatar()) b_debug::internalError("Can't hook Avatar",$this);
     
-    // There should be no owner for the external visits                                                                                                                     
+    // There should be no owner for the external visits, force it to be empty
     if ($this->getValue('v_type',1) === VISIT_TYPE_PROGRAM){ 
       foreach(array('v_host_avid','v_owner_avid') as $item) $this->getValue_reset($item,0);
     }
 
     // Check for errors
-    if ($this->visitOutOfScope()) $this->isVITAL = array();
-
     if (($d1=$this->getValue('v_start',1)) >= ($d9=$this->getValue('v_end',1)) && $d1) {
       $this->errorsInTheForm['v_end'] = x("'",$this->getDescr('v_start'))." must be before ".x("'",$this->getDescr('v_end'));
-    }elseif ($this->getClashingVisits($d1,$d9)){
+    }elseif ($clashes=$this->getClashingVisits(True)){
       $this->errorsInTheForm['v_start'] = 'Dates for the visit'.' '.b_time::period($d1,$d9).' '.'clash with another visit:';
+      foreach($clashes as $v_id){
+	$v = new bForm_vm_Visit($v_id);
+	b_debug::xxx(b_time::period($v->getValue('v_start'),$v->getValue('v_end')));
+      }
     }
 
     if (!VM_manager_here && !$this->isOwner()) $this->errorsInTheForm = array();
     //    foreach (array_keys($this->errorsInTheForm) as $f) $this->printErrorAsIs[$f] = True; 
 
     // set the defaults for a newly created visit
-    if ((@$_POST['_post_bForm_ID_once'] === 'new') || (@$_POST['_post_bForm_ID_once'] === 'empty')){
       if (!$this->getValue('v_created',1))         $this->getValue_reset('v_created',time());
       $this->getValue_reset('v_admin_avid',bAuth::$av->ID); 
-    }
+    // Set the request owner
+    if (!$this->getValue('v_owner_avid',1)) $this->getValue_reset('v_owner_avid',bAuth::$av->ID);
 
     // Update office number
     if ($_o_name = $this->getValue('_o_name',1,1)){
@@ -1979,15 +2062,9 @@ class bForm_vm_Visit extends bForm_vm {
     }
     
 
+    // Save the avatar for a the visit to be created
     if ($this->errorless()){
-
-      // Save the avatar for a the visit to be created
       if ($v_avid = @$GET['v_avid'])      $this->getValue_reset('v_avid',$v_avid);
-      
-      // Set the "hosting person" to the submitter if not explicitly imposed
-      foreach(array('v_host_avid','v_owner_avid') as $id){
-	if (!(int)$this->getValue($id,1)) $this->getValue_reset($id,bAuth::$av->ID);
-      }
     }       
     
     // Update policy 

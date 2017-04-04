@@ -103,6 +103,10 @@ class bMailer_vm extends bMailer{
       if (preg_match('/^m_/',$method)) call_user_func(array($this, $method));
     }
   }
+
+  function dbg($txt='?',$forced=False) {
+    myPear::WARNING($txt,$this);
+  }
   
   /*
    *
@@ -131,7 +135,7 @@ class bMailer_vm extends bMailer{
 	      : $v->getPolicy($code));
 
     case VM_E_endorsmentSent:
-    case VM_V_scrtrInfoSent:
+    case VM_V_guestAcceptSent:
     defailt:
       b_debug::internalError(myPear::getClassFromID($arg)."($code)");
     }
@@ -145,7 +149,7 @@ class bMailer_vm extends bMailer{
    */
   private $info = array();
   public function cronjob_remind_organizers(){
-    $verbose = cnf_dev || VM_observer_here;    
+    $verbose = cnf_dev || VM_administrator_here; // VM_observer_here;    
    
     // Do it ones per session...
     if (!@$_SESSION[__METHOD__]++){
@@ -200,7 +204,7 @@ class bMailer_vm extends bMailer{
    * - 'reg' invitation to register for the event
    */
   public function remind_organizer($av_id,$e,$mode='pwd',$no_preview=True){
-
+    $this->dbg(starting);
     // Parse the arguments
     if ($av_id instanceof bForm_Avatar_vm){
       $v  = Null;
@@ -218,7 +222,7 @@ class bMailer_vm extends bMailer{
 
     // Continue parsing, the argument might be the visit ID...
     if (empty($av)){
-      $this->dbg("Argument is not 'av_id', try bForm_vm_Visit");
+      $this->dbg("Argument is not 'av_id', trying bForm_vm_Visit");
       $v = new bForm_vm_Visit($av_id);
       $av = $v->av;
     }
@@ -230,6 +234,7 @@ class bMailer_vm extends bMailer{
     if (empty($v) && ($mode !== 'reg')){
       if (!($v_id = $e->getVisit_ID($av->ID))){
 	myPear::WARNING($av->fmtName('fl').' is not yet registered for "'.$e->name().'"<br>No mail sent');
+	$this->dbg(exiting);
 	return False;
       }
       $v = new bForm_vm_Visit($v_id);
@@ -249,7 +254,8 @@ class bMailer_vm extends bMailer{
     // Is it already done?
     if (!empty($policy) && ($v->getPolicy($policy) || $v->getPolicy($policyQ))){
       $this->_dbg("$mode already done... ");
-      return;
+      $this->dbg(exiting);
+      return True;
     }
     
     // Put this mail into the execution queue, not waist time in the interactive session
@@ -259,6 +265,7 @@ class bMailer_vm extends bMailer{
       myPear::MESSAGE(sprintf("E-mail to %s is send to the mail queue",$fqn));
       myPear_taskManager()->addTask(get_class($this),__function__,array($av->ID,$e->ID,$mode,$no_preview));
       if (!empty($v)) $v->setPolicy($policyQ,1);
+      $this->dbg(exiting);
       return;
     }
 
@@ -276,6 +283,7 @@ class bMailer_vm extends bMailer{
     }
     
     foreach($recipients as $email){
+      $this->dbg($email,cnf_dev);
       $body = (in_array($email,$sec_mails)
 	       ?"Dear organizers of the ".myOrg_name." event \"$event\", taking place $event_period,"
 	       :"Dear $fqn,
@@ -317,6 +325,7 @@ However, in order to do this you have to be registered as the event participant,
 
       default:
 	$this->dbg("Unexpected argument mode='$mode'",cnf_dev);
+	$this->dbg(exiting);
 	return Null;
       }
       
@@ -351,6 +360,7 @@ Remember to save this mail or book-mark the web page to facilitate later access 
       }
     }
     $this->dbg("Mail to '$email' is ".($ok ? 'OK' : 'NOT sent ...'),cnf_dev);
+    $this->dbg(exiting);
     return $ok;
   }
   
@@ -401,51 +411,108 @@ to approve or deny the request.
    * Inform secretaries that there a collaboration visit approved/canceled
    *
    * @param $v  - visit class
-   * @param $av - secretary avatar class
-   * @param $v_status - reject or accept
+   * @param $no_preview
    */
-  public function inform_secretary_about_visit($v,$s_email,$v_status,$endorser,$no_preview=True){
-
-    $this->dbg();
+  public function inform_about_guest_invitation($v,$no_preview=True){
+    $no_preview = True;    
     if (!($v instanceof bForm_vm_Visit)) $v = new bForm_vm_Visit($v);
 
-    // Is it our business?
-    if ($v->getValue('v_end',True,True) < time())                    return;
-    if (!in_array(VM_V_scrtrInfoSent,array_keys($v->getPolicies()))) return;
-    if ($v->getPolicy(VM_V_scrtrInfoSent))                           return;
+    $accepted = ($v->getValue('v_status') == STATUS_YES);
+    $rejected = ($v->getValue('v_status') == STATUS_NO);
     
-    // Put this mail into the execution queue, not waist time in the interactive session
-    if (!myPear_taskManager()->exec_request && $no_preview){
-      myPear_taskManager()->addTask(get_class($this),__function__,array($v->ID,$s_email,$v_status,$endorser,$no_preview));
-      return;
+    // Is it our business?
+    if (($v0=($v->getValue('v_type') != VISIT_TYPE_COLLABORATION)) ||
+	($v1=(!$accepted && !$rejected)) ||
+	($v2=($v->getValue('v_end',True,True) < time())) ||
+	($v3=!array_intersect(array(VM_V_guestRejectSent,VM_V_guestAcceptSent),
+			      array_keys($v->getPolicies()))) || 
+	($v4=($rejected && $v->getPolicy(VM_V_guestRejectSent))) ||
+	($v5=($accepted && $v->getPolicy(VM_V_guestAcceptSent)))){
+      $this->dbg("No need to send mail(s) v0=$v0 v1=$v1 v2=$v2 v3=$v3 v4=$v4 v5=$v5",cnf_dev);
+      return True;
+    }
+    
+    // Sent the mail without queuing to:
+    //       Secretaries
+    foreach(VM_administrators()->membersOnDuty(VISIT_TYPE_COLLABORATION) as $s_name=>$s_email){
+      $all_recepients[] = bForm_Avatar::hook($s_email);
+    }
+    
+    //       Group leader
+    foreach(VM_endorsers()->getEndorsers($v->getValue('v_group',1)) as $av_id){
+      $all_recepients[] = new bForm_Avatar_vm($av_id);
     }
 
-    // Sent the mail
-    $secretaries = bForm_Avatar::hookByEmail($s_email,$reply_with_ID=False);
-    $secretary = array_pop($secretaries);
-    if (VM_administrator_here || cnf_dev){
-      myPear::MESSAGE("Informing administrator ".$secretary->name()." about visit of ".$v->av->fmtName('Lf'));
-    }      
-    $subject = "Visit of ".$v->av->fmtName('fl',0).' is '.($v_status == STATUS_YES ? 'APPROVED' : 'CANCELED');
-    $body = "Dear ".$secretary->fmtName('f',0).",
-$subject by $endorser.
-".($v_status==STATUS_YES 
+    // Org. managers
+    $u_ea = new bUnit(myOrg_ID,RANK__ea_org_manager);
+    foreach($u_ea->getMembers() as $um_id=>$r){
+      $all_recepients[] = new bForm_Avatar_vm($r['um_avid']);
+    }
+ 
+    //       Host
+    $v_host_avid = $v->getValue('v_host_avid');
+    if (empty($v_host_avid)){
+      $host = 'To be decided';
+    }else{
+      $all_recepients[] = $av = new bForm_Avatar_vm($v_host_avid);
+      $host = $av->name();
+    }
+    
+    //       Request owner
+    $owner = 'Unknown';
+    if (($date = $v->getValue('v_created',1)) && ($v_owner_avid=$v->getValue('v_owner_avid',1))){
+      if ($av = myPear::getInstance_new('bForm_Avatar_vm',$v_owner_avid,'fatal')){
+	$all_recepients[] = $av;
+	$owner = $av->fmtName('fl').' '.b_time::medium_date($date);
+      }
+    }
+    
+    $ok = 0;
+    foreach(array_unique($all_recepients) as $av){
+      
+      myPear::MESSAGE("Informing ".$av->name()." about visit of ".$v->av->fmtName('Lf'));
+      
+      // Mail text
+      $subject = "Visit of ".$v->av->fmtName('fl',0).' is '.($accepted ? 'APPROVED' : 'CANCELED');
+      $body = "Dear ".$av->fmtName('f').",
+$subject.
+".($accepted
    ? "You can access the visit record by clicking on the URL:
 {login_url}
 " 
-   : "");
-    if ($ok = $this->send(array($secretary,
-				array('form'=>'vm_Visit',
-				      'id'=>$v->ID)),
-			  $s_email,
-			  $subject,
-			  $body,
-			  $syslog_thisMail=True,
-			  $no_preview)){
-      myPear_logs()->add('info',$secretary->ID,'visit of '.$v->av->fmtName('Lf'),myPear_cronjob()->ID);
-      $v->setPolicy(VM_V_scrtrInfoSent,1,True,True);
+   : "").
+
+"
+Visit information:
+ Inviting group: ". myOrg()->orgGroups()->get_groups($v->getValue('v_group'))."
+ Visit dates:    ".b_time::period($v->getValue('v_start'),$v->getValue('v_end'))."
+ Host:           $host
+ Visit requested by: $owner 
+      ";
+      
+      // Submit it
+      if ($this->send(array($av,
+			    array('form'=>'vm_Visit',
+				  'id'=>$v->ID)),
+		      $av->getEmail(),
+		      $subject,
+		      $body,
+		      $syslog_thisMail=True,
+		      $no_preview)){
+	$ok++;
+	myPear_logs()->add('info',$av->ID,'visit of '.$v->av->fmtName('Lf'),myPear_cronjob()->ID);
+      }
     }
-    return $ok;
+    if ($ok > 0){
+      if ($accepted){
+	$v->setPolicy(VM_V_guestAcceptSent,1,True,True);
+	$v->setPolicy(VM_V_guestRejectSent,0,False,True);
+      }else{
+	$v->setPolicy(VM_V_guestRejectSent,1,True,True);
+	$v->setPolicy(VM_V_guestAcceptSent,0,False,True);
+      }
+    }
+    return ($ok > 0);
   }  
 
   /*
@@ -462,16 +529,16 @@ $subject by $endorser.
 		    : myPear::getInstance_new('bForm_vm_Visit',$v_id,'fatal'));
     
     // Not conserned
-    if ($this->visit->getPolicy(VM_V_infoMailNC)){
+    if($this->visit->getValue('v_type',1) !== VISIT_TYPE_PROGRAM){
+      $case = 'not_VISIT_TYPE_PROGRAM';
+
+    }elseif ($this->visit->getPolicy(VM_V_infoMailNC)){
       $case = 'flag already set';
       
     }elseif (!$this->visit->getValue('v_status',1) &&
 	 $this->visit->getValue('v_start',1) < time()){
       $case = 'visit started';
     
-    }elseif($this->visit->getValue('v_type',1) != VISIT_TYPE_PROGRAM){
-      $case = 'not_VISIT_TYPE_PROGRAM';
-
     }elseif($this->visit->getPolicy(VM_V_denialMailSent) ||
 	    $this->visit->getPolicy(VM_V_welcomeMailSent)){
       $case = 'welcome_mail_sent';
@@ -485,7 +552,9 @@ $subject by $endorser.
     
     // Exit if the visitor is not concerned
     if (!empty($case)){
-      $this->visit->setPolicy(VM_V_infoMailNC,1);
+      if (in_array(VM_V_infoMailNC,array_keys($this->visit->getPolicies()))){
+	$this->visit->setPolicy(VM_V_infoMailNC,1);
+      }
       $reply = CONST_not_concerned;
       $this->dbg("$reply, $case ".x('em',$this->visit->av->fmtName('fl')));
       $this->debug = $debug_sv;
@@ -566,15 +635,18 @@ Organizing committee for \"<event/>\".
     
     $this->dbg();
 
+    $this->visit = myPear::getInstance_new('bForm_vm_Visit',$v_id,'fatal');
+
     //
     // Check is the visitor subject of getting the "denial Email" 
     if (!send_denialMail_to_applicants){
       $case = "NO DENIAL MAILS configured";
+    }elseif($this->visit->getValue('v_type',1) !== VISIT_TYPE_PROGRAM){
+      $case = 'not_VISIT_TYPE_PROGRAM';
     }elseif (!empty($v_status) && ($v_status !== STATUS_NO)){
       // Shortcut to save time
       $case = $v_status;
     }else{
-      $this->visit = myPear::getInstance_new('bForm_vm_Visit',$v_id,'fatal');
       $name = $this->visit->av->fmtName('fl');
 
       // Catch the approved/pending visits
@@ -649,17 +721,19 @@ Organizing committee for \"<event/>\"."));
    */
   public function welcome_applicant($v_id,$hut_id,$a_name='',$no_preview=False,$v_status=Null){
 
+    $this->visit = myPear::getInstance_new('bForm_vm_Visit',$v_id,'fatal');
     //
-    // Check is the visitor subject of getting the "welcome Email" 
     if (!send_welcomeMail_to_applicants){
+      // Check is the visitor subject of getting the "welcome Email" 
       $case = "NO WELCOME MAILS configured";
+    }elseif($this->visit->getValue('v_type',1) !== VISIT_TYPE_PROGRAM){
+      $case = 'not_VISIT_TYPE_PROGRAM';
     }elseif (!empty($v_status) && ($v_status !== STATUS_YES)){
       // Shortcut to save time
       $case = $v_status;
     }else{
-      $this->visit = myPear::getInstance_new('bForm_vm_Visit',$v_id,'fatal');
       $name = $this->visit->av->fmtName('fl');
-
+      
       // Catch the refused/pending visits
       if ($this->visit->getValue('v_status',1) !== STATUS_YES) $case = $v_status;
       

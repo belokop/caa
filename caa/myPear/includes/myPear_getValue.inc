@@ -23,7 +23,7 @@ class myPear_getValue extends myPear_base{
   public $varsModified = array();
   public $vars = array();
 
-  public $show_gv         = False;
+  public $show_gv = False;
 
   static    $getValue_cache_counter = array();
   protected $getValue_recursion = array();
@@ -56,6 +56,8 @@ class myPear_getValue extends myPear_base{
    */
   static $instance_count = array();
   function __construct($arg1=Null, $arg2=Null, $arg3=Null){
+
+    if (cnf_show_gv) $this->show_gv = True;
 
     // Instance counter, used for debugging only
     if (empty(self::$instance_count[$id=get_class($this)])) self::$instance_count[$id] = 0;
@@ -339,6 +341,7 @@ class myPear_getValue extends myPear_base{
    */
   public function getValue_reset($name,$value=Null){
 
+    $this->dbg();
     $this->getValue_readDefRecord(__FUNCTION__,$name);
     
     if ($value !== Null){
@@ -596,7 +599,7 @@ class myPear_getValue extends myPear_base{
 	  $description_array = array($pname=>$pdescr);
 	}
 	
-      // build the column description table
+	// build the column description table
 	foreach ($description_array as $name=>$descr){
 	  // does not work for bList, where the definition of fields is
 	  // dynamic... Need a better idea...
@@ -615,30 +618,23 @@ class myPear_getValue extends myPear_base{
   }
 
   /*
-   * Cancel "vital" fields for the new empty instance,
-   * redeclare those as "can't be empty'
+   * Create on the fly the record requested as 'empty'
    */
-  protected $isVITAL_saved = array();
   protected function new_vs_empty(){
-    if ($this->ID === 'empty'){
-      $this->dbg();
-      if (empty($this->isVITAL_saved)) $this->isVITAL_saved = $this->isVITAL;
+    if (($this->ID === 'empty') && $this->myPost_bForm()){
+      $this->dbg("ID == empty",True);
 
-      // Strange if the isVITAL is changed. Strictly speaking this is allowed, but better have a look
-      if (($this->isVITAL != $this->isVITAL_saved) && !empty($this->isVITAL)){
-	myPear::WARNING_T(join('<br/>',array('isVITAL is changed',
-					     'bef - '.join(',',array_keys($this->isVITAL_saved)),
-					     'now - '.join(',',array_keys($this->isVITAL)))));
-	$this->isVITAL_saved = $this->isVITAL;
-      }
-      
-      // Set all the variables except those which are vital to "might be empty"
-      $this->isMBE   = array();
-      $this->isVITAL = array();
+      // Create a new empty record, set the new ID
+      $this->VITAL = array();
+      $this->updateDB_createRecord();
+      //      $this->_recordCreated();
 
-      foreach($this->vars as $k=>$v){
-	$this->isMBE[$k] = empty($this->isVITAL_saved[$k]);
+      // Fill ad-hoc data
+      $args = array();
+      foreach(array_keys($_POST) as $column){
+	if (myPear_db()->columnExists($column,$this->TABLE)) $args[$column] = $this->getValue($column,1,1);
       }
+      $this->updateDB($args);
     }
   }
 

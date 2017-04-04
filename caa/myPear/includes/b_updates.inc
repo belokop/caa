@@ -71,6 +71,7 @@ function myPear_updates(){
     if (True){
       // Updates for myPear_5.72, 2015-04-15
       myPear_update31();
+      myPear_update32();
     }
 
     if (!@$_SESSION['updates'][__METHOD__]++){
@@ -125,10 +126,57 @@ function myPear_set_collation(){
 }
 
 /*
+ * Change names
+ */
+function myPear_update32(){
+
+  foreach(array(
+		'E_TYPE'=>'rec_type',
+		//		'E_RATE'=>'emp_type',
+		) as $frC=>$to){
+    $fr = strToLower($frC);
+    b_debug::xxx("$fr ===> $to",True);
+    $q=myPear_db()->qquery("SELECT lm_id,lm_option,l_class,lm_id FROM zzz_list_members LEFT JOIN zzz_lists ON l_id=lm_lid WHERE lm_option REGEXP '$fr'",True);
+    while($r = myPear_db()->next_record($q)){
+      $lm_option = unserialize($r['lm_option']);
+      if (!isset($lm_option['e_type']) && !!isset($lm_option['rec_type'])){
+	myPear_db()->qquery("DELETE FROM zzz_list_members WHERE lm_id=$r[lm_id]",True);
+      }else{   
+	$lm_option[$to] = $lm_option[$fr];
+	unset($lm_option[$fr]);
+	ksort($lm_option);
+	myPear_db()->qquery("UPDATE zzz_list_members SET ".myPear_db()->quote(serialize($lm_option), 1,'lm_option')." WHERE lm_id=$r[lm_id]",True);
+      }
+    }
+  }
+
+  /*
+  // test
+  $q=myPear_db()->qquery("SELECT lm_value,lm_key,lm_status,lm_option,l_class FROM zzz_list_members LEFT JOIN zzz_lists ON l_id=lm_lid WHERE lm_option REGEXP 'e_' AND lm_option NOT REGEXP 'e_org'",True);
+  while($r = myPear_db()->next_record($q)){
+    $r = array_merge($r,($lm_option=unserialize($r['lm_option'])));
+    $stranges = array_diff(array_keys($lm_option),array('e_inst','e_cc','rec_type'));
+    if (!empty($stranges)) b_debug::print_r($stranges,'stranges');
+  }
+*/
+}
+
+/*
  *
  */
 function myPear_update31(){
 
+  locateAndInclude('bList');
+  bList::$use_membersCache = False; 
+
+  // Change class name
+  myPear_db()->qquery("UPDATE zzz_lists SET l_class = 'bList_orgEmpTypes' WHERE l_class = 'bList_orgTrades'",True);
+
+  // Change field name
+  if (myPear_db()->columnExists('org_affil') && !myPear_db()->columnExists('org_roles')){
+    myPear_db()->qquery("ALTER TABLE `zzz_organizations` CHANGE `org_affil` `org_roles` VARCHAR(230) NULL DEFAULT NULL",True);
+  }
+  
   // add a field
   if (!myPear_db()->columnExists('org_trusted_domains'))
     myPear_db()->qquery('ALTER TABLE `zzz_organizations` ADD `org_trusted_domains` VARCHAR(230) NULL DEFAULT NULL AFTER `org_domain`',True); 
@@ -152,7 +200,7 @@ function myPear_update31(){
 										  'av_position','av_position'),
 							    'varchar(230)'=>array('av_birthplace','av_pwd2','av_identity','av_institute','av_ms_institute',
 										  'av_address','av_institute','av_pwd2','av_phd_institute')),
-				 'zzz_organizations'=>array('varchar(230)'=>array('org_affil','org_domain','org_signature_dir'),
+				 'zzz_organizations'=>array('varchar(230)'=>array('org_roles','org_domain','org_signature_dir'),
 							    'varchar(128)'=>array('org_code','org_name'),
 							    'varchar(32)' =>array('org_country','org_name_short','org_theme'))),
 			   'NULL');
@@ -331,7 +379,7 @@ function myPear_update28(){
 							    'varchar(32)' =>array('av_citizenship','av_residentship','av_ms_country','av_phd_country','av_zip'),
 							    'varchar(64)' =>array('av_city','av_pwd'),
 							    'varchar(230)'=>array('av_pwd2','av_identity','av_institute')),
-				 'zzz_organizations'=>array('varchar(230)'=>array('org_affil','org_domain'),
+				 'zzz_organizations'=>array('varchar(230)'=>array('org_roles','org_domain'),
 							    'varchar(128)'=>array('org_code'),
 							    'tinytext'    =>array('org_signature_dir'))),'NULL');
   myPear_update_DBdefaults(array('zzz_units'        =>array('varchar(128)'=>array('u_name','u_class','u_member_title')),
@@ -493,7 +541,7 @@ function myPear_update23(){
 
     foreach(array(
 		  'bList_eaEmpRecords'      => 'Employment record',
-		  'bList_orgTrades'         => 'Employment types',
+		  'bList_orgEmpTypes'         => 'Employment types',
 		  'bList_jam_requiredDocs'  => 'required documents',
 		  'bList_jam_subPositions'  => 'research fields',
 		  'bList_vm_agenda'         => 'agenda events',
@@ -560,8 +608,8 @@ function myPear_update21(){
   }
   
   // Upgrade Organozation
-  if (!myPear_db()->columnExists('org_affil','zzz_organizations')){
-    myPear_db()->qquery("ALTER TABLE `zzz_organizations` ADD `org_affil` VARCHAR(240) NOT NULL AFTER `org_theme`",1); 
+  if (!myPear_db()->columnExists('org_roles','zzz_organizations')){
+    myPear_db()->qquery("ALTER TABLE `zzz_organizations` ADD `org_roles` VARCHAR(240) NOT NULL AFTER `org_theme`",1); 
     myPear_db()->reset_cache();
   }
 

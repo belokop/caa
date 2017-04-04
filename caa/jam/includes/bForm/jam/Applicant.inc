@@ -1227,6 +1227,9 @@ class bForm_jam_Applicant extends bForm_jam {
     return $reply;
   }
   
+  /*
+   *
+   */
   function readDefRecord(){
     $this->formDB = array();
     $q = myPear_db()->query("SELECT * FROM jam_applicants WHERE ap_id = '$this->ID'");

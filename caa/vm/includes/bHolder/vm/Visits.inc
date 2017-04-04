@@ -30,8 +30,8 @@ class bHolder_vm_Visits extends bHolder_vm{
   function rejectRecord(){
     if (b_cnf::getValue('showClashingVisits')){
       $visit = myPear::getInstance_new('bForm_vm_Visit',$this->rec['v_id'],array('strict','fatal'));
-      if (!($this->clashe = $visit->getClashingVisits($this->rec['v_start'],
-						       $this->rec['v_end'],False))) return True;
+      $this->clashe = $visit->getClashingVisits_byDate($this->rec['v_start'],$this->rec['v_end']));
+      return (!empty($this->clashe));
     }
   }
   

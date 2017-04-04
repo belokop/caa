@@ -85,11 +85,14 @@ class bForm_jam_RF extends bForm_jam{
     while ($r = myPear_db()->next_record($q))      $this->formDB = $r;
   }
 
+  /*
+   *
+   */
   function getValue($name,$arg1=True,$arg2=True){
     return parent::getValue($name,True,True);
   }
-
-  function formOKspecific() { }
+  
+  function formOKspecific() {}
 
   /*
    * List all RF names for the position, excluding the position itself,

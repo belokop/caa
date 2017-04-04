@@ -15,8 +15,9 @@ class bUnit_ea_members extends bUnit_ea {
 
   var $debug    = False;
   var $see_only = Null;
+  public $b_tabs_Engine = Null;
   
-  protected $packed_items= array('role2','acl','day1','day9');
+  protected $packed_items= array('acl','day1','day9');
   
   
   /*
@@ -117,8 +118,6 @@ class bUnit_ea_members extends bUnit_ea {
    *
    */
   protected function setPageHeader() {
-    //   if (($this->see_only === EA_role_alumnus) && !in_array(EA_role_alumnus,$role2)) $accept = False;
-    //    if (($this->see_only !== EA_role_alumnus) &&  in_array(EA_role_alumnus,$role2)) $accept = False;
     myPear::H1($this->see_only,'reset');
   }
   
@@ -151,18 +150,13 @@ class bUnit_ea_members extends bUnit_ea {
 	       EA_role_employee.EA_role_alumnus   => EA_title_alumnus,
 	       EA_role_lt_visitor                 => EA_title_lt_visitor,
 	       EA_role_lt_visitor.EA_role_alumnus => EA_title_alumnus.' '.EA_title_lt_visitor,
-	       EA_role_boardMember                => EA_title_boardMember,
-	       EA_role_boardMember.EA_role_alumnus=> EA_title_alumnus.' '.EA_title_boardMember,
+	       // EA_role_boardMember                => EA_title_boardMember,
+	       // EA_role_boardMember.EA_role_alumnus=> EA_title_alumnus.' '.EA_title_boardMember,
 	       );
-    $s2a=array(EA_role_affiliate                  => EA_title_affiliated,
-	       EA_role_affiliate.EA_role_alumnus  => EA_title_alumnus.' '.EA_title_affiliated);
-
+ 
     $status = $this->get_memberInfo($av_id,'um_status');
-    $role2  = $this->get_memberInfo($av_id,'role2');
 
     if    ($title = @$s2t[$status])    $reply = $title;
-    elseif($title = @$s2t[$role2])     $reply = $title;
-    elseif($title = @$s2a[$status])    $reply = $title;
     if (empty($reply)){
       $reply = parent::unitMemberTitle($av_id);
     }else{
@@ -171,6 +165,7 @@ class bUnit_ea_members extends bUnit_ea {
     $this->dbg($reply);
     return $reply;
   }
+
   
   /*
    * Add EA specific items to the members cache
@@ -181,39 +176,77 @@ class bUnit_ea_members extends bUnit_ea {
 			     'av_position',
 			     'day1',
 			     'day9',
-			     'role2'));
+			     ));
   }
   
+  /*
+   *
+   */
+  protected function accept_for_tab(&$rec,$tabs=Null,$tab=''){
+    
+    $empType = '?';
+    if (empty($rec)){
+      $reply = False;
+    }elseif ($tabs === Null){
+      //      $this->dbg(1,True);
+      $reply = True;
+    }else{
+      $is_currently_employed = in_array($rec['um_status'],array(EA_role_lt_visitor,EA_role_employee));
+      switch($this->see_only){
+      case EA_role_employee:
+	if ($reply = $is_currently_employed){
+	  $empType = myOrg()->orgEmpTypes()->title2empType(@$rec['av_position'],join(' ',array($rec['av_id'],$rec['av_firstname'],$rec['av_lastname'])));
+	  if ($reply = ($tab == $empType)){
+	    $av = new bForm_Avatar_ea($rec['av_id']);
+	    $rec['e_off']    = $av->hook_employment()->get_currentItem('e_off');
+	    $rec['av_phone'] = $av->getValue('av_phone',True);
+	    // Workaround...
+	    if (($rec['av_phone'] > 1000) && ($rec['av_phone'] < 10000)) $rec['av_phone'] = '+46 8 5537 '.$rec['av_phone'];
+	  }
+	}
+	break;
+
+      case EA_role_alumnus:
+	$reply = !$is_currently_employed &&  parent::accept_for_tab($rec,$tabs,$tab);
+	break;
+	
+      default:
+	b_debug::internalError("???");
+      }
+    }
+    //    myPear::DEBUG(sprintf("%s - %s %s - %s --> %s",$this->see_only,$rec['um_status'],@$rec['role2'],$empType,var_export($reply,True)));
+    //    myPear::DEBUG(sprintf('%s',var_export(@$rec['role2'],True)));
+    return $reply;
+  }
+
   /*
    * This function tries to resolve the egg-chicken problem - it is called in 2 contradictory environments 
    * - to build the list of tabs
    * - check access for the given tab
    */
-  protected function accept_for_tab(&$rec,$tabs=Null,$tab=''){
+  protected function accept_for_tab_old(&$rec,$tabs=Null,$tab=''){ // Kept for reference, to be removed <<<< ==============================================
 
     if (empty($rec)) return False;
 
     // Get all the affiliations    
-    static $affil=array(), $default_affiations=array();
-    if (empty($default_affiations)){
-      $default_affiations = myPear_set_roles('affiliation');
+    static $affil=array(), $default_roles=array();
+    if (empty($default_roles)){
+      $default_roles = myPear_set_roles('affiliation');
       $affil = myOrg()->getAffiliation();
     }
 
     $accept = True;
     foreach($affil as $role=>$accepted){
       if ((strpos(@$rec['um_status'],$role) !== False) && !$accepted) $accept = False;
-      if ((strpos(@$rec['role2'],$role)     !== False) && !$accepted) $accept = False;
     }
     
     // If the affiliation type is accepted, check further down
     if ($accept){
       $stats = preg_split('//', @$rec['um_status'], -1, PREG_SPLIT_NO_EMPTY);
-      $role2 = preg_split('//', @$rec['role2'],     -1, PREG_SPLIT_NO_EMPTY);
       if ($accept = (($tabs === Null)
 		     ? True
 		     : parent::accept_for_tab($rec,$tabs,$tab))){
-	if ($tab == $default_affiations[EA_role_boardMember]['group']){ // Board
+	if ($tab == $default_roles[EA_role_boardMember]['group']){ // Board
 	  if (($this->see_only === EA_role_alumnus) && !in_array(EA_role_alumnus,$role2)) $accept = False;      
 	  if (($this->see_only !== EA_role_alumnus) &&  in_array(EA_role_alumnus,$role2)) $accept = False;      
 	}else{
@@ -225,18 +258,12 @@ class bUnit_ea_members extends bUnit_ea {
       if ($accept){
 	switch($tab){
 	  
-	case $default_affiations[EA_role_lt_visitor]['group']: // Visitors
+	case $default_roles[EA_role_lt_visitor]['group']: // Visitors
 	  $trigger = EA_role_lt_visitor;
 	  break;
 	  
-	case $default_affiations[EA_role_boardMember]['group']: // Board
+	case $default_roles[EA_role_boardMember]['group']: // Board
 	  $trigger = EA_role_boardMember;
-	  break;
-	  
-	case $default_affiations[EA_role_affiliate]['group']: // Affiliated
-	  $trigger = ($affil[EA_role_boardMember] && in_array(EA_role_boardMember,$role2)
-		      ? 'No'
-		      : EA_role_affiliate);
 	  break;
 	  
 	default:  
@@ -249,10 +276,22 @@ class bUnit_ea_members extends bUnit_ea {
     return $accept;
   }
 
-  protected function header($arg=null){
-    return array('name'=>'', 'av_institute'=>'','av_position'=>'');
-  }
 
+  protected function header($arg=null){
+   $reply = ($this->see_only == EA_role_employee 
+	    ? array('name'        =>'', 
+		    'av_position' =>'',
+		    'e_off'       =>'Office',
+		    'av_phone'    =>'Phone')
+	    : array('name'        =>'', 
+		    'av_institute'=>'',
+		    'av_position' =>'',
+		    ));
+   
+   if (empty(bAuth::$av)) unset($reply['av_phone']);
+   return $reply;
+  }
+  
   /*
    *
    */
@@ -362,9 +401,30 @@ class bUnit_ea_members extends bUnit_ea {
    * but check first that they are populated 
    */
   protected function build_tabs_for_show(){
+    switch($this->see_only){
+    case EA_role_employee:
+      if (empty($this->b_tabs_Engine))       $this->b_tabs_Engine = 'b_tabs_JQ';
+      foreach(myOrg()->orgEmpTypes()->get_empTypes() as $k=>$v){
+	// Skip director for the employee listing
+	if (stripos($k,'director') !== False) continue;
+	if (!count(myOrg()->orgEmpTypes()->get_empByTypes($k))) continue;
+	$reply[$k] = $v;
+      }
+      break;
+
+    default:
+      if (empty($this->b_tabs_Engine))      $this->b_tabs_Engine = 'b_tabs_myPear';
+      $reply = parent::build_tabs_for_show();
+    }
+    $this->dbg($reply,True);
+    return $reply;
+  }
+
+  protected function build_tabs_for_show_old(){  // Kept for reference, to be removed <<<< ==============================================
 
     // get the "root tab(s)"
     $reply = parent::build_tabs_for_show();
+    $this->dbg($reply,True);
 
     // get the affiliations used by the organization
     $affiliations = myOrg()->getAffiliation();
@@ -384,7 +444,7 @@ class bUnit_ea_members extends bUnit_ea {
 	if ($ok) $reply[$descr['group']] = $descr['group'];
       }
     }
-    $this->dbg($reply);
+    $this->dbg($reply,True);
     return $reply;
   }
 

@@ -23,6 +23,55 @@ class bForm_vm_Room extends bForm_vm {
   public $hut = Null; // The parent Hut class (if any)
   public $e   = Null; // The event class 
   
+  
+  function __construct($id, $mode='RO') {
+
+    parent::__construct($id, $mode);
+
+    // Sanity
+    if ((int)$this->getValue('a_start',1,1) < VMaps_day1) $this->getValue_reset_forced('a_start',myPear_day0);
+    if ((int)$this->getValue('a_end'  ,1,1) < VMaps_day1) $this->getValue_reset_forced('a_end',  myPear_day9);
+
+    // Catch the arguments...
+    if ($a_hutid = @$_GET['a_hutid']){
+      $this->getValue_reset('a_hutid',$a_hutid);
+    }
+    
+    // Hook the hut
+    if ($a_hutid=$this->getValue('a_hutid',1,1)){
+      $this->hut = myPear::getInstance_new('bForm_vm_Hut',$a_hutid,'strict');
+      $this->dbg('hook '.$this->hut->__toString());
+    }
+
+    // Save the default room price
+    if (empty($_SESSION['a_price_myOrg'][$this->ID])){
+      $_SESSION['a_price_myOrg'][$this->ID] = $this->getValue('a_price',1,1);
+      $this->dbg(sprintf('save a_price="%s"',$_SESSION['a_price_myOrg'][$this->ID]),cnf_dev);
+    }
+
+
+    if (!empty($_GET['e_id_once'])){
+      $this->dbg("e_id_once = ".var_export($_GET['e_id_once'],True),True);
+      // Catch the rent price update for a particular event
+      $this->e = myPear::getInstance_new('bForm_vm_Event',$_GET['e_id_once']);
+      if ($this->myPost_bForm()){
+	$a_price_event = $_POST['a_price'];
+	if ($a_price_event != $_SESSION['a_price_myOrg'][$this->ID]){
+	  b_debug::xxx(sprintf("a_price %s --> $a_price_event",$_SESSION['a_price_myOrg'][$this->ID]));
+	  // Put back the myOrg rent price since they are already auto-updated
+	  $this->updateDB(array('a_price'=>$_SESSION['a_price_myOrg'][$this->ID]));
+	  $this->getValue_reset('a_price', $_SESSION['a_price_myOrg'][$this->ID]);
+	  // Update the rent price in accommodationOptions for this event
+	  VM_accommodationOptions($this->e)->set_a_price($a_price_event,$this->ID,$this->getValue('a_hutid'));
+	}
+      }
+    }
+    $this->dbg('done');
+  }
+
+  /*
+   *
+   */
   function defineVariables() {
     $this->defineVariable(array('a_name'           => ($this->MODE=='RW'?'Nickname':' '),
 				'a_phone'          => 'Phone',
@@ -37,61 +86,29 @@ class bForm_vm_Room extends bForm_vm {
 				'a_capacity'       => 'Capacity (beds)',
 				),True);
     
-    foreach(array('a_name',
-		  'a_price',
-		  'a_capacity')  as $item)  $this->isVITAL[$item] = True;
-    foreach(array('a_hutid',
-		  'a_phone',
-		  'a_capacity',
-		  'a_area',
-		  'a_comment',
-		  'a_price_cleaning',
-		  'a_start',
-		  'a_end')    as $item)  $this->isMBE[$item] = True; // MBE - Might Be Empty
-  }
-
-  function __construct($id, $mode='RO') {
-    if ($a_hutid = @$_GET['a_hutid']) $this->getValue_reset('a_hutid',$a_hutid);
-    parent::__construct($id, $mode);
-
-    if (!empty($_GET['e_id_once'])){
-      // Catch the rent price update for a particular event
-      $this->e = myPear::getInstance_new('bForm_vm_Event',$_GET['e_id_once']);
-      $this->show_gv = True;
-      if ($this->myPost_bForm()){
-	$a_price_event = $_POST['a_price'];
-	if ($a_price_event != $_SESSION['a_price_myOrg'][$this->ID]){
-	  b_debug::xxx(sprintf("a_price %s --> $a_price_event",$_SESSION['a_price_myOrg'][$this->ID]));
-	  // Put back the myOrg rent price since they are already auto-updated
-	  $this->updateDB(array('a_price'=>$_SESSION['a_price_myOrg'][$this->ID]));
-	  $this->getValue_reset('a_price', $_SESSION['a_price_myOrg'][$this->ID]);
-	  // Update the rent price in accommodationOptions for this event
-	  VM_accommodationOptions($this->e)->set_a_price($a_price_event,$this->ID,$this->getValue('a_hutid'));
-	}
-      }
-      $this->show_gv = False;
-    }
+    $this->defineTypes(array('isVITAL'  =>array('a_name',
+						'a_price',
+						'a_capacity'),
+                             'isMBE'    =>array('a_hutid',
+						'a_phone',
+						'a_capacity',
+						'a_area',
+						'a_comment',
+						'a_price_cleaning',
+						'a_start',
+						'a_end')));
   }
 
   /*
    *
    */
   function readDefRecord(){
-    $q = myPear_db()->query(sprintf("SELECT * FROM %s ".
-				    " LEFT JOIN abs_huts ON a_hutid = hut_id ".
-				    " WHERE %s = '%d'",
-				    $this->TABLE,$this->TABLEID,$this->ID));
-    while ($r=myPear_db()->next_record($q)) {
-      $this->formDB = $r; 
-      if ((int)$this->getValue('a_start',1,1) < VMaps_day1) $this->formDB['a_start'] = myPear_day0;
-      if ((int)$this->getValue('a_end'  ,1,1) < VMaps_day1) $this->formDB['a_end']   = myPear_day9;
-      if (!empty($r['a_hutid'])) $this->hut = myPear::getInstance_new('bForm_vm_Hut',$r['a_hutid'],'strict');
-      // Save the default room price
-      if (empty($_SESSION['a_price_myOrg'][$this->ID])){
-	$_SESSION['a_price_myOrg'][$this->ID] = $this->formDB['a_price'];
-	b_debug::xxx(sprintf('save a_price="%s"',$_SESSION['a_price_myOrg'][$this->ID]));
-      }
-    }
+    $q = myPear_db()->query($sql=sprintf("SELECT * FROM %s ".
+					 " LEFT JOIN abs_huts ON a_hutid = hut_id ".
+					 " WHERE %s = '%d'",
+					 $this->TABLE,$this->TABLEID,$this->ID));
+    while ($r=myPear_db()->next_record($q)) $this->formDB = $r; 
+    $this->dbg($sql);
   }
 
   /*

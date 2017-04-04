@@ -114,12 +114,12 @@ class bForm_Avatar_ea extends bForm_Avatar{
    * For the complete definition of the employee records see bList_eaEmpRecords class,
    * this table gives mapping  bList_eaEmpRecords -> bForm_Avatar_ea
    */
-  public static $er2av = Null; // to be filled on the fly, see the constructor,
-  public static $av2er = array('e_rate'         =>array('k'=>'e_rate',    'c'=>'orgTrades'), // The description comes from 'c', i.e. bList_orgTrades
-			       'e_gid'          =>array('k'=>'e_gid',     'c'=>'orgGroups'),
+  public static $er2av = Null; // Filled on the fly, see the constructor
+  public static $av2er = array('rec_type'       =>array('k'=>'rec_type',  'd'=>''),
 			       'e_off'          =>array('k'=>'e_off',     'd'=>'Office'),
-			       'e_type'         =>array('k'=>'e_type',    'd'=>''),
 			       'e_org'          =>array('k'=>'e_org',     'd'=>''),
+			       'e_rate'         =>array('k'=>'e_rate',    'c'=>'orgEmpTypes'), // The description comes from 'c', i.e. bList_orgEmpTypes
+			       'e_gid'          =>array('k'=>'e_gid',     'c'=>'orgGroups'),
 			       'e_start'        =>array('k'=>'lm_key',    'd'=>''), // start of the employment period
 			       'e_end'          =>array('k'=>'lm_status', 'd'=>''), // end   of the employment period
 			       'lm_id'          =>array('k'=>'lm_id',     'd'=>''),
@@ -132,8 +132,7 @@ class bForm_Avatar_ea extends bForm_Avatar{
   /*
    * Helper to bForm_Avatar::delete
    */
-  public static function delete_deps($where){
-  }
+  public static function delete_deps($where){}
 
   /*
    * Reject the candidate for merging if he is not known to EA
@@ -181,7 +180,7 @@ class bForm_Avatar_ea extends bForm_Avatar{
     $this->modalRW_enabled = isset($_GET['block_once']);
     if ((@$_GET['av_id'] == $this->ID) || (@$_GET['id'] == $this->ID)) $this->adjust_status();
 
-    // Fill the description for orgTrades & orgGroups
+    // Fill the description for orgEmpTypes & orgGroups
     if (myPear_db()->isReady() && empty(self::$av2er['e_rate']['d'])){
       foreach(self::$av2er as $key=>$data){
 	if (!empty($data['c'])){
@@ -220,12 +219,14 @@ class bForm_Avatar_ea extends bForm_Avatar{
 							 array('e_org'=>myOrg_ID),
 							 2,
 							 $this->getValue('av_ddate',True));
-	$elements = preg_split(";( |/|,);",str_replace('  ',' ',strToLower($currentItem)));
-	$currentItem_compressed = b_fmt::ucwords(join(' ',array_unique($elements)));
-
-	if ($this->getValue($what,1) != $currentItem_compressed){
-	  $this->getValue_reset_forced($what,$currentItem_compressed);
-	  myPear::MESSAGE_add($this->name()." - set current ".self::$av2er[$what]['d']." '$currentItem_compressed'");
+	if (!empty($currentItem)){
+	  $elements = preg_split(";( |/|,);",str_replace('  ',' ',strToLower($currentItem)));
+	  $currentItem_compressed = b_fmt::ucwords(join(' ',array_unique($elements)));
+	  
+	  if ($this->getValue($what,1) != $currentItem_compressed){
+	    $this->getValue_reset_forced($what,$currentItem_compressed);
+	    myPear::MESSAGE_add($this->name()." - set current ".self::$av2er[$what]['d']." '$currentItem_compressed'");
+	  }
 	}
       }
     }
@@ -377,7 +378,7 @@ class bForm_Avatar_ea extends bForm_Avatar{
     
     $lm_id = (empty($_POST['lm_id'])
 	      ? @$_POST['_virt_emp_record']
-	      : @$_POST['lm_id']);
+	      :  $_POST['lm_id']);
     if (empty($lm_id)) return;
 
     $this->dbg(starting);
@@ -436,24 +437,24 @@ class bForm_Avatar_ea extends bForm_Avatar{
     // set the start/retire date, etc.
     $this->eaRecords->sortArgs = ' ORDER BY '.self::$av2er['e_end']['k'].' ASC ';
     foreach($this->eaRecords->getMembers(array('e_org' => myOrg_ID)) as $r_id=>$r){
-      if (!($e_type = @$r['e_type'])){
+      if (!($rec_type = @$r['rec_type'])){
 	myPear::WARNING("Missing 'Employment type'");
 	continue;
       }
       // Set record type "Visiting appointment" if "major position" matches 'visit' 
       if (stripos($r['lm_value'],'visit') !== False){
 	$e = '40_va';
-	if ($e_type != $e) myPear::WARNING_T(sprintf("Change e_type '%s' -> '%s' for position '%s'",$e_type,$e,$r['lm_value'])); 
-	$e_type = $e;
-      }elseif($e_type == '40_va'){
+	if ($rec_type != $e) myPear::WARNING_T(sprintf("Change rec_type '%s' -> '%s' for position '%s'",$rec_type,$e,$r['lm_value'])); 
+	$rec_type = $e;
+      }elseif($rec_type == '40_va'){
 	$e = '20_mp';
-	myPear::WARNING_T(sprintf("Change e_type '$e_type' -> '$e' for position '%s'",$r['lm_value'])); 
+	myPear::WARNING_T(sprintf("Change rec_type '$rec_type' -> '$e' for position '%s'",$r['lm_value'])); 
 	// ?? is it correct? Does the visiting position always contain word "visit"?
-	$e_type = $e;
+	$rec_type = $e;
       }
       
       // Change the record type if is was wrongly entered
-      if ($e_type != $r['e_type']) $this->eaRecords->updateMember(array('e_type'=>$e_type),$r['lm_id']);
+      if ($rec_type != $r['rec_type']) $this->eaRecords->updateMember(array('rec_type'=>$rec_type),$r['lm_id']);
 
       // Set the retirement date as the latest date of any affiliation with the organization
       if ($e_start = @$r['lm_key']){
@@ -478,24 +479,15 @@ class bForm_Avatar_ea extends bForm_Avatar{
     myOrg()->eaMembers()->setStatus($this->ID,'');
     $this->eaRecords->sortArgs = ' ORDER BY '.self::$av2er['e_start']['k'].' ASC ';
     foreach($this->eaRecords->getMembers(array('e_org' => myOrg_ID)) as $r_id=>$r){
-      if (empty($r['e_type'])) continue;
+      if (empty($r['rec_type'])) continue;
       $position_is_expired = (b_time::txt2unix($r[self::$av2er['e_end']['k']]) < $timestamp);
       $id = ($position_is_expired ? 'was' : 'now');
-
-      if (empty($r['role2'])) $r['role2'] = '';
-      if (stripos($r['lm_value'],'Board') !== False){
-	// let's keep those people happy, fill a special field for the board members (role2)
-   	$role2 = EA_role_boardMember;
-      }else{
-	$role2 = '';
-	switch($r['e_type']){
-	case '20_mp': $stat[$id] = EA_role_employee;   break;
-	case '40_va': $stat[$id] = EA_role_lt_visitor; break;
-	default: if (empty($stat[$id])) $stat[$id] = EA_role_affiliate;  
-	}
+      
+      switch($r['rec_type']){
+      case '20_mp': $stat[$id] = EA_role_employee;   break;
+      case '40_va': $stat[$id] = EA_role_lt_visitor; break;
+      default: 
       }
-      if (!empty($role2) || !empty($r['role2'])) $this->eaRecords->updateMember(array('role2'=>$role2),$r['lm_id']);
-      // $ddd = array(); foreach(array('e_type','lm_key','lm_value','lm_status') as $k) $ddd[$k] = $r[$k];  b_debug::print_r($ddd,join('',$status)."<--".join('',$status)." $role2<--".@$r['role2'] );      
     }
     
     // Save the latest status as the EA member status 
@@ -566,9 +558,8 @@ class bForm_Avatar_ea extends bForm_Avatar{
 
     }else{
 
-      // update EA records
-      // (however, I am not sure that this is needed....)
-      $this->update_EA();
+      // update EA records (however, I am not sure that this is needed....)
+      //      $this->update_EA();
 
       //
       // Show the employment records instead of Avatar form, if the referrer is bList_eaRecords and the form is complete
@@ -597,7 +588,7 @@ class bForm_Avatar_ea extends bForm_Avatar{
 								  999,
 								  $this->getValue('av_ddate',True));
 	if ($r = @$records[0]){
-	  foreach(array('from_bList'     => 1,
+	  foreach(array('from_bList' => 1,
 			'act_code'   => 'edit',
 			'act_id'     => $r['l_id'],  
 			'act_lmid'   => $r['lm_id'], 
@@ -605,7 +596,7 @@ class bForm_Avatar_ea extends bForm_Avatar{
 			'lm_id'      => $r['lm_id'], 
 			) as $k=>$v) $_POST[$k] = $_GET[$k] = $_REQUEST[$k] = $v;
 	}else{
-	  foreach(array('from_bList'     => 1,
+	  foreach(array('from_bList' => 1,
 			'act_code'   => 'add',
 			'act_id'     => $this->eaRecords->ID,
 			'act_lmid'   => 'new',
@@ -798,11 +789,17 @@ Seem to be useless....
       //
       $e_end = min(CONST_eternity,$this->getValue('e_end',1,1));
       $this->formDB_modified['_emp_period'] = b_time::short_date($this->getValue('e_start')). ' -> ' .b_time::short_date($e_end);
-    
-      $dialog = array('_virt_emp_record'=> array('textHidden'),
-		      '_emp_period'     => array('datePickerField2','e_start','e_end'),
-		      'av_position'     => array('textField'));
-      if ($trades=myOrg()->orgTrades()->get_trades()) $dialog['e_rate'] = array('selectMenu',$trades);
+
+      $dialog = (($types=myOrg()->orgEmpTypes()->get_empTypes())
+		 ? array('_virt_emp_record'=> array('textHidden'),
+			 '_emp_period'     => array('datePickerField2','e_start','e_end'),
+			 'e_rate'          => array('selectMenu',$types),
+			 'av_position'     => array('textField'))
+		 : array('_virt_emp_record'=> array('textHidden'),
+			 '_emp_period'     => array('datePickerField2','e_start','e_end'),
+			 'av_position'     => array('textField')));
+
+      $this->submitOnChange['e_rate'] = True;
       $this->formBlock('office_contract',
 		       myOrg_name.' employment',
 		       $dialog,
@@ -840,7 +837,7 @@ Seem to be useless....
       //
     }else{
       $this->defineVariable('Country','av_residentship');
-      if (!$this->getValue('e_type')) $this->formDB_modified['e_type'] = '20_mp';
+      if (!$this->getValue('rec_type')) $this->formDB_modified['rec_type'] = '20_mp';
       
       if (!$this->getValue('av_ddate',True,True)){
 	$dialog = array('av_position'     => array('textField'),
@@ -849,7 +846,7 @@ Seem to be useless....
 			'av_residentship' => array('textFieldCountry'),
 			'_emp_period'     => array('datePickerField2','e_start','e_end'),
 			'_virt_emp_record'=> array('textHidden'),
-			'e_type'          => array('textHidden'),
+			'rec_type'        => array('textHidden'),
 			);
 	// All the fields are optional
 	foreach($dialog as $k=>$v)       $this->isMBE[$k] = True;

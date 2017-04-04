@@ -53,8 +53,11 @@ class bIcal_matrix_ea extends bIcal_matrix{
       $av      = new bForm_Avatar_ea($av_id);
       $name_Lf = $av->fmtName('Lf');
       $name_sfl= $av->fmtName('sfl');
-      $clas    = $this->av_rate($r['lm_value'],@$r['e_rate']); // employers "rate"
+      if (empty($r['e_rate'])) b_debug::print_r($r,"$name_Lf");
+      else b_debug::xxx("$name_Lf ".$r['e_rate']);
+      $clas    = $this->av_rate($r['lm_value'],myOrg()->orgEmpTypes()->code2text($r['e_rate'])); // employers "rate"
       $a2 = True ? $clas : $name_Lf;
+      b_debug::xxx("class='$clas'");
       
       $photo = myPear_photos.$r['av_photo'];
       if (is_file($photo)) $photo = bJS()->modal_image_file($name_Lf,$photo,$name_Lf);
@@ -99,7 +102,14 @@ class bIcal_matrix_ea extends bIcal_matrix{
   }
 
   private function av_rate($position,$e_rate){
-    static $t1 = array(
+    /*
+    return $e_rate;
+    $reply = myOrg()->orgEmpTypes()->code2text($e_rate);
+    if (empty($reply)) $reply = myOrg()->orgEmpTypes()->code2text(myOrg()->orgEmpTypes()->text2code($position));
+    b_debug::xxx($reply);
+    return $reply;
+    */ 
+   static $t1 = array(
 		       'fellow'   =>'fellows',
 		       'postdoc'  =>'fellows',
 		       'professor'=>'faculty',
@@ -110,6 +120,7 @@ class bIcal_matrix_ea extends bIcal_matrix{
     static $t2 = array('visit'    =>'visitors',
 		       'corresp'  =>'visitors',
 		       'baltic'   =>'visitors',
+		       'guest'    =>'visitors',
 		       'vice'     =>'deputy director',
 		       'deputy'   =>'deputy director',
 		       'board'    =>'board');
@@ -134,6 +145,7 @@ class bIcal_matrix_ea extends bIcal_matrix{
     foreach ($t2 as $pos=>$t)  if (stristr($position,$pos)) $rate = $t;
     if (empty($rate))                                       $rate = strToLower($position);
     if ($rate !== $rateN)    myPear::WARNING_T("rate '$rateN' ==> '$rate'");
+    b_debug::xxx($rate);
     return $rate;
   }
 }

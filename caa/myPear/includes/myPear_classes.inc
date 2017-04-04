@@ -42,7 +42,7 @@ class b_vars{
   /*
    * Get the variable(s)
    */
-  static function get($name,$module=Null,$regexp=False){
+  static function get($name,$module=Null,$regexp=False,$limit=333){
 
     $reply = array();
       
@@ -50,7 +50,7 @@ class b_vars{
       // Get the variable names which match the regular expression
       $q = myPear_db()->qquery($x="SELECT * FROM zzz_variables WHERE ".
 			       myPear_db()->quote($name,'RR','var_name').
-			       " ORDER BY var_name",self::$debug||cnf_dev);
+			       " ORDER BY var_name LIMIT $limit",self::$debug||cnf_dev);
       
       // Get recursively all the values & modules
       while($r = myPear_db()->next_record($q)){
@@ -372,7 +372,7 @@ class b_fmt{
   static function ucwords($text,$catchMc=False){
     static 
       $dejaVu = 0,
-      $stay_lower = array('at','in','by','the','for', 'and', 'of','och',// Connecting words
+      $stay_lower = array('at','in','by','the','for', 'für', 'and', 'of','och',// Connecting words
 			  //			  'van','van de','van der'
 			  'v.','van','von','di','de','del','der','den','la','los',"'t", // Dutch, French, German nobility
 			  'degli'),   // Common names
@@ -1448,18 +1448,16 @@ class b_debug{
   private static $was = array();
   public static function watchDog($now,$class='all',$condition=True,$verbose=False){
     if ($condition){
-      $id=(is_object($class) ? (int)$class->ID : $class);
+      $id=(is_object($class) ? str_replace('bForm_','',get_class($class).'('.@$class->ID.')') : $class);
       if (!is_object($class)) $class = True;
-
+      
       if (!isset(self::$was[$id])){
 	self::$was[$id] = $now;
 	if ($verbose) self::xxx("init($id) with ---------> '".var_export($now,True)."'",array(2,$class,True,'redText'));
       }
       if (self::$was[$id] !== $now){
-	static $case = 0;
-	self::xxx(__FUNCTION__.": '".self::$was[$id]."' ===($id)=====> '$now'. Case#".(++$case),array(2,$class,True,'redText'));
-	self::traceBack(__FUNCTION__."-$case: '".var_export(self::$was[$id],True)."' ========> '".var_export($now,True)."'");
-	//	self::print_r(self::get_callStack(),"case $case");
+	static $case = array(); if (empty($case[$id])) $case[$id] = 0;
+	self::traceBack(sprintf($id."-%s: \"%s\" --> \"%s\"",(++$case[$id]),var_export(self::$was[$id],True),var_export($now,True)));
       }
       self::$was[$id] = $now;
     }
@@ -1513,7 +1511,7 @@ class b_debug{
    * Generic debug printout function
    */
   private static $xxx_cache = array();
-  public  static $s_e_depth = 0;
+  private static $s_e_depth = 0;
   public  static $starting_exiting = False;
   static function xxx($text=' ',$flags=array()){
     static $default_flags = array('fuchsiaText',2);
@@ -1631,22 +1629,20 @@ class b_debug{
       default:    $dbgString = sprintf("%s %s", $caller, $text);
       }
 
-      $dbgString = self::s_e_depth() . "<span class='$color'>$dbgString</span>";
+      $dbgString = "<span class='$color'>$dbgString</span>";
       if (self::$starting_exiting || !@self::$xxx_cache[b_crypt::hash($dbgString)]++){
 	if (isset($class) && is_object($class) && (bool)@$class->nodrupal){
-	  print "<br/>$dbgString";
+	  printf("<br/>\n%s%s\n",self::s_e_depth(),$dbgString);
 	}else{
-	  $s_e_depth = self::$s_e_depth;	  
 	  myPear::DEBUG($dbgString);
-	  self::$s_e_depth = $s_e_depth;  
 	}
       }
     }
     if (self::$starting_exiting && $s_e_s) self::$s_e_depth++;
   }
 
-  public static function s_e_depth(){
-    return (self::$s_e_depth > 0 ? str_repeat('&nbsp;',5*self::$s_e_depth) : ''); 
+  public static function s_e_depth($extra_shift=0){
+    return (self::$s_e_depth > 0 ? str_repeat('&nbsp;',5*(self::$s_e_depth+$extra_shift)) : ''); 
   } 
   
   /*
@@ -1695,13 +1691,9 @@ class b_debug{
 
       ob_start();
       b_cnf::get('nodrupal',($_GET['nodrupal']=1));
-      if (is_array($class)){
-	self::print_r($class);
-	$class = Null;
-      }
-      print x('h2',__method__."($txt)");
+
+      print x('h2',__method__.'()');
       print x('pre',date('Y-m-d H:i:s',time()));
-      if ($class !== Null) self::var_dump($class,'Second argument');
       
       print "\n<h2>---Database transactions</h2>\n";
       printf("%s = %s\n",x('strong','in_autocommit'), var_export(myPear_db()->in_autocommit, True));
@@ -2046,9 +2038,13 @@ class b_time{
 
   public static function strftime($fmt,$time=Null){
     if (empty($time)) $time = time();
-    $time = self::txt2unix($time);
-    $reply = b_crypt::encode_utf8(strftime($fmt,$time));
-    if (($x=strftime($fmt,$time)) != $reply) b_debug::xxx(date('Y-m-d ',$time)." $reply != $x ");
+    $time = self::txt2unix(str_replace('20016-08-31','2016-08-31',$time));
+    try{
+      $reply = b_crypt::encode_utf8(strftime($fmt,$time));
+      if (($x=strftime($fmt,$time)) != $reply) b_debug::xxx(date('Y-m-d ',$time)." $reply != $x ");
+    }catch(Exception $e){
+      if (cnf_dev) var_dump($time,$time,$e->xdebug_message);
+    }
     return $reply;
   }
 
@@ -2447,6 +2443,8 @@ class b_time{
    *
    */
   public static function period($start,$end=0,$noDate=False){
+    if (self::is_valid($start) == 2) $start = self::txt2unix($start);
+    if (self::is_valid($end)   == 2) $end   = self::txt2unix($end);
     if (empty($start) && empty($end)){
       $reply = '';
     }elseif ($noDate === 'full'){
@@ -2625,7 +2623,7 @@ class b_crypt{
    * but the reliable hash function is "md5".
    */
   static function hash($string,$function='crc32'){
-    if (is_array($string)) $string = join('/',$string);
+    if (is_array($string)) $string = serialize($string);
     if ($function == 'crc32') return sprintf("%u",crc32($string));
     else                      return md5($string);
   }
@@ -2870,7 +2868,7 @@ class b_crypt{
 	      $q = myPear_db()->qquery("INSERT INTO zzz_crypt SET c_code = ".(++$c_code).", c_value='$was'",self::$debug);
 	      $now = 'x'.$c_code;
 	    }catch (Exception $e) {
-	      b_debug::internalError("Exception $e");
+	      b_debug::internalError(x('pre',$e->xdebug_message));
 	    }
 	    // Release the lock
 	    myPear_db()->transaction('end');
@@ -4130,7 +4128,7 @@ class b_cnf{
     if (stripos($keyL,'_once') !== False) unset($_SESSION[CONST_cnfOptions][$keyL]); 
     $inside = 0;
 
-    if (defined('cnf_dev')) if (cnf_dev) if (($key == 'noCompactMessages') && @$reply) { var_dump($key,$reply);echo'<pre>';debug_print_backtrace();echo'</pre>';}
+    //    if (defined('cnf_dev')) if (cnf_dev) if (($key == 'noCompactMessages') && @$reply) { var_dump($key,$reply);echo'<pre>';debug_print_backtrace();echo'</pre>';}
     if (isset($reply))      return $reply;
     else                    return Null;
   }

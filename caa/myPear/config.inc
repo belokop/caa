@@ -3,8 +3,8 @@ ini_set("allow_url_fopen", true);
 //var_dump(file_get_contents('php://input'));
 
 // myPear module 
-$releaseDate = '2017-03-06';
-define('myPear_VERSION','5.3.164');
+$releaseDate = '2017-04-04';
+define('myPear_VERSION','5.3.166');
 define('myPear_MODULE', 'myPear');
 define('myPear_DATE',    $releaseDate);
 
@@ -44,6 +44,22 @@ if (!defined('bMailer_noreply')) die ("<h3>Missing OR incomplete configuration f
 
 // Optional "Employees & Alumni" module
 define('EA_MODULE', 'ea');
+
+/*
+ * Shortcuts to the EA statuses.
+ * Not to be edited.
+ * Philosophy:
+ * - a person in EA module is might be 
+ *   = EA_role_employee (members of the personnel)
+ *   = EA_role_alumnus (alumnus)
+ * - employee is a member of an "employee type" group, se bList_orgEmpTypes class, which is normally
+ *   = Administration (optional)
+ *   = Visitors (normally long term ones, optional)
+ *   = Other user defined groups like "faculty", "students", etc.
+ */
+define('EA_role_alumnus' ,   'a');
+define('EA_role_employee',   'e');
+define('EA_role_lt_visitor', 'v');
 
 $GLOBALS['imapServers'] = array('kth.se'     => array('imap'=>array('ssl://webmail.kth.se','webmail.kth.se'),
 						      'port'=>993,
@@ -135,6 +151,7 @@ if (cnf_localhost && !cnf_myPear_taskManager){
   error_reporting(E_ALL); 
   if (!cnf_CLI) foreach(array(
 			      'warnings', 'showdb', 'showd', 'timing', 
+			      'showpv','showgv',
 			      // 'showreg', // registry
 			      // 'showl',     
 			      // 'showi', // invocation
@@ -149,15 +166,12 @@ if (cnf_localhost && !cnf_myPear_taskManager){
  * Define the basic built-in Employers & Alumni roles in the organization.
  * - "EA_title_employee" is automatically (by a cron job or an explicit call to "rebuild EA") set if the current date is within the employment period,
  *                       and is automatically replaced by "EA_title_alumnus" when the employment period expired
- * - "EA_title_affiliated" is automatically replaced by "EA_title_affiliated" + "EA_title_alumnus" when the employment period expired
- *
+  *
  * See also classes bForm_Avatar_ea & bUnit_ea_members
  */
 define('EA_title_alumnus' ,   'Alumnus');
 define('EA_title_employee',   'Employee');
 define('EA_title_lt_visitor', 'Visitor');
-define('EA_title_affiliated', 'Affiliate');
-define('EA_title_boardMember','Board Member');
 
 /*
  * The default size of the portrait photos (in pixels) 
@@ -382,15 +396,6 @@ myPear_set_roles('roles',
                                             
                                             )));
 
-/*
- * Shortcuts to the EA statuses.
- * Not to be edited.
- */
-define('EA_role_alumnus' ,   'a');
-define('EA_role_employee',   'e');
-define('EA_role_lt_visitor', 'v');
-define('EA_role_affiliate',  'o');
-define('EA_role_boardMember','b');
 
 /*
  * Affiliation with the organization
@@ -405,16 +410,11 @@ myPear_set_roles('affiliation',
                                                     'group' => 'Alumni',
                                                     'page'  => 1,           // Starts web page
                                                     'active'=> 1),          // active by default
-                       EA_role_lt_visitor  => array('title' => EA_title_lt_visitor,
+		       EA_role_lt_visitor  => array('title' => EA_title_lt_visitor,
                                                     'group' => 'Visitors',
                                                     'active'=> 0),          // NOT active by default
-                       EA_role_boardMember => array('title' => EA_title_boardMember,
-                                                    'group' => 'Board',
-                                                    'active'=> 0),          // NOT active by default
-                       EA_role_affiliate  => array('title' => EA_title_affiliated,
-                                                    'group' => 'Affiliated',
-                                                    'active'=> 0)));        // NOT active by default
-  
+		       ));
+
 
 /*
  * Load the core libraries
@@ -480,7 +480,7 @@ function locateAndInclude($objects,$flag=''){
   if (!$reply){
     if ($flag === 'fatal'){
       var_dump($path);
-      if (class_exists('b_debug',0)) b_debug::internalError("?????? Can't load the file \"$object\"");
+      if (class_exists('b_debug',0)) b_debug::internalError("?????? Can't load file \"$object\"");
       debug_print_backtrace();
       die("?????? Can't locate \"$object\"");
     }elseif($flag === 'any'){

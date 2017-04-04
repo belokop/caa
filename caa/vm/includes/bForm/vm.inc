@@ -12,6 +12,7 @@ class bForm_vm extends bForm {
   function __construct($id, $mode='RO') {
     parent::__construct($id,$mode);
     start_VM();
+    $this->dbg('done');
   }
 
   function isManager(){

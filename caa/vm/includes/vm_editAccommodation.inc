@@ -1,5 +1,5 @@
 <?php
-
+b_debug::xxx(__FILE__);
 if (!empty($_REQUEST['id'])) myPear::WARNING_T("_GET[id] is not empty, but is ignored...");
 
 //

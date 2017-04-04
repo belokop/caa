@@ -16,6 +16,7 @@ locateAndInclude('bForm_vm_Visit');
 
 class bForm_vm_Expenses extends bForm_vm{
 
+  var $show_gv=True;
   var $debug = False;
 
   static $pay_items = array('exp_living'  => array('d'=>'Accommodation', 
@@ -153,7 +154,7 @@ class bForm_vm_Expenses extends bForm_vm{
       $value = ($returnFormula
 		? 999
 		: $this->living($showFormula=False,$showDefaultOnly=True));
-      if ($this->visit->getPolicy(VM_V_payAccommodation,($value>0))){
+      if ($this->visit->getPolicy(VM_V_payAccommodation,($value>9))){ // sic, own accommodation is priced at 1 kopeek, i.e. >0
 	$formula = $this->living($showFormula=True, $showDefaultOnly=False);
       }
       break;
@@ -162,9 +163,10 @@ class bForm_vm_Expenses extends bForm_vm{
     case '_exp_totalExpenses':
     }
     
-    if ($returnFormula) $reply = $formula;
-    else                $reply = $value;
-    $this->dbg($reply);
+    $reply = ($returnFormula
+	      ? $formula
+	      : $value);
+    $this->dbg($reply,True);
     return $reply;
   }
 
@@ -468,6 +470,7 @@ class bForm_vm_Expenses extends bForm_vm{
       // Normal visit to be reimbursed
       //
       foreach(array_keys(self::$pay_items) as $i){
+	$this->dbg($i,True);
 	if (empty(self::$pay_items[$i]['est'])) self::$pay_items[$i]['est'] = array();
 	if (!$this->visit->getPolicy(self::$pay_items[$i]['p']) && !in_array('always',self::$pay_items[$i]['est'])) continue;
 	
@@ -481,20 +484,21 @@ class bForm_vm_Expenses extends bForm_vm{
           break;
 	  
 	case 'exp_living':
-	  //	  if (empty($v))
 	  $this->dbg("v=$v v_est=$v_est",cnf_dev);
- $this->formDB[$i] = $v = $this->defaultPay($i);
-	  $v_est = $v;
+	  $v_est = $v = $this->defaultPay($i);
+	  $this->getValue_reset($i,$v);
           break;
 	  
 	default:
 	  break;
 	}
 
-	if (empty($this->formDB['_exp_totalExpenses']))     $this->formDB['_exp_totalExpenses']     = 0;
-	if (empty($this->formDB['_exp_totalExpenses_est'])) $this->formDB['_exp_totalExpenses_est'] = 0;
-	$this->formDB['_exp_totalExpenses']     += $v;
-	$this->formDB['_exp_totalExpenses_est'] += $v_est;
+	foreach(array('_exp_totalExpenses'    => $v,
+		      '_exp_totalExpenses_est'=> $v_est) as $kk=>$vv){
+	  $vv += $this->getValue($kk,1);
+	  $this->getValue_reset($kk,$vv);
+	  $this->formDB[$kk] = $this->getValue($kk,1);
+	}
 
 	$this->isRO[$i]     = !VM_access()->mayDoAccounting();
 	$this->isRO[$i_est] =  VM_access()->mayDoAccounting();
@@ -503,9 +507,11 @@ class bForm_vm_Expenses extends bForm_vm{
 	if (!in_array('no_est',self::$pay_items[$i]['est'])) $dialog[$i_est] = array('textField');
 	if ($this->MODE == 'RW' || !empty($v))               $dialog[$i]     = array('textField');
       }
-      
+
+      // Complete the dialog with total amounts      
       $this->isRO['exp_living'] = ($this->visit->getValue('v_type',1) != VISIT_TYPE_RENT);
       foreach(array('_exp_totalExpenses','_exp_totalExpenses_est') as $item){
+	if ($this->getValue($item)) $dialog[$item] = array('textField');
 	if ($this->getValue($item) == $this->getValue('exp_living')) unset($dialog[$item]);
 	$this->isRO[$item] = True;
       }
@@ -524,9 +530,9 @@ class bForm_vm_Expenses extends bForm_vm{
     $this->textHidden('exp_vid',$this->visit->ID);
 
     // Show the dialog
-    b_debug::print_r($dialog,$this->getValue('exp_living'));
+    b_debug::var_dump($dialog,'dialog');
     $this->formBlock(VM_visit_expenses, 
-		     ($this->visit->getValue('v_type',1) == VISIT_TYPE_RENT ? 'Invoice ' : 'Expenses reimbursement'),
+		     ($this->visit->getValue('v_type',1) == VISIT_TYPE_RENT ? 'Invoice ' : 'Expences'),
 		     $dialog,
 		     array('d'=> 'update budget',
 			   //'i'=> ($this->exp_arePayed()?'i-lock':'i-dollar'),
@@ -590,7 +596,7 @@ class bForm_vm_Expenses extends bForm_vm{
    *
    */
   function isReadable(){
-    $reply=($this->isOwner() || VM_observer_here);
+    $reply=($this->isOwner() || VM_administrator_here); // VM_observer_here);
     return $reply;
   }
 

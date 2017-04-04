@@ -106,7 +106,7 @@ class bList_orgGroups extends bList{
    */
   private $all_groups = Null;
   private $all_groups_IDs = Null;
-  function get_groups(){
+  function get_groups($key=Null){
     if ($this->all_groups === Null){
       $this->all_groups_IDs = $this->all_groups = array();
       foreach($this->getMembers() as $lm_id=>$r){
@@ -118,9 +118,13 @@ class bList_orgGroups extends bList{
       }
       ksort($this->all_groups);
     }
-    return $this->all_groups;
+    $reply = (empty($key)
+	      ? $this->all_groups
+	      : (empty($this->all_groups[$key]) ? 'unknown' : $this->all_groups[$key]));
+    $this->dbg($reply,True);
+    return $reply;
   }
-
+  
   /*
    * Get list of department members
    */

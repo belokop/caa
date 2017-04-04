@@ -322,7 +322,7 @@ class APImenu_vm extends APImenu_ea{
 	break;
 
       case tab_vm_adm:  // ========================================================================================================= tab_vm_adm
-	$reply = VM_observer_here;
+	$reply = VM_administrator_here; // VM_observer_here;
 	break;
 	
       case tab__tasks:
@@ -337,7 +337,7 @@ class APImenu_vm extends APImenu_ea{
       case tab_vm_adm_projects:
       case tab_vm_adm_unitOrganizers:
       case tab_vm_vis_welcome:
-	$reply = !VM::outOfScope() && VM_observer_here;
+	$reply = !VM::outOfScope() && VM_administrator_here; // VM_observer_here;
 	break;
 
       case tab_vm_vis_badges:    
@@ -452,7 +452,7 @@ class APImenu_vm extends APImenu_ea{
 
       case tab_vm_vis_sok:
       case tab_vm_vis_budget:
-	$reply = is_object(VM::$e) && VM_observer_here && !VM::outOfScope();
+	$reply = is_object(VM::$e) && !VM::outOfScope() && VM_administrator_here; // VM_observer_here; 
 	break;
 	
       case tab_vm_reg:
@@ -493,7 +493,8 @@ class APImenu_vm extends APImenu_ea{
 	break;
 
       case tab_vm_guests_budgetBP:
-	$reply = VM_observer_here || (is_object(bAuth::$av) && bAuth::$av->isEndorser());
+	$reply = (is_object(bAuth::$av) && bAuth::$av->isEndorser()) || VM_administrator_here; // VM_observer_here;
+	if (!show_guests_by_budget) $reply = False;
 	break;
 
       case tab_vm_guests_to_approve:

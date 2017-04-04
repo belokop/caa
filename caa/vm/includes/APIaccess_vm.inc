@@ -21,8 +21,8 @@ class APIaccess_vm extends APIaccess{
 							     'def' => 'superUser_here'),
 			     'VM_program_coordinator_here'       => array('rank'=> 'RANK_vm_program_coordinator',
 							     'def' => 'VM_manager_here'),
-			     'VM_observer_here'     => array('rank'=> 'RANK_vm_observer',
-							     'def' => 'VM_program_coordinator_here'),
+			   //'VM_observer_here'     => array('rank'=> 'RANK_vm_observer',
+			   //			             'def' => 'VM_program_coordinator_here'),
 			     'VM_visitor_here'      => array('rank'=> 'RANK_vm_visitor'),
 			     'VM_registrant_here'   => array('rank'=> 'RANK_vm_registrant'),
 			     'VM_stranger_here'=> array('rank'=> 'RANK__authenticated'),
@@ -37,7 +37,7 @@ class APIaccess_vm extends APIaccess{
 			     'VM_reimberser_here'         =>array('IF'=> ($authenticated && VM_administrators()->isHandlingDuty(DUTY_reimbursement))),
 			     'VM_unlocker_here'           =>array('IF'=> ($authenticated &&(VM_administrators()->isHandlingDuty(DUTY_unlock_events)||VM_manager_here))),
 			     'VM_external_registrant_here'=>array('IF'=>VM_registrant_here && !VM_lt_visitor_here && !VM_employee_here),
-			     'VM_administrator_here'      =>array('IF'=>VM_observer_here || VM_endorser_here || VM_organizer_here || superUser_here),
+			     'VM_administrator_here'      =>array('IF'=>VM_endorser_here || VM_organizer_here || superUser_here), // || VM_observer_here
 			     ));
 
     $this->who_is_here(array('VM_member_here'             =>array('IF'=>EA_member_here || VM_external_registrant_here || VM_administrator_here || VM_organizer_here),
@@ -90,7 +90,7 @@ class APIaccess_vm extends APIaccess{
     if (is_object(bAuth::$av)){
       if (empty($av_id)) $av = bAuth::$av;
       else               $av = myPear::getInstance_new('bForm_Avatar_vm',$av_id,'fatal');
-      $reply = superUser_here || $av->isObserver();
+      $reply = superUser_here; //  || $av->isObserver();
     }
     $this->dbg($reply);
     return $reply;
@@ -99,7 +99,9 @@ class APIaccess_vm extends APIaccess{
   /*
    *
    */
-  public function mayCheckAccounting($av_id=''){ return VM_observer_here; }
+  public function mayCheckAccounting($av_id=''){ 
+    return VM_administrator_here; // VM_observer_here; 
+  }
   
   /*
    * Show "the access matrix" (who may do what)
@@ -127,7 +129,7 @@ class APIaccess_vm extends APIaccess{
 							   RANK_vm_manager,
 							   RANK_vm_endorser,
 							   RANK_vm_program_coordinator,
-							   RANK_vm_observer,
+							   // RANK_vm_observer,
 							   ));
       
       // Walk thru all the recent events 

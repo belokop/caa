@@ -83,7 +83,7 @@ foreach(explode("\n",`$cmd`) as $line){
 	case 'e_org':                                $nv = myOrg_ID; break;
 	case 'e_cc':  
 	case 'e_inst':
-	case 'e_type':
+	case 'rec_type':
 	  break;
 	default:
 	  b_debug::internalError("Forgotten option '$k'");

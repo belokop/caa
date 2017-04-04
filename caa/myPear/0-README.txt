@@ -1,5 +1,11 @@
 Changes log                                                                                                                                                             
                                                                                                                                                                                  
+2017-04-04, Version 5.3.166,
+D       myPear/includes/bList/orgTrades.inc
+                                                                                                                                                                                 
+2017-04-04, Version 5.3.165,
+D       myPear/includes/bList/orgTrades.inc
+                                                                                                                                                                                 
 2017-03-06, Version 5.3.164,
 A       myPear/images/f-uu.png
                                                                                                                                                                                  

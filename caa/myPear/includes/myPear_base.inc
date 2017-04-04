@@ -6,10 +6,18 @@ class myPear_base{
   public static $_debug= False;
   protected $dbg_color = 'blackText';
 
+  public $errorsInTheForm = array();
+
+  /*
+   *
+   */
   function __construct() {}
 
-  //                  $id,     $text,   $force,      $addLevel
+  /*
+   *
+   */
   protected function dbg($arg0='',$arg1='',$arg2=False, $arg3=0) {
+  //                     $id,     $text,   $force,      $addLevel
     
     if (!class_exists('b_debug',False)) return;
 
@@ -25,6 +33,7 @@ class myPear_base{
     //$x=defined('superUser_here');  if (class_exists('b_debug',0)) b_debug::watchDog($x);
     //if (stripos(get_class($this),'Visit') !== False)    b_debug::watchDog(@$this->isRO['v_status'],$this);
     //    b_debug::watchDog($_REQUEST['vm_eventSelector']);
+    //    b_debug::watchDog($this->errorsInTheForm, $this);
 
     switch(func_num_args()){
     case 0: 

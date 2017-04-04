@@ -57,6 +57,9 @@ class bForm_jam_Review extends bForm_jam{
     $this->_init();
   }
 
+  /*
+   *
+   */
   private function _init(){
     if (empty($this->ap_id)) $this->ap_id = $this->getValue('r_apid',True,True);
     if (empty($this->av_id)) $this->av_id = $this->getValue('r_avid',True,True);
@@ -67,8 +70,19 @@ class bForm_jam_Review extends bForm_jam{
     $this->dbg($this->av);
     $this->dbg($this->ap);
     $this->readDefRecord();
+
+    // Create the Review record if it is not yet done
+    if (empty($this->formDB)){
+      if ((int)$this->ID) b_debug::internalError($this." something wrong with reviews");
+      $this->isVITAL = array();
+      $this->updateDB($where);
+    }
+    if (empty($this->formDB['r_time']))  $this->formDB_modified['r_time'] = time();
   }
 
+  /*
+   *
+   */
   function __clean_cache(){
     $this->av->__clean_cache();
     myPear::getInstance(get_class($this), $this->ID, 'clean');
@@ -86,13 +100,6 @@ class bForm_jam_Review extends bForm_jam{
     $q = myPear_db()->qquery("SELECT * FROM jam_reviews LEFT JOIN jam_applicants ON r_apid = ap_id WHERE ".join(' AND ',$where),$this->debug);
     while($r = myPear_db()->next_record($q)) $this->formDB = $r;
     
-    // Create the Review record if it is not yet done
-    if (empty($this->formDB)){
-      if ((int)$this->ID) b_debug::internalError($this." something wrong with reviews");
-      $this->isVITAL = array();
-      $this->updateDB($where);
-    }
-    if (empty($this->formDB['r_time']))  $this->formDB_modified['r_time'] = time();
   }
 
   /*

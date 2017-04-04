@@ -7,18 +7,20 @@ locateAndInclude('vm_functions.inc');
 class bIcal_matrix_visits extends bIcal_matrix{
   
   var $see_day9 = True;
-  var $tClass         = NULL;
+  var $tClass   = NULL;
   public  $imposedEntries = array();
+  public  $graphTitle = '';
 
   public function __construct(){
     locateAndInclude('b_checkBox');
     parent::__construct();
+    if (is_object(VM::$e)) $this->graphTitle = 'Who arrives when?';
   }
   
   function show($arg=0){    
     myPear::H1('empty');
-    if (is_object(VM::$e))      print x('h3','Who arrives when?');
-
+    if (!empty($this->graphTitle)) print x('h3',$this->graphTitle);
+    
     bTiming()->cpu(__FUNCTION__);
 
     if (empty($this->day9)) $this->day9 = $this->day1 + 40*86400;
@@ -71,6 +73,7 @@ class bIcal_matrix_visits extends bIcal_matrix{
     if (!empty($this->imposedEntries)){
       $boxes = array();
       $this->noNavig = True;
+      $nnn = 0;
       foreach($this->imposedEntries as $r){
 	$mRegistrants['clash'][] = $this->fillEntry($r,'visit '.(++$nnn));
       }
@@ -88,23 +91,35 @@ class bIcal_matrix_visits extends bIcal_matrix{
       // Show nothing if no visitors is selected for the view .
       // To see all visits set "$where = array(1)"
       if (empty($where)) $where = array(0); 
+      $orderBy = (show_guests_by_budget
+                  ? 'lm_key'
+                  : 'v_group');
       $q = myPear_db()->query("SELECT * FROM abs_visits ".
 			      "    LEFT JOIN abs_events   ON v_eid = e_id ".
 			      "    LEFT JOIN abs_expenses ON exp_vid = v_id ".
 			      "    LEFT JOIN zzz_avatars  ON v_avid = av_id ".
-			      "    LEFT JOIN zzz_list_members ON v_projectid = lm_id ".
+			      (show_guests_by_budget ? "    LEFT JOIN zzz_list_members ON v_projectid = lm_id " : "").
 			      " WHERE ".join(' AND ',
 					     array_merge(array('('.join(' OR ',$where).')'),$v_where)).
-			      " ORDER BY e_start,v_start,lm_key,av_lastname ASC ");
+			      " ORDER BY e_start,v_start,$orderBy,av_lastname ASC ");
       while($r = myPear_db()->next_record($q)){
-	// group visitors by projects
-	if (empty($r['lm_value']))  $r['lm_value'] = 'undefined';
-	if (empty($r['e_name'])){
-	  if (empty(VM::$description[$r['lm_key']])) $r['e_name'] = 'project '.$r['lm_value'];
-	  else                                       $r['e_name'] = 'project '.$r['lm_key'];
-	}
-	
-	$mRegistrants[$r['e_name']][] = $this->fillEntry($r,b_fmt::strcut(b_fmt::unescape($r['e_name']),30,'...'));
+	// Group visitors by the program attended
+	$displayName = $r['e_name'];
+	if (show_guests_by_budget){
+	  // group visitors by projects
+	  if (empty($r['lm_value']))  $r['lm_value'] = 'undefined';
+	  if (empty($displayName)) $displayName = (empty(VM::$description[$r['lm_key']])
+						   ? 'project '.$r['lm_value']
+						   : 'project '.$r['lm_key']);
+	}else{
+	  // group visitors by reseach groups
+	  if (empty($displayName)){
+	    if (empty($r['v_group'])) $r['v_group'] = '?';
+	    $displayName = 'group '.myOrg()->orgGroups()->get_groups($r['v_group']);
+	  }
+	}	
+
+	$mRegistrants[$displayName][] = $this->fillEntry($r,b_fmt::strcut(b_fmt::unescape($displayName),30,'...'));
 	if (empty($boxes) && !empty($e_id)){
 	  $boxes = array($e_id => sprintf("%s %d %s <i>%s</i>", bText::_('See'), 
 					  myPear_db()->num_rows($q), bText::_('attenders of'), b_fmt::strcut($r['e_name'],30,'...')));
@@ -128,7 +143,7 @@ class bIcal_matrix_visits extends bIcal_matrix{
     bTiming()->cpu();
   }
     
-  function fillEntry($r,$projectName='?'){
+  function fillEntry($r,$displayName='?'){
     $av_name = bForm_Avatar::_fmtName('Lf',$r);
     $r['tname']= nbsp(bForm_Avatar::_fmtName('Lf',$r));
     $url = b_url::same(array(b_crypt_no=>1,
@@ -139,7 +154,7 @@ class bIcal_matrix_visits extends bIcal_matrix{
 		 'clas' => $this->getRandomColor(vm_colorLegend($r)),	
 		 'icon' => bForm_Avatar::_getThumbnail($r),
 		 'tips' => nbsp(join('<br/>',array(trim(x('strong',$r['tname'])),x('em',$r['av_institute'])))),
-		 'name' => $projectName, // $av_name
+		 'name' => $displayName,
 		 'text' => (bAuth::authenticated() ? "<a href='$url'>$av_name</a>" : $av_name), 
 		 );
   }
