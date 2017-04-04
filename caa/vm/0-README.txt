@@ -1,5 +1,7 @@
 Changes log                                                                                                                                                             
                                                                                                                                                                                  
+2017-04-04, Version 5.12.rc6,
+                                                                                                                                                                                 
 2017-04-04, Version 5.12.rc5,
 
   * New procedure for inviting the guest researches (invitations are accepted by default,
