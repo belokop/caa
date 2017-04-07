@@ -81,13 +81,13 @@ class bMailer_vm extends bMailer{
   var $isMailAutomatic = False;
   var $visit  = Null;
   var $debug  = cnf_dev;
+
+  public static $wrapper = 'VM_mailer'; 
   
   private $rec    = array();
 
   public static $isReady = 0;
   public function __construct(){
-
-    self::$wrapper = 'VM_mailer'; 
 
     if (self::$isReady++) b_debug::internalError("??? second call to ".$this);
     parent::__construct();
@@ -430,7 +430,7 @@ to approve or deny the request.
 			      array_keys($v->getPolicies()))) || 
 	($v4=($rejected && $v->getPolicy(VM_V_guestRejectSent))) ||
 	($v5=($accepted && $v->getPolicy(VM_V_guestAcceptSent)))){
-      $this->dbg("No need to send mail(s) v0=$v0 v1=$v1 v2=$v2 v3=$v3 v4=$v4 v5=$v5",cnf_dev);
+      $this->dbg("No need to send mail(s) v0=@$v0 v1=@$v1 v2=@$v2 v3=@$v3 v4=@$v4 v5=@$v5",cnf_dev);
       return True;
     }
     

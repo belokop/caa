@@ -349,10 +349,22 @@ $(document).ready(function() {
   /**
    * Modal iframe
    *
-   * iframe can load any URL into the modal window
+   * iframe can load any URL into the modal window, but...
+   * If it is called from a secure connection the iframe must be also secure, otherwise the result is simply empty.
+   *
    */
   function modal_iframe($url, $title='',$description=Null, $galery=False){
-    $reply = $this->popup($title, $url, myPear::myPear_enabled_theme(), __FUNCTION__, $description, $galery);
+    // Check for the secure connection
+    $mightBeModal = myPear::myPear_enabled_theme();
+    if (($_SERVER["SERVER_PORT"] == 443) && preg_match(';http:/;i',$url)){
+      $mightBeModal = myPear_hostReplies(parse_url($url,PHP_URL_HOST),443);
+      $this->dbg("mightBeModal = ".var_export($mightBeModal,True),True);
+      if ($mightBeModal){ 
+	$url = str_ireplace('http:/','https:/',($x=$url));
+	$this->dbg("change url: <br>$x<br>$url",True);
+      }
+    }
+    $reply = $this->popup($title, $url, $mightBeModal, __FUNCTION__, $description, $galery);
     if ($this->debug) b_debug::xxx(b_fmt::escape($reply));
     return $reply;
   }

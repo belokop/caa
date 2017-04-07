@@ -3,6 +3,9 @@
 
 set_error_handler('myPear_exceptions_error_handler');
 
+/*
+ *
+ */
 function myPear_exceptions_error_handler($severity, $message, $filename, $lineno) {
   if (error_reporting() == 0) {
     return;
@@ -11,6 +14,44 @@ function myPear_exceptions_error_handler($severity, $message, $filename, $lineno
     throw new ErrorException($message, 0, $severity, $filename, $lineno);
   }
 }
+
+/*
+ * Check that the server connects to the given port.
+ * Optionally check also that the server replies request
+ */
+function myPear_hostReplies($host,$port=443,$check_reply=False,$timeout=5){
+
+  $reply = False;
+
+  // Check the connection
+  try{
+    $fp = fsockopen($host, $port, $errno, $errstr, $timeout);
+  }catch(Exception $e){
+    $fp = False;
+    //      echo "??? Error Exception: ".$e->xdebug_message."\n";
+    $msg = "ERROR after $timeout secs. timeout: $errstr ($errno)";
+    if (class_exists('b_debug',0)) b_debug::xxx($msg);
+    else echo "$msg\n";
+  }
+
+  // Send request to the server, test reply
+  if ($fp){
+    if ($check_reply){
+      fwrite($fp, ("GET / HTTP/1.1\r\n".
+		   "Host: $host\r\n".
+		   "Connection: Close\r\n\r\n"));
+      while (!feof($fp)){
+	$buffer = fgets($fp, 128);
+	if (!empty($buffer)) $reply = True;
+      }
+    }else{
+      $reply = True;
+    }
+    fclose($fp);
+  }
+  return $reply;
+}
+
 
 /*
  * bAuth class wrapper.
@@ -164,7 +205,7 @@ function myPear_setConstants(){
   // Demo site has "test" as part of the name
   if (!defined('cnf_demo')){
     if (cnf_dev)            define('cnf_demo',False);
-    else                    define('cnf_demo',preg_match('/(test|^192.168|130.242.129.1[01])/',@$_SERVER["HTTP_HOST"]));
+    else                    define('cnf_demo',preg_match('/(test|norosx|^192.168|130.242.129.1[01])/',@$_SERVER["HTTP_HOST"]));
   }
   if (cnf_dev && cnf_inside_fb) myPear::DEBUG(cnf_inside_fb_iframe
 					      ?'cnf_inside_fb_iframe YES'

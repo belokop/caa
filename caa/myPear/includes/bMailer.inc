@@ -9,6 +9,7 @@ define('bMailer_dev_address','yb.mypear@gmail.com');
 /*
  * mailer class
  */
+locateAndInclude('myPear_base');
 if (locateAndInclude(array('Mail',
 			   'PEAR/Mail'),
 		     'any')){
@@ -16,7 +17,7 @@ if (locateAndInclude(array('Mail',
 			 'Net_SMTP'),
 		   'fatal');
   
-  class bMailer{
+  class bMailer extends myPear_base{
     
     // used during the initial/development stage
     var $bcc           = array(bMailer_dev_address);
@@ -529,14 +530,7 @@ Remember to save this mail or book-mark the URL to facilitate later access to th
     
     /*
      *
-     */
-    function dbg($txt='',$forced=False) {
-      if ($forced || $this->debug || cnf_debug){
-	if (cnf_CLI) printf("%s: %s\n",get_class($this),$txt);
-	else b_debug::xxx($txt,array(True,'orangeText',3,$this));
-      }
-    }
-    
+     */    
     function __toString(){
       if (is_object($this->object)) return  get_class($this).x('(',get_class($this->object).' '.$this->object->name());
       else                          return  get_class($this);
@@ -632,7 +626,7 @@ Remember to save this mail or book-mark the URL to facilitate later access to th
   }
 }else{
   myPear::ERROR("php class 'PEAR/Mail' not found, <a href='http://pear.php.net/search.php?q=mail&in=packages'>please upgrade</a>");
-  class bMailer{
+  class bMailer extends myPear_base{
     function __construct(){}
     
     public function send($packPWD_args=array(),

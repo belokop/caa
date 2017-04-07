@@ -1,8 +1,8 @@
 <?php
 
 define('WIW_MODULE'   , 'wiw');
-define('WIW_VERSION','5.2.rc3');
-$releaseDate = '2017-03-06';
+define('WIW_VERSION','5.2.rc4');
+$releaseDate = '2017-04-07';
 
 define('wiw_acl_public', 'public');
 define('wiw_acl_public_text','Anyone on the web can see the trip info');

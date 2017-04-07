@@ -30,7 +30,7 @@ if (!class_exists('D8',False)){
      * Is it the front page?
      */
     public static function is_fp(){
-      return empty($GLOBALS['myPear_current_module'] || (@$GLOBALS['myPear_current_module'] === myPear_MODULE));
+      return empty($GLOBALS['myPear_current_module']) || (@$GLOBALS['myPear_current_module'] === myPear_MODULE);
     }
     
     public static function compat($q=''){

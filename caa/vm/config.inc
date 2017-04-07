@@ -3,9 +3,9 @@ set_time_limit(0);
 /**
  * Visitors Manager (VM) configuration file
  */
-$releaseDate = '2017-04-04';
+$releaseDate = '2017-04-07';
 define('VM_MODULE'   , 'vm');
-define('VM_VERSION','5.12.rc6');
+define('VM_VERSION','5.12.rc7');
 
 //
 // transition problems...
@@ -968,10 +968,10 @@ function VM_reimbursable_visits(){
 function VM_mailer(){
   static $mailer = Null;
   if ($mailer === Null){
-    start_VM();
     locateAndInclude('bMailer_vm');
-    $mailer = new bMailer_vm();
     bMailer_vm::$wrapper = __function__;
+    start_VM();
+    $mailer = new bMailer_vm();
   }
   return $mailer;
 }

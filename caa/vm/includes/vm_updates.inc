@@ -16,7 +16,10 @@ function vm_updates(){
  */
   locateAndInclude('b_updates');
   if (bMaster()->register_module_update_script(VM_MODULE,VM_VERSION,__FILE__)){
+    // Updates take time...
+    ini_set("memory_limit", "-1");
     set_time_limit(0);
+
     bTiming()->cpu(__FUNCTION__);
     myPear_db()->noAutoCommit('start');
     myPear_logs()->doNotLog = True;

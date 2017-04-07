@@ -6,7 +6,7 @@
  *  um_id
  *  um_uid
  *  um_avid
- *  um_status - join(<EA_role> , <a_flag ('a' for alumni>))
+ *  um_status - join(<EA_role> , <a_flag> ('a' for alumni>))
  *  um_option - packed (<board membership> , <a_flag> , <acl ('p' for public)>)
  */
 
@@ -16,9 +16,7 @@ class bUnit_ea_members extends bUnit_ea {
   var $debug    = False;
   var $see_only = Null;
   public $b_tabs_Engine = Null;
-  
-  protected $packed_items= array('acl','day1','day9');
-  
+  protected $packed_items= array('acl','day1','day9',EA_role_employee,EA_role_alumnus);
   
   /*
    * EA unit constructor
@@ -54,9 +52,20 @@ class bUnit_ea_members extends bUnit_ea {
       $av->adjust_status();
 //    $av->update_AVpos_AVinst('av_institute');
 //    $av->update_AVpos_AVinst('av_position');
+
+      // Board membersip
+      if ($er = $av->hook_employment()){
+	$this->updateMember($x=$er->get_boardMembership(),
+			    $this->get_memberInfo($av_id,'um_id'));
+	if ($x){
+	  $x = $this->get_memberInfo($av_id);
+	  b_debug::print_r($x,'get_boardMembership');
+	}
+      }
+
       $x = ob_get_contents();
       ob_end_clean();
-      // We do not need an output, just kill it
+      // We do not need an output, hence just kill it
       unset($x);
     }
     myPear::MESSAGE_close();
@@ -176,8 +185,11 @@ class bUnit_ea_members extends bUnit_ea {
 			     'av_position',
 			     'day1',
 			     'day9',
+			     EA_role_employee,
+			     EA_role_alumnus,
 			     ));
   }
+
   
   /*
    *
@@ -188,9 +200,13 @@ class bUnit_ea_members extends bUnit_ea {
     if (empty($rec)){
       $reply = False;
     }elseif ($tabs === Null){
-      //      $this->dbg(1,True);
       $reply = True;
     }else{
+      if (empty($rec['um_status'])){
+	b_debug::print_r($rec,'??? empty um_status');
+	b_debug::traceBack();
+	return False;
+      }
       $is_currently_employed = in_array($rec['um_status'],array(EA_role_lt_visitor,EA_role_employee));
       switch($this->see_only){
       case EA_role_employee:
@@ -224,6 +240,7 @@ class bUnit_ea_members extends bUnit_ea {
    * - to build the list of tabs
    * - check access for the given tab
    */
+  /*
   protected function accept_for_tab_old(&$rec,$tabs=Null,$tab=''){ // Kept for reference, to be removed <<<< ==============================================
 
     if (empty($rec)) return False;
@@ -276,7 +293,52 @@ class bUnit_ea_members extends bUnit_ea {
     return $accept;
   }
 
+  //
+  // NORDITA CUSTOMIZED....
+  //
+  protected function detect_selectedTab($tabs){
+    if (($reply = parent::detect_selectedTab($tabs))==0 && (count($tabs)>0) && is_object($this->av_justAdded)){
+      if ($this->see_only == EA_role_employee && !empty(EA::$extra_tabs_to_show)){
+	switch($status = $this->getUnitMemberStatus($this->av_justAdded->ID)){
+	case EA_role_lt_visitor:
+	  $reply = 1;
+	  break;
 
+	case EA_role_boardMember:
+	  $reply = 2;
+	  break;
+	}
+      }
+    }
+    $this->dbg($reply);
+    return $reply;
+  }
+  */
+
+  /*
+   * Slightly customized...
+   */
+  protected function detect_selectedTab($tabs){
+    if (($reply = parent::detect_selectedTab($tabs))==0 && (count($tabs)>0) && is_object($this->av_justAdded)){
+      if ($this->see_only == EA_role_employee && !empty(EA::$extra_tabs_to_show)){
+	switch($status = $this->getUnitMemberStatus($this->av_justAdded->ID)){
+	case EA_role_lt_visitor:
+	  $reply = 1;
+	  break;
+
+	case EA_role_boardMember:
+	  $reply = 2;
+	  break;
+	}
+      }
+    }
+    $this->dbg($reply);
+    return $reply;
+  }
+
+  /*
+   *
+   */
   protected function header($arg=null){
    $reply = ($this->see_only == EA_role_employee 
 	    ? array('name'        =>'', 
@@ -375,32 +437,11 @@ class bUnit_ea_members extends bUnit_ea {
   
 
   /*
-   * NORDITA CUSTOMIZED....
-   */
-  protected function detect_selectedTab($tabs){
-    if (($reply = parent::detect_selectedTab($tabs))==0 && (count($tabs)>0) && is_object($this->av_justAdded)){
-      if ($this->see_only == EA_role_employee && !empty(EA::$extra_tabs_to_show)){
-	switch($status = $this->getUnitMemberStatus($this->av_justAdded->ID)){
-	case EA_role_lt_visitor:
-	  $reply = 1;
-	  break;
-
-	case EA_role_boardMember:
-	  $reply = 2;
-	  break;
-	}
-      }
-    }
-    $this->dbg($reply);
-    return $reply;
-  }
-
-  
-  /*
    * Extend the EA list by a few optional tabs (like "Visitors", "Board members", etc.),
    * but check first that they are populated 
    */
   protected function build_tabs_for_show(){
+    $reply = array();
     switch($this->see_only){
     case EA_role_employee:
       if (empty($this->b_tabs_Engine))       $this->b_tabs_Engine = 'b_tabs_JQ';

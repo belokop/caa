@@ -6,7 +6,6 @@
 
 myPear_startup_queue('ea_updates');
 
-
 function ea_updates(){
   if    (file_exists($f=dirname(__FILE__)."/../config.inc")) require_once($f);
   elseif(file_exists($f=dirname(__FILE__)."/../config.inc")) require_once($f);
@@ -241,7 +240,11 @@ function ea_update18(){
     //    foreach($bList_eaEmpRecords->getMembers(array('e_org'=>$org_id)) as $lm_id=>$r){
     foreach($bList_eaEmpRecords->getMembers() as $lm_id=>$r){
       $to = $title = strToLower(trim(str_replace('  ',' ',$r['lm_value'])));
-      if (empty($title) || in_array($title,$drops)){
+      if (in_array($title,$drops) 
+	  || empty($r['lm_key']) 
+      //  || empty($r['lm_status'])
+	  ){
+	nameIt($rr,$name_printed);
  	b_debug::print_r($r,'??? drop me');
 	myPear_db()->qquery("DELETE FROM  zzz_list_members WHERE lm_id = ".$r['lm_id'],True);
 	continue;

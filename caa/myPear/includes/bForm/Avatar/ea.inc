@@ -115,11 +115,11 @@ class bForm_Avatar_ea extends bForm_Avatar{
    * this table gives mapping  bList_eaEmpRecords -> bForm_Avatar_ea
    */
   public static $er2av = Null; // Filled on the fly, see the constructor
-  public static $av2er = array('rec_type'       =>array('k'=>'rec_type',  'd'=>''),
+  public static $av2er = array('e_rate'         =>array('k'=>'e_rate',    'c'=>'orgEmpTypes'), // The description comes from 'c', i.e. bList_orgEmpTypes
+			       'e_gid'          =>array('k'=>'e_gid',     'c'=>'orgGroups'),
+			       'rec_type'       =>array('k'=>'rec_type',  'd'=>''),
 			       'e_off'          =>array('k'=>'e_off',     'd'=>'Office'),
 			       'e_org'          =>array('k'=>'e_org',     'd'=>''),
-			       'e_rate'         =>array('k'=>'e_rate',    'c'=>'orgEmpTypes'), // The description comes from 'c', i.e. bList_orgEmpTypes
-			       'e_gid'          =>array('k'=>'e_gid',     'c'=>'orgGroups'),
 			       'e_start'        =>array('k'=>'lm_key',    'd'=>''), // start of the employment period
 			       'e_end'          =>array('k'=>'lm_status', 'd'=>''), // end   of the employment period
 			       'lm_id'          =>array('k'=>'lm_id',     'd'=>''),
@@ -180,6 +180,14 @@ class bForm_Avatar_ea extends bForm_Avatar{
     $this->modalRW_enabled = isset($_GET['block_once']);
     if ((@$_GET['av_id'] == $this->ID) || (@$_GET['id'] == $this->ID)) $this->adjust_status();
 
+    self::_init();
+
+    // Update avatar av_institute & av_position.
+    // We do it on the fly since "myOrg" might change since the previous invication 
+    $this->update_AVpos_AVinst();    
+  }
+  
+  static function _init(){
     // Fill the description for orgEmpTypes & orgGroups
     if (myPear_db()->isReady() && empty(self::$av2er['e_rate']['d'])){
       foreach(self::$av2er as $key=>$data){
@@ -188,12 +196,8 @@ class bForm_Avatar_ea extends bForm_Avatar{
 	}
       }
     }
-
-    // Update avatar av_institute & av_position.
-    // We do it on the fly since "myOrg" might change since the previous invication 
-    $this->update_AVpos_AVinst();    
   }
-  
+
   function __clean_cache(){
     //    myPear::getInstance(get_class($this),$this->ID,'clean');
     parent::__clean_cache();

@@ -1324,7 +1324,8 @@ class bHolder_vm_Visitors extends bHolder_vm{
 	$this->rec['cotenant'] = b_crypt::encode_utf8(b_fmt::unEscape(join(', ',$names)));
       }
       
-      if ($this->rec['hut_code'] != HUT_BI) $this->fill_excel($hut_name);
+      //      if ($this->rec['hut_code'] != HUT_BI) 
+      $this->fill_excel($hut_name);
       break;
 
     case 'photos':

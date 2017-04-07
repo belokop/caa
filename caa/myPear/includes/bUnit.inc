@@ -334,7 +334,7 @@ class bUnit extends bList{
 
   /*
    * Detect which tab should be selected when the page is shown.
-   * Select the tab with the new member if the latter was just added to the unit.
+   * The tab with a new member (i.e. the one which was just added to the unit) is always "detected"
    */
   protected $av_justAdded = False;
   protected function detect_selectedTab($tabs){
@@ -444,6 +444,7 @@ class bUnit extends bList{
   /*
    * Show the unit members, arrange them by tabs if there are too many members
    */
+  protected $b_table_styles = 'style=width:100%';
   function show($onlyNames=False){
     locateAndInclude(bForm_Avatar::$bForm_Avatar);
 
@@ -465,7 +466,7 @@ class bUnit extends bList{
       // Show the members list      
 
       locateAndInclude('b_table');
-      $this->t = new b_table_zebra($this->header($onlyNames));
+      $this->t = new b_table_zebra($this->header($onlyNames),$this->b_table_styles);
       $this->t->noSort = True;
       $this->show_set_css();
       

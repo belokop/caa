@@ -107,7 +107,12 @@ class bList_eaEmpRecords extends bList{
     $this->dbg($this->av->name());
 
     // Set the postponed naming 
-    $this->list_quering['e_rate'] = bForm_Avatar_ea::$av2er['e_rate']['d'];
+    $d = @bForm_Avatar_ea::$av2er['e_rate']['d'];
+    if (empty($d)){
+      b_debug::print_r(bForm_Avatar_ea::$av2er);
+    }else{
+      $this->list_quering['e_rate'] = $d;
+    }
     
     // Adjust the pop-up menu to the organization name
     foreach ($this->rec_type_menuD as $k=>$v) $this->rec_type_menu[$k] = str_replace('ORG',myOrg_name,$v);
@@ -174,6 +179,29 @@ class bList_eaEmpRecords extends bList{
     return $buffer;
   }
 
+  /*
+   *
+   */
+  public function get_boardMembership(){
+    $reply = $reply_a = array();
+    // get as the regular expression
+    $this->where_regexp = array('lm_value' => 'board',);
+    foreach($this->getMembers(array('e_org'=>myOrg_ID)) as $r){
+      $role = (self::is_current($r,$av_ddate=null)
+	       ? EA_role_employee
+	       : EA_role_alumnus);
+      $reply_a[$role][] = $r['lm_value'];
+    }
+    foreach($reply_a as $role=>$positions){
+      $reply[$role] = join(',',array_unique($positions));
+      $this->dbg(sprintf("%s: %s",$role,$reply[$role]),True);
+    }
+    return $reply;
+  }
+  
+  /*
+   *
+   */
   static function is_current($r,$av_ddate=null,$verbose=False){
     $reply = False;
     if (!empty($r['rec_type'])){

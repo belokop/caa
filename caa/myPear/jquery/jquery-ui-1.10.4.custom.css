@@ -798,7 +798,8 @@ body .ui-tooltip {
 }
 .ui-widget-content {
 	border: 1px solid #d9d6c4;
-	background: #eceadf url(images/ui-bg_fine-grain_10_eceadf_60x60.png) 50% 50% repeat;
+/* YBtabs background: #eceadf url(images/ui-bg_fine-grain_10_eceadf_60x60.png) 50% 50% repeat; */
+	background: #f1f2f3 none repeat scroll 0 0;
 	color: #1f1f1f;
 }
 .ui-widget-content a {
@@ -827,7 +828,8 @@ body .ui-tooltip {
 .ui-state-default a,
 .ui-state-default a:link,
 .ui-state-default a:visited {
-	color: #654b24;
+/* YBtabs color: #654b24; */
+	color: #333333;
 	text-decoration: none;
 }
 .ui-state-hover,

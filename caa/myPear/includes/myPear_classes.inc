@@ -3850,7 +3850,11 @@ class b_os{
       //      $l = error_reporting(0);
       if (!is_dir($dir)){
 	$oldumask = umask(0); 
-	$ok = mkdir($dir,$umask,True);
+	try{
+	  $ok = mkdir($dir,$umask,True);
+	}catch(Exception $e){
+	  b_debug::traceBack("Cant create $dir: ".$e->xdebug_message);
+	}
 	umask($oldumask); 
 	$text   = preg_replace(';.*/trunk/;','&lt;trunk&gt;/',str_replace(getcwd(),'&lt;cwd&gt;',$dir));
 	if (cnf_dev && $ok) myPear::MESSAGE("creating $text umask=".$umask);

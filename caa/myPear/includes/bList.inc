@@ -224,7 +224,6 @@ class bList extends myPear_getValue{
   // b_table options
   protected $repetValuesCol1only = False;
   protected $noSort              = False;
-  protected $table_attributes    = '';
 
   private   $w = array();
   private   $where_eq      = array(); // 
@@ -1294,7 +1293,7 @@ class bList extends myPear_getValue{
 
   protected function show_open_table(){
     if (empty($this->t)){
-      $this->t = new b_table_zebra($this->header(),$this->table_attributes);
+      $this->t = new b_table_zebra($this->header());
       $this->t->preHeaders          = $this->preHeaders;
       $this->t->noSort              = $this->noSort;
       $this->t->noSort              = True;

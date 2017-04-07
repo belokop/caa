@@ -53,11 +53,15 @@ class bDB extends mysqli{
 
       // Extract the other useful variables
       $this->Database= $dbname;
-      $this->charset = $this->character_set_name();
+
+      // $this->charset = $this->character_set_name();
+      $q = $this->query('show variables like "character_set_database"');
+      while($r = $this->next_record($q))  $this->charset = $r['Value'];
+      $this->dbg("character_set_database = '$this->charset'",True);
+
       $this->debug_changes = (defined('cnf_show_db') && cnf_show_db);
       $this->dbg(sprintf("user = %s,  database = %s@%s", $user, $this->Database, $this->Host),
 		 $this->debug_changes || (defined('YBhere') && YBhere));
-      $this->dbg("character_set_name = '$this->charset'",$this->debug_changes || (defined('YBhere') && YBhere));
     }
     $this->dbg("__construct done, isReady=".var_export($this->isReady,True));
   }
