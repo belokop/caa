@@ -20,21 +20,13 @@ class b_vars{
     if(empty($module))    $module = b_reg::$current_module;
 
     if (is_array($value)){
-      $reply = False;
-      $q = myPear_db()->query("SELECT var_name,var_value FROM zzz_variables WHERE ".
-			      "var_module = '$module'");
-      while($r = myPear_db()->next_record($q)){
-	if (is_array($var_value = b_fmt::safe_decode($r['var_value']))){
-	  $reply = True;
-	  foreach($value as $k=>$v) if (@$var_value[$k] !== $v) $reply = False;
-	  if ($reply) break;
-	}
-      }
-    }else{
-      $q = myPear_db()->query("SELECT var_name FROM zzz_variables WHERE ".
-			      "var_module = '$module' AND ".myPear_db()->quote($value,True,'var_value')." LIMIT 1");
-      $reply = (bool)myPear_db()->num_rows($q);
+      ksort($value);
+      $value = serialize($value);
     }
+
+    $q = myPear_db()->qquery("SELECT var_name FROM zzz_variables WHERE ".
+			     "var_module = '$module' AND ".myPear_db()->quote($value,True,'var_value')." LIMIT 1",True);
+    $reply = (bool)myPear_db()->num_rows($q);
     b_debug::xxx($reply,array(2,cnf_dev));
     return $reply;
   }
@@ -42,34 +34,41 @@ class b_vars{
   /*
    * Get the variable(s)
    */
-  static function get($name,$module=Null,$regexp=False,$limit=333){
+  static function get($name,$module=Null,$regexp=False){
 
     $reply = array();
-      
+    
     if ($regexp){
       // Get the variable names which match the regular expression
-      $q = myPear_db()->qquery($x="SELECT * FROM zzz_variables WHERE ".
+      $q = myPear_db()->qquery("SELECT * FROM zzz_variables WHERE ".
 			       myPear_db()->quote($name,'RR','var_name').
-			       " ORDER BY var_name LIMIT $limit",self::$debug||cnf_dev);
+			       " ORDER BY var_name",self::$debug||cnf_dev);
       
       // Get recursively all the values & modules
       while($r = myPear_db()->next_record($q)){
-	// add the variable name to the output
+	if (!is_array(b_fmt::safe_decode($r['var_value']))){
+	  b_debug::traceBack('var_value is not array');
+	  b_debug::print_r($r);
+	  continue;
+	}
+	// add the variable name to the output (sic, recursion!)
 	$var = self::get($r['var_name'],$r['var_module']);
-	foreach(array('var_name','var_timestamp') as $i) $var[$i] = $r[$i];
+	foreach(array('var_name','var_timestamp') as $i){
+	  if (@$r[$i]) $var[$i] = $r[$i];
+	}
 	$reply[$r['var_module']][] = $var;
       }
-      return $reply;
     }else{
       $q = myPear_db()->qquery("SELECT * FROM zzz_variables WHERE ".join(' AND ',self::args($name,$module)),self::$debug);
       while($r = myPear_db()->next_record($q)){
-	$reply = b_fmt::safe_decode($r['var_value']);
-	if (is_array($reply) && empty($reply['var_name'])) $reply['var_name'] = $name;
+	if (is_array($reply = b_fmt::safe_decode($r['var_value']))){
+	  if (is_array($var_value2=b_fmt::safe_decode($r['var_value2']))) $reply += $var_value2; 
+	  if (empty($reply['var_name'])) $reply['var_name'] = $name;
+	}
       }
-      
-      if (self::$debug) b_debug::xxx($reply);
-      return $reply;
     }
+    if (self::$debug) b_debug::xxx($reply);
+    return $reply;
   }
 
   /*
@@ -85,11 +84,19 @@ class b_vars{
   /*
    *
    */
-  static function set($name,$value,$module=Null){
-    $var_value = array(myPear_db()->quote(b_fmt::safe_encode($value),True,'var_value'));
-    myPear_db()->query((myPear::is_empty(self::get($name,$module))
-			? "INSERT INTO zzz_variables SET ".join(',',array_merge($var_value,self::args($name,$module)))
-			: "UPDATE zzz_variables SET ".join(',',$var_value)." WHERE ".join(' AND ',self::args($name,$module))));
+  static function set($name,$value,$module=Null,$value2=Null){
+    if (is_array($value))  ksort($value);
+    if (is_array($value2)) ksort($value2);
+
+    // Save the values
+    $var_values[] = myPear_db()->quote(b_fmt::safe_encode($value),True,'var_value');
+    if (!empty($value2)) $var_values[] = myPear_db()->quote(b_fmt::safe_encode($value2),True,'var_value2');
+
+    // Create or update the record
+    myPear_db()->qquery((myPear::is_empty(self::get($name,$module))
+			 ? "INSERT INTO zzz_variables SET ".join(',',array_merge($var_values,self::args($name,$module)))
+			 : "UPDATE zzz_variables SET ".join(',',$var_values)." WHERE ".join(' AND ',self::args($name,$module))),
+			True);
   }
 }
 
@@ -3397,7 +3404,7 @@ class b_url{
     $url = trim($url_);
     $http = sprintf('http%s://',($_SERVER['SERVER_PORT'] == 80 ? '' : 's'));
     if ($replace){
-      if (stripos($url,'https://') === False) $url = preg_replace('|^http?:/+|i',$http,$url);
+      if (stripos($url,'https://') === False) $url = preg_replace('|^http:/+|i',$http,$url);
     }else{
       $url = sprintf('%s%s/%s',$http,$_SERVER['HTTP_HOST'],$url);
     }

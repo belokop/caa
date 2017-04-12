@@ -555,7 +555,7 @@ Remember to save this mail or book-mark the URL to facilitate later access to th
 		    'bMailer_user',
 		    'bMailer_passwd',
 		    ) as $item){
-	if (empty($$item)) $$item = $GLOBALS[$item];
+	if (empty($$item)) $$item = @$GLOBALS[$item];
       }
 
       // arguments for Mail::factory

@@ -3,7 +3,7 @@
 if    (function_exists('locateAndInclude'))    locateAndInclude('APImenu','APImenu_ea');
 elseif(function_exists('drupal_get_path'))  require_once drupal_get_path('module','ea') . '/includes/APImenu_ea.inc';
 
-foreach(array('tab_prp_see'         => (myOrg_ID ? myOrg_nameS.' ' : '').'Preprints',
+foreach(array('tab_prp_see'         => (defined('myOrg_nameS') ? myOrg_nameS.' ' : '').'Preprints',
               'tab_prp_mng'         => 'Register/Manage preprints',
               'tab_prp_pending'     => 'Manage pending preprints',
               'tab_prp_update'      => 'Update preprints',
@@ -37,7 +37,7 @@ class APImenu_prp extends APImenu{
   
   static function startup(){
 
-    if (!(int)myOrg_ID) return False;
+    if (!defined('myOrg_ID')) return False;
 
     static $dejaVu = 0;
     if (!$dejaVu++){

@@ -10,7 +10,7 @@ class myPear_taskManager{
   public $exec_request = False;
   public $debug = cnf_dev;
   public $removeAfterExecution = False;
-  
+
   /*
    * 
    */
@@ -33,13 +33,31 @@ class myPear_taskManager{
     if ($task_id = @$_REQUEST['tm_delete_once']){
       $task = b_vars::get($task_id,$module = $_REQUEST['tm_m_once']);
       if (empty($task['end'])){
-	b_vars::set($task_id,array_merge($task,array('cmt'=>'Removed','end'=>time())));
+	$this->set($task_id,$task,array('cmt'=>'Removed','end'=>time()));
       }else{
 	b_vars::delete($task_id,$module);
       }
       myPear_logs()->syslog("Explicitly remove ".$this->doing($task));
       myPear::WARNING("Removing ".$this->doing($task));
     }
+  }
+
+  /*
+   * Wrapper around b_vars::set 
+   * Split the data between 2 fields - var_value (method arguments) & var_value2 (all the rest)
+   */
+  private function set($task_id,$value,$value2,$module=Null){
+    static $to_var_value = array('class',
+				 'function',
+				 'args',
+				 );
+  
+    $var_value = $var_value2 = array();
+    foreach(array_merge($value,$value2) as $k=>$v){
+      if (in_array($k,$to_var_value)) $var_value[$k] = $v;
+      else                            $var_value2[$k]= $v;
+    }
+    b_vars::set($task_id,$var_value,$module,$var_value2);
   }
 
   /*
@@ -62,6 +80,9 @@ class myPear_taskManager{
 		    );
       // if (!cnf_dev && !cnf_demo && !YBhere) unset($header['_av_dev']);
 
+      // Print message if the lock is active
+      $this->lock_isActive($release_if_deadlock=False);
+      
       // Create the table
       $t = new b_table_zebra($header);
 
@@ -186,8 +207,8 @@ class myPear_taskManager{
 	$extras['av_dev'] = bAuth::$av_authenticated->ID;
 	myPear::WARNING(sprintf('Set <em>%s</em>  as the task submitter',bAuth::$av_authenticated->name()));
       }
-
-      b_vars::set($this->task_id($task_counter),array_merge($extras,$taskManager_args));
+      
+      $this->set($this->task_id($task_counter),$extras,$taskManager_args);
       myPear_logs()->add('TM_add','',$this->doing($taskManager_args,False),myPear_cronjob()->ID,b_reg::$current_module,False);
       myPear_db()->transaction('end');
       // Syslog the request
@@ -214,19 +235,12 @@ class myPear_taskManager{
    */
   private $lock_start = Null; 
   private function lock_acquire(){
-    static $deadlock = 10; // Minutes
-    static $wait_for = 30; // Seconds
 
     $this->dbg();
-    while($lock = b_vars::get('taskManager_lock',myPear_MODULE)){
-      $locked_at = $lock['time'];
-      if ((time() - $locked_at) > 60*$deadlock){
-	myPear::WARNING(sprintf("taskManager is locked for %s, remove the deadlock",b_time::delta(time(),$locked_at)));
-	$this->lock_release();
-      }else{
-	sleep($wait_for);
-      }
-    }
+
+    // Wait until the lock is expired
+    $this->lock_isActive($release_if_deadlock=True);
+
     // Write the lock record
     b_vars::set('taskManager_lock',array('time'=>time()),myPear_MODULE);
     $this->lock_start = time();
@@ -239,6 +253,35 @@ class myPear_taskManager{
   private function lock_release(){
     b_vars::delete('taskManager_lock',myPear_MODULE);
     $this->dbg("Locked during ".b_time::delta(time(),$this->lock_start));
+  }
+
+  /*
+   * Check is the lock active.
+   * Optionally release the the lock the it is expired.
+   */
+  private function lock_isActive($release_if_deadlock=True, $deadlock=60){ // dead lock in minutes
+    static $wait_for = 30; // Seconds
+
+    $reply = False;
+    $this->dbg();
+    while($lock = b_vars::get('taskManager_lock',myPear_MODULE)){
+      $reply = True;
+      if ($release_if_deadlock){
+	// Wait for the lock to disapier...
+	$locked_at = $lock['time'];
+	if ((time() - $locked_at) > 60*$deadlock){
+	  myPear::WARNING(sprintf("taskManager is locked for %s, remove the deadlock",b_time::delta(time(),$locked_at)));
+	  $this->lock_release();
+	  $reply = False;
+	}else{
+	  sleep($wait_for);
+	}
+      }else{
+	if ($this->lock_start != time()) myPear::MESSAGE("TaskManager is last locked in ".b_time::delta(time(),$this->lock_start));
+	break; // Lock is there, we no not want to know more...
+      }
+    }
+    return $reply;
   }
 
   /*
@@ -321,10 +364,17 @@ class myPear_taskManager{
 	    //
 	    locateAndInclude(($class=$task['class']),'fatal');
 	    if (empty($class_instance[$task['class']])) $class_instance[$task['class']] = new $class();
-	    $class_instance[$task['class']]->debug = $this->debug;
-	    
-	    // Execute the task
-	    $OK = call_user_func_array(array($class_instance[$task['class']],$task['function']),$args);
+	    if (method_exists($class_instance[$task['class']],$task['function'])){
+	      // Execute the task
+	      $class_instance[$task['class']]->debug = $this->debug;
+	      $OK = call_user_func_array(array($class_instance[$task['class']],$task['function']),$args);
+	    }else{
+	      // Method does not exist...
+	      $msg = sprintf("Method %s()->%s does not exist can't execute the task.<br/>Task ignored and declared to be completed...",$class,$task['function']);
+	      myPear::ERROR($msg);
+	      b_debug::xxx($msg);
+	      $OK = True;
+	    }
 	  }
 	  
 	  if ($OK){
@@ -343,7 +393,7 @@ class myPear_taskManager{
 	    }else{
 	      // Or leave it, but save the execution time
 	      $this->dbg(sprintf('%s - set "ended"',$task['var_name']));
-	      b_vars::set($task['var_name'],array_merge($task,array('end'=>time())),$module);
+	      $this->set($task['var_name'],$task,array('end'=>time()),$module);
 	    }
 	  }else{
 	    myPear::ERROR($this->doing($task).' FAILED');
@@ -370,7 +420,7 @@ class myPear_taskManager{
     $this->info();
     //    $this->lock_release();
     //    $this->dbg(exiting);
-    }
+  }
   
   function dbg($text=' ',$forced=False){
     if (True || $this->debug || $forced) b_debug::xxx($text,array(3,True,'redText',$this));

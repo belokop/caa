@@ -356,15 +356,18 @@ $(document).ready(function() {
   function modal_iframe($url, $title='',$description=Null, $galery=False){
     // Check for the secure connection
     $mightBeModal = myPear::myPear_enabled_theme();
-    if (($_SERVER["SERVER_PORT"] == 443) && preg_match(';http:/;i',$url)){
+    if ($mightBeModal && ($_SERVER["SERVER_PORT"] == 443) && preg_match(';http:/;i',$url)){
+      // Check that the server replies port 443, switch to 443 if it does
       $mightBeModal = myPear_hostReplies(parse_url($url,PHP_URL_HOST),443);
-      $this->dbg("mightBeModal = ".var_export($mightBeModal,True),True);
+      //      b_debug::xxx("mightBeModal = ".var_export($mightBeModal,True));
       if ($mightBeModal){ 
 	$url = str_ireplace('http:/','https:/',($x=$url));
-	$this->dbg("change url: <br>$x<br>$url",True);
+	b_debug::xxx("!!! change url: <br>&nbsp;was: $x<br>&nbsp;now: $url");
       }
     }
+
     $reply = $this->popup($title, $url, $mightBeModal, __FUNCTION__, $description, $galery);
+
     if ($this->debug) b_debug::xxx(b_fmt::escape($reply));
     return $reply;
   }
