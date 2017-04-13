@@ -132,10 +132,9 @@ function myPear_set_collation(){
 /*
  * Modify the task manager, make it easily searchable
  */
-myPear_update33();
 function myPear_update33(){
-  ini_set("memory_limit", "-1");
-  set_time_limit(0);
+
+  // Create a second column for the variables value
   $taskManager_args = array('class',
 			    'function',
 			    'args',
@@ -143,40 +142,53 @@ function myPear_update33(){
   if (!myPear_db()->columnExists('var_value2','zzz_variables')){
     myPear_db()->qquery("ALTER TABLE `zzz_variables` ADD `var_value2` TEXT CHARACTER SET utf8 COLLATE utf8_unicode_ci NULL DEFAULT NULL AFTER `var_value`",True); 
   }
-  $limit = 999;
-  $offset= 0;
-  $dejavu = array();
-  while(True){
-    //    b_debug::xxx("========================================================== $offset");
-    $q = myPear_db()->qquery("SELECT * FROM  `zzz_variables` WHERE var_name REGEXP 'taskManager_task' AND var_value2 IS NULL LIMIT $limit OFFSET $offset",True);
-    //    $offset += $limit;
-    if (!myPear_db()->num_rows($q)) break;
-    $todrop = array();
-    while($r = myPear_db()->next_record($q)){
-      $var_value = b_fmt::safe_decode($r['var_value']);
-      $var_value2= b_fmt::safe_decode($r['var_value2']);
-      if (empty($var_value2)) $var_value2 = array();
-      foreach(array_diff(array_keys($var_value),$taskManager_args) as $k){
-	$var_value2[$k] = $var_value[$k];
-	unset($var_value[$k]);
+
+  //
+  // Clean or just remove the ghost taskManager records
+  //
+  if (!cnf_dev){
+    // remove
+    myPear_db()->qquery("DELETE FROM zzz_variables WHERE var_name REGEXP 'taskManager_'",True);
+  }else{
+    // clean 
+    ini_set("memory_limit", "-1");
+    set_time_limit(0);
+    
+    $limit = 999;
+    $offset= 0;
+    $dejavu = array();
+    while(True){
+      //    b_debug::xxx("========================================================== $offset");
+      $q = myPear_db()->qquery("SELECT * FROM  `zzz_variables` WHERE var_name REGEXP 'taskManager_task' AND var_value2 IS NULL LIMIT $limit OFFSET $offset",True);
+      //    $offset += $limit;
+      if (!myPear_db()->num_rows($q)) break;
+      $todrop = array();
+      while($r = myPear_db()->next_record($q)){
+	$var_value = b_fmt::safe_decode($r['var_value']);
+	$var_value2= b_fmt::safe_decode($r['var_value2']);
+	if (empty($var_value2)) $var_value2 = array();
+	foreach(array_diff(array_keys($var_value),$taskManager_args) as $k){
+	  $var_value2[$k] = $var_value[$k];
+	  unset($var_value[$k]);
+	}
+	ksort($var_value);
+	ksort($var_value2);
+	b_debug::xxx(array_keys($var_value2));
+	if (empty($dejavu[serialize($var_value)])){
+	  $dejavu[serialize($var_value)] = $r['var_name'];
+	  myPear_db()->qquery(sprintf("UPDATE zzz_variables SET %s,%s WHERE %s='%s'",
+				      myPear_db()->quote(serialize($var_value), 1,'var_value'),
+				      myPear_db()->quote(serialize($var_value2),1,'var_value2'),
+				      'var_name',$r['var_name']),
+			      True);
+	}else{
+	  $todrop[] = $r['var_name'];
+	}
       }
-      ksort($var_value);
-      ksort($var_value2);
-      b_debug::xxx(array_keys($var_value2));
-      if (empty($dejavu[serialize($var_value)])){
-	$dejavu[serialize($var_value)] = $r['var_name'];
-	myPear_db()->qquery(sprintf("UPDATE zzz_variables SET %s,%s WHERE %s='%s'",
-				    myPear_db()->quote(serialize($var_value), 1,'var_value'),
-				    myPear_db()->quote(serialize($var_value2),1,'var_value2'),
-				    'var_name',$r['var_name']),
-			    True);
-      }else{
-	$todrop[] = $r['var_name'];
-      }
+      foreach($todrop as $var_name) myPear_db()->qquery("DELETE FROM zzz_variables WHERE var_name = '$var_name'",True);
     }
-    foreach($todrop as $var_name) myPear_db()->qquery("DELETE FROM zzz_variables WHERE var_name = '$var_name'",True);
+    b_debug::var_dump($dejavu);
   }
-  b_debug::var_dump($dejavu);
 }
 
 /*
