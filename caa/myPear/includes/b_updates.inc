@@ -135,17 +135,19 @@ function myPear_set_collation(){
 function myPear_update33(){
 
   // Create a second column for the variables value
-  $taskManager_args = array('class',
-			    'function',
-			    'args',
-			    );
   if (!myPear_db()->columnExists('var_value2','zzz_variables')){
     myPear_db()->qquery("ALTER TABLE `zzz_variables` ADD `var_value2` TEXT CHARACTER SET utf8 COLLATE utf8_unicode_ci NULL DEFAULT NULL AFTER `var_value`",True); 
   }
 
+  if (cnf_CLI) return;
+
   //
   // Clean or just remove the ghost taskManager records
   //
+  $taskManager_args = array('class',
+			    'function',
+			    'args',
+			    );
   if (!cnf_dev){
     // remove
     myPear_db()->qquery("DELETE FROM zzz_variables WHERE var_name REGEXP 'taskManager_'",True);

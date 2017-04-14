@@ -29,7 +29,7 @@ foreach(explode("\n",`$cmd`) as $line){
   }else{
     while($r = myPear_db()->next_record($q)) $ssn = $r['av_ssn'];
   }
-  if (SSN::valid($ssn) && ($ssn != $pers_number)){
+  if (SSN::is_valid($ssn) && ($ssn != $pers_number)){
     $msg .= sprintf("<tt>%-20s %6d %-12s %-12s</tt><br/>\n",$namefam,$m_myorg,$ssn,$pers_number);
     myPear_db()->qquery("UPDATE zzz_avatars SET av_ssn='$pers_number' WHERE av_id=$m_myorg",True);
   }

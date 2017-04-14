@@ -353,7 +353,7 @@ class bForm_Avatar_Search extends bForm {
       $arg = $_POST['firstname_search_once'];
       if (is_numeric($arg)){
 	$w_from_post[] = "av_id = $arg";
-      }elseif(SSN::valid($arg,'check_only')){
+      }elseif(SSN::is_valid($arg,'check_only')){
 	$w_from_post[] = "av_ssn = '$arg'";
       }else{
 	foreach(explode(' ',$arg) as $v){

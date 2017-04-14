@@ -894,9 +894,10 @@ class myPear{
     self::$messageBuffer_active = True;
   }
   
-  static public function MESSAGE_close(){
+  static public function MESSAGE_close($id='status'){
     if (is_array($c = @$_SESSION['messages.cache'])){
-      myPear::MESSAGE(join('<br/>',$c).'<br/>&nbsp;');
+      if ($id == 'status') myPear::MESSAGE(join('<br/>',$c).'<br/>&nbsp;');
+      else                 myPear::WARNING(join('<br/>',$c).'<br/>&nbsp;');
     }
     unset($_SESSION['messages.cache']);
     self::$messageBuffer_active = False;

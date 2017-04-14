@@ -13,7 +13,8 @@
 class SSN{
   
   /* Year */
-  static private $yymmdd   =       '(\d\d)([01]\d)([0123]\d)'; // y m d
+//static private $yymmdd   =       '(\d\d)([01]\d)([0123]\d)'; // y m d
+  static private $yymmdd   =       '(\d\d)(0[1-9]|1[012])([012]\d|3[01])'; // y m d
   static private $yyyymmdd = '([12]\d\d\d)([01]\d)([0123]\d)'; // Y m d
 
   /* Number */
@@ -51,12 +52,18 @@ class SSN{
   }
   
   /*
-   * SE checksum
+   * SE checksum, taken "from Google" as the official algorith
+   * Modified however...
    */
   private static function checkPnr10($pnr) {
-    $pnr = str_replace(array('-','+'), '', (string)$pnr);
-    if (strlen($pnr) == 12)   $pnr = substr($pnr, 2);
-    if (strlen($pnr) != 10)   return False;
+    if (strlen($pnr) == 12){
+      $pnr = substr($pnr, 2);
+    }elseif(strlen($pnr) != 11){
+      return False;
+    }else{
+      $pnr = str_replace(array('-','+'), '', (string)$pnr);
+      if(strlen($pnr) != 10) return False;
+    }
     if (!preg_match('/^'.self::$yymmdd.'/',$pnr,self::$matches)) return False;
 
     $n = 2;
@@ -71,11 +78,11 @@ class SSN{
   }
 
   /*
-   * SSN can't contain string "0000", exception is for provisional numbers
+   * SSN can't contain string "0000"
    */
-  private static $matches = array();
+  public static  $matches = array();
   public static  $ssn_country = '?';
-  public  static function valid($ssn,$verbose=False){
+  public  static function is_valid($ssn,$verbose=False){
 
     self::$ssn_country = 'SE';
     $ssn = preg_replace('/^(......)-[pP0]000$/','\\1'.'-P123',(string)$ssn);
@@ -125,7 +132,7 @@ class SSN{
    *   - unix time if SSN is ok
    */
   public static function ssn2birthDate($ssn,$av=False){
-    $reply = (self::valid($ssn,$av)
+    $reply = (self::is_valid($ssn,$av)
 	      ? b_time::noon(self::$matches[1],self::$matches[2],self::$matches[3])
 	      : False);
     return $reply;
@@ -274,7 +281,7 @@ class bForm_Avatar extends bForm {
     $av_id = $av_ssn = array();
     while ($r=myPear_db()->next_record($q)){
       if (!empty($r['av_id']))      $av_id[]  = $r['av_id'];
-      if (SSN::valid($r['av_ssn'])) $av_ssn[] = $r['av_ssn'];
+      if (SSN::is_valid($r['av_ssn'])) $av_ssn[] = $r['av_ssn'];
     }
     $reply = (bool)(count(array_unique($av_id)) == count(array_unique($av_ssn)));
     return $reply;
@@ -1055,7 +1062,7 @@ class bForm_Avatar extends bForm {
 	break;
 	
       case 'av_ssn':
-	if (!SSN::valid($v,$this)){
+	if (!SSN::is_valid($v,$this)){
 	   $err_msg = "SSN '$v' is not valid ";
 	   $this->bad_SSN = $v;
 	   if ($this->show_gv||$this->debug)$this->dbg($err_msg,True);

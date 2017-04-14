@@ -1960,9 +1960,10 @@ class b_time{
       b_debug::xxx("Y=$year? ".date('Y-m-d',$date),array(cnf_dev));
       return False;
     }
-    if (function_exists('easter_date') && $date>0 && ($year <= 2037)){
+    if (function_exists('easter_date') && $date>0 && ($year >= 1970) && ($year <= 2037)){
       $edate = easter_date($year);
     }else{
+      b_debug::traceBack();
       $edate = self::easter_date($year);
     }
 
@@ -2199,7 +2200,7 @@ class b_time{
     }elseif($arg == CONST_year_not_considered){
       $reply =-1;
       $dbg = 'not considered'; 
-    }elseif(SSN::valid($arg,'check_only')){
+    }elseif(SSN::is_valid($arg,'check_only')){
       $reply = 3;
       $dbg = 'YES'; 
     }elseif(is_numeric($arg) && ($arg < CONST_eternity_t+365*3600) && (($arg<0) || ($arg>CONST_eternity_year))){

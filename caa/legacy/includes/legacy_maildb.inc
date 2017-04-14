@@ -341,8 +341,8 @@ class legacy_maildb{
     // Check the personal number both in maildb and myPear, reject the wrong one
     $pers_number = $this->maildb($this->parent_AV->ID,'pers_number');
     $ssn      = $this->parent_AV->getValue('av_ssn',True);
-    if (!SSN::valid($ssn))       $ssn = '';
-    if (!SSN::valid($pers_number))  $pers_number = '';
+    if (!SSN::is_valid($ssn))       $ssn = '';
+    if (!SSN::is_valid($pers_number))  $pers_number = '';
     
     if (empty($pers_number) && !empty($ssn)){
       $this->maildb($this->parent_AV->ID,'pers_number',($pers_number=$ssn));

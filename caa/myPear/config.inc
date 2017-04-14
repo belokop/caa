@@ -3,8 +3,8 @@ ini_set("allow_url_fopen", true);
 //var_dump(file_get_contents('php://input'));
 
 // myPear module 
-$releaseDate = '2017-04-13';
-define('myPear_VERSION','5.3.170');
+$releaseDate = '2017-04-14';
+define('myPear_VERSION','5.3.171');
 define('myPear_MODULE', 'myPear');
 define('myPear_DATE',    $releaseDate);
 
@@ -241,7 +241,7 @@ define('b_emptyHTML','<html><body bgcolor="#FFFFFF"></body></html>');
 
 define('MSG_NYI',        'Sorry, this function is not yet implemented...');
 define('NO_ACCESS',      'Sorry, you are not authorized to access this resource');
-define('EMPTY_SELECTION','At the being there is no entries to show');
+define('EMPTY_SELECTION','At the time being there is no entries to show');
 define('employment_record','Employment record');
 
 /*

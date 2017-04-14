@@ -206,12 +206,14 @@ class bIcal_matrix extends bIcal {
     /*
      * Debug - error report
      */
-    if (is_array(@$GLOBALS['clashICAL'])){
+    if ((cnf_demo||cnf_dev) && is_array(@$GLOBALS['clashICAL'])){
       foreach($GLOBALS['clashICAL'] as $Nline=>$line) {
-	print x('strong',"<br/>clash in line $Nline<br/>");
-	foreach ($line as $entry){
-	  print $entry['name'].date('Y-m-d',$entry['v_start']).'/'.date('Y-m-d',$entry['v_end']).'&nbsp; ; &nbsp; ';
-	}
+	myPear::MESSAGE_open("ERROR - clash in line $Nline");
+	foreach ($line as $entry) myPear::MESSAGE_add(sprintf("%s: %s/%s ",
+							      $entry['name'],
+							      date('Y-m-d',$entry['v_start']),
+							      date('Y-m-d',$entry['v_end'])));
+	myPear::MESSAGE_close('warning');
       }
     }
   }
