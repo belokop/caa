@@ -3,4 +3,4 @@ description = Managing the preprints
 package = myPear
 core = 7.x
 dependencies[] = myPear
-version = 7.x-5.2.rc4
+version = 7.x-5.2.1

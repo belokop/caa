@@ -890,13 +890,17 @@ class bUnit extends bList{
 	  foreach($not_to_cache as $k) unset($_SESSION[$members_cache][$r['av_id']][$k]); 
 	}else{
 	  // Duplication might appear after merging avatars and should be removed
-	  if ($this->isWritable() || cnf_dev){
-	    myPear::WARNING("Duplicated membership <i>".bForm_Avatar::_fmtName('sfl',$r)."</i> in ".$this->name()." (u_id=".$this->ID.",um_id=$r[um_id]) is REMOVED");
-	  }
 	  if (cnf_dev){
+	    $msg = "Duplicated membership <i>".bForm_Avatar::_fmtName('sfl',$r)."</i> in ".$this->name()." (u_id=".$this->ID.",um_id=$r[um_id]) is REMOVED";
+	    if ($this->isWritable()) myPear::WARNING($msg);
 	    myPear::DEBUG(sprintf("%s(%s,%s,%s)->".__FUNCTION__."(%s,%s) %s",
-				  get_class($this),$this->parent_ID,$this->rank,$this->MODE,(is_numeric($av_id) ? $av_id : ''),$column,
-				  x('em',"Duplicated membership <i>".bForm_Avatar::_fmtName('sfl',$r)."</i> in ".$this->name()." (u_id=".$this->ID.",um_id=$r[um_id]) is REMOVED")));
+				  get_class($this),
+				  $this->parent_ID,
+				  $this->rank,
+				  $this->MODE,
+				  (is_numeric($av_id) ? $av_id : ''),
+				  var_export($column,True),
+				  $msg));
 	    b_debug::print_r($_SESSION[$members_cache][$r['av_id']],'_SESSION');
 	    b_debug::print_r($r,'database');
 	  }

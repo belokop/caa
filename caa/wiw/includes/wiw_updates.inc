@@ -4,8 +4,10 @@ myPear_startup_queue('wiw_updates');
 
 function wiw_updates(){
   if (bMaster()->register_module_update_script(WIW_MODULE,WIW_VERSION,__FILE__)){
-    wiw_update01();
-    wiw_update02();
+    if (False){
+      wiw_update01();
+      wiw_update02();
+    }
   }
 }
 

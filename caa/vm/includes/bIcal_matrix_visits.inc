@@ -153,7 +153,7 @@ class bIcal_matrix_visits extends bIcal_matrix{
 		 'day9' => $r['v_end'],
 		 'clas' => $this->getRandomColor(vm_colorLegend($r)),	
 		 'icon' => bForm_Avatar::_getThumbnail($r),
-		 'tips' => nbsp(join('<br/>',array(trim(x('strong',$r['tname'])),x('em',$r['av_institute'])))),
+		 'tips' => nbsp(join('<br/>',array(trim(x('strong',$r['tname'])),x('em',@$r['av_institute'])))),
 		 'name' => $displayName,
 		 'text' => (bAuth::authenticated() ? "<a href='$url'>$av_name</a>" : $av_name), 
 		 );

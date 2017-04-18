@@ -39,7 +39,6 @@ function _ea_getAV($av_id=Null){
  * See and edit the employment records
  */
 function ea_updateER($av_id=Null){
-  b_debug::xxx();
   _ea_getAV($av_id)->hook_employment()->getForm();
 }
 
@@ -657,10 +656,12 @@ Seem to be useless....
       
       if ($this->MODE == 'RO'){
 	$this->closeForm('');
-	locateAndInclude('b_tabs');
-	if (!cnf_inside_fb && ! b_tabs::$inside) 
-	  print b_btn::UL_buttons(array(b_btn::submit('update employment records',
-						      b_url::same("?from_bForm=0&function=ea_updateER&av_id=".$this->ID))));
+	if ($this->isWritable()){
+	  locateAndInclude('b_tabs');
+	  if (!cnf_inside_fb && ! b_tabs::$inside) 
+	    print b_btn::UL_buttons(array(b_btn::submit('update employment records',
+							b_url::same("?from_bForm=0&function=ea_updateER&av_id=".$this->ID))));
+	}
       }else{
 	$this->closeForm();
       }

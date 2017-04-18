@@ -6,6 +6,7 @@ locateAndInclude('bForm_Avatar_ea');
  * Set the graph limits to [year 1957] <-> [2 months from now]
  */
 define('EA_org_founded',1957);
+define('EA_fellows','fellows/postdocs');
 
 class bIcal_matrix_ea extends bIcal_matrix{
   
@@ -38,7 +39,7 @@ class bIcal_matrix_ea extends bIcal_matrix{
     static $colors = array('director'      => 'orange',
 			   'vice director' => 'orange',
 			   'faculty'       => '#26D4FE',
-			   'fellows'       => '#9EC633',
+			   EA_fellows      => '#9EC633',
 			   'phd students'  => '#FDFA3D',
 			   'visitors'      => '#FDDAD9',
 			   'board'         => '#DD9988',
@@ -53,9 +54,7 @@ class bIcal_matrix_ea extends bIcal_matrix{
       $av      = new bForm_Avatar_ea($av_id);
       $name_Lf = $av->fmtName('Lf');
       $name_sfl= $av->fmtName('sfl');
-      if (empty($r['e_rate'])) b_debug::print_r($r,"$name_Lf");
-      else b_debug::xxx("$name_Lf ".$r['e_rate']);
-      $clas    = $this->av_rate($r['lm_value'],myOrg()->orgEmpTypes()->code2text($r['e_rate'])); // employers "rate"
+      $clas    = $this->av_rate($r['lm_value']);
       $a2 = True ? $clas : $name_Lf;
       b_debug::xxx("class='$clas'");
       
@@ -101,17 +100,10 @@ class bIcal_matrix_ea extends bIcal_matrix{
                                                   'l'=>b_url::same('?ea_year='.min(ea_year+1,date('Y',time())))));
   }
 
-  private function av_rate($position,$e_rate){
-    /*
-    return $e_rate;
-    $reply = myOrg()->orgEmpTypes()->code2text($e_rate);
-    if (empty($reply)) $reply = myOrg()->orgEmpTypes()->code2text(myOrg()->orgEmpTypes()->text2code($position));
-    b_debug::xxx($reply);
-    return $reply;
-    */ 
-   static $t1 = array(
-		       'fellow'   =>'fellows',
-		       'postdoc'  =>'fellows',
+  private function av_rate($position){
+    static $t1 = array(
+		       'fellow'   =>EA_fellows,
+		       'postdoc'  =>EA_fellows,
 		       'professor'=>'faculty',
 		       'student'  =>'phd students',
 		       'adm'      =>'administration',
@@ -126,7 +118,7 @@ class bIcal_matrix_ea extends bIcal_matrix{
 		       'board'    =>'board');
     static $rate1 = array('director'       => array('director'),
 			  'faculty'        => array('professor'),
-			  'fellows'        => array('fellow','postdoc'),
+			  EA_fellows       => array('fellow','postdoc'),
 			  'phd students'   => array('student'),
 			  'administration' => array('adm','hr officer','coordinator'),
 			  'IT support'     => array('web','computing'));

@@ -2245,7 +2245,7 @@ class bForm extends myPear_getValue{
     $reply = b_cnf::check_conditions(array(True =>array('debug'  => (stripos($field,'_debug') !== False),
 							'vitalA' => ((@$this->isADMIN[$field] || @$this->isVITAL_ifADMIN[$field]) && $this->isAdmin()),
 							'vital'  =>  @$this->isVITAL[$field],
-							'notMBE' => !@$this->isMBE[$field] && !$spacer,
+							'notMBE' => ($this->isWritable() || !empty($value)) && !@$this->isMBE[$field] && !$spacer,
 							),
 					   False=>array('spacer' =>  $spacer,
 							'empty'  => (($field === cnf_emptyString) || (empty($value) && @$this->isMBE[$field] && $this->isRO($field))),

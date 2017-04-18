@@ -39,15 +39,19 @@ function ea_updates(){
     }
 
     // 2015-01-15
-    if (True){
+    if (False){
       locateAndInclude('bList');
       bList::$use_membersCache = False;
       ea_update16();
       ea_update17();
       ea_update18();
       ea_update19();
-      ea_update15_off();
+      ea_update15_offices();
     }
+    
+    if (True){ // Fixes for the version "Easter 2017"
+    }
+      
     myPear_db()->noAutoCommit('end');
     bTiming()->cpu();
   }
@@ -361,7 +365,7 @@ function ea_update16(){
 /*
  * Re-erect offices allocation...
  */
-function ea_update15_off(){
+function ea_update15_offices(){
   if (!cnf_CLI){
 
     vm_init();

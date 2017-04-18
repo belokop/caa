@@ -21,8 +21,8 @@ class bHolder_wiw_trip extends bHolder{
     // Info message
     myPear::INFO(array(wiw_acl_public. ' - '.wiw_acl_public_text,
 		       wiw_acl_protected.' - '.wiw_acl_protected_text),
-		 'The trip privacy might be '.join(' OR ',array(wiw_acl_public,wiw_acl_protected)).
-		 ', the default is "'.wiw_acl_default.'"',
+		 'The trip privacy might be "'.join('" OR "',array(wiw_acl_public,wiw_acl_protected)).
+		 '", the default is "'.wiw_acl_default.'"',
 		 $only_once=True);
     myPear::INFO(array('all trips - click "Make all trips protected/public"',
 		       'one trip - click on the privacy value of the desired trip'),

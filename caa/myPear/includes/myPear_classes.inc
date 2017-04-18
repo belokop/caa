@@ -4090,23 +4090,24 @@ class b_cnf{
   public static function check_conditions($c_array,$class,$verbose=False){
     if (cnf_dev && !is_object($class)) b_debug::traceBack("arg is not object");
     $reply = Null;
+    $msg   = '?';
     foreach($c_array as $answer=>$conditions){
       if (!is_array($conditions)) $conditions = array($conditions);
       foreach($conditions as $msg=>$condition){
 	if ($answer === 'default'){
 	  $reply = $condition;
 	  $msg   = 'default';
-	}else{
-	  if ($condition){ 
-	    $reply = $answer; 
-	    break 2;
-	  }
+	  break 2;
+	}elseif ($condition){ 
+	  $reply = $answer; 
+	  break 2;
 	}
       }
     }
     if (empty($reply)) $reply = False;
-    if (cnf_show_w || $verbose || $class->debug) myPear::DEBUG(($reply ? 'YES - ' : 'NO - '),$class);
-      //      b_debug::xxx(($reply ? 'YES - ' : 'NO - ').$msg,array(3,$class,True,'redText'));
+    if (cnf_show_w || $verbose || $class->debug)
+      // myPear::DEBUG(($reply ? 'YES - ' : 'NO - '),$class);
+      b_debug::xxx(($reply ? 'YES - ' : 'NO - ').$msg,array(3,$class,True,'redText'));
     return $reply;
   }
 

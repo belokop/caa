@@ -105,12 +105,15 @@ function vm_updates(){
       vm_compat_update_43();
     }
 
-    if (True){
+    if (False){
       // 2016-05-01 - 2017-01-20
       vm_compat_update_44();
       vm_compat_update_45();
       vm_compat_update_46();
       vm_compat_update_48();
+    }
+
+    if (True){ // Fixes for the version "Easter 2017"
     }
 
     myPear_logs()->doNotLog = False;

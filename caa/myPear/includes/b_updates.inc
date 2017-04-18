@@ -70,11 +70,14 @@ function myPear_updates(){
       myPear_update30();
     }
     
-    if (True){
+    if (False){
       // Updates for myPear_5.72, 2015-04-15
       myPear_update31();
       myPear_update32();
       myPear_update33();
+    }
+
+    if (True){ // Fixes for the version "Easter 2017"
     }
 
     if (!@$_SESSION['updates'][__METHOD__]++){

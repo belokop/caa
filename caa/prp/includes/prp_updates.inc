@@ -4,9 +4,11 @@ myPear_startup_queue('prp_updates');
 
 function prp_updates(){
   if (bMaster()->register_module_update_script(PRP_MODULE,PRP_VERSION,__FILE__)){
-    prp_update_01();
-    prp_update_02();
-    prp_update_03();
+    if (False){
+      prp_update_01();
+      prp_update_02();
+      prp_update_03();
+    }
   }
 }
 

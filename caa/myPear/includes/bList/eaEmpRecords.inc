@@ -107,9 +107,10 @@ class bList_eaEmpRecords extends bList{
     $this->dbg($this->av->name());
 
     // Set the postponed naming 
+    bForm_Avatar_ea::_init();
     $d = @bForm_Avatar_ea::$av2er['e_rate']['d'];
     if (empty($d)){
-      b_debug::print_r(bForm_Avatar_ea::$av2er);
+      b_debug::print_r(bForm_Avatar_ea::$av2er,'Empty bForm_Avatar_ea::$av2er[e_rate][d]');
     }else{
       $this->list_quering['e_rate'] = $d;
     }

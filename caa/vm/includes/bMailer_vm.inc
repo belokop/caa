@@ -430,7 +430,7 @@ to approve or deny the request.
 			      array_keys($v->getPolicies()))) || 
 	($v4=($rejected && $v->getPolicy(VM_V_guestRejectSent))) ||
 	($v5=($accepted && $v->getPolicy(VM_V_guestAcceptSent)))){
-      $this->dbg("No need to send mail(s) v0=@$v0 v1=@$v1 v2=@$v2 v3=@$v3 v4=@$v4 v5=@$v5",cnf_dev);
+      $this->dbg(sprintf("No need to send mail(s) v0=%s v1=%s v2=%s v3=%s v4=%s v5=%s",@$v0,@$v1,@$v2,@$v3,@$v4,@$v5),cnf_dev);
       return True;
     }
     

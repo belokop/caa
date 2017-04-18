@@ -77,10 +77,11 @@ function vm_colorLegend($r){
     }else{
       $colorLegend = 'project X';
     }
+    if (preg_match('/^[0-9]*$/',$colorLegend)) $colorLegend = "project $colorLegend";
   }else{
-    $colorLegend = $r['v_group'];
+    $colorLegend = @$r['v_group'];
+    if (empty($colorLegend)) $colorLegend = 'group X';
   }
-  if (preg_match('/^[0-9]*$/',$colorLegend)) $colorLegend = "project $colorLegend";
   return $colorLegend;
 }
 

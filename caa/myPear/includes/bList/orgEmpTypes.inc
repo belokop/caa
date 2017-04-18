@@ -241,7 +241,7 @@ class bList_orgEmpTypes extends bList{
     $reply = @$this->_text2titl[strToLower($text)];
     if (empty($reply)){
       $reply = $this->get_defaultEmpType();
-      myPear::WARNING("Unknown employee title \"$text\", set empType to \"".$this->code2text($reply)."\" for $id");
+      if ($this->isWritable()) myPear::WARNING("Unknown employee title \"$text\", set empType to \"".$this->code2text($reply)."\" for $id");
     }
     $this->dbg(@$reply);
     return $reply;
