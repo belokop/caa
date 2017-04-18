@@ -63,7 +63,7 @@ foreach(explode("\n",`$cmd`) as $line){
   $av = new bForm_Avatar_ea($m_myorg);
   if ($av->isE() || $av->isV()){
     $er = $av->hook_employment();
-    $records = $er->get_currentEmploementRecords(array('e_org'=>myOrg_ID));
+    $records = $er->get_currentEmploymentRecords(array('e_org'=>myOrg_ID));
     if ((count($records) == 1) && !empty($records[0]['lm_id'])){
 
       list($day1,$day2) = (preg_match('/(\d*-\d*-\d*)-(\d*-\d*-\d*)$/',$NorPeriodOfStay,$m)

@@ -209,7 +209,7 @@ class bForm_Avatar_ea extends bForm_Avatar{
   /*
    * Update the 'av_position' & 'av_institute' field in the avatar record from the current EA record(s)
    */
-  function update_AVpos_AVinst(){
+  private function update_AVpos_AVinst(){
     if ($this->isEA()){
       $this->hook_employment();
       $this->isMBE['av_birthdate']    = !$this->isE();
@@ -585,7 +585,7 @@ class bForm_Avatar_ea extends bForm_Avatar{
       // An "inversed" case. We are called from the "Avatar dialog", but will query an EA record. 
       // The results will go both to the EA & Avatar records
       if (($block_once === 'office_contract') && ($this->MODE == 'RW')){
-	$records = $this->eaRecords->get_currentEmploementRecords(($this->isE(True) 
+	$records = $this->eaRecords->get_currentEmploymentRecords(($this->isE(True) 
 								   ? array('e_org'=>myOrg_ID)
 								   : array()),
 								  999,
@@ -617,7 +617,7 @@ class bForm_Avatar_ea extends bForm_Avatar{
       /*
 Seem to be useless....
 	if (!empty($_REQUEST['action_once']) && preg_match('/'.myOrg_name.' employment/',$_REQUEST['action_once']) && ($ea = $this->hook_employment())){
-	  $records = $ea->get_currentEmploementRecords(array('e_org'=>myOrg_ID),999,$this->getValue('av_ddate',True));
+	  $records = $ea->get_currentEmploymentRecords(array('e_org'=>myOrg_ID),999,$this->getValue('av_ddate',True));
 	  foreach($records as $r){
 	    $lm_id = $r['lm_id'];
 	    break; // take just the first record if there are many
@@ -735,7 +735,7 @@ Seem to be useless....
   function get_staffOffice(){
     $office = Null;
     if ($ea = $this->hook_employment()){
-      $records = $ea->get_currentEmploementRecords(array('e_org'=>myOrg_ID),999,$this->getValue('av_ddate',True));
+      $records = $ea->get_currentEmploymentRecords(array('e_org'=>myOrg_ID),999,$this->getValue('av_ddate',True));
       
       foreach($records as $k=>$r){ 
 	// Check the AlbaNova campus room numbering convention
@@ -760,7 +760,7 @@ Seem to be useless....
     // and populate Avatar class
     //
     $this->hook_employment();
-    $records = $this->eaRecords->get_currentEmploementRecords(($this->isE(True) 
+    $records = $this->eaRecords->get_currentEmploymentRecords(($this->isE(True) 
 							       ? array('e_org'=>myOrg_ID)
 							       : array()),
 							      999,

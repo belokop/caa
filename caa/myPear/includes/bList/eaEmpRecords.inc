@@ -210,6 +210,7 @@ class bList_eaEmpRecords extends bList{
 		? $av_ddate-30*24*3600 
 		: time());
       $reply = (b_time::txt2unix($r['lm_status']) >= $e_end &&
+		b_time::txt2unix($r['lm_key'])    <= time() &&
 		in_array($r['rec_type'],array_merge(self::$emp_groups[emp_major_pos],
 						    self::$emp_groups[emp_lt_visits])));
     }
@@ -218,27 +219,10 @@ class bList_eaEmpRecords extends bList{
   }
 
   /*
-   *
-   */
-  function get_recentEmploementRecords($args=array(),$av_ddate=Null){
-    $reply = array();
-    foreach($this->getMembers($args) as $r){
-      if (self::is_current($r,$av_ddate)){
-	foreach($this->get_currentEmploementRecords($args,99,$av_ddate) as $cr) $reply[] = $cr;
-      }else{
-	if (!empty($reply)) continue;
-	$reply[] = $r;
-      }
-    }
-    b_debug::print_r($reply);
-    return $reply;
-  }
-
-  /*
    * Extract active records of the types "Major positions" & "Long Time Visits".
    * The EA records are first in the list
    */
-  function get_currentEmploementRecords($args=array(),$limit=99,$av_ddate=Null){
+  function get_currentEmploymentRecords($args=array(),$limit=99,$av_ddate=Null){
     $reply = array();
     foreach($this->getMembers($args) as $r){
       if (!self::is_current($r,$av_ddate)) continue;
@@ -263,12 +247,12 @@ class bList_eaEmpRecords extends bList{
    */
   function get_currentItem($what='e_inst',$args=array('e_org'=>myOrg_ID),$limit=999,$av_ddate=Null){
     $reply_a = array();
-    foreach($this->get_currentEmploementRecords($args,$limit,$av_ddate) as $r){
+    foreach($this->get_currentEmploymentRecords($args,$limit,$av_ddate) as $r){
       if    ($v = @$r[$what])            $reply_a[] = trim($v);
       elseif($v = @$r[$what.'_virtual']) $reply_a[] = trim($v);
     } 
     $reply = join(',',array_unique($reply_a));
-    $this->dbg($reply);
+    $this->dbg($reply,True);
     return $reply;
   }
 
