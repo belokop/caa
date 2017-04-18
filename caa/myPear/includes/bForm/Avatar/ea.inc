@@ -214,23 +214,32 @@ class bForm_Avatar_ea extends bForm_Avatar{
       $this->hook_employment();
       $this->isMBE['av_birthdate']    = !$this->isE();
       $this->isMBE['av_birthcountry'] = !$this->isE();
-      
-      foreach(array('av_institute','av_position') as $what){
+
+      foreach(array('av_institute','av_position','e_rate') as $what){
 	
 	// Get the current employment from eaRecords
 	$currentItem = $this->eaRecords->get_currentItem(self::$av2er[$what]['k'],
 							 array('e_org'=>myOrg_ID),
-							 2,
+							 ($what = 'av_position' ? 2 : 1),
 							 $this->getValue('av_ddate',True));
-	if (!empty($currentItem)){
-	  $elements = preg_split(";( |/|,);",str_replace('  ',' ',strToLower($currentItem)));
-	  $currentItem_compressed = b_fmt::ucwords(join(' ',array_unique($elements)));
-	  
-	  if ($this->getValue($what,1) != $currentItem_compressed){
-	    $this->getValue_reset_forced($what,$currentItem_compressed);
-	    myPear::MESSAGE_add($this->name()." - set current ".self::$av2er[$what]['d']." '$currentItem_compressed'");
+	if ($currentItem) switch($what){
+	  case 'av_institute':
+	  case 'av_position':
+	    $elements = preg_split(";( |/|,);",str_replace('  ',' ',strToLower($currentItem)));
+	    $currentItem_compressed = b_fmt::ucwords(join(' ',array_unique($elements)));
+	    
+	    if ($this->getValue($what,1) != $currentItem_compressed){
+	      $this->getValue_reset_forced($what,$currentItem_compressed);
+	      myPear::MESSAGE_add($this->name()." - set current ".self::$av2er[$what]['d']." '$currentItem_compressed'");
+	    }
+	    break;
+	    
+	  case 'e_rate':
+	    $e_rate = myOrg()->orgEmpTypes()->code2text($currentItem);
+	    $this->dbg($e_rate,True);
+	    $this->getValue_reset($what,$e_rate);
+	    // myPear::MESSAGE_add($this->name()." - set current ".self::$av2er[$what]['d']." '$_virt_e_rate'");
 	  }
-	}
       }
     }
   }
@@ -588,7 +597,6 @@ class bForm_Avatar_ea extends bForm_Avatar{
 	$records = $this->eaRecords->get_currentEmploymentRecords(($this->isE(True) 
 								   ? array('e_org'=>myOrg_ID)
 								   : array()),
-								  999,
 								  $this->getValue('av_ddate',True));
 	if ($r = @$records[0]){
 	  foreach(array('from_bList' => 1,
@@ -617,7 +625,7 @@ class bForm_Avatar_ea extends bForm_Avatar{
       /*
 Seem to be useless....
 	if (!empty($_REQUEST['action_once']) && preg_match('/'.myOrg_name.' employment/',$_REQUEST['action_once']) && ($ea = $this->hook_employment())){
-	  $records = $ea->get_currentEmploymentRecords(array('e_org'=>myOrg_ID),999,$this->getValue('av_ddate',True));
+	  $records = $ea->get_currentEmploymentRecords(array('e_org'=>myOrg_ID),$this->getValue('av_ddate',True));
 	  foreach($records as $r){
 	    $lm_id = $r['lm_id'];
 	    break; // take just the first record if there are many
@@ -735,8 +743,8 @@ Seem to be useless....
   function get_staffOffice(){
     $office = Null;
     if ($ea = $this->hook_employment()){
-      $records = $ea->get_currentEmploymentRecords(array('e_org'=>myOrg_ID),999,$this->getValue('av_ddate',True));
-      
+      $records = $ea->get_currentEmploymentRecords(array('e_org'=>myOrg_ID),
+						   $this->getValue('av_ddate',True));
       foreach($records as $k=>$r){ 
 	// Check the AlbaNova campus room numbering convention
 	if (preg_match("/\b(\w*:\w*)\b/",@$r['e_off'],$m)){
@@ -763,7 +771,6 @@ Seem to be useless....
     $records = $this->eaRecords->get_currentEmploymentRecords(($this->isE(True) 
 							       ? array('e_org'=>myOrg_ID)
 							       : array()),
-							      999,
 							      $this->getValue('av_ddate',True));
     if (($n = count($records)) > 1){
       myPear::WARNING_T("There are $n \"current employment\" records for ".

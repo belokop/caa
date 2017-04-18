@@ -193,6 +193,16 @@ class bList_orgEmpTypes extends bList{
     }
   }
 
+  public function title2emp_type($title){
+    $this->set_code2text();
+    /*
+      $this->title2emp_type[strToLower($v)] = array('t'=>$r['lm_option'],
+      'k'=>$r['lm_key']);
+    */
+    b_debug::print_r($this->title2emp_type,__FUNCTION__);
+    var_dump($this->title2emp_type,__FUNCTION__);
+  }
+
   public function code2text($code,$MBE = False){
     $this->set_code2text();
     $reply = @$this->_code2text[strToLower($code)];

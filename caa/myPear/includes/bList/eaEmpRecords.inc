@@ -203,14 +203,16 @@ class bList_eaEmpRecords extends bList{
   /*
    *
    */
-  static function is_current($r,$av_ddate=null,$verbose=False){
+  static function is_current($r,$av_ddate=null,$verbose=False,$include_future=True){
     $reply = False;
     if (!empty($r['rec_type'])){
       $e_end = ($av_ddate // end of employment period
 		? $av_ddate-30*24*3600 
 		: time());
       $reply = (b_time::txt2unix($r['lm_status']) >= $e_end &&
-		b_time::txt2unix($r['lm_key'])    <= time() &&
+		($include_future
+		 ? True
+		 : b_time::txt2unix($r['lm_key']) <= time()) &&
 		in_array($r['rec_type'],array_merge(self::$emp_groups[emp_major_pos],
 						    self::$emp_groups[emp_lt_visits])));
     }
@@ -220,24 +222,24 @@ class bList_eaEmpRecords extends bList{
 
   /*
    * Extract active records of the types "Major positions" & "Long Time Visits".
-   * The EA records are first in the list
    */
-  function get_currentEmploymentRecords($args=array(),$limit=99,$av_ddate=Null){
-    $reply = array();
+  function get_currentEmploymentRecords($args=array(),$av_ddate=Null,$limit=99){
+    $recs = array();
     foreach($this->getMembers($args) as $r){
       if (!self::is_current($r,$av_ddate)) continue;
       $lm_status = b_time::txt2unix($r['lm_status']);
       if ($av_ddate && ($lm_status > $av_ddate)){
 	$r['lm_status'] = date('Y-m-d',min($av_ddate,$lm_status)); 
       }
-      if (empty($r['e_org'])){
-	$reply[] = $r;
-      }else{
-	$r['e_cc'] = myOrg($r['e_org'])->getValue('org_country',True,True);
-	array_unshift($reply,$r);
-      }
-      if (count($reply) >= $limit) break;
+      if (!empty($r['e_org'])) $r['e_cc'] = myOrg($r['e_org'])->getValue('org_country',True,True);
+      $recs[$r['lm_key']] = $r;
     }
+
+    // The lastest records first...
+    krsort($recs);
+
+    $reply = array();
+    foreach($recs as $date=>$r) if (count($reply) < $limit) $reply[] = $r;
     return $reply;
   }
   
@@ -247,7 +249,7 @@ class bList_eaEmpRecords extends bList{
    */
   function get_currentItem($what='e_inst',$args=array('e_org'=>myOrg_ID),$limit=999,$av_ddate=Null){
     $reply_a = array();
-    foreach($this->get_currentEmploymentRecords($args,$limit,$av_ddate) as $r){
+    foreach($this->get_currentEmploymentRecords($args,$av_ddate,$limit) as $r){
       if    ($v = @$r[$what])            $reply_a[] = trim($v);
       elseif($v = @$r[$what.'_virtual']) $reply_a[] = trim($v);
     } 
