@@ -29,6 +29,6 @@ class bUnit_vm extends bUnit{
    *
    */  
   function isAdmin(){
-    return VM_program_coordinator_here;
+    return VM_prg_coordinator_here;
   }
 }

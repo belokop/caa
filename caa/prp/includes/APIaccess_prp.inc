@@ -35,9 +35,9 @@ class APIaccess_prp extends APIaccess_ea{
    */
   function getRank($av_id=Null){
     if (empty($av_id)) $av_id = @bAuth::$av->ID;
-    if (($reply = parent::getRank($av_id)) == RANK__authenticated){
-      if (PRP_submitters()->isMember($av_id)) $reply = RANK_prp_submitter;
-      if (PRP_censors()->isMember($av_id))    $reply = RANK_prp_censor;
+    if (($reply = parent::getRank($av_id)) >= RANK__authenticated){
+      if     (PRP_censors()->isMember($av_id))    $reply = RANK_prp_censor;
+      elseif (PRP_submitters()->isMember($av_id)) $reply = RANK_prp_submitter;
     }
     $this->dbg($reply,cnf_dev);
     return (int)@$reply;

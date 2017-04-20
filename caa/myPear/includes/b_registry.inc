@@ -588,11 +588,13 @@ class b_reg_bUnit{
   /*
    * Get the title corresponding to the rank
    */
-  public static function get_title($rank=Null,$module=Null){
+  public static function getTitle($rank=Null,$module=Null){
     if (empty($module)) $module = b_reg::$current_module;
     if (empty($rank))   $rank   = myPear_access($module)->getRank();
     $d = self::get_description($rank,$module);
-    return @$d['d'];
+    $reply = @$d['d'];
+    b_debug::xxx("module=$module, reply=$reply",True);
+    return $reply;
   }
 
   /*

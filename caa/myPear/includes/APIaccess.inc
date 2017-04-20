@@ -58,7 +58,8 @@ class APIaccess extends myPear_base{
    */
   public function getTitle(){
     locateAndInclude('b_registry');
-    $reply = b_reg_bUnit::get_title(myPear_access()->getRank());
+    $reply = b_reg_bUnit::getTitle(myPear_access()->getRank());
+    $this->dbg($reply,cnf_dev);
     return $reply;
   }
 

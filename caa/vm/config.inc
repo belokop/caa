@@ -3,9 +3,9 @@ set_time_limit(0);
 /**
  * Visitors Manager (VM) configuration file
  */
-$releaseDate = '2017-04-18';
+$releaseDate = '2017-04-20';
 define('VM_MODULE'   , 'vm');
-define('VM_VERSION','5.13.1');
+define('VM_VERSION','5.13.3');
 
 //
 // transition problems...
@@ -59,7 +59,7 @@ define('VM_css',  vm_root.'css');
  * Roles played in VM
  */
 define('RANK_vm_manager'   , 90); // the same rights as superuser, but for VM_MODULE only
-define('RANK_vm_program_coordinator'    , 30);
+define('RANK_vm_prg_coordinator'    , 30);
 //define('RANK_vm_observer'  , 28);
 define('RANK_vm_endorser'  , 27);
 define('RANK_vm_organizer' , 26);
@@ -330,7 +330,7 @@ b_reg::add_module(VM_MODULE,
 				       RANK_vm_endorser   => array('class'=>'bUnit_vm_endorses',
 								   'd'    =>'VM endorser', 
 								   'i'    =>'user_exclamation'),
-				       RANK_vm_program_coordinator     => array('class'=>'bUnit_vm_bookers',
+				       RANK_vm_prg_coordinator     => array('class'=>'bUnit_vm_bookers',
 								   'd'    =>'VM booker', 
 								   'i'    =>'user_pencil'),
 				       //RANK_vm_observer   => array('class'=>'bUnit_vm_observers',
@@ -816,18 +816,18 @@ class VM extends myPear{
       break;
       
     case 'setup_SE':
-      $reply = (VM_program_coordinator_here || VM_organizer_here);
+      $reply = (VM_prg_coordinator_here || VM_organizer_here);
       if (self::isArchived())       $reply = False;
       break;
       
     case 'book_ah': 
-      if (!($reply = (VM_program_coordinator_here || (VM_organizer_here && is_object(self::$e) && bAuth::$av->isOrganizer(self::$e->ID))))){
+      if (!($reply = (VM_prg_coordinator_here || (VM_organizer_here && is_object(self::$e) && bAuth::$av->isOrganizer(self::$e->ID))))){
 	$reply = (is_object($visit=$argv) && $visit->isWritable());
       }
       break;
       
     case 'book':
-      $reply = (VM_program_coordinator_here || (is_object($visit=$argv) && $visit->isWritable()));
+      $reply = (VM_prg_coordinator_here || (is_object($visit=$argv) && $visit->isWritable()));
       break;
       
     case 'assign_offices':
@@ -842,7 +842,7 @@ class VM extends myPear{
       break;
       
       case 'send_welcomeMail':  
-	$reply = VM_program_coordinator_here || self::hasRightTo('endorse_event');
+	$reply = VM_prg_coordinator_here || self::hasRightTo('endorse_event');
 	break;
 	
     case 'endorse_event':
@@ -1078,7 +1078,7 @@ function vm_used_by_myOrg(){
 
 function VM_managers()       { start_VM(); return myPear::_UNIT(RANK_vm_manager,  VM_MODULE); }
 
-function VM_administrators() { start_VM(); return myPear::_UNIT(RANK_vm_program_coordinator,   VM_MODULE); }
+function VM_administrators() { start_VM(); return myPear::_UNIT(RANK_vm_prg_coordinator,   VM_MODULE); }
 
 //function VM_observers()      { start_VM(); return myPear::_UNIT(RANK_vm_observer, VM_MODULE); }
 
@@ -1089,7 +1089,7 @@ function VM_organizers($e_id){ start_VM(); return myPear::_UNIT(RANK_vm_organize
 function VM_unit($rank,$module=VM_MODULE,$org=myOrg_ID){ 
   switch($rank){
   case RANK_vm_manager:            return VM_managers();
-  case RANK_vm_program_coordinator:return VM_administrators();
+  case RANK_vm_prg_coordinator:return VM_administrators();
 //case RANK_vm_observer:           return VM_observers();
   case RANK_vm_endorser:           return VM_endorsers();
   case RANK_vm_organizer:          return VM_organizers(VM::$e);

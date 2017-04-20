@@ -322,7 +322,7 @@ class APImenu_vm extends APImenu_ea{
 	break;
 
       case tab_vm_adm:  // ========================================================================================================= tab_vm_adm
-	$reply = VM_administrator_here; // VM_observer_here;
+	$reply = VM_prg_coordinator_here;
 	break;
 	
       case tab__tasks:
@@ -331,7 +331,7 @@ class APImenu_vm extends APImenu_ea{
 
       case tab_vm_adm_acc: 
       case tab_vm_adm_agendaList:
-	$reply = VM_program_coordinator_here;
+	$reply = VM_prg_coordinator_here;
 	break;
 	
       case tab_vm_adm_projects:
@@ -350,15 +350,15 @@ class APImenu_vm extends APImenu_ea{
 	break;
 
       case tab_vm_ogz_vlist:
-	if (VM::outOfScope() || VM::$e->isArchived()){
-	  $reply = False;
-	  break;
-	}
-
+	$reply = !VM::outOfScope() && !VM::$e->isArchived() && VM_organizer_here;
+	break;
+	
       case tab_vm_ogz_mails:
-	$reply = cnf_dev || (!VM::outOfScope() && 
-			     VM::$e->isArchived() && 
-			     VM::$e->attenders() && see_mails_exchange_with_attenders && !cnf_dontSendMails_Point);
+	$reply = cnf_dev ||
+	  (VM_organizer_here && see_mails_exchange_with_attenders && !cnf_dontSendMails_Point &&
+	   !VM::outOfScope() && 
+	   !VM::$e->isArchived() && 
+	    VM::$e->attenders());
 	break;
 
       case tab_vm_ogz_photos:
@@ -371,16 +371,19 @@ class APImenu_vm extends APImenu_ea{
       case tab_vm_ogz_amatrix:
       case tab_vm_ogz_vmatrix:
       case tab_vm_ogz_se_setup:
-	$reply = (!VM::$e->isArchived() && VM::$e->attenders() && !VM::outOfScope());
-	if (!empty($policy) && !VM::$e->getPolicy($policy)) $reply = False;
+	$reply = (!empty($policy) && !VM::$e->getPolicy($policy)
+		  ? False
+		  : (VM_organizer_here && 
+		     !VM::outOfScope() && 
+		     !VM::$e->isArchived() && 
+		     VM::$e->attenders()));
 	break;
-
+	
       case tab_vm_ogz_dup:
 	$reply = (VM::e_ID() > 0) && cnf_dev && bForm_Avatar::findDuplicates(" LEFT JOIN abs_visits ON v_avid=av_id WHERE v_eid=".VM::e_ID(),True);
 	break;
 	
-      case tab_vm_ogz:  // ========================================================================================================= tab_vm_ogz
-      case tab_vm_end_mails:
+      case tab_vm_end_mails: // ========================================================================================================= tab_vm_end
 	if (!see_mails_exchange_with_attenders || cnf_dontSendMails_Point){
 	  $reply = False;
 	  break;
@@ -418,7 +421,7 @@ class APImenu_vm extends APImenu_ea{
       case tab_vm_adm_sync:
       case tab_vm_ogz_sync:
       case tab_vm_ogz_acc:
-	$reply = (VM_program_coordinator_here || VM_organizer_here);
+	$reply = (VM_prg_coordinator_here || VM_organizer_here);
 	break;
 
       case tab_vm_adm_acl:

@@ -78,7 +78,7 @@ class bForm_Avatar_vm extends bForm_Avatar_ea{
     $role = $roleIcon = array();
     if    ($this->isSuperUser())   $role[] = RANK__superuser;
     if    (VM_managers()->isMember($this->ID)) $role[] = RANK_vm_manager;
-    if    ($this->isProgramCoordinator())      $role[] = RANK_vm_program_coordinator;
+    if    ($this->isProgramCoordinator())      $role[] = RANK_vm_prg_coordinator;
     if    ($this->isObserver())    $role[] = RANK_vm_observer;
     if    ($this->isEndorser())    $role[] = RANK_vm_endorser;
     if    ($this->isOrganizer())   $role[] = RANK_vm_organizer;
@@ -175,7 +175,7 @@ class bForm_Avatar_vm extends bForm_Avatar_ea{
   }
   
   function isProgramCoordinator($av_id=Null){
-    return $this->unitMember($av_id,RANK_vm_program_coordinator);
+    return $this->unitMember($av_id,RANK_vm_prg_coordinator);
   }
 
   function isObserver($av_id=Null){

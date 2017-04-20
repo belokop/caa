@@ -19,10 +19,10 @@ class APIaccess_vm extends APIaccess{
     $authenticated = bAuth::authenticated();
     $this->who_is_here(array('VM_manager_here'      => array('rank'=> 'RANK_vm_manager',
 							     'def' => 'superUser_here'),
-			     'VM_program_coordinator_here'       => array('rank'=> 'RANK_vm_program_coordinator',
+			     'VM_prg_coordinator_here'=> array('rank'=> 'RANK_vm_prg_coordinator',
 							     'def' => 'VM_manager_here'),
 			   //'VM_observer_here'     => array('rank'=> 'RANK_vm_observer',
-			   //			             'def' => 'VM_program_coordinator_here'),
+			   //			             'def' => 'VM_prg_coordinator_here'),
 			     'VM_visitor_here'      => array('rank'=> 'RANK_vm_visitor'),
 			     'VM_registrant_here'   => array('rank'=> 'RANK_vm_registrant'),
 			     'VM_stranger_here'=> array('rank'=> 'RANK__authenticated'),
@@ -40,7 +40,7 @@ class APIaccess_vm extends APIaccess{
 			     'VM_administrator_here'      =>array('IF'=>VM_endorser_here || VM_organizer_here || superUser_here), // || VM_observer_here
 			     ));
 
-    $this->who_is_here(array('VM_member_here'             =>array('IF'=>EA_member_here || VM_external_registrant_here || VM_administrator_here || VM_organizer_here),
+    $this->who_is_here(array('VM_member_here'             =>array('IF'=>EA_member_here || VM_external_registrant_here || VM_organizer_here),
 			     ));
   }
   
@@ -128,7 +128,7 @@ class APIaccess_vm extends APIaccess{
       $organizational_duty = myPear::org_duty($av_id,array(RANK__superuser,
 							   RANK_vm_manager,
 							   RANK_vm_endorser,
-							   RANK_vm_program_coordinator,
+							   RANK_vm_prg_coordinator,
 							   // RANK_vm_observer,
 							   ));
       

@@ -1718,19 +1718,24 @@ class b_debug{
 
       if (!empty($_GET)){
 	print "\n<h2>---_GET</h2>\n";
-	self::print_r($_GET);
+	self::print_r($_GET,__FUNCTION__);
       }
 
       if (!empty($_POST)){
 	print "\n<h2>---_POST</h2>\n";
-	self::print_r($_POST); 
+	self::print_r($_POST,__FUNCTION__); 
+      }
+
+      if (!empty($_SESSION[CONST_cnfOptions])){
+	print "\n<h2>---CONST_cnfOptions</h2>\n";
+	self::print_r($_SESSION[CONST_cnfOptions],__FUNCTION__); 
       }
 
       print "\n<h2>---traceBack</h2>\n";
       echo '<pre>'; debug_print_backtrace(); echo '</pre>'; 
       if (!empty($_SESSION['messages'])){
 	print "\n<h2>---messages</h2>\n";
-	self::print_r($_SESSION['messages'],'messages cache');
+	self::print_r($_SESSION['messages'],__FUNCTION__);
 	unset($_SESSION['messages']);
       }
       b_cnf::get('nodrupal',($_GET['nodrupal']=0));
@@ -1769,7 +1774,11 @@ class b_debug{
    */
   static function print_r(&$array,$txt='',$doNotPrint=False) {
 
-    if (!defined('cnf_dev') || !defined('YBhere') || (!cnf_dev && !YBhere)) return;
+    if ($txt == 'get_diagnostics'){
+      $txt = '';
+    }elseif (!defined('cnf_dev') || !defined('YBhere') || (!cnf_dev && !YBhere)){
+      return;
+    }
 
     if (is_string($array)){
       self::var_dump($array,"redirected from b_debug::print_r $txt");

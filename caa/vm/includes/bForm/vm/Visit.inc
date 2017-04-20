@@ -331,8 +331,8 @@ class bForm_vm_Visit extends bForm_vm {
     }
     
     // Now set the requested policy
-    if (defined('VM_program_coordinator_here') && 
-	(!(VM_program_coordinator_here||VM_organizer_here) || 
+    if (defined('VM_prg_coordinator_here') && 
+	(!(VM_prg_coordinator_here||VM_organizer_here) || 
 	 (@VM::$v_policies[$policy]['t'] === auto_maintained) ||
 	 ($this->getValue('v_end') < time()))) $verbose = False;
     
@@ -2114,7 +2114,7 @@ class bForm_vm_Visit extends bForm_vm {
 							      True  => array('endorser'   => (is_object(bAuth::$av) && 
 											      in_array(bAuth::$av->ID,VM_endorsers()->getEndorsers($this->getValue('v_group',1)))),
 									     'isOrganizer'=> VM_organizer_here,
-									     'booker'     => VM_program_coordinator_here,
+									     'booker'     => VM_prg_coordinator_here,
 									     'owner'      => $exp_owner),
 							      'default' => parent::isWritable()),
 							$this,

@@ -609,6 +609,7 @@ class bUnit extends bList{
     $reply = (empty($av_id)
 	      ? False
 	      : !myPear::is_empty($this->get_memberInfo($av_id))); // Check against the cache    
+    $this->dbg($reply,True);
     return $reply;
   }
   
