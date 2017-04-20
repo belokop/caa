@@ -301,10 +301,12 @@ class bList extends myPear_getValue{
    * Perform the add / edit session
    */
   protected function edit_bList_cancel(){
-    $myPost_bList = $this->myPost_bList();
-    if ($reply=(!empty($_POST) && !$myPost_bList)){
-      b_debug::traceBack("act_code=".$this->act_code.", but not myPost_bList"); 
-      $this->dbg("Cancel processing",cnf_dev);
+    $reply = !empty($_POST) && !$this->myPost_bList() && (@$_POST['act_id'] != $this->ID);
+    if ($reply){
+      $msg = "Cancel processing: ID=".$this->ID.", act_code=".$this->act_code.", but not myPost_bList"; 
+      $this->dbg($msg,cnf_dev);
+      b_debug::var_dump($_POST,'$_POST');
+      b_debug::traceBack($msg);
     }
     return $reply;
   }
@@ -955,6 +957,9 @@ class bList extends myPear_getValue{
     return $reply;
   }
 
+  /*
+   *
+   */
   function dump() {}
 
   protected function sanity_action($where) {}
@@ -1150,7 +1155,7 @@ class bList extends myPear_getValue{
   /*
    * Helper, builds arguments for the list editing
    */
-  function get_action_array($code=''){
+  protected function get_action_array($code=''){
     $reply = array('act_once'  => 1,    // flag saying 'Мы начинаем...'
 		   'act_id'    =>(int)$this->ID,
 		   'act_code'  => $code,
