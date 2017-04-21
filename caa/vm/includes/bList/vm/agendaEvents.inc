@@ -53,6 +53,11 @@ class bList_vm_agendaEvents extends bList_vm{
       b_debug::var_dump($xml,"xml $url");
       $xml = simplexml_load_string($xml);
       $json= json_encode($xml);
+
+      if (!is_array(json_decode($json,True))){
+	myPear::ERROR("Can't contact agenda system...");
+	return array(Null,null);
+      } 
       
       foreach(json_decode($json,TRUE) as $categories){
 	foreach ($categories as $k=>$v){
@@ -90,6 +95,8 @@ class bList_vm_agendaEvents extends bList_vm{
 	continue;
       }
       list($name,$confs) = $this->getCategoryInfo($catEntry['lm_value']);
+      if ($name === Null) return;
+
       $sortedByDate = array();
       foreach($confs as $confId=>$conf){
 	$r = $this->getMember(array('lm_key'=>'conf','lm_value'=>$confId));
