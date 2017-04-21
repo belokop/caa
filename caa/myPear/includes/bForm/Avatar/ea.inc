@@ -210,36 +210,42 @@ class bForm_Avatar_ea extends bForm_Avatar{
    * Update the 'av_position' & 'av_institute' field in the avatar record from the current EA record(s)
    */
   private function update_AVpos_AVinst(){
-    if ($this->isEA()){
-      $this->hook_employment();
-      $this->isMBE['av_birthdate']    = !$this->isE();
-      $this->isMBE['av_birthcountry'] = !$this->isE();
-
-      foreach(array('av_institute','av_position','e_rate') as $what){
+    if (!$this->isEA()) return;
+    
+    $this->hook_employment();
+    $this->isMBE['av_birthdate']    = !$this->isE();
+    $this->isMBE['av_birthcountry'] = !$this->isE();
+    
+    foreach(array('av_institute','av_position','e_rate') as $what){
+      
+      // Get the current employment from eaRecords
+      $currentItem = $this->eaRecords->get_currentItem(self::$av2er[$what]['k'],
+						       array('e_org'=>myOrg_ID),
+						       ($what == 'av_position' ? 2 : 1),
+						       $this->getValue('av_ddate',True));
+      if (empty($currentItem)) continue;
+      
+      switch($what){
+      case 'av_institute':
+      case 'av_position':
+	$elements = preg_split(";( |/|,);",str_replace('  ',' ',strToLower($currentItem)));
+	$currentItem_compressed = b_fmt::ucwords(join(' ',array_unique($elements)));
 	
-	// Get the current employment from eaRecords
-	$currentItem = $this->eaRecords->get_currentItem(self::$av2er[$what]['k'],
-							 array('e_org'=>myOrg_ID),
-							 ($what = 'av_position' ? 2 : 1),
-							 $this->getValue('av_ddate',True));
-	if ($currentItem) switch($what){
-	  case 'av_institute':
-	  case 'av_position':
-	    $elements = preg_split(";( |/|,);",str_replace('  ',' ',strToLower($currentItem)));
-	    $currentItem_compressed = b_fmt::ucwords(join(' ',array_unique($elements)));
-	    
-	    if ($this->getValue($what,1) != $currentItem_compressed){
-	      $this->getValue_reset_forced($what,$currentItem_compressed);
-	      myPear::MESSAGE_add($this->name()." - set current ".self::$av2er[$what]['d']." '$currentItem_compressed'");
-	    }
-	    break;
-	    
-	  case 'e_rate':
-	    $e_rate = myOrg()->orgEmpTypes()->code2text($currentItem);
-	    $this->dbg($e_rate,True);
-	    $this->getValue_reset($what,$e_rate);
-	    // myPear::MESSAGE_add($this->name()." - set current ".self::$av2er[$what]['d']." '$_virt_e_rate'");
-	  }
+	if ($this->getValue($what,1) != $currentItem_compressed){
+	  $this->getValue_reset_forced($what,$currentItem_compressed);
+	  myPear::MESSAGE_add($this->name()." - set current ".self::$av2er[$what]['d']." '$currentItem_compressed'");
+	}
+	break;
+	
+      case 'e_rate':
+	$e_rate = myOrg()->orgEmpTypes()->code2text($currentItem);
+	$this->dbg($e_rate,True);
+	$this->getValue_reset($what,$e_rate);
+	// myPear::MESSAGE_add($this->name()." - set current ".self::$av2er[$what]['d']." '$_virt_e_rate'");
+	break;
+	
+      default:
+	b_debug::internalError('Unexpected agrument $what="'.var_export($what,True).'"');
       }
     }
   }

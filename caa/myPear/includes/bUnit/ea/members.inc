@@ -180,14 +180,16 @@ class bUnit_ea_members extends bUnit_ea {
    * Add EA specific items to the members cache
    */
   protected function membersInfo_toSelect($extended=False){
-    return array_merge(parent::membersInfo_toSelect($extended),
-		       array('av_institute',
-			     'av_position',
-			     'day1',
-			     'day9',
-			     EA_role_employee,
-			     EA_role_alumnus,
-			     ));
+    $reply = array_merge(parent::membersInfo_toSelect($extended),
+			 array('av_institute',
+			       'av_position',
+			       'day1',
+			       'day9',
+			       EA_role_employee,
+			       EA_role_alumnus,
+			       ));
+    // b_debug::print_r($reply);
+    return $reply;
   }
 
   
@@ -211,6 +213,7 @@ class bUnit_ea_members extends bUnit_ea {
       switch($this->see_only){
       case EA_role_employee:
 	if ($reply = $is_currently_employed){
+	  // if (empty($rec['av_position'])) b_debug::print_r($rec,'??? empty av_position');
 	  $empType = myOrg()->orgEmpTypes()->title2empType(@$rec['av_position'],join(' ',array($rec['av_id'],$rec['av_firstname'],$rec['av_lastname'])));
 	  if ($reply = ($tab == $empType)){
 	    $av = new bForm_Avatar_ea($rec['av_id']);

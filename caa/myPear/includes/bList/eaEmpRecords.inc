@@ -636,15 +636,20 @@ class bList_eaEmpRecords extends bList{
 	$this->f->textField($item);
       }
     }	
+
+    // Send lm_id
+    $this->f->formDB['memberID'] = $this->member_ID;
     if (cnf_dev){
       $this->f->isRO['memberID'] = True;
-      $this->f->formDB['memberID'] = $this->member_ID;
       $this->f->textField('memberID');
+    }else{
+      $this->f->textHidden('memberID');
     }
-    
-    if($this->member_ID)       $this->f->textHidden('lm_id',$this->member_ID);
-    elseif($lm_id)             $this->f->textHidden('lm_id',$lm_id);
-    else  b_debug::traceBack('????? empty lm_id');
+    if (empty($lm_id)) $lm_id = $this->member_ID;
+    if (empty($lm_id)) b_debug::traceBack('????? empty lm_id');
+    else  $this->f->textHidden('lm_id',$lm_id);
+
+    // Close the form
     $this->f->closeForm();
     $this->dbg(sprintf('$this->MODE="%s" $this->f->MODE="%s"',$this->MODE,$this->f->MODE));
     $this->MODE = $this->f->MODE;

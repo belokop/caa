@@ -78,6 +78,7 @@ function myPear_updates(){
     }
 
     if (True){ // Fixes for the version "Easter 2017"
+      myPear_update34();
     }
 
     if (!@$_SESSION['updates'][__METHOD__]++){
@@ -130,6 +131,10 @@ function myPear_set_collation(){
       }
     }
   }
+}
+
+function myPear_update34(){
+  myPear_db()->qquery("DELETE FROM zzz_list_members WHERE lm_key IS NULL AND lm_value IS NULL AND lm_status IS NULL",1);      
 }
 
 /*

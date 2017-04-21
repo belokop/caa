@@ -832,6 +832,9 @@ class bUnit extends bList{
 			  $this->rank));
   }
 
+  /*
+   *
+   */
   function get_memberInfo($av_id=Null,$column=Null,$action='get'){
     // Those columns are not cached
     $not_to_cache = array('av_salutation','av_id','u_name',$this->serialized);
