@@ -5,6 +5,7 @@
 locateAndInclude('agenda');
 locateAndInclude('bUnit_vm');
 locateAndInclude('bForm_vm_Visit');
+locateAndInclude('bForm_vm_Lease');
 locateAndInclude('bList_vm_agendaEvents');
 
 // The applications deadline should be at least a month before the event starts 
