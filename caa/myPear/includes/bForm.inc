@@ -751,7 +751,7 @@ class bForm extends myPear_getValue{
         print "</form> <!-- end $this->formName -->\n";
 
 	// Clean the buffers
-	b_debug::print_r(self::$fData_fields,'fData_fields');
+	// b_debug::print_r(self::$fData_fields,'fData_fields');
 	self::$textHidden_fields = array();
 	self::$fData_fields  = array();
 	bForm::$formOpened   = Null;

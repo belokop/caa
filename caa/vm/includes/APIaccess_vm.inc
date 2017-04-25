@@ -38,7 +38,7 @@ class APIaccess_vm extends APIaccess{
 			     'VM_administrator_here'      =>array('IF'=>VM_endorser_here || VM_organizer_here || superUser_here), // || VM_observer_here
 			     ));
 
-    $this->who_is_here(array('VM_member_here'             =>array('IF'=>EA_member_here || VM_external_registrant_here || VM_organizer_here),
+    $this->who_is_here(array('VM_member_here'             =>array('IF'=>EA_member_here() || VM_external_registrant_here || VM_organizer_here),
 			     ));
   }
   

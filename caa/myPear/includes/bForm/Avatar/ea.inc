@@ -432,13 +432,13 @@ class bForm_Avatar_ea extends bForm_Avatar{
       }
       
       $updates[$key] = $new_v;
-      foreach(array($er['k'],$av) as $item) $this->getValue_reset($item,@$this->eaRecords->formDB_member[$er['k']]);
+      foreach(array($er['k'],$av) as $item) $this->getValue_reset($item,@$this->hook_employment()->formDB_member[$er['k']]);
       if (cnf_dev) myPear::MESSAGE(__METHOD__.': updates='.b_fmt::joinX($updates));
-      $this->eaRecords->updateMember($updates,$lm_id);
+      $this->hook_employment()->updateMember($updates,$lm_id);
     }
 
     $this->adjust_status();
-    if (cnf_show_er) $this->eaRecords->dump();
+    if (cnf_show_er) $this->hook_employment()->dump();
     $this->dbg(exiting);
   }
   
@@ -461,8 +461,8 @@ class bForm_Avatar_ea extends bForm_Avatar{
 
     // Sanity, convert "visiting major position" to "visiting activity", 
     // set the start/retire date, etc.
-    $this->eaRecords->sortArgs = ' ORDER BY '.self::$av2er['e_end']['k'].' ASC ';
-    foreach($this->eaRecords->getMembers(array('e_org' => myOrg_ID)) as $r_id=>$r){
+    $this->hook_employment()->sortArgs = ' ORDER BY '.self::$av2er['e_end']['k'].' ASC ';
+    foreach($this->hook_employment()->getMembers(array('e_org' => myOrg_ID)) as $r_id=>$r){
       if (!($rec_type = @$r['rec_type'])){
 	myPear::WARNING("Missing 'Employment type'");
 	continue;
@@ -480,7 +480,7 @@ class bForm_Avatar_ea extends bForm_Avatar{
       }
       
       // Change the record type if is was wrongly entered
-      if ($rec_type != $r['rec_type']) $this->eaRecords->updateMember(array('rec_type'=>$rec_type),$r['lm_id']);
+      if ($rec_type != $r['rec_type']) $this->hook_employment()->updateMember(array('rec_type'=>$rec_type),$r['lm_id']);
 
       // Set the retirement date as the latest date of any affiliation with the organization
       if ($e_start = @$r['lm_key']){
@@ -503,8 +503,8 @@ class bForm_Avatar_ea extends bForm_Avatar{
     // The most fresh record comes last
     $stat = array();
     myOrg()->eaMembers()->setStatus($this->ID,'');
-    $this->eaRecords->sortArgs = ' ORDER BY '.self::$av2er['e_start']['k'].' ASC ';
-    foreach($this->eaRecords->getMembers(array('e_org' => myOrg_ID)) as $r_id=>$r){
+    $this->hook_employment()->sortArgs = ' ORDER BY '.self::$av2er['e_start']['k'].' ASC ';
+    foreach($this->hook_employment()->getMembers(array('e_org' => myOrg_ID)) as $r_id=>$r){
       if (empty($r['rec_type'])) continue;
       $position_is_expired = (b_time::txt2unix($r[self::$av2er['e_end']['k']]) < $timestamp);
       $id = ($position_is_expired ? 'was' : 'now');
@@ -609,10 +609,10 @@ class bForm_Avatar_ea extends bForm_Avatar{
       // An "inversed" case. We are called from the "Avatar dialog", but will query an EA record. 
       // The results will go both to the EA & Avatar records
       if (($block_once === 'office_contract') && ($this->MODE == 'RW')){
-	$records = $this->eaRecords->get_currentEmploymentRecords(($this->isE(True) 
-								   ? array('e_org'=>myOrg_ID)
-								   : array()),
-								  $this->getValue('av_ddate',True));
+	$records = $this->hook_employment()->get_currentEmploymentRecords(($this->isE(True) 
+									   ? array('e_org'=>myOrg_ID)
+									   : array()),
+									  $this->getValue('av_ddate',True));
 	if ($r = @$records[0]){
 	  foreach(array('from_bList' => 1,
 			'act_code'   => 'edit',
@@ -783,8 +783,7 @@ Seem to be useless....
     // Get the current employment from the database
     // and populate Avatar class
     //
-    $this->hook_employment();
-    $records = $this->eaRecords->get_currentEmploymentRecords(($this->isE(True) 
+    $records = $this->hook_employment()->get_currentEmploymentRecords(($this->isE(True) 
 							       ? array('e_org'=>myOrg_ID)
 							       : array()),
 							      $this->getValue('av_ddate',True));
