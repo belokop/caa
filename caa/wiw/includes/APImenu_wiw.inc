@@ -31,7 +31,6 @@ function wiw_after_search_check($av_id,$_after_search=''){
 
 class APImenu_wiw extends APImenu{
   
-  var $debug = True;
   var $title  = 'Who Is Where';
   var $q      = WIW_MODULE;
   var $static_menu = array(

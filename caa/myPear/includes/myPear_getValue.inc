@@ -55,8 +55,10 @@ class myPear_getValue extends myPear_base{
    * The constructor is dummy.
    */
   static $instance_count = array();
+  protected $dejaVu_me = 0;
   function __construct($arg1=Null, $arg2=Null, $arg3=Null){
 
+    if ($this->dejaVu_me++) myPear::WARNING("??? dejaVu_me = ".$this->dejaVu_me);
     if (cnf_show_gv) $this->show_gv = True;
 
     // Instance counter, used for debugging only
@@ -131,7 +133,8 @@ class myPear_getValue extends myPear_base{
       $look_here = array('_REQUEST'=> @$_REQUEST[$name],
 			 'cache'   => @$this->list_memberID[$name],
 			 'cnf::get'=> b_cnf::get($name,'ask_only'));
-      if(in_array($name,array('l_id','u_id'))) $look_here['act_id'] = @$_REQUEST['act_id'];
+      if(in_array($name,array('l_id','u_id'))) $look_here['act_id']   = @$_REQUEST['act_id'];
+      if(in_array($name,array('lm_id')))       $look_here['memberID'] = @$_REQUEST['memberID'];
       foreach($look_here as $hint=>$value){
 	if (empty($value)) continue;
 	$this->dbg("get '$value' from '$hint', don't cache in getValue cache",cnf_dev);

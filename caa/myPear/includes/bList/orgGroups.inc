@@ -157,7 +157,7 @@ class bList_orgGroups extends bList{
 			    b_url::get_GET('^(act_|ed_bList)',True));
 	
 	$not_defined = True;
-	$EmpRec_class = new bList_eaEmpRecords($av_id);
+        $EmpRec_class = bList::getListInstance($av_id,'bList_eaEmpRecords');
 	foreach($EmpRec_class->getMembers() as $er_id=>$er){
 	  $groups = (empty($er['e_gid'])
 		     ? array()

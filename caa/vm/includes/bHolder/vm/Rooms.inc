@@ -2,7 +2,6 @@
 locateAndInclude('bHolder_vm');
 class bHolder_vm_Rooms extends bHolder_vm{
 
-  var $debug=True;
   var $cleanCost = 0;
   var $rent      = 0;
   var $usage     = 0;

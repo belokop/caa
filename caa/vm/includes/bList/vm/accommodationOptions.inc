@@ -18,8 +18,7 @@ locateAndInclude('bList_vm');
  *
  */
 class bList_vm_accommodationOptions extends bList_vm{
-  
-  var $debug = True;
+
   var $list_quering = array('lm_key'  =>'Name',  // hut_id
                             'nrooms'  =>'Number of rooms allocated',
 			    );

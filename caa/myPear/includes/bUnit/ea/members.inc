@@ -185,6 +185,8 @@ class bUnit_ea_members extends bUnit_ea {
 			       'av_position',
 			       'day1',
 			       'day9',
+			       //			       'e_off',
+			       'av_phone',
 			       EA_role_employee,
 			       EA_role_alumnus,
 			       ));
@@ -216,9 +218,14 @@ class bUnit_ea_members extends bUnit_ea {
 	  // if (empty($rec['av_position'])) b_debug::print_r($rec,'??? empty av_position');
 	  $empType = myOrg()->orgEmpTypes()->title2empType(@$rec['av_position'],join(' ',array($rec['av_id'],$rec['av_firstname'],$rec['av_lastname'])));
 	  if ($reply = ($tab == $empType)){
-	    $av = new bForm_Avatar_ea($rec['av_id']);
-	    $rec['e_off']    = $av->hook_employment()->get_currentItem('e_off');
-	    $rec['av_phone'] = $av->getValue('av_phone',True);
+	    if (1){
+	      if (empty($rec['e_off']))    $rec['e_off'] = '';
+	      if (empty($rec['av_phone'])) $rec['av_phone'] = '';
+	    }else{
+	      $av = new bForm_Avatar_ea($rec['av_id']);
+	      $rec['e_off']    = $av->hook_employment()->get_currentItem('e_off');
+	      $rec['av_phone'] = $av->getValue('av_phone',True);
+	    }
 	    // Workaround...
 	    if (($rec['av_phone'] > 1000) && ($rec['av_phone'] < 10000)) $rec['av_phone'] = '+46 8 5537 '.$rec['av_phone'];
 	  }
@@ -447,12 +454,12 @@ class bUnit_ea_members extends bUnit_ea {
     $reply = array();
     switch($this->see_only){
     case EA_role_employee:
+      locateAndInclude('bList_eaEmpRecords');
       if (empty($this->b_tabs_Engine))       $this->b_tabs_Engine = 'b_tabs_JQ';
       foreach(myOrg()->orgEmpTypes()->get_empTypes() as $k=>$v){
 	// Skip director for the employee listing
 	if (stripos($k,'director') !== False) continue;
-	if (!count(myOrg()->orgEmpTypes()->get_empByTypes($k))) continue;
-	$reply[$k] = $v;
+	if (bList_eaEmpRecords::countEmpByType($k)) $reply[$k] = $v;
       }
       break;
 

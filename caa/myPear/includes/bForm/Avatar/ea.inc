@@ -117,11 +117,11 @@ class bForm_Avatar_ea extends bForm_Avatar{
   public static $av2er = array('e_rate'         =>array('k'=>'e_rate',    'c'=>'orgEmpTypes'), // The description comes from 'c', i.e. bList_orgEmpTypes
 			       'e_gid'          =>array('k'=>'e_gid',     'c'=>'orgGroups'),
 			       'rec_type'       =>array('k'=>'rec_type',  'd'=>''),
-			       'e_off'          =>array('k'=>'e_off',     'd'=>'Office'),
 			       'e_org'          =>array('k'=>'e_org',     'd'=>''),
 			       'e_start'        =>array('k'=>'lm_key',    'd'=>''), // start of the employment period
 			       'e_end'          =>array('k'=>'lm_status', 'd'=>''), // end   of the employment period
 			       'lm_id'          =>array('k'=>'lm_id',     'd'=>''),
+			       'av_office'      =>array('k'=>'e_off',     'd'=>'Office'),
 			       'av_position'    =>array('k'=>'lm_value',  'd'=>'Position'),
 			       'av_institute'   =>array('k'=>'e_inst',    'd'=>'Institute'),
 			       // 'av_residentship'=>array('k'=>'e_cc',      'd'=>'Residentship'), // e_cc this is Institute location, not private residentship
@@ -175,15 +175,10 @@ class bForm_Avatar_ea extends bForm_Avatar{
       myOrg()->eaMembers()->setMemberAccess($_GET['av_id'],$_GET['set_access_once']);
     }
 
-    // Optionally adjust statuses
     $this->modalRW_enabled = isset($_GET['block_once']);
-    if ((@$_GET['av_id'] == $this->ID) || (@$_GET['id'] == $this->ID)) $this->adjust_status();
 
     self::_init();
 
-    // Update avatar av_institute & av_position.
-    // We do it on the fly since "myOrg" might change since the previous invication 
-    $this->update_AVpos_AVinst();    
   }
   
   static function _init(){
@@ -209,28 +204,31 @@ class bForm_Avatar_ea extends bForm_Avatar{
   /*
    * Update the 'av_position' & 'av_institute' field in the avatar record from the current EA record(s)
    */
+  private $dejuVu_update_AVpos_AVinst = 0;
   private function update_AVpos_AVinst(){
     if (!$this->isEA()) return;
+    if ($this->dejuVu_update_AVpos_AVinst++) return;
     
-    $this->hook_employment();
     $this->isMBE['av_birthdate']    = !$this->isE();
     $this->isMBE['av_birthcountry'] = !$this->isE();
     
-    foreach(array('av_institute','av_position','e_rate') as $what){
-      
+    foreach(array('av_office','av_institute','av_position','e_rate') as $what){
+
       // Get the current employment from eaRecords
-      $currentItem = $this->eaRecords->get_currentItem(self::$av2er[$what]['k'],
-						       array('e_org'=>myOrg_ID),
-						       ($what == 'av_position' ? 2 : 1),
-						       $this->getValue('av_ddate',True));
+      $currentItem = $this->hook_employment()->get_currentItem(self::$av2er[$what]['k'],
+							       array('e_org'=>myOrg_ID),
+							       ($what == 'av_position' ? 2 : 1),
+							       $this->getValue('av_ddate',True));
       if (empty($currentItem)) continue;
       
       switch($what){
+      case 'av_office':
       case 'av_institute':
       case 'av_position':
 	$elements = preg_split(";( |/|,);",str_replace('  ',' ',strToLower($currentItem)));
 	$currentItem_compressed = b_fmt::ucwords(join(' ',array_unique($elements)));
 	
+	$this->dbg("$what=$currentItem_compressed");
 	if ($this->getValue($what,1) != $currentItem_compressed){
 	  $this->getValue_reset_forced($what,$currentItem_compressed);
 	  myPear::MESSAGE_add($this->name()." - set current ".self::$av2er[$what]['d']." '$currentItem_compressed'");
@@ -254,9 +252,10 @@ class bForm_Avatar_ea extends bForm_Avatar{
    * Create (if not yet done) the instance of bList_eaEmpRecords 
    */
   function hook_employment(){
+    
     locateAndInclude('bList_eaEmpRecords');
     if (!is_object($this->eaRecords) && $this->isEA()){
-      $this->eaRecords = new bList_eaEmpRecords($this);
+      $this->eaRecords = bList::getListInstance($this,'bList_eaEmpRecords');
       $this->tips        = $this->eaRecords->tips;
       $this->tips_byMode = $this->eaRecords->tips_byMode;
       
@@ -267,6 +266,14 @@ class bForm_Avatar_ea extends bForm_Avatar{
 	$_POST['_post_bForm_class_once'] = get_class($this);
       }
     }
+
+    // Update avatar av_institute & av_position.
+    // We do it on the fly since "myOrg" might change since the previous invication 
+    $this->update_AVpos_AVinst();    
+
+    // Optionally adjust statuses
+    if ((@$_GET['av_id'] == $this->ID) || (@$_GET['id'] == $this->ID)) $this->adjust_status();
+
     return $this->eaRecords;
   }
 
@@ -398,7 +405,7 @@ class bForm_Avatar_ea extends bForm_Avatar{
 	      ? @$_POST['_virt_emp_record']
 	      :  $_POST['lm_id']);
     if (empty($lm_id)) return;
-
+    
     $this->dbg(starting);
     $this->hook_employment();
     
@@ -447,8 +454,9 @@ class bForm_Avatar_ea extends bForm_Avatar{
    * THERE IS SOMETHING WRONG HERE - THE FUNCTION IS HORRIBLY SLOW 
    *
    */
+  private $dejaVu_adjust_status = 0;
   function adjust_status($timestamp=Null){
-    if (!$this->hook_employment()) return;
+    if ($this->dejaVu_adjust_status++) return;
     if (empty($timestamp)) $timestamp = time();
 
     // Sanity, convert "visiting major position" to "visiting activity", 
@@ -530,8 +538,9 @@ class bForm_Avatar_ea extends bForm_Avatar{
     if (myPear::is_empty($v)){
       $err_msg = parent::getValue_validate_empty($k,$v);
       switch($k){
-      case 'e_end':
+      case 'av_office':
       case 'e_off':
+      case 'e_end':
       case 'e_gid':
       case 'e_rate':
 	if (!$this->isE()) $err_msg = '';
@@ -553,7 +562,7 @@ class bForm_Avatar_ea extends bForm_Avatar{
       if ($this->hook_employment()){
 	$updates = array('lm_id' => $_POST['_virt_emp_record']);
 	foreach($av2er as $k) $updates[$k] = $_POST[$k];
-	$this->eaRecords->updateMember($updates);
+	$this->hook_employment()->updateMember($updates);
       }
     }
   }
@@ -592,7 +601,7 @@ class bForm_Avatar_ea extends bForm_Avatar{
 	$this->dbg(sprintf('from_bForm=%s from_bList=%s block_once=%s',var_export($from_bForm,True),var_export($from_bList,True),$block_once),cnf_dev);
 	$this->formOK();
 	if ($this->MODE == 'RO'){
-	  $this->eaRecords->getForm();
+	  $this->hook_employment()->getForm();
 	  return;
 	}
       }
@@ -623,7 +632,7 @@ class bForm_Avatar_ea extends bForm_Avatar{
 	}
 	b_cnf::set('from_bForm',1);
 	b_cnf::set('from_bList',0);
-	$bList_eaEmpRecords = new bList_eaEmpRecords($this->ID);
+	$bList_eaEmpRecords = bList::getListInstance($this,'bList_eaEmpRecords');
 	$bList_eaEmpRecords->getForm();
 	return;
       }
@@ -752,6 +761,7 @@ Seem to be useless....
       $records = $ea->get_currentEmploymentRecords(array('e_org'=>myOrg_ID),
 						   $this->getValue('av_ddate',True));
       foreach($records as $k=>$r){ 
+	b_debug::print_r($r);
 	// Check the AlbaNova campus room numbering convention
 	if (preg_match("/\b(\w*:\w*)\b/",@$r['e_off'],$m)){
 	  $office = $m[1];
@@ -842,7 +852,7 @@ Seem to be useless....
       //
       $dialog = array('_virt_emp_record' => array('textHidden'),
 		      'av_phone'   => array('textField'));
-      if ($groups) $dialog['e_off'] = array('textField');
+      if ($groups) $dialog['av_office'] = array('textField');
       $this->formBlock('office_off',
 		       'Office location',
 		       $dialog,

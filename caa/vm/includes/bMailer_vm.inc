@@ -578,7 +578,7 @@ Visit information:
     if ($no_preview && !myPear_taskManager()->exec_request){
       if ($VM_V_infoMailSent){
 	// This mail has to be sent only once
-	$this->dbg("Mail to ".$this->visit->av->name()." was already sent",$this->debug||cnf_dev);
+	$this->dbg("Mail to ".$this->visit->av->name()." was already sent",cnf_dev);
       }else{
 	// Put this mail into the execution queue, not waist time in the interactive session
 	myPear_taskManager()->addTask(get_class($this),__function__,array($this->visit->ID,'send_now'));
@@ -677,7 +677,7 @@ Organizing committee for \"<event/>\".
 
     // This mail has to be sent only once
     if ($no_preview && $VM_V_denialMailSent){
-      $this->dbg("Mail to ".$this->visit->av->name()." was already sent",$this->debug||cnf_dev);
+      $this->dbg("Mail to ".$this->visit->av->name()." was already sent",cnf_dev);
       return;
     }
     

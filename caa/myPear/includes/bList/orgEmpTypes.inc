@@ -56,8 +56,9 @@ class bList_orgEmpTypes extends bList{
    * The type is not deletable unless it is not used
    */
   protected function isMemberDeletable(){
+    locateAndInclude('bList_orgEmpTypes');
     static $noname = '???';
-    $nMembers = count($this->get_empByTypes($this->r['lm_key']));
+    $nMembers = bList_eaEmpRecords::countEmpByType($this->r['lm_key']);
     if (empty($this->r['lm_value'])) $this->r['lm_value'] = $noname;
     //? if ($nMembers && $this->isWritable()) myPear::MESSAGE("$nMembers members in \"".$this->r['lm_value']."\"");
     return b_cnf::check_conditions(array(True =>array('empty' => empty($this->r['lm_key'])),
@@ -171,9 +172,10 @@ class bList_orgEmpTypes extends bList{
   private $title2emp_type = Null;
   private function set_code2text(){
     if($this->_code2text === Null){
-      static $counter = 0;
+      static $v_counter = 0, $k_counter = 0;
       foreach($this->getMembers() as $lm_id=>$r){
-	if (empty($r['lm_value'])) $r['lm_value'] = str_repeat('?',++$counter).' Unknown';
+	if (empty($r['lm_key']))   $r['lm_key']   = str_repeat('?',++$k_counter).'Unknown_lm_key';
+	if (empty($r['lm_value'])) $r['lm_value'] = str_repeat('?',++$v_counter).'Unknown_lm_value';
 	if (!empty($this->_code2text[strToLower($r['lm_key'])]))   b_debug::internalError(sprintf("??? clashing key '%s'",strToLower($r['lm_key'])));
 	if (!empty($this->_code2text[strToLower($r['lm_value'])])) b_debug::internalError(sprintf("??? clashing key '%s'",strToLower($r['lm_value'])));
 	$this->_code2text[strToLower($r['lm_key'])]   = $r['lm_value'];
@@ -207,8 +209,12 @@ class bList_orgEmpTypes extends bList{
     $this->set_code2text();
     $reply = @$this->_code2text[strToLower($code)];
     if (empty($reply)){
-      if ($MBE) $reply = $code; // Might Be Empty
-      else      myPear::ERROR("Unknown employee code \"$code\"",$this);
+      if ($MBE){
+	$reply = $code; // Might Be Empty
+      }else{
+	myPear::ERROR("Unknown employee code \"$code\"",$this);
+	b_debug::traceBack();
+      }
     }
     $this->dbg($reply,cnf_dev);
     return $reply;
@@ -236,10 +242,10 @@ class bList_orgEmpTypes extends bList{
 	      ? array()
 	      : unserialize($this->_code2tits[strToLower($code)]));
     if (empty($reply)){
-      myPear::ERROR("Unknown employee code \"$code\"");
+      myPear::ERROR("Unknown employee code \"$code\"",$this);
       //b_debug::var_dump($this->getMembers(),"Unknown code \"$code\"");
     }
-    $this->dbg($reply,cnf_dev);
+    $this->dbg($reply);
     return $reply;
   }
 
@@ -256,7 +262,7 @@ class bList_orgEmpTypes extends bList{
 	b_debug::traceBack();
       }
     }
-    $this->dbg(@$reply,cnf_dev);
+    $this->dbg(@$reply);
     return $reply;
   }
 
@@ -311,8 +317,10 @@ class bList_orgEmpTypes extends bList{
    * Formatting for the employmentType record listing
    */
   protected function format(){
+    locateAndInclude('bList_orgEmpTypes');
     parent::format();
-    $nMembers = count($this->get_empByTypes($this->r['lm_key']));
+
+    $nMembers = bList_eaEmpRecords::countEmpByType($this->r['lm_key']);
     if (empty($nMembers)) $this->r['n_members'] = b_fmt::redText(x('em','No members'));
     else                  $this->r['n_members'] = "$nMembers members";
     // Fetch the list of emp. titles
@@ -332,7 +340,7 @@ class bList_orgEmpTypes extends bList{
    * Get employers by types
    */
   private $empTypes = Null;
-  function get_empByTypes($emp_type=Null){
+  function get_empByType($emp_type=Null){
     static $unk = '??';
     
     locateAndInclude('bList_eaEmpRecords');
@@ -355,9 +363,9 @@ class bList_orgEmpTypes extends bList{
 				  'block_once'=>'office_contract'),
 			    b_url::get_GET('^(act_|ed_bList)',True));
 	
-	$EmpRec_class = new bList_eaEmpRecords($av_id);
+	$EmpRec_class = bList::getListInstance($av_id,'bList_eaEmpRecords');
 	$not_defined = True;
-	foreach($EmpRec_class->getMembers() as $er_id=>$er){
+	foreach($EmpRec_class->getMembers(array('e_org'=>myOrg_ID)) as $er_id=>$er){
 	  if (!isset($er['e_rate']))  continue;
 	  if (in_array($er['e_rate'],array_keys($this->_types))){
 	    $this->empTypes[$er['e_rate']][] = $av_id;
@@ -380,6 +388,7 @@ class bList_orgEmpTypes extends bList{
 	}
       }
       ksort($this->empTypes);
+      static $ccc=0; b_debug::xxx(++$ccc);
     }
     if (empty($emp_type)) $emp_type = $unk;
     if (!@$this->empTypes[$emp_type]) myPear::WARNING_T("No members in \"$emp_type\"");

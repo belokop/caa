@@ -10,7 +10,6 @@ locateAndInclude('bForm_jam_Applicant');
 locateAndInclude('bForm_jam_RF');
 class bHolder_jam_Applicant extends bHolder_jam {
   
-  var $debug = True;
   private $av_id = Null;
   private $ap_ids = array();
 

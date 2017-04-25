@@ -5,8 +5,6 @@ class bHolder_Avatar_ea extends bHolder_Avatar{
 
   public $av_ids;
 
-  var $debug = True;
-
   /*
    * Constructor
    */

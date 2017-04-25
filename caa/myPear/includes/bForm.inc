@@ -342,7 +342,7 @@ class bForm extends myPear_getValue{
 	$new =  b_mask::set($old, $bitName, $value);
 	$this->updateDB(array($field=>$new),$forced=True);
       }
-      $this->dbg("isChanged ? ".($isChanged ? 'YES' : 'NO'),(bool)(cnf_show_pv || $this->debug));
+      $this->dbg("isChanged ? ".($isChanged ? 'YES' : 'NO'),(bool)cnf_show_pv);
     }else{
       $isChanged = False;
     }
@@ -394,7 +394,7 @@ class bForm extends myPear_getValue{
 			   (!(int)$this->ID && ($_POST['_post_bForm_ID_once']==='new' || 
 						$_POST['_post_bForm_ID_once']==='empty'))));
       $color = (cnf_dev || ($this->dbg_color == 'blackText') ? 'oliveText' : $this->dbg_color);
-      $this->dbg($this->reply_myP,array(3,$this,$color,(bool)($this->debug || (cnf_dev && $this->reply_myP))));
+      $this->dbg($this->reply_myP,array(3,$this,$color,(bool)(cnf_dev && $this->reply_myP)));
     }
     return $this->reply_myP;
   }
@@ -430,7 +430,7 @@ class bForm extends myPear_getValue{
     $this->formOK();
 
     if (!$this->isWritable() && ($this->MODE == 'RW')){    // Sanity
-      $this->dbg('set mode=RO, the form is not writable',(bool)(cnf_dev||$this->debug));
+      $this->dbg('set mode=RO, the form is not writable',cnf_dev);
       $this->MODE = 'RO';
     }
 
@@ -499,7 +499,7 @@ class bForm extends myPear_getValue{
       // Print the buttons only if it makes sense
       $only_one_RW_field_here = False;
       $this->all_RWfields = array_unique($this->all_RWfields);
-      $this->dbg("all_RWfields = ".join(', ',$this->all_RWfields),$this->debug || cnf_dev);
+      $this->dbg("all_RWfields = ".join(', ',$this->all_RWfields),cnf_dev);
       if (count($this->all_RWfields)==1){
 	foreach($this->all_RWfields as $item){
 	  $only_one_RW_field_here = !empty($this->submitOnChange[$item]);
@@ -743,10 +743,18 @@ class bForm extends myPear_getValue{
 
       if (!empty(bForm::$formOpened)){
         $this->dbg('ZZZ closeForm '.bForm::$formOpened);
-	foreach(array_keys(self::$hidden_inputs) as $field) print $field; 
+	// Send current "lm_id" if available
+	if (!empty($this->member_ID)) $this->textHidden('memberID',$this->member_ID);
+
+	// Send the hiden fields, close the form
+	foreach(array_keys(self::$textHidden_fields) as $field) print $field; 
         print "</form> <!-- end $this->formName -->\n";
-	self::$hidden_inputs = array();
-	bForm::$formOpened = Null;
+
+	// Clean the buffers
+	b_debug::print_r(self::$fData_fields,'fData_fields');
+	self::$textHidden_fields = array();
+	self::$fData_fields  = array();
+	bForm::$formOpened   = Null;
       }
     }
   }
@@ -809,7 +817,7 @@ class bForm extends myPear_getValue{
     }else{
       $reply = !$this->vitalFieldMissing();
     }
-    $this->dbg($reply,cnf_dev||$this->debug);
+    $this->dbg($reply,cnf_dev);
     $this->dbg(exiting);
     return $reply;
   }
@@ -1204,8 +1212,7 @@ class bForm extends myPear_getValue{
     if ($this->SQL_backend){
       if (!empty($pars)) {
 	if ((int)$this->ID){
-	  myPear_db()->qquery("UPDATE $this->TABLE SET ".join(', ',$pars)." WHERE $this->TABLEID='$this->ID'",
-			      ($this->debug || cnf_show_db));
+	  myPear_db()->qquery("UPDATE $this->TABLE SET ".join(', ',$pars)." WHERE $this->TABLEID='$this->ID'",cnf_show_db);
 	  $this->readDefRecord();
 	  $this->_recordUpdated();
 	}else{
@@ -1230,7 +1237,7 @@ class bForm extends myPear_getValue{
    * Create a new bForm record
    */
   function updateDB_createRecord($pars=array()){
-    $this->dbg("Creating ".$this->__toString(),(bool)($this->debug || cnf_show_db));
+    $this->dbg("Creating ".$this->__toString(),cnf_show_db);
     $this->bForm_isJustCreated = True;
     $this->formDB[$this->TABLEID] = $this->formDB_modified[$this->TABLEID] = $_GET['id'] = $this->ID = bMaster()->reserve_masterCounter();
     $pars[] = myPear_db()->quote($this->ID,True,$this->TABLEID);
@@ -1238,7 +1245,7 @@ class bForm extends myPear_getValue{
     // Reset the "my POST" if it was not this a new record
     if ($this->myPost_bForm()) $this->myPost_bForm($this->ID);
     
-    myPear_db()->qquery("INSERT INTO $this->TABLE SET ".join(', ',$pars),($this->debug || cnf_show_db));
+    myPear_db()->qquery("INSERT INTO $this->TABLE SET ".join(', ',$pars),cnf_show_db);
     $this->dbg('New record is created',True);
   }
   
@@ -1353,8 +1360,8 @@ class bForm extends myPear_getValue{
     }
     
     // Sanity
-    if (!empty($reply))        $this->dbg(($reply ? join(', ',$reply) : False),(bool)($this->debug || cnf_dev));
-    if($this->errorsInTheForm) $this->dbg("errorsInTheForm: ".b_fmt::joinX(',',$this->errorsInTheForm),(bool)($this->debug||cnf_dev));
+    if (!empty($reply))        $this->dbg(($reply ? join(', ',$reply) : False),cnf_dev);
+    if($this->errorsInTheForm) $this->dbg("errorsInTheForm: ".b_fmt::joinX(',',$this->errorsInTheForm),cnf_dev);
     //    if($this->errorsInTheForm) {
     //      b_debug::print_r($this->isMBE);
     //      b_debug::traceBack("errorsInTheForm: ".b_fmt::joinX(',',$this->errorsInTheForm));
@@ -1380,15 +1387,17 @@ class bForm extends myPear_getValue{
       $r = ($this->isRO($name) ? 'disabled': '');
       if (empty($r)) $this->all_RWfields[] = $name;
       $this->fData("<input type='checkbox' name='${name}' $c $r border=0 ".$this->submit_onchange($name,'')."/>".
-		   "<input type='hidden'   name='${name}_cb_expected' value='off'/>\n");
+		   "<input type='hidden'   name='${name}_cb_expected' value='off'/>\n",
+		   $name);
     }else{
       // in the RO mode show the value as YES/NO icon (in RW as a normal checkbox)
       if ($this->isRO($name)){
-	$this->fData(bIcons()->get($checkBoxIsOn ? $img_on : $img_off));
+	$this->fData(bIcons()->get($checkBoxIsOn ? $img_on : $img_off),$name);
       }else{
 	$this->all_RWfields[] = $name;
 	$this->fData("<input type='checkbox' name='${name}' $c border=0 ".$this->submit_onchange($name,'')."/>".
-		     "<input type='hidden'   name='${name}_cb_expected' value='off'/>\n");
+		     "<input type='hidden'   name='${name}_cb_expected' value='off'/>\n",
+		     $name);
       }
     }
     $this->t->trc();
@@ -1424,12 +1433,12 @@ class bForm extends myPear_getValue{
 	b_checkBox::set($k,in_array($k,$values) ? b_checkBox::$ON[0] : b_checkBox::$OFF[0]);
       }
 
-      if (@$this->submitOnChange[$name]) $this->fData(b_checkBox::create($cb,$separator));
-      else                               $this->fData(b_checkBox::create($cb,"\n",''));
+      if (@$this->submitOnChange[$name]) $this->fData(b_checkBox::create($cb,$separator),$name);
+      else                               $this->fData(b_checkBox::create($cb,"\n",''),$name);
     }else{
       $items = array();
       foreach($values as $k) if (!empty($boxes[$k])) $items[] = $boxes[$k];
-      $this->fData(join($separator,$items));
+      $this->fData(join($separator,$items),$name);
     }
     $this->t->trc();
   }
@@ -1846,11 +1855,12 @@ class bForm extends myPear_getValue{
   /*
    * Show a hidden value
    */  
-  private static $hidden_inputs = array();
+  private static $textHidden_fields = array();
   function textHidden($name,$value=Null,$printNow=True) {
     if (bForm::$formOpened === $this->ID){
       $show_it = ($value === 'show_it');
       if ($show_it || is_null($value))  $value = $this->getValue($name,True,True);
+      self::$fData_fields[$name][] = $value;
       if ($show_it && cnf_dev){
 	$this->isRO[$name] = True;
 	$this->vars[$name] = $name;
@@ -1859,7 +1869,7 @@ class bForm extends myPear_getValue{
       $reply = "<input type='hidden' name='$name' value='".strip_tags($value)."'/>\n";
       if ($printNow){
 	// The array must be static, otherwise fields from other classes will be lost :-/
-	@self::$hidden_inputs[$reply]++;
+	@self::$textHidden_fields[$reply]++;
       }else{
 	return $reply;
       }
@@ -2102,7 +2112,7 @@ class bForm extends myPear_getValue{
     $fileExtension = bFile_file_name_extension($original_file);
     $destination = str_ireplace('.pdf.pdf','.pdf',b_os::join(array($this->uploadsDir,$fileName.$fileExtension)));
     if (copy($_FILES[$name]['tmp_name'], $destination)){            
-      $this->dbg("OK $original_file -> $destination",(bool)(cnf_dev||$this->debug));
+      $this->dbg("OK $original_file -> $destination",cnf_dev);
       $reply = $this->_FILES_uploaded[$name] = $fileName.$fileExtension;
     }else{
       $reply = False;
@@ -2171,7 +2181,8 @@ class bForm extends myPear_getValue{
   /*
    *
    */  
-  protected function fData($data,$name=Null){
+  private static $fData_fields = array();
+  protected function fData($data,$name){
     $data = trim($data);
     if (empty($data)) $data = $this->getValue($name,($this->MODE == 'RW'));
     if (@$this->isMONEY[$name]){
@@ -2191,6 +2202,7 @@ class bForm extends myPear_getValue{
     if (self::$inputToPDF) $this->t->td(x('em',$data)," 'width=36%'");
     else                   $this->t->td($i . $data,
 					$this->style('data','',@$this->cellStyle[$name]));
+    self::$fData_fields[$name][] = $this->getValue($name,True);
   }
 
   /*
@@ -2228,7 +2240,7 @@ class bForm extends myPear_getValue{
 	break;
       }
     }
-    $this->dbg($reply,cnf_show_v||$this->debug);
+    $this->dbg($reply,cnf_show_v);
     return $reply;
   }
 
@@ -2392,7 +2404,7 @@ class bForm extends myPear_getValue{
     // Do not print an empty header if there is only a photo to show
     if ($toPrint === array('av_photo') && ($block_ID == 'av_birth_block')) $toPrint = array();
 
-    $this->dbg('toPrint: '.join(', ',$toPrint),cnf_show_st||$this->debug);
+    $this->dbg('toPrint: '.join(', ',$toPrint),cnf_show_st);
 
     //
     // Show the block title row

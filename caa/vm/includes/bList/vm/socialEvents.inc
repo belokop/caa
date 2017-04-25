@@ -3,7 +3,6 @@ locateAndInclude('bList_vm');
 
 class bList_vm_socialEvents extends bList_vm{
 
-  var $debug=True;
   protected $packed_items = array('s_price');
   var $list_quering = array('lm_key'   =>'what',  // link to the "social events setup" record
 			    'lm_value' =>'when',  // social event date

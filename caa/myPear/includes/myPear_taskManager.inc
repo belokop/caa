@@ -142,6 +142,9 @@ class myPear_taskManager{
 	    myPear::WARNING($msg);
 	    b_vars::delete($task['var_name'],$module);
 	    continue;
+	  }elseif(0 && @$_REQUEST['tm_clean_lock_once']==='yes'){
+	    myPear::WARNING('tm_clean_lock_once');
+	    continue;
 	  }else{
 	    $n_ended++;
 	    $task['_end']  = x('em','in '.b_time::delta(b_time::txt2unix($task['start']),$task['end']));
@@ -155,10 +158,15 @@ class myPear_taskManager{
 	  $module_was = $module;
 	}
       }
-      if ($n_waiting) $btns[] = b_btn::submit("execute $n_waiting waiting tasks",
-					      b_url::same('?resetcache_once=1&tm_execute_once=yes&myPear_taskManager=yes'));
-      if ($n_ended)   $btns[] = b_btn::submit("clean out $n_ended completed tasks",
-					      b_url::same('?tm_execute_once=1&resetcache_once=1&tm_clean_once=yes&myPear_taskManager=yes'));
+      if ($n_waiting) 
+	$btns[] = b_btn::submit("execute $n_waiting waiting tasks",
+				b_url::same('?resetcache_once=1&tm_execute_once=yes&myPear_taskManager=yes'));
+      if ($n_ended)   
+	$btns[] = b_btn::submit("clean out $n_ended completed tasks",
+				b_url::same('?tm_execute_once=1&resetcache_once=1&tm_clean_once=yes&myPear_taskManager=yes'));
+      if ($this->lock_isActive(False)) 
+	$btns[] = b_btn::submit("remove deadlock",
+				b_url::same('?tm_execute_once=1&resetcache_once=1&tm_clean_lock_once=yes&myPear_taskManager=yes'));
       if (!empty($btns)) print x('tr',x('td colspan=9 style="text-align:center;"',b_btn::UL_buttons($btns)));
       $t->close();
     }
@@ -238,7 +246,7 @@ class myPear_taskManager{
 
     $this->dbg();
 
-    // Wait until the lock is expired
+    // Wait until the lock expires
     $this->lock_isActive($release_if_deadlock=True);
 
     // Write the lock record
@@ -252,7 +260,7 @@ class myPear_taskManager{
    */
   private function lock_release(){
     b_vars::delete('taskManager_lock',myPear_MODULE);
-    $this->dbg("Locked during ".b_time::delta(time(),$this->lock_start));
+    $this->dbg("Locked since ".b_time::delta(time(),$this->lock_start));
   }
 
   /*
@@ -265,10 +273,10 @@ class myPear_taskManager{
     $reply = False;
     $this->dbg();
     while($lock = b_vars::get('taskManager_lock',myPear_MODULE)){
+      $locked_at = $lock['time'];
       $reply = True;
       if ($release_if_deadlock){
 	// Wait for the lock to disapier...
-	$locked_at = $lock['time'];
 	if ((time() - $locked_at) > 60*$deadlock){
 	  myPear::WARNING(sprintf("taskManager is locked for %s, remove the deadlock",b_time::delta(time(),$locked_at)));
 	  $this->lock_release();
@@ -277,7 +285,8 @@ class myPear_taskManager{
 	  sleep($wait_for);
 	}
       }else{
-	if ($this->lock_start != time()) myPear::MESSAGE("TaskManager is last locked in ".b_time::delta(time(),$this->lock_start));
+	// if ($this->lock_start != time()) myPear::MESSAGE(date('Y-m-d H:i:s ',$this->lock_start)." TaskManager is last locked in ".b_time::delta(time(),$this->lock_start));
+	if ($locked_at != time()) myPear::MESSAGE("TaskManager is locked since ".b_time::delta(time(),$locked_at).date(' (Y-m-d H:i:s) ',$locked_at));
 	break; // Lock is there, we no not want to know more...
       }
     }

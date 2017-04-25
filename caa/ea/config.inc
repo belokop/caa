@@ -7,8 +7,8 @@ if (file_exists($f='../myPear/config.inc'))  require_once $f;
 if (function_exists('drupal_get_path') && file_exists($f=drupal_get_path('module','myPear').'/includes/drupal8_compat.inc')) require_once $f;
 
 // register the module in myPear registry
-$releaseDate = '2017-04-18';
-define('EA_VERSION','5.5.2');
+$releaseDate = '2017-04-25';
+define('EA_VERSION','5.5.3');
 
 myOrg();
 b_reg::add_module(EA_MODULE,array('v' =>EA_VERSION,

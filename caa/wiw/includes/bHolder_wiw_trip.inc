@@ -3,7 +3,6 @@ locateAndInclude('bHolder');
 
 class bHolder_wiw_trip extends bHolder{
 
-  var $debug = cnf_dev;
   public $av_id = Null;
   public $sortBy_default = 't_departure';
 

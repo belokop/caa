@@ -51,7 +51,7 @@ class bForm_vm_Room extends bForm_vm {
 
 
     if (!empty($_GET['e_id_once'])){
-      $this->dbg("e_id_once = ".var_export($_GET['e_id_once'],True),True);
+      $this->dbg("e_id_once = ".var_export($_GET['e_id_once'],True),cnf_dev);
       // Catch the rent price update for a particular event
       $this->e = myPear::getInstance_new('bForm_vm_Event',$_GET['e_id_once']);
       if ($this->myPost_bForm()){
@@ -338,9 +338,8 @@ class bForm_vm_Room extends bForm_vm {
     if ($this->isWritable === Null){
       locateAndInclude('bForm_vm_Lease');
       $this->isWritable = (bool)(VM_rooms_updater_here || parent::isWritable()) && (bForm_vm_Lease::_hut_code($this->formDB) !== LODGING_OA);
-      $this->dbg($this->isWritable);
     }
-    $this->dbg($this->isWritable,$this->debug||cnf_dev);
+    $this->dbg($this->isWritable,cnf_dev);
     return $this->isWritable;
   }
   

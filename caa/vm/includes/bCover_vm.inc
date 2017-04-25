@@ -5,7 +5,6 @@ locateAndInclude('bHolder_vm_Rooms');
 locateAndInclude('bHolder_vm_Offices');
 class bCover_vm extends bCover {
 
-  var $debug = True;
   var $id    = 'v_code';
   var $start = 'v_start';
   var $end   = 'v_end';

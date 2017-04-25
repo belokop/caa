@@ -111,7 +111,7 @@ if (function_exists('locateAndInclude')) locateAndInclude('APImenu_ea');
 else require_once drupal_get_path('module','ea').'/includes/APImenu_ea.inc';
 
 class APImenu_vm extends APImenu_ea{
-  var $debug = True;
+
   var $title  = 'Visits';
   var $q      = VM_MODULE;
   

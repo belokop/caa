@@ -358,13 +358,13 @@ class bForm_vm_Visit extends bForm_vm {
     
     $was = $this->getValue('v_status');
     if ($was === $v_status){
-      $this->dbg("Status is not changed... $v_status",cnf_show_pv || $this->debug);
+      $this->dbg("Status is not changed... $v_status",cnf_show_pv);
       return;
     }
     
     // Save the new status
     $this->getValue_reset_forced('v_status',$v_status);
-    $this->dbg("v_status $was->$v_status",(bool)($this->debug || cnf_show_pv || cnf_dev));
+    $this->dbg("v_status $was->$v_status",cnf_show_pv || cnf_dev);
 
     switch($v_status){
     case STATUS_NO:
@@ -410,7 +410,7 @@ class bForm_vm_Visit extends bForm_vm {
        if ((int)$this->ID && empty($v_status)) $this->setPolicy(VM_V_welcomeMailSent,True,False);
      }
 
-     $this->dbg($reply,(bool)(cnf_show_pv||$this->debug));    
+     $this->dbg($reply,cnf_show_pv);    
      return $reply;
    }
 
@@ -639,7 +639,7 @@ class bForm_vm_Visit extends bForm_vm {
        if (!empty($block_ID)) myPear::WARNING_T("Unexpected block '$block_ID'");
      }
 
-     $this->dbg($reply,(bool)$this->debug || cnf_show_st);
+     $this->dbg($reply,cnf_show_st);
      return $reply;
    }
    
@@ -1362,7 +1362,7 @@ class bForm_vm_Visit extends bForm_vm {
 
     // Sanity, catch invocation with an arbitrary v_id
     if (!$this->hookAvatar()){
-      $this->dbg("Can't hook Avatar for the visit",$this->debug||cnf_dev);
+      $this->dbg("Can't hook Avatar for the visit",cnf_dev);
       return;
     }
 
@@ -1617,7 +1617,7 @@ class bForm_vm_Visit extends bForm_vm {
    * Canceling the visit
    */
   function delete(){
-    $this->dbg($this->av->name(),$this->debug||cnf_dev);
+    $this->dbg($this->av->name(),cnf_dev);
     myPear::MESSAGE_add(b_fmt::redText("Delete visit ".$this->_periodToString()));    
     $this->deleteLease();
     myPear_db()->query("DELETE FROM $this->TABLE WHERE $this->TABLEID = '$this->ID'");

@@ -103,7 +103,7 @@ class bHolder_Avatar extends bHolder {
 
     if ($d = $this->rec['av_lastlogin']) $this->rec['av_lastlogin'] = b_time::strftime('%Y-%m-%d',$d);
 
-    if ($this->show_icons && EA_member_here){
+    if ($this->show_icons && EA_member_here()){
       // Get membership in all the bUnits for the organization
       $ranks = array();
       $look_for = array(RANK__ea_member,

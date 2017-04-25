@@ -79,6 +79,7 @@ function myPear_updates(){
 
     if (True){ // Fixes for the version "Easter 2017"
       myPear_update34();
+      myPear_update35();
     }
 
     if (!@$_SESSION['updates'][__METHOD__]++){
@@ -133,8 +134,31 @@ function myPear_set_collation(){
   }
 }
 
-function myPear_update34(){
-  myPear_db()->qquery("DELETE FROM zzz_list_members WHERE lm_key IS NULL AND lm_value IS NULL AND lm_status IS NULL",1);      
+function myPear_update35(){
+  if (!myPear_db()->columnExists('av_office','zzz_avatars')){
+    myPear_db()->qquery("ALTER TABLE `zzz_avatars` ADD `av_office` VARCHAR( 64 ) NULL DEFAULT NULL AFTER `av_phone`",True); 
+  }
+}
+
+
+/*
+ * Tentative problem
+ */
+myPear_update34(False);
+function myPear_update34($delete=True){
+  $q = myPear_db()->qquery("SELECT lm_id,lm_timestamp FROM zzz_list_members LEFT JOIN zzz_lists ON lm_lid = l_id ".
+			   " WHERE ((lm_key IS NULL) AND (lm_status IS NULL)) AND ((lm_value IS NULL) OR (l_class = 'bList_eaEmpRecords')) ".
+			   " ORDER BY lm_timestamp DESC",True);
+  $ts  = array();
+  $ids = array(0);
+  while($r = myPear_db()->next_record($q)){
+    $ids[]= 'lm_id='.$r['lm_id'];
+    $ts[] = $r['lm_timestamp'];
+  }
+  if ($n = count($ts)){
+    myPear::WARNING_T("Found $n empty 'zzz_list_members' records:<pre>".join('<br>',$ts).'</pre>'); 
+    if ($delete) myPear_db()->qquery("DELETE FROM zzz_list_members WHERE ".join(' OR ',$ids),True);
+  }
 }
 
 /*
@@ -617,7 +641,7 @@ function myPear_update23(){
 
     foreach(array(
 		  'bList_eaEmpRecords'      => 'Employment record',
-		  'bList_orgEmpTypes'         => 'Employment types',
+		  'bList_orgEmpTypes'       => 'Employment types',
 		  'bList_jam_requiredDocs'  => 'required documents',
 		  'bList_jam_subPositions'  => 'research fields',
 		  'bList_vm_agenda'         => 'agenda events',

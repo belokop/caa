@@ -39,12 +39,15 @@ class myPear_base{
     case 0: 
       return b_debug::xxx(' ',  array(3,$this, (bool)($this->debug||self::$_debug), $this->dbg_color));
     case 1:
-      return b_debug::xxx($arg0,array(3,$this, (bool)($this->debug||self::$_debug), $this->dbg_color));
+      $_arg1 = False;
     case 2:  
-      if    (is_bool($arg1))  return b_debug::xxx($arg0,array($arg1,3,'redText',$this));
-      elseif(is_array($arg1)) return b_debug::xxx($arg0,$arg1);
+      $_arg1 = (is_array($arg1)
+		? $arg1
+		: array(3, $this, (bool)$arg1, $this->dbg_color));
+      foreach($_arg1 as $k=>$v) if (is_bool($v)) $_arg1[$k] = (bool)($v || $this->debug || self::$_debug);
+      return b_debug::xxx($arg0,$_arg1);
     default: 
-      return b_debug::xxx($arg1,array(3+$arg3,$this, (bool)($this->debug || self::$_debug || $arg2), $this->dbg_color));
+      return b_debug::xxx($arg1,array(3+$arg3, $this, (bool)($arg2 || $this->debug || self::$_debug), $this->dbg_color));
     }
   }
     

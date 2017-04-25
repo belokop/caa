@@ -15,6 +15,13 @@ function myPear_exceptions_error_handler($severity, $message, $filename, $lineno
   }
 }
 
+function EA_member_here(){
+  if (!defined('EA_member_here')) define('EA_member_here',(is_object(bAuth::$av)
+                                                           ? myOrg()->eaMembers()->isMember(bAuth::$av->ID)
+                                                           : False));
+  return EA_member_here;
+}
+
 /*
  * Check that the server connects to the given port.
  * Optionally check also that the server replies request

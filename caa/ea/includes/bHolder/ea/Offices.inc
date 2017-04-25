@@ -3,6 +3,7 @@
  * Show offices used by staff members
  */
 locateAndInclude('bHolder_ea');
+
 class bHolder_ea_Offices extends bHolder_ea{
   
   private $doing = Null;
@@ -71,7 +72,7 @@ class bHolder_ea_Offices extends bHolder_ea{
 		      //'_n_sits'   => 'usage',
 		      '_tenants'  => ' ',
 		      );
-      if (!EA_member_here) unset($header['_o_status'],$header['o_capacity']);
+      if (!EA_member_here()) unset($header['_o_status'],$header['o_capacity']);
 
       foreach ($header as $k=>$v) $this->th_attr[$k] = "style='text-align:right;'";
       foreach ($header as $k=>$v) $this->td_attr[$k] = "style='text-align:right;'";
@@ -156,7 +157,7 @@ class bHolder_ea_Offices extends bHolder_ea{
     switch($this->doing){
     case 'summary':
       $o_name = ' No office';
-      if (!EA_member_here) unset($this->offices[$o_name]);
+      if (!EA_member_here()) unset($this->offices[$o_name]);
       if (empty($this->offices[$o_name])) $this->offices[$o_name] = array();
       $this->t->tr(array('&nbsp'));	
       foreach($this->offices[$o_name] as $av){

@@ -1,8 +1,6 @@
 <?php
 locateAndInclude('APIaccess');
 class APIaccess_vm extends APIaccess{
-
-  var $debug = True;
   
   /*
    * Construct the privileges

@@ -13,7 +13,7 @@ class APIaccess extends myPear_base{
 							     'def' => 'superUser_here'),
                              'EA_administrator_here'=> array('rank'=> 'RANK__ea_admin',
 							     'def' => 'EA_ORG_manager_here'),
-			     'EA_member_here'       => array('IF'  => myOrg()->eaMembers()->isMember()),
+			     // 'EA_member_here'       => array('IF'  => myOrg()->eaMembers()->isMember()),
 			     ));
   }
   

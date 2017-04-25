@@ -301,6 +301,7 @@ class bList extends myPear_getValue{
    * Perform the add / edit session
    */
   protected function edit_bList_cancel(){
+    if (array_keys($_POST) === array('_')) $_POST = array();
     $reply = !empty($_POST) && !$this->myPost_bList() && (@$_POST['act_id'] != $this->ID);
     if ($reply){
       $msg = "Cancel processing: ID=".$this->ID.", act_code=".$this->act_code.", but not myPost_bList"; 
@@ -311,6 +312,14 @@ class bList extends myPear_getValue{
     return $reply;
   }
 
+  /*
+   *
+   */
+  protected function edit_bList_preFlight(){}
+
+  /*
+   *
+   */
   protected function edit_bList(){
 
     if (b_cnf::get('act_id') == $this->ID){
@@ -320,6 +329,8 @@ class bList extends myPear_getValue{
       $this->MODE = 'RW';
       $this->act_code = b_cnf::get('act_code');
       $this->dbg("act_code=".$this->act_code);
+
+      $this->edit_bList_preFlight();
       
       switch($this->act_code){
       case 'add':  /////////////////////////////////////////////////////////////////

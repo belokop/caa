@@ -588,7 +588,7 @@ class bForm_vm_Expenses extends bForm_vm{
 	}
       }
     }
-    $this->dbg($reply,$this->debug||cnf_show_v);
+    $this->dbg($reply,cnf_show_v);
     return $reply;
   }
 

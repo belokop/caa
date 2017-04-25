@@ -866,7 +866,6 @@ class myPear{
 	  $caller = b_debug::__(3,$class);
 	  $text = $caller.' '.x('strong',x('em',$text));
 	}
-	//if (!b_debug::$starting_exiting)
 	$text = b_debug::s_e_depth() . $text;
 	break;
       default:

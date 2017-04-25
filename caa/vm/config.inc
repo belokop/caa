@@ -3,9 +3,9 @@ set_time_limit(0);
 /**
  * Visitors Manager (VM) configuration file
  */
-$releaseDate = '2017-04-21';
+$releaseDate = '2017-04-25';
 define('VM_MODULE'   , 'vm');
-define('VM_VERSION','5.13.5');
+define('VM_VERSION','5.13.6');
 
 //
 // transition problems...
@@ -854,7 +854,7 @@ class VM extends myPear{
       if (is_object($visit=$argv) && (int)$visit->ID){
 	$reply = $visit->formBlock_isWritable(VM_visit_policy);
       }else{
-	$reply = EA_member_here;
+	$reply = EA_member_here();
       }
       // $reply = (is_object($visit=$argv) && $visit->formBlock_isWritable(VM_visit_policy));
       break;

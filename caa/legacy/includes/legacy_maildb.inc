@@ -5,9 +5,11 @@
  * Obviously myPear does not keep those, since it is very much customer-oriented,
  * we leave this for the "plug-ins" like this one.
  */
+
 define('maildb_RO',!bAuth::authenticated() || cnf_demo || cnf_dev);
 
-class legacy_maildb{
+locateAndInclude('myPear_base');
+class legacy_maildb extends myPear_base{
   
   
   private static $maildb_fields_org = array('an'     => array('m' => array(),
@@ -203,7 +205,7 @@ class legacy_maildb{
 	if (maildb_RO || empty($_SESSION[__class__])) myPear::WARNING("Command to be executed:</br><code>$cmd_human_readable</code>");
 	else	                                      b_os::exec($cmd_add,'>>>');
       }else{
-	$this->dbg("Command ignored: $cmd_human_readable",cnf_dev||$this->debug);
+	$this->dbg("Command ignored: $cmd_human_readable",cnf_dev);
       }
       $reply = $new_value;
     }
@@ -433,12 +435,4 @@ class legacy_maildb{
     if (cnf_dev|maildb_RO) myPear::DEBUG(__FUNCTION__."() ".str_replace('#',' ',$cmd));
     return array($cmd,$cmd_human_readable);
   }
-  
-  /*
-   * debug
-   */
-  private function dbg($txt,$forced=False){
-    if (!empty($txt) || $forced) b_debug::xxx($txt,array((bool)($forced|$this->debug),3,'orangeText',$this));
-  }
-  
 }

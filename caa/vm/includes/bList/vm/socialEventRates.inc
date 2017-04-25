@@ -238,7 +238,7 @@ class bList_vm_socialEventRates extends bList_vm{
     case 'pppf': $reply = $N * $p_price + $this->getMemberValue($lm_id,'p_floor'); break;
     default:     $reply =  "unknown p_model '$p_model' ???"; 
     }
-    $this->dbg($reply,!(int)$reply||$this->debug);
+    $this->dbg($reply,!(int)$reply);
     return $reply;
   }
 
