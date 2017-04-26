@@ -159,6 +159,7 @@ Supported arguments:
       $page = "$curl $url";
       $page = `$page 2>/dev/null`;
     }
+    $this->dbg(count(explode("\n",$page)).' lines on output');
     $this->dbg(exiting);
     bTiming()->cpu();
     return $page;

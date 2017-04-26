@@ -64,7 +64,7 @@ class agenda_vm extends agenda{
     bTiming()->cpu(__FUNCTION__);
     set_time_limit(0);
     $this->dbg(starting);
-    myPear::H1("Synchronizing visitors database with Agenda");
+    myPear::H1("Syncing visitors database with Agenda");
 
     // Update list of events
     VM_agendaEvents()->syncEventsInCategories(False);
@@ -107,7 +107,7 @@ class agenda_vm extends agenda{
       foreach ($this->parser($args) as $ev_id=>$program) {
 	$this->dbg(starting);
 	$program['title'] = strip_tags($program['title']);
-	if (count($conferences_to_sync) == 1) myPear::MESSAGE(x('strong',"Syncing ".x('em',$program['title'])));
+	if (count($conferences_to_sync) == 1) myPear::MESSAGE(x('h3',"Syncing ".x('em',$program['title'])));
 
 	$allRegistrants = array();
 
