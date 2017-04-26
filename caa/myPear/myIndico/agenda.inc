@@ -140,6 +140,7 @@ Supported arguments:
   }
   
   function curl($url){
+    bTiming()->cpu(__FUNCTION__);
     $this->dbg(starting);
     if (function_exists ("curl_setopt")) {
       $ch = curl_init();
@@ -159,6 +160,7 @@ Supported arguments:
       $page = `$page 2>/dev/null`;
     }
     $this->dbg(exiting);
+    bTiming()->cpu();
     return $page;
   }
 

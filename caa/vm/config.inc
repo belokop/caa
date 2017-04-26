@@ -5,7 +5,7 @@ set_time_limit(0);
  */
 $releaseDate = '2017-04-26';
 define('VM_MODULE'   , 'vm');
-define('VM_VERSION','5.13.8');
+define('VM_VERSION','5.13.9');
 
 //
 // transition problems...

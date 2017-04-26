@@ -82,6 +82,7 @@ APItabs::define_tabs(array(
 			   'tab_vm_vis_sok'           => 'Search',
 			   'tab_vm_vis_vmatrix'       => 'Who arrives when',
 			   'tab_vm_vis_welcome'       => 'Welcome visitor',
+			   'tab_vm_vis_sync'          => 'Sync with agenda',
 			   ));
 
 /*
@@ -139,6 +140,7 @@ class APImenu_vm extends APImenu_ea{
 						       tab_vm_vis_export,
 						       tab_vm_vis_badges, 
 						       tab_vm_vis_photos,
+						       tab_vm_vis_sync    =>divider,
 						       // tab_vm_vis_welcome, // tab_vm_vis_sok,
 						       ),
 			     divider,
@@ -342,6 +344,10 @@ class APImenu_vm extends APImenu_ea{
 	$reply = !VM::outOfScope() && VM_administrator_here; // VM_observer_here;
 	break;
 
+      case tab_vm_vis_sync:
+	$reply = !VM::outOfScope() && VM_administrator_here && !VM_organizer_here; 
+	break;
+	
       case tab_vm_vis_badges:    
 	// Use Hans's script instead...
 	$reply = False;
@@ -846,21 +852,22 @@ class APImenu_vm extends APImenu_ea{
       
     case tab_vm_vis_sok: 
       myPear_search()->getForm(array('_lookFor' => '',
-				       '_button'  => 'show visits',
-				       '_header'  => 'Search for visitors',
-				       '_after_search'=> 'tab_force=tab_vm_vis_allVisits&av_id=AV_ID',
-				       '_join'    => 'abs_visits on av_id:v_avid',
-				       '_where'   => 'v_avid>0'));
+				     '_button'  => 'show visits',
+				     '_header'  => 'Search for visitors',
+				     '_after_search'=> 'tab_force=tab_vm_vis_allVisits&av_id=AV_ID',
+				     '_join'    => 'abs_visits on av_id:v_avid',
+				     '_where'   => 'v_avid>0'));
       break;
       
     case 'listSearch':
       myPear_search()->getForm();
       break;
       
+    case tab_vm_vis_sync:
     case tab_vm_end_sync:
-       $e_code = VM::$e->getValue('e_code');
-       VM_agenda()->sync(array("conf=$e_code&show_reg=all"));
-      // VM_agenda()->sync(array("conf=".VM::$e->ID."&show_reg=all"));
+      b_cache_file::emptyCache();
+      $e_code = VM::$e->getValue('e_code');
+      VM_agenda()->sync(array("conf=$e_code&show_reg=all"));
       break;
       
     case tab_vm_adm_sync:
@@ -869,7 +876,7 @@ class APImenu_vm extends APImenu_ea{
 		       'bUnit_vm_organizers',
 		       'b_cache_file');
       b_cache_file::emptyCache();
-
+      
       switch(b_btn::confirm()){
       case 'yes':
 	// Extract list of relevant events for the organizers
