@@ -231,7 +231,7 @@ class bForm_Avatar_ea extends bForm_Avatar{
 	$this->dbg("$what=$currentItem_compressed");
 	if ($this->getValue($what,1) != $currentItem_compressed){
 	  $this->getValue_reset_forced($what,$currentItem_compressed);
-	  myPear::MESSAGE_add($this->name()." - set current ".self::$av2er[$what]['d']." '$currentItem_compressed'");
+	  // myPear::MESSAGE_add($this->name()." - set current ".self::$av2er[$what]['d']." '$currentItem_compressed'");
 	}
 	break;
 	

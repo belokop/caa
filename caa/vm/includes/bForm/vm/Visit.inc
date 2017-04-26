@@ -2005,8 +2005,8 @@ class bForm_vm_Visit extends bForm_vm {
       break;
 
     default:
-      b_debug::xxx("??? status=".var_export($status,True));
-      b_debug::print_r($buffer);
+      b_debug::xxx($msg="??? unexpected status=".var_export($status,True));
+      b_debug::print_r($buffer,$msg);
       //      b_debug::internalError("??? status=".var_export($status,True));
     case STATUS_PENDING:
       $reply = STATUS_PENDING;

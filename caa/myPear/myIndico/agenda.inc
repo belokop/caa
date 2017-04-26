@@ -51,12 +51,13 @@ Supported arguments:
    *
    */
   function getCategoryInfo($category='270',$args='') {
-    if ($this->debug) print "\n================================= \$agenda->getCategoryInfo('$category','$args')\n\n";
-    $xml   = simplexml_load_string(`curl http://agenda.albanova.se/tools/getConf.py?catinfo=270`);
-				   //
-				   $json  = json_encode($xml);
-				   $array = json_decode($json,TRUE);
-				   return $array;
+    $this->dbg('=================================================');
+    $url = sprintf("%s%s?catinfo=%s",$this->agenda_url,$this->tools_url,270);
+    //    $xml   = simplexml_load_string(`curl http://agenda.albanova.se/tools/getConf.py?catinfo=270`);
+    $xml   = simplexml_load_string($this->curl($url)); 
+    $json  = json_encode($xml);
+    $array = json_decode($json,TRUE);
+    return $array;
   }
 
   /*
@@ -85,6 +86,7 @@ Supported arguments:
   }
 
  function parser($args){
+   $this->dbg();
    if (defined('cnf_CLI') && !cnf_CLI)  set_time_limit(0);
    $structues = 'registrant|contribution';
    $reply  = $bufer = array();
@@ -138,6 +140,7 @@ Supported arguments:
   }
   
   function curl($url){
+    $this->dbg(starting);
     if (function_exists ("curl_setopt")) {
       $ch = curl_init();
       curl_setopt($ch, CURLOPT_URL, $url);
@@ -155,9 +158,18 @@ Supported arguments:
       $page = "$curl $url";
       $page = `$page 2>/dev/null`;
     }
+    $this->dbg(exiting);
     return $page;
   }
 
   function __toString() { return get_class($this); }
 
+  protected function dbg($o='',$t1='',$t2=''){
+    if (is_string($o)){
+      b_debug::xxx($o,array(3,'fuchsiaText',(bool)(cnf_dev||$this->debug),$this));
+    }else{
+      b_debug::xxx($o->name().' '.b_time::period($o->getValue($t1,1),$o->getValue($t2,1)),
+		   array('T',3, cnf_dev||$this->debug));
+    }
+  }
 }

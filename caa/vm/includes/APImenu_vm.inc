@@ -36,7 +36,7 @@ APItabs::define_tabs(array(
 			   'tab_vm_adm_agendaList'    => 'Edit agenda list',
 			   'tab_vm_adm_dup'           => 'Duplicate avatars',
 			   'tab_vm_adm_fixClashes'    => 'Fix clashes',
-			   'tab_vm_adm_sync'          => 'Agenda sync',
+			   'tab_vm_adm_sync'          => 'Sync all events with Agenda',
 
 			   'tab_vm_end'               => 'Events to endorse',
 			   'tab_vm_end_amatrix'       => 'Who lives where',
@@ -45,6 +45,7 @@ APItabs::define_tabs(array(
 			   'tab_vm_end_omatrix'       => 'Who sits where Matrix',
 			   'tab_vm_end_vlist'         => 'A-Z applicant lists',
 			   'tab_vm_end_vmatrix'       => 'Who arrives when',
+			   'tab_vm_end_sync'          => 'Sync with agenda',
 
 			   'tab_vm_events'            => myOrg_nameS.' events',
 			   'tab_vm_events_see'        => myOrg_nameS.' events',
@@ -147,6 +148,7 @@ class APImenu_vm extends APImenu_ea{
 						       tab_vm_end_vmatrix,
 						       tab_vm_end_omatrix,
 						       tab_vm_end_amatrix,
+						       tab_vm_end_sync  =>divider,
 						       ),
 			     divider,
 			     tab_vm_ogz       => array(tab_vm_ogz_vlist,
@@ -398,6 +400,7 @@ class APImenu_vm extends APImenu_ea{
       case tab_vm_end_vmatrix:
       case tab_vm_end_amatrix:
       case tab_vm_end_omatrix:
+      case tab_vm_end_sync:
 	if ($tab == tab_vm_end_omatrix) $policy = VM_E_provideOffice;
 	$reply = 
 	  is_object(bAuth::$av) &&
@@ -852,6 +855,12 @@ class APImenu_vm extends APImenu_ea{
       
     case 'listSearch':
       myPear_search()->getForm();
+      break;
+      
+    case tab_vm_end_sync:
+       $e_code = VM::$e->getValue('e_code');
+       VM_agenda()->sync(array("conf=$e_code&show_reg=all"));
+      // VM_agenda()->sync(array("conf=".VM::$e->ID."&show_reg=all"));
       break;
       
     case tab_vm_adm_sync:

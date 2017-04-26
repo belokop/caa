@@ -62,6 +62,7 @@ class agenda_vm extends agenda{
     if ($alreadySyncing++) return;
 
     bTiming()->cpu(__FUNCTION__);
+    set_time_limit(0);
     $this->dbg(starting);
     myPear::H1("Synchronizing visitors database with Agenda");
 
@@ -106,6 +107,8 @@ class agenda_vm extends agenda{
       foreach ($this->parser($args) as $ev_id=>$program) {
 	$this->dbg(starting);
 	$program['title'] = strip_tags($program['title']);
+	if (count($conferences_to_sync) == 1) myPear::MESSAGE(x('strong',"Syncing ".x('em',$program['title'])));
+
 	$allRegistrants = array();
 
 	// The applications deadline should be at least a month before the event starts 
@@ -136,7 +139,7 @@ class agenda_vm extends agenda{
 	// Get & update the time of the last sync
 	$lastSync = b_vars::set('agendaSync_'.$this->e->ID,time(),VM_MODULE); 
 	if (empty($lastSync)) $lastSync = $this->r_start;
-	b_debug::xxx("Previous sync ".date('Y-m-d H:i',$lastSync),array(cnf_dev,2,'redText'));;
+	$this->dbg("Previous sync ".date('Y-m-d H:i',$lastSync));
 	
 	// Update event organizers unit
 	$allOrganizers = array();
@@ -474,13 +477,4 @@ class agenda_vm extends agenda{
      }
      return $reply; 
    }
-
-   function dbg($o,$t1='',$t2=''){
-     if (is_string($o)){
-       b_debug::xxx($o,array(3,'fuchsiaText',(bool)(cnf_dev||$this->debug),$this));
-     }else{
-       b_debug::xxx($o->name().' '.b_time::period($o->getValue($t1,1),$o->getValue($t2,1)),
-		    array('T',3, cnf_dev||$this->debug));
-     }  
-   }  
 }
