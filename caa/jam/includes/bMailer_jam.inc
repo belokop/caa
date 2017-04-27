@@ -2,7 +2,7 @@
 locateAndInclude('bMailer');
 class bMailer_jam extends bMailer{
 
-  var $mailID = 'Job Application Manager';
+  protected $mailID = 'Job Application Manager';
   private $ap = Null;
   
   public function send($to=nobody_at_nowhere,

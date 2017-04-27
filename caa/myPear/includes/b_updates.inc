@@ -80,6 +80,7 @@ function myPear_updates(){
     if (True){ // Fixes for the version "Easter 2017"
       myPear_update34();
       myPear_update35();
+      myPear_update36();
     }
 
     if (!@$_SESSION['updates'][__METHOD__]++){
@@ -108,6 +109,9 @@ function myPear_updates(){
   }
 }
 
+// watch the bug...
+myPear_update34(False);
+myPear_update35();
 
 /*
  *    ALTER TABLE  `tableName` CHANGE  `Name`  `Name` VARCHAR( 255 ) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL
@@ -134,17 +138,29 @@ function myPear_set_collation(){
   }
 }
 
-function myPear_update35(){
+function myPear_update36(){
   if (!myPear_db()->columnExists('av_office','zzz_avatars')){
     myPear_db()->qquery("ALTER TABLE `zzz_avatars` ADD `av_office` VARCHAR( 64 ) NULL DEFAULT NULL AFTER `av_phone`",True); 
   }
 }
 
+function myPear_update35(){
+  // Change the approach
+  myPear_db()->qquery("DELETE FROM zzz_variables WHERE var_name = 'taskManager_counter'",True);
+
+  // Look for problems...  
+  $qq=myPear_db()->qquery("SELECT COUNT(*),var_name FROM zzz_variables GROUP BY var_name HAVING COUNT(*)>1",True);
+  while($rr = myPear_db()->next_record($qq)){
+    $q=myPear_db()->qquery("SELECT * FROM zzz_variables WHERE var_name = '$rr[var_name]'",True);
+    while($r = myPear_db()->next_record($q)){
+      b_debug::print_r($r);
+    }
+  }
+}
 
 /*
  * Tentative problem
  */
-myPear_update34(False);
 function myPear_update34($delete=True){
   $q = myPear_db()->qquery("SELECT lm_id,lm_timestamp FROM zzz_list_members LEFT JOIN zzz_lists ON lm_lid = l_id ".
 			   " WHERE ((lm_key IS NULL) AND (lm_status IS NULL)) AND ((lm_value IS NULL) OR (l_class = 'bList_eaEmpRecords')) ".
@@ -543,7 +559,7 @@ function myPear_update26(){
     }
     
     if (!myPear_db()->columnExists('org_name_short','zzz_organizations')){
-      myPear_db()->qquery("ALTER TABLE `zzz_organizations` ADD `org_name_short` VARCHAR( 32 ) NOT NULL AFTER `org_name`",1);
+      myPear_db()->qquery("ALTER TABLE `zzz_organizations` ADD `org_name_short` VARCHAR(32) NOT NULL AFTER `org_name`",1);
       myPear_db()->reset_cache();
       foreach(array('an'     => 'AlbaNova',
 		    'nordita'=> 'Nordita',

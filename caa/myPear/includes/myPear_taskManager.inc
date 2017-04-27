@@ -30,12 +30,12 @@ class myPear_taskManager{
     }
 
     // Perform "delete" action, mark task as completed
-    if ($task_id = @$_REQUEST['tm_delete_once']){
-      $task = b_vars::get($task_id,$module = $_REQUEST['tm_m_once']);
+    if ($taskID = @$_REQUEST['tm_delete_once']){
+      $task = b_vars::get($taskID,$module = $_REQUEST['tm_m_once']);
       if (empty($task['end'])){
-	$this->set($task_id,$task,array('cmt'=>'Removed','end'=>time()));
+	$this->set($taskID,$task,array('cmt'=>'Removed','end'=>time()));
       }else{
-	b_vars::delete($task_id,$module);
+	b_vars::delete($taskID,$module);
       }
       myPear_logs()->syslog("Explicitly remove ".$this->doing($task));
       myPear::WARNING("Removing ".$this->doing($task));
@@ -46,7 +46,7 @@ class myPear_taskManager{
    * Wrapper around b_vars::set 
    * Split the data between 2 fields - var_value (method arguments) & var_value2 (all the rest)
    */
-  private function set($task_id,$value,$value2,$module=Null){
+  private function set($taskID,$value,$value2,$module=Null){
     static $to_var_value = array('class',
 				 'function',
 				 'args',
@@ -57,7 +57,7 @@ class myPear_taskManager{
       if (in_array($k,$to_var_value)) $var_value[$k] = $v;
       else                            $var_value2[$k]= $v;
     }
-    b_vars::set($task_id,$var_value,$module,$var_value2);
+    b_vars::set($taskID,$var_value,$module,$var_value2);
   }
 
   /*
@@ -125,8 +125,8 @@ class myPear_taskManager{
 	  $task['_function'] = $this->doing($task);
 	  $task['n'] = x('tt',(int)str_replace(taskManager_ID,'',$task['var_name']));
 	  $task['_module'] = ($module == $module_was ? '' : x('strong',$module));
-	  $task['_start']  = date('Y-m-d H:i',$task['start']);
-	  if (!empty($task['cmt'])) $task['_cmt'] = x('strong',b_fmt::redText($task['cmt']));
+	  if (!empty($task['start'])) $task['_start']  = date('Y-m-d H:i',$task['start']);
+	  if (!empty($task['cmt']))   $task['_cmt'] = x('strong',b_fmt::redText($task['cmt']));
 	  if ( empty($task['end'])){
 	    $n_waiting++;
 	    $t->extraTD[] = b_btn::submit_icon('i-bullet_go',
@@ -147,9 +147,11 @@ class myPear_taskManager{
 	    continue;
 	  }else{
 	    $n_ended++;
-	    $task['_end']  = x('em','in '.b_time::delta(b_time::txt2unix($task['start']),$task['end']));
+	    $task['_end']  = (empty($task['start'])
+			      ? x('em',date('Y-m-d H:i:s',$task['end']))
+			      : x('em','in '.b_time::delta(b_time::txt2unix($task['start']),$task['end'])));
 	  }
-
+	  
 	  if ($_av_dev = @$task['av_dev']){
 	    $av = myPear::getInstance_new('bForm_Avatar',$_av_dev,'fatal');
 	    $task['_av_dev'] = $av->getEmail();
@@ -179,8 +181,9 @@ class myPear_taskManager{
     $_function = array();
     if (!empty($task['class']))    $_function[] = $task['class'].'()->';
     if (!empty($task['function'])) $_function[] = $task['function'];
-    $_function[] = x('(',implode(',',@$task['args']));
+    if (is_array(@$task['args']))  $_function[] = x('(',implode(',',$task['args']));
     $reply = implode('',$_function);
+    b_debug::print_r($task);
     return ($strong
 	    ? x('strong',$reply)
 	    :            $reply);
@@ -204,9 +207,6 @@ class myPear_taskManager{
     }else{
       // get and update the task counter
       myPear_db()->transaction('start');
-      $task_counter = b_vars::get('taskManager_counter',myPear_MODULE);
-      if (!myPear::is_int($task_counter)) $task_counter = 0;
-      b_vars::set('taskManager_counter',++$task_counter,myPear_MODULE);
       
       // Store the task description as a variable
       // Take care about "login as other user", used for debugging
@@ -216,12 +216,13 @@ class myPear_taskManager{
 	myPear::WARNING(sprintf('Set <em>%s</em>  as the task submitter',bAuth::$av_authenticated->name()));
       }
       
-      $this->set($this->task_id($task_counter),$extras,$taskManager_args);
+      // Get the new task name
+      $this->set($this->get_taskID(),$extras,$taskManager_args);
       myPear_logs()->add('TM_add','',$this->doing($taskManager_args,False),myPear_cronjob()->ID,b_reg::$current_module,False);
       myPear_db()->transaction('end');
       // Syslog the request
       myPear_logs()->syslog(implode(' ',array(__METHOD__,
-					      $this->task_id($task_counter,True),
+					      $this->get_taskID(False),
 					      $this->doing($taskManager_args,False))));
       $this->dbg($this->doing($taskManager_args));
     }
@@ -229,13 +230,21 @@ class myPear_taskManager{
   }
   
   /*
-   *
+   * Create OR return a short form of the task name
    */
-  private function task_id($task_counter,$short=False){
-    $task_id = (is_numeric($task_counter)
-		? sprintf("%s%04d",($short ? 'task' :  taskManager_ID),$task_counter)
-		: sprintf("%s%04d",'task',preg_replace('/[a-zA-Z_-]*/','',$task_counter)));
-    return $task_id;
+  private $taskID = Null;
+  private function get_taskID($new_ID=True,$task_name=''){
+    if ($new_ID){
+      $n = 0;
+      while(b_vars::isValueKnown($this->taskID=sprintf("%s%04d",taskManager_ID,$n))) { $n++; }
+      $reply = $this->taskID;
+    }else{
+      if (empty($task_name)) $task_name = $this->taskID;
+      if (empty($task_name)) b_debug::internalError('Missing "$task_name" argument');
+      $reply = str_replace(taskManager_ID,'task_',$task_name);
+    }
+    $this->dbg($reply,cnf_dev);
+    return $reply;
   }
 
   /*
@@ -342,7 +351,7 @@ class myPear_taskManager{
 	
 	if (($task_already_completed = @$task['end']) || empty($task)){
 	  if (empty($task_already_completed)) $task_already_completed = time();
-	  $this->dbg(sprintf("%s ended %s",$this->task_id($task['var_name']),b_time::delta($task_already_completed,time())));
+	  $this->dbg(sprintf("%s ended %s",$this->get_taskID(False,$task['var_name']),b_time::delta($task_already_completed,time())));
 	}else{
 	  $args = (empty($task['args'])
 		   ? array()
@@ -390,7 +399,7 @@ class myPear_taskManager{
 	    // Log the task execution	
 	    myPear_logs()->add('TM_exec','',$this->doing($task,False),myPear_cronjob()->ID,b_reg::$current_module,False);
 	    $log_info=implode(' ',array(__METHOD__,
-					$this->task_id($task['var_name']),
+					$this->get_taskID(False,$task['var_name']),
 					$this->doing($task)));
 	    myPear_logs()->syslog(strip_tags($log_info));
 	    $info[] = x('p',$log_info);

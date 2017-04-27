@@ -247,12 +247,12 @@ class bList_vm_cotenants extends bList_vm{
       $this->names = array_unique($this->names);
       $leases = array_unique($leases);
       sort($leases);
-      $member_ID = $this->updateMember(array('lm_key'   => date('Y-m-d',$lm_key),
-					     'lm_value' => date('Y-m-d',$lm_value),
-					     'leases'   => join(',',$leases)),
-				       $lm_id); 
+      $memberID = $this->updateMember(array('lm_key'   => date('Y-m-d',$lm_key),
+					    'lm_value' => date('Y-m-d',$lm_value),
+					    'leases'   => join(',',$leases)),
+				      $lm_id); 
       if (is_numeric($lm_id)) $this->message_addMember();
-      if (cnf_dev)    $this->dump($member_ID);
+      if (cnf_dev)    $this->dump($memberID);
     }
   }
 

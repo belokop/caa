@@ -27,9 +27,9 @@ if (locateAndInclude(array('Mail',
     var $signature     = '';
     var $from          = '';
     var $cc            = '';
-    var $mailID        = 'web application';
     var $object        = Null;
     var $isMailAutomatic = True;
+    protected $mailID      = 'web application';
     private   $smtp_factory= array();
     protected $attachments = array();
     protected $no_preview  = False;

@@ -1037,8 +1037,7 @@ class bForm extends myPear_getValue{
     $options = array();
     $bList->getMembers_where = $getMembers_where;
     foreach ($bList->getMembers() as $id=>$r){
-    //$options[$r['lm_id']] = bText::_($r[$column],True,$r['lm_locale']);
-      $options[$r['lm_id']] = $r[$column];
+      $options[$r['lm_id']] = $r[$column]; // bText::_($r[$column],True,$r['lm_locale']);
     }
     asort($options);
     $this->getFormRow($name, $this->selectMenu_exec($name,$options));

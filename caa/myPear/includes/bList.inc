@@ -920,7 +920,8 @@ class bList extends myPear_getValue{
     if (cnf_dev && !empty($get2post)) b_debug::print_r($get2post,'get2post');
  
     // Load the list member declared 
-    if ($id = $this->getValue($this->TABLEID_member,True,'isMBE')) $this->getMember($id,True);
+    $id = $this->getValue($this->TABLEID_member,True,'isMBE');
+    if ((int)$id) $this->getMember($id,True);
 
     if (myPear::is_empty($rr=$r)) $rr = array($this->TABLEID       =>  $this->ID,
 					      $this->TABLEID_member=> @$this->member_ID);
@@ -1643,7 +1644,7 @@ class bList extends myPear_getValue{
     }else{
       //      b_debug::internalError("Empty \"lm_id\" argument");
     }
-    
+
     $reply = ($this->myPost_bList() && isset($_REQUEST[$name])
 	      ? $_REQUEST[$name]
 	      : @$this->formDB_member[$name]);

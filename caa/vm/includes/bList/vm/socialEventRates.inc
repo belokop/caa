@@ -338,8 +338,9 @@ class bList_vm_socialEventRates extends bList_vm{
     if (empty($this->f->formDB['p_model'])) $this->f->formDB['p_model'] = 'ppp';
     $this->f->isMONEY['lm_value']= True;
     $this->f->isMONEY['p_floor'] = True;
-    $lm_id = $this->getValue('lm_id');
 
+    $lm_id = $this->getValue('lm_id');
+    $this->f->formDB['lm_id'] = $lm_id;
     if ($this->isCompulsory($lm_id))  $this->f->isRO['p_model'] = True;
 
     foreach(array_keys($this->list_quering) as $item){
@@ -364,7 +365,6 @@ class bList_vm_socialEventRates extends bList_vm{
         $this->f->textField($item);
       }
     }
-    $this->f->textHidden('lm_id',$this->member_ID);
     $this->f->closeForm();
   }
   

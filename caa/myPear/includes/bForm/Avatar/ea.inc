@@ -456,9 +456,10 @@ class bForm_Avatar_ea extends bForm_Avatar{
    */
   private $dejaVu_adjust_status = 0;
   function adjust_status($timestamp=Null){
-    if ($this->dejaVu_adjust_status++) return;
+    if ( $this->dejaVu_adjust_status++) return;
+    if (!$this->hook_employment()) return;
     if (empty($timestamp)) $timestamp = time();
-
+    
     // Sanity, convert "visiting major position" to "visiting activity", 
     // set the start/retire date, etc.
     $this->hook_employment()->sortArgs = ' ORDER BY '.self::$av2er['e_end']['k'].' ASC ';
@@ -481,7 +482,7 @@ class bForm_Avatar_ea extends bForm_Avatar{
       
       // Change the record type if is was wrongly entered
       if ($rec_type != $r['rec_type']) $this->hook_employment()->updateMember(array('rec_type'=>$rec_type),$r['lm_id']);
-
+      
       // Set the retirement date as the latest date of any affiliation with the organization
       if ($e_start = @$r['lm_key']){
 	$e_start = b_time::txt2unix($e_start);
@@ -494,6 +495,7 @@ class bForm_Avatar_ea extends bForm_Avatar{
 	$day9 = max($day9 , $e_end);
       }
     }
+
     if (isset($day1) && isset($day9)){
       // $this->dbg(b_time::period($day1,$day9),cnf_dev);
       myOrg()->eaMembers()->updateMember(array('day1'=>$day1,'day9'=>$day9),array('um_avid'=>$this->ID));

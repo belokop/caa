@@ -45,7 +45,7 @@ APItabs::define_tabs(array(
 			   'tab_vm_end_omatrix'       => 'Who sits where Matrix',
 			   'tab_vm_end_vlist'         => 'A-Z applicant lists',
 			   'tab_vm_end_vmatrix'       => 'Who arrives when',
-			   'tab_vm_end_sync'          => 'Sync with agenda',
+			   'tab_vm_end_sync'          => 'Sync me with Agenda',
 
 			   'tab_vm_events'            => myOrg_nameS.' events',
 			   'tab_vm_events_see'        => myOrg_nameS.' events',
@@ -82,7 +82,7 @@ APItabs::define_tabs(array(
 			   'tab_vm_vis_sok'           => 'Search',
 			   'tab_vm_vis_vmatrix'       => 'Who arrives when',
 			   'tab_vm_vis_welcome'       => 'Welcome visitor',
-			   'tab_vm_vis_sync'          => 'Sync with agenda',
+			   'tab_vm_vis_sync'          => 'Sync me with Agenda',
 			   ));
 
 /*

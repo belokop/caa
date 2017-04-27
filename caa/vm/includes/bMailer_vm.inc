@@ -77,12 +77,12 @@ function VM_mailer_render($what,$args=array(),$preview=False){
 locateAndInclude('bMailer');
 class bMailer_vm extends bMailer{
 
-  var $mailID = "Visits Manager API";
+  public static $wrapper = 'VM_mailer'; 
+  protected $mailID = "Visits Manager API";
+
   var $isMailAutomatic = False;
   var $visit  = Null;
   var $debug  = cnf_dev;
-
-  public static $wrapper = 'VM_mailer'; 
   
   private $rec    = array();
 

@@ -4,8 +4,8 @@ locateAndInclude('APImenu_prp');
 
 class bMailer_prp extends bMailer{
   
+  protected $mailID = "Preprints Database";
   var $debug  = False;
-  var $mailID = "Visits Manager API";
   var $isMailAutomatic = False;
   private $prp_formDB = array();
   
@@ -78,8 +78,9 @@ If you want to publish ONLY at '.myOrg_name.' you can upload your paper now ("ed
     while ( $formDB = myPear_db()->next_record($q)){
       if ((@$formDB['log_type'] !== $action) || 
 	  ((int)@$formDB['log_time'] < time()-PRP_remindingPeriod)){
-	myPear_logs()->add($action,$formDB['prp_id']);
-	$this->censor($action,$formDB);
+	$preprint = new bForm_prp($formDB['prp_id']);
+	myPear_logs()->add($action,$preprint->ID);
+	$this->censor($action,$preprint);
       }
     }
   }
