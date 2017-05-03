@@ -1,13 +1,13 @@
 <?php
 
-$releaseDate = '2017-04-27';
+$releaseDate = '2017-05-03';
 define('PRP_MODULE'   , 'prp');
-define('PRP_VERSION','5.2.4');
+define('PRP_VERSION','5.2.5');
 
 define('PRP_OK'          , 'ok');
 define('PRP_CANCELED'    , 'canceled');
 define('PRP_RESERVED'    , 'reserved');
-define('PRP_TEXT_reserve', 'register new preprint');
+define('PRP_TEXT_reserve', 'reserve new preprint number');
 
 define('RANK_prp_submitter' , 10);
 define('RANK_prp_censor' , 12);
@@ -24,7 +24,7 @@ b_reg::add_module(PRP_MODULE,
 			'd' =>'Preprints database',  
 			'i' =>'bb-book',
 			'c' =>__FILE__,
-			'l' =>array('register','accept','cancel'),
+			'l' =>array('reserve','accept','cancel'),
 			
 			'classes'=>array('bForm_prp'       => array('t'=>'prp_list',
 								    'i'=>'prp_id'),

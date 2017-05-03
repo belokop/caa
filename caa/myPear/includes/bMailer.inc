@@ -23,7 +23,7 @@ if (locateAndInclude(array('Mail',
     var $bcc           = array(bMailer_dev_address);
 
     var $template      = False;
-    var $debug         = False;
+    var $debug         = cnf_dev;
     var $signature     = '';
     var $from          = '';
     var $cc            = '';
@@ -176,21 +176,26 @@ if (locateAndInclude(array('Mail',
 				"Content-Type: text/plain; charset=\"$charset\"",
 				"Content-Transfer-Encoding: 7bit",'')
 			: array());
-	if (cnf_dev||cnf_localhost)$messageBody=array_merge($messageBody,array("--- DISCLAIMER",
-								      "--- This E-mail is sent by the test version of the ",
-								      "--- '$this->mailID' software and should be ignored ",
-								      "--- unless you participate in the debugging and expect it.",
-								      "--- Sorry if you got it my mistake...",
-								      "--- ".b_fmt::joinX(', ',$addressLine,':'),
-							              ''));
-	elseif (cnf_demo)          $messageBody=array_merge($messageBody,array("--- DISCLAIMER",
+	if (cnf_dev||cnf_localhost){
+          $callStack = debug_backtrace(false);
+	  $messageBody=array_merge($messageBody,array("--- DISCLAIMER",
+						      "--- This E-mail is sent by the test version of the ",
+						      "--- '$this->mailID' software and should be ignored ",
+						      "--- unless you participate in the debugging and expect it.",
+						      "--- Sorry if you got it my mistake...",
+						      "--- ".b_fmt::joinX(', ',$addressLine,':'),
+						      "--- Caller: ".sprintf("%s(%s)",$callStack[1]['function'],join(', ',$callStack[1]['args'])),
+						      ''));
+	}elseif (cnf_demo){
+          $messageBody=array_merge($messageBody,array("--- DISCLAIMER",
 								      "--- This E-mail is sent to You by the trial version of the ",
-								      "--- '$this->mailID', everything here is just a test.",
-								      "--- However, we need your help in finalizing the software,",
-								      "--- hence we encourage you to 'click every button' :-)",
-								      "--- Please don't hesitate.",
-							              "--- ".b_fmt::joinX(', ',$addressLine,':'),
-								      ''));
+						      "--- '$this->mailID', everything here is just a test.",
+						      "--- However, we need your help in finalizing the software,",
+						      "--- hence we encourage you to 'click every button' :-)",
+						      "--- Please don't hesitate.",
+						      "--- ".b_fmt::joinX(', ',$addressLine,':'),
+						      ''));
+	}
 	
 	// Massage packPWD arguments
 	if (!isset($packPWD_args[0])) $packPWD_args[0] = Null;

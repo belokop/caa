@@ -5,8 +5,6 @@ locateAndInclude('APImenu_prp');
 class bMailer_prp extends bMailer{
   
   protected $mailID = "Preprints Database";
-  var $debug  = False;
-  var $isMailAutomatic = False;
   private $prp_formDB = array();
   
   public function __construct(){
@@ -15,45 +13,59 @@ class bMailer_prp extends bMailer{
   }
   
   /*
-   * Welcome mail to the accept a new preprint registration
+   * Welcome mail to the accept a new preprint reservation
    */
-  function submitter($action='Reserved',$preprint){
+  function informSubmitter($action='Reserved',$preprint){
     if (cnf_CLI)    return;
+    $this->dbg();
     if ($preprint instanceof bForm) $this->prp_formDB = $preprint->formDB;
     elseif(!empty($preprint))       $this->prp_formDB = $preprint;
     $owner = myPear::getInstance('bForm_Avatar',$this->prp_formDB['prp_avid']);
-    $this->send($this->packPWD_axi(),
-		$owner->getEmail(),
-		'Preprint number '.bForm_prp::_serial($this->prp_formDB).' is reserved for you',
-		$this->prp_info($action).'
+    switch($action){
+    case 'Reserved':
+      $login = $this->packPWD_axi(bAuth::$av);
+      $subject = 'Preprint number '.bForm_prp::_serial($this->prp_formDB).' is reserved for you';
+      $msg = "
 
 When you have published this preprint in a Public Archive (i.e. you know the URL to the abstract) please return to
 {login_url}
 and complete the form.
 
-You can correct eventual typos at any time (button "edit"), you may also cancel (button "delete") the preprint reservation.
+You can correct eventual typos at any time (button \"edit\"), you may also cancel (button \"delete\") the preprint reservation.\n"
+	// . "If you want to publish ONLY at '.myOrg_name.' you can upload your paper now (\"edit\" -> \"local archive\") from the same link.\n"
+	;
+      break;
 
-If you want to publish ONLY at '.myOrg_name.' you can upload your paper now ("edit" -> "local archive") from the same link.
-
-',
+    default:
+      $login = '';
+      $subject = 'Preprint number '.bForm_prp::_serial($this->prp_formDB).' is '.strToLower($action);
+      $msg = "";
+      break;
+    }
+    // Send the mail
+    $this->send($login,
+		$owner->getEmail(),
+		$subject,
+		$this->prp_info($action)."\n$msg\n",
 		$syslog_thisMail=False,
 		$no_preview =True);
   }
-
+  
   /*
    * Inform the censors about new preprints
    */
-  function censor($action,$preprint){
+  function informCensor($action,$preprint){
     if (cnf_CLI)    return;
+    $this->dbg();
     $owner = myPear::getInstance_new('bForm_Avatar',$preprint->getValue('prp_avid'));
     foreach(PRP_censors()->getUnitMemberIDs() as $av_id){
       $av = myPear::getInstance('bForm_Avatar',$av_id);
-      $this->send($this->packPWD_axi($av),
-		  $av->getEmail(),
-		  bForm_prp::_serial($preprint->formDB)." $action for ".b_fmt::unescape($owner->fmtName('fl')),
-		  $this->prp_info($action,$av,$preprint->formDB),
-		  $syslog_thisMail=False,
-		  $no_preview =True);
+      if ($av->ID != $owner->ID) $this->send($this->packPWD_axi($av),
+					     $av->getEmail(),
+					     bForm_prp::_serial($preprint->formDB)." $action for ".b_fmt::unescape($owner->fmtName('fl')),
+					     $this->prp_info($action,$av,$preprint->formDB),
+					     $syslog_thisMail=False,
+					     $no_preview =True);
     }
   }
 
@@ -61,11 +73,12 @@ If you want to publish ONLY at '.myOrg_name.' you can upload your paper now ("ed
    * Remind the censor to approve pending endorsements
    */
   function reminder(){
-    if (cnf_CLI)    return;
+    $reply = True;
     
+    $this->dbg();
     if (!myPear_taskManager()->exec_request){
-      if (!@$_SESSION[__METHOD__]++) myPear_taskManager()->addTask(get_class($this),__function__);
-      return;
+      myPear_taskManager()->addTask(get_class($this),__function__);
+      return True;
     }
     
     $action = 'reminder';
@@ -75,28 +88,30 @@ If you want to publish ONLY at '.myOrg_name.' you can upload your paper now ("ed
 					       "prp_status = '".PRP_RESERVED."'",
 					       "prp_orgid = ".myOrg_ID)).
 			    "  GROUP BY prp_id ORDER BY log_time DESC");
-    while ( $formDB = myPear_db()->next_record($q)){
-      if ((@$formDB['log_type'] !== $action) || 
-	  ((int)@$formDB['log_time'] < time()-PRP_remindingPeriod)){
-	$preprint = new bForm_prp($formDB['prp_id']);
+    while ($r = myPear_db()->next_record($q)){
+      if ((@$r['log_type'] !== $action) || 
+	  ((int)@$r['log_time'] < time()-PRP_remindingPeriod)){
+	$preprint = new bForm_prp($r['prp_id']);
 	myPear_logs()->add($action,$preprint->ID);
-	$this->censor($action,$preprint);
+	$reply = $this->informCensor($action,$preprint);
       }
     }
+    return $reply;
   }
   
   /*
    *
    */
-  private function packPWD_axi($av=Null){
-    if (empty($av)) $av = bAuth::$av; 
+  private function packPWD_axi($av,$tab=tab_prp_update){
     return array($av,
 		 array('q'=>join('/',array(PRP_MODULE,
-					   APImenu::tab_code(tab_prp_mng),
-					   APImenu::tab_code(tab_prp_update)))),
+					   APImenu::tab_code($tab)))),
 		 False);
   }
   
+  /*
+   *
+   */
   private function prp_info($action,$av=Null,$formDB=array()){
 
     $this->prp_formDB = array_merge($this->prp_formDB,$formDB);
@@ -109,7 +124,7 @@ If you want to publish ONLY at '.myOrg_name.' you can upload your paper now ("ed
       
     default:
       $tit = "Preprint $action ".b_time::long_date($this->prp_formDB["prp_tm"]);
-      if (bAuth::$av) $act = "$action by ".b_fmt::unescape(bAuth::$av->fmtName('fl'));
+      if (bAuth::$av) $act = "$action by: ".b_fmt::unescape(bAuth::$av->fmtName('fl'));
     }
     $owner = myPear::getInstance('bForm_Avatar',$this->prp_formDB['prp_avid']);
     return join("\n",array($tit,

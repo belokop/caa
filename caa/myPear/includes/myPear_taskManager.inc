@@ -71,14 +71,16 @@ class myPear_taskManager{
     }else{
       $header=array('n'         =>'#',
 		    '_cmt'      => ' ',
-		    // '_module'   => 'module',
+		    '_module'   => 'mod',
 		    '_function' => 'task',
 		    '_av'       => ' ',
 		    '_start'    => 'start',
 		    '_end'      => 'end',
 		    '_av_dev'   => '',
 		    );
-      // if (!cnf_dev && !cnf_demo && !YBhere) unset($header['_av_dev']);
+      if (!cnf_dev && !cnf_demo && !YBhere) unset($header['_av_dev'],
+						  $header['_module']
+						  );
 
       // Print message if the lock is active
       $this->lock_isActive($release_if_deadlock=False);
@@ -121,9 +123,9 @@ class myPear_taskManager{
 	  if ($class = myPear::getClassFromID(@$task['args'][0],'class')){
 	    $task['_av'] = $class->name();
 	  }
-	  
+
+	  $task['n'] = x('h6',(int)str_replace(taskManager_ID,'',$task['var_name']));
 	  $task['_function'] = $this->doing($task);
-	  $task['n'] = x('tt',(int)str_replace(taskManager_ID,'',$task['var_name']));
 	  $task['_module'] = ($module == $module_was ? '' : x('strong',$module));
 	  if (!empty($task['start'])) $task['_start']  = date('Y-m-d H:i',$task['start']);
 	  if (!empty($task['cmt']))   $task['_cmt'] = x('strong',b_fmt::redText($task['cmt']));
@@ -183,7 +185,6 @@ class myPear_taskManager{
     if (!empty($task['function'])) $_function[] = $task['function'];
     if (is_array(@$task['args']))  $_function[] = x('(',implode(',',$task['args']));
     $reply = implode('',$_function);
-    b_debug::print_r($task);
     return ($strong
 	    ? x('strong',$reply)
 	    :            $reply);
@@ -217,12 +218,12 @@ class myPear_taskManager{
       }
       
       // Get the new task name
-      $this->set($this->get_taskID(),$extras,$taskManager_args);
+      $this->set($this->get_var_name(),$extras,$taskManager_args);
       myPear_logs()->add('TM_add','',$this->doing($taskManager_args,False),myPear_cronjob()->ID,b_reg::$current_module,False);
       myPear_db()->transaction('end');
       // Syslog the request
       myPear_logs()->syslog(implode(' ',array(__METHOD__,
-					      $this->get_taskID(False),
+					      $this->get_var_name(False),
 					      $this->doing($taskManager_args,False))));
       $this->dbg($this->doing($taskManager_args));
     }
@@ -233,10 +234,10 @@ class myPear_taskManager{
    * Create OR return a short form of the task name
    */
   private $taskID = Null;
-  private function get_taskID($new_ID=True,$task_name=''){
+  private function get_var_name($new_ID=True,$task_name=''){
     if ($new_ID){
       $n = 0;
-      while(b_vars::isValueKnown($this->taskID=sprintf("%s%04d",taskManager_ID,$n))) { $n++; }
+      while(b_vars::isVariableKnown($this->taskID=sprintf("%s%04d",taskManager_ID,$n))) { $n++; }
       $reply = $this->taskID;
     }else{
       if (empty($task_name)) $task_name = $this->taskID;
@@ -351,7 +352,7 @@ class myPear_taskManager{
 	
 	if (($task_already_completed = @$task['end']) || empty($task)){
 	  if (empty($task_already_completed)) $task_already_completed = time();
-	  $this->dbg(sprintf("%s ended %s",$this->get_taskID(False,$task['var_name']),b_time::delta($task_already_completed,time())));
+	  $this->dbg(sprintf("%s ended %s",$this->get_var_name(False,$task['var_name']),b_time::delta($task_already_completed,time())));
 	}else{
 	  $args = (empty($task['args'])
 		   ? array()
@@ -399,7 +400,7 @@ class myPear_taskManager{
 	    // Log the task execution	
 	    myPear_logs()->add('TM_exec','',$this->doing($task,False),myPear_cronjob()->ID,b_reg::$current_module,False);
 	    $log_info=implode(' ',array(__METHOD__,
-					$this->get_taskID(False,$task['var_name']),
+					$this->get_var_name(False,$task['var_name']),
 					$this->doing($task)));
 	    myPear_logs()->syslog(strip_tags($log_info));
 	    $info[] = x('p',$log_info);

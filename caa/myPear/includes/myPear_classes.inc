@@ -14,6 +14,16 @@ class b_vars{
   }
   
   /*
+   * Check is the variable name known 
+   */
+  static function isVariableKnown($var_name){
+    $q = myPear_db()->qquery("SELECT var_name FROM zzz_variables WHERE var_name = '$var_name'",True);
+    $reply = myPear_db()->num_rows($q);
+    b_debug::xxx($reply,array(2,cnf_dev));
+    return $reply;
+  }
+
+  /*
    * Check is the value known 
    */
   static function isValueKnown($value,$module=Null){

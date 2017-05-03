@@ -179,6 +179,18 @@ class APImenu extends myPear_base{
 
     myPear_logs()->add_access();
 
+    //
+    // It happens that the page might become unaccesible after being processed, 
+    // say you click "delete" to remove an unwanted object from the page which is accesible only if unwanted object exists.
+    // After deleting the last object the page (where you are "staying on") becomes unaccesible and the system generates error.
+    // Here is a workaround
+    // 
+    $menuItem_encoded = APImenu::tab_code($menuItem);
+    if (!empty($menuItem_encoded) && (strpos($_SERVER['HTTP_REFERER'].$_GET['q'],"/$menuItem_encoded") !== False)){
+      $this->dbg("Force staying on the page",cnf_dev);
+      return True;
+    }
+
     switch ($menuItem){
 
     case myPear_MODULE:

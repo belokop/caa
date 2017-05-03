@@ -25,7 +25,7 @@ prp.prp_1407449137:
   parent: prp.prp
 
 prp.prp_2975246614:
-  title: Register new preprint
+  title: Reserve new preprint
   route_name: prp.prp_2975246614
   weight: 10
   menu_name: tools

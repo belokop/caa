@@ -82,7 +82,6 @@ class bMailer_vm extends bMailer{
 
   var $isMailAutomatic = False;
   var $visit  = Null;
-  var $debug  = cnf_dev;
   
   private $rec    = array();
 

@@ -30,7 +30,25 @@ class bForm_prp extends bForm{
     }
     return in_array($av_id,$cache);
   }
+  
+  /*
+   *
+   */
+  private function get_freePreprintNumber(){
+    $prp_report = 1;
+    $q = myPear_db()->qquery("SELECT prp_report FROM prp_list WHERE (YEAR(FROM_UNIXTIME(prp_day0)) = YEAR(FROM_UNIXTIME(UNIX_TIMESTAMP()))) ".
+			     " AND prp_status != '".PRP_CANCELED."'".
+			     " AND prp_status != '".PRP_RESERVED."'".
+			     " ORDER BY prp_report",True);
+    while ($r = myPear_db()->next_record($q)) $prp_reports[] = $r['prp_report'];
+    while(in_array($prp_report,$prp_reports)) { $prp_report++; }
+    $this->dbg($prp_report,cnf_dev);
+    return $prp_report;
+  }
 
+  /*
+   * Get free report number
+   */
   function __construct($id, $mode='RO') {
     parent::__construct($id, $mode,$SQL_backend=True);
   }
@@ -122,10 +140,10 @@ class bForm_prp extends bForm{
 
   protected function _recordCreated() {
     if (!cnf_CLI){
-      PRP_mailer()->censor('Registered',$this);
-      PRP_mailer()->submitter('Registered',$this);
+      PRP_mailer()->informCensor('Reserved',$this);
+      PRP_mailer()->informSubmitter('Reserved',$this);
       myPear::MESSAGE("Allocated preprint ".$this->serial());
-      myPear_logs()->add('register',$this->ID);
+      myPear_logs()->add('reserve',$this->ID);
     }
   }
 
@@ -136,19 +154,24 @@ class bForm_prp extends bForm{
     }
   }
   
+  /*
+   *
+   */
   function formOKspecific() {
     // Check the request to create a new record
     if (!(int)$this->ID && ($this->getValue('prp_title') &&
 			    $this->getValue('prp_authors') &&
 			    $this->getValue('prp_field'))){
       
+      /*
       // Get the maximum preprint number
       $prp_report = 1;
       $q = myPear_db()->qquery("SELECT MAX(prp_report) as N FROM prp_list WHERE prp_orgid = ".myOrg_ID." AND YEAR(FROM_UNIXTIME(prp_day0)) = ".prp_year9);
       while ($r = myPear_db()->next_record($q)) $prp_report = $r['N'] + 1;
+      */
       
-      // Set the "environmental variables"
-      foreach(array('prp_report' => $prp_report + 1,
+      // Set the preprint information
+      foreach(array('prp_report' => self::get_freePreprintNumber(), // $prp_report + 1,
 		    'prp_avid'   => $this->getValue('prp_avid'),
 		    'prp_orgid'  => myOrg_ID,
 		    'prp_status' => PRP_RESERVED,
@@ -261,12 +284,13 @@ class bForm_prp extends bForm{
    *
    */
   static function _serial($formDB=array(),$prefix=True){
-    if ((int)$formDB['prp_id']) $serial = sprintf("%s %s-%03d%s",
-						  ($prefix ? mb_strToUpper(myOrg_name) : ''),
-						  date('Y',(int)$formDB['prp_day0']),
-						  (int)$formDB["prp_report"],
-						  ((date('Y',(int)$formDB['prp_day0']) <= 2003) ? $formDB["prp_field"] : ""));
-    else                        $serial = 'to be allocated'; 
+    $serial = ((int)$formDB['prp_id']
+	       ? sprintf("%s %s-%03d%s",
+			 ($prefix ? mb_strToUpper(myOrg_name) : ''),
+			 date('Y',(int)$formDB['prp_day0']),
+			 (int)$formDB["prp_report"],
+			 ((date('Y',(int)$formDB['prp_day0']) <= 2003) ? $formDB["prp_field"] : ""))
+	       : 'to be allocated'); 
     return trim($serial);
   }
 
@@ -274,7 +298,8 @@ class bForm_prp extends bForm{
     $this->updateDB(array('prp_status' => PRP_OK,
 			  'prp_tm'     => time()));
     myPear::MESSAGE("Preprint ".$this->serial()." is ACCEPTED");
-    PRP_mailer()->censor('Accepted',$this);
+    PRP_mailer()->informCensor('Accepted',$this);
+    PRP_mailer()->informSubmitter('Accepted',$this);
     myPear_logs()->add('accept',$this->ID);
   }
   
@@ -282,7 +307,8 @@ class bForm_prp extends bForm{
     $this->updateDB(array('prp_status' => PRP_CANCELED,
 			  'prp_tm'     => time()));
     myPear::MESSAGE("Preprint ".$this->serial()." is CANCELED");
-    PRP_mailer()->censor('Canceled',$this);
+    PRP_mailer()->informCensor('Canceled',$this);
+    PRP_mailer()->informSubmitter('Canceled',$this);
     myPear_logs()->add('cancel',$this->ID);
   }
 }

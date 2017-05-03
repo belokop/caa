@@ -4,10 +4,9 @@ if    (function_exists('locateAndInclude'))    locateAndInclude('APImenu','APIme
 elseif(function_exists('drupal_get_path'))  require_once drupal_get_path('module','ea') . '/includes/APImenu_ea.inc';
 
 foreach(array('tab_prp_see'         => (defined('myOrg_nameS') ? myOrg_nameS.' ' : '').'Preprints',
-              'tab_prp_mng'         => 'Register/Manage preprints',
               'tab_prp_pending'     => 'Manage pending preprints',
               'tab_prp_update'      => 'Update preprints',
-              'tab_prp_new'         => 'Register new preprint',
+              'tab_prp_new'         => 'Reserve new preprint number',
               'tab_prp_adm'         => 'Preprints censors',
               ) as $name=>$descr) APItabs::define_tab($name,$descr);
 
@@ -18,14 +17,14 @@ class APImenu_prp extends APImenu{
   var $q = PRP_MODULE;
   var $static_menu  = array(
 			    tab_prp_see => array(),
-			    //tab_prp_see => array(tab_prp_pending,tab_prp_new,tab_prp_update), 
 			    tab_prp_new     => array(),
-			    //tab_prp_mng => array(tab_prp_pending,tab_prp_new,tab_prp_update), 
 			    divider,
 			    tab_prp_pending => array(),
 			    tab_prp_update  => array(),
 			    divider,
 			    tab_prp_adm     => array(
+						     tab__tasks,
+						     tab__syslog,
 						     // tab__mergeAV
 						     ),
 			    );
@@ -81,6 +80,8 @@ class APImenu_prp extends APImenu{
 	break;
 
       case tab_prp_pending:
+	// Now in "access_callback()"
+	//	$reply = (PRP::_HOLDER()->count('my_pending_preprints') > 0) || strpos($_GET['q'],APImenu::tab_code(tab_prp_pending));
 	$reply = (PRP::_HOLDER()->count('my_pending_preprints') > 0);
 	break;
 
@@ -92,10 +93,6 @@ class APImenu_prp extends APImenu{
 	$reply = PRP_manager_here;
 	break;
 	
-      case tab_prp_mng:
-	$reply = PRP_submitter_here;
-	break;
-
       case tab_prp_new:
 	$reply = !PRP_submitter_here;
 	$reply = True;
@@ -159,15 +156,6 @@ class APImenu_prp extends APImenu{
       
     case tab_prp_adm:
       bUnit::b_tabs_bUnits(PRP_MODULE);
-      break;
-
-    case tab_prp_mng:
-      if (bAuth()->loginPrompt()){
-	b_debug::xxx(' ');
-	$this->get_lowLevelMenu(tab_prp_mng);
-      }else{
-	myPear::WARNING('Please authenticate with your username and password');
-      }
       break;
 
     case tab_prp_update:

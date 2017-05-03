@@ -9,6 +9,8 @@ function prp_updates(){
       prp_update_02();
       prp_update_03();
     }
+    if (True){
+    }
   }
 }
 
@@ -16,7 +18,6 @@ function prp_updates(){
  * MySQL is getting strict...
  */
 function prp_update_03(){
-  // Null
   myPear_update_DBdefaults(array('prp_list'=>array('tinytext' =>array('prp_authors','prp_title'),
 						   'int(11)'  =>array('prp_orgid','prp_avid','prp_report','prp_day0','prp_tm'),
 						   'text'     =>array('prp_publisher'),

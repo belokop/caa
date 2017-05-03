@@ -12,7 +12,6 @@ function EA_mailer(){
 
 class bMailer_ea extends bMailer{
 
-  var $debug  = False;
   var $isMailAutomatic = False;
 
   public function remind_password($av_id){

@@ -112,7 +112,7 @@ class bHolder_prp_preprints extends bHolder{
       b_debug::internalError('unexpected option "'.$this->doing.'"');
     }
 
-    // Let the adminstrator see the cancelled preprints    
+    // Let the adminstrator see the canceled preprints    
     if (!(is_object(bAuth::$av) && PRP_manager_here))$where[] = "prp_status != '".PRP_CANCELED."'";
     
     // Optionally split by years
@@ -227,7 +227,6 @@ class bHolder_prp_preprints extends bHolder{
     
     switch ($this->rec["prp_status"]) {
     case PRP_RESERVED:
-    case 'registered':
       $this->rec['preprint'] = $this->href(x('strong class="redText"',$t)).'<br/>'.x('em class="redText"',$a);
       foreach($this->header() as $k=>$v) $this->t->class[$k] = 'redText';
       $this->rec['prp_avid'] .= '<br/>'.date(' Y-m-d',$this->rec['prp_tm']);
