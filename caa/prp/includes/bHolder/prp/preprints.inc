@@ -229,7 +229,9 @@ class bHolder_prp_preprints extends bHolder{
     case PRP_RESERVED:
       $this->rec['preprint'] = $this->href(x('strong class="redText"',$t)).'<br/>'.x('em class="redText"',$a);
       foreach($this->header() as $k=>$v) $this->t->class[$k] = 'redText';
-      $this->rec['prp_avid'] .= '<br/>'.date(' Y-m-d',$this->rec['prp_tm']);
+      $this->rec['prp_avid'] .= '<br/>'.date(' Y-m-d',(empty($this->rec['prp_tm'])
+						       ? $this->rec['prp_day0']
+						       : $this->rec['prp_tm']));
       if (is_object($p) && $p->isWritable()){
 	if (PRP_censor_here) $this->t->extraTD[]=x("a href='".b_url::same("?prp_accept_once=$p->ID").
 						   "' onClick='return confirm(\"Really accept?\");'",

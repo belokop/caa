@@ -1169,7 +1169,7 @@ class APImenu_vm extends APImenu_ea{
 									      'vm_day9',vm_day9,
 									      True),
 							  array('<input type="hidden" name="vm_eventSelector" value="'.EVT_ANY.'"/>',
-								'<input type="submit" class="page_load_progress" value="Set new time range"/>',
+								'<input type="submit" class="page-load-progress" value="Set new time range"/>',
 								)))
 	    ));
       break;

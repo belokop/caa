@@ -71,9 +71,9 @@ function hw_render() {
     $self = $_SERVER['QUERY_STRING'];
     //    var_dump($self,$_POST);
     print "
-<h3>page_load_progress test</h3>
+<h3>page-load-progress test</h3>
 <form action='?$self' method='post'>
-     <input name='button' type='submit' class='form-submit page_load_progress' />
+     <input name='button' type='submit' class='page-load-progress' />
 </form>
 ";
     $reply = ob_get_contents();
@@ -112,7 +112,7 @@ function hw_render() {
 
   
   print "<h2>Source code of this page</h2>";
-  print "<a href='http://code.google.com/p/norweb/source/browse/trunk/helloworld/_drupal-6/hw.module' class='form-submit page_load_progress'>
+  print "<a href='http://code.google.com/p/norweb/source/browse/trunk/helloworld/_drupal-6/hw.module' class='page-load-progress'>
          See the source code of this demo here 
          </a>";
   
@@ -133,7 +133,7 @@ function hw_render() {
     $value   = @$_POST[$name];
     b_cc::getCC($value);
     $country = "<input id='$name' name='$name' size='40' value='$value' maxlength='99' type='text'/>";
-    $submitt = "<input name='_s' type='submit' class='form-submit page_load_progress'/>";
+    $submitt = "<input name='_s' type='submit' class='page-load-progress'/>";
     print x('form action="'.b_url::same().'" method="post"',$country.'<br/>'.$submitt);
   }
 

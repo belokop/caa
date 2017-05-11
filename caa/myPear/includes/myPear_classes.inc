@@ -188,8 +188,8 @@ class b_btn{
 	       bIcons()->get('32-phone2').' '.$text.
 	       x("form method='post' enctype='multipart/form-data' name='confirmator'",
 		 (join("\n",array(join("\n",$hd),
-				  "<input type='submit' class='page_load_progress' name='$act_confirmation' value='yes'>",
-				  "<input type='submit' class='page_load_progress' name='$act_confirmation' value='no'>")))));
+				  "<input type='submit' class='page-load-progress' name='$act_confirmation' value='yes'>",
+				  "<input type='submit' class='page-load-progress' name='$act_confirmation' value='no'>")))));
       if ($printQuestion) print  $txt;
       else                return $txt;
     }
@@ -200,7 +200,7 @@ class b_btn{
    * Raison d'être - to have multiple submit buttons in the form, not all of them "parts" of the <form>
    */
   static function submit($text, $url='', $confirm=False, $class='', $img=''){
-    $style = sprintf("style='padding:1px; font-size:small;' class='%s page_load_progress'",$class);
+    $style = sprintf("style='padding:1px; font-size:small;' class='%s page-load-progress'",$class);
     list($img,$type)= (!empty($img)
 		       ? array("src='$img'", 'image')
 		       : array('',           'submit'));
@@ -229,7 +229,7 @@ class b_btn{
     $text_action = strip_tags($text_action);
     return x("span class='only_online'",
              x("a href='$url'".($confirm ? " onClick='return confirm(\"Really $text_action?\");'" : ""),
-	       bIcons()->get(array('i'=>$icon,'d'=>$text_action,'class'=>"page_load_progress $min100"))));
+	       bIcons()->get(array('i'=>$icon,'d'=>$text_action,'class'=>"page-load-progress $min100"))));
   }
 
   /*
@@ -283,7 +283,7 @@ class b_btn{
     }
 
     // Optionally confirm the request
-    if (is_bool($img) && ($confirm = $img)) $onclick = "class='page_load_progress' title='$text' onclick='return submitConfirm(this);'"; 
+    if (is_bool($img) && ($confirm = $img)) $onclick = "class='page-load-progress' title='$text' onclick='return submitConfirm(this);'"; 
     
     if (strpos($url,'?') === 0) $url = b_url::repack($url); 
     return x("span class='only_online'","<a class='mypear_a' ".@$onclick." href='$url'>$button</a>");
@@ -1727,25 +1727,21 @@ class b_debug{
       }
 
       if (!empty($_GET)){
-	print "\n<h2>---_GET</h2>\n";
-	self::print_r($_GET,'get_diagnostics');
+	print "\n<h2>---_GET</h2>\n".self::print_r($_GET,'get_diagnostics');
       }
 
       if (!empty($_POST)){
-	print "\n<h2>---_POST</h2>\n";
-	self::print_r($_POST,'get_diagnostics'); 
+	print "\n<h2>---_POST</h2>\n".self::print_r($_POST,'get_diagnostics'); 
       }
 
       if (!empty($_SESSION[CONST_cnfOptions])){
-	print "\n<h2>---CONST_cnfOptions</h2>\n";
-	self::print_r($_SESSION[CONST_cnfOptions],'get_diagnostics'); 
+	print "\n<h2>---CONST_cnfOptions</h2>\n".self::print_r($_SESSION[CONST_cnfOptions],'get_diagnostics'); 
       }
 
       print "\n<h2>---traceBack</h2>\n";
       echo '<pre>'; debug_print_backtrace(); echo '</pre>'; 
       if (!empty($_SESSION['messages'])){
-	print "\n<h2>---messages</h2>\n";
-	self::print_r($_SESSION['messages'],'get_diagnostics');
+	print "\n<h2>---messages</h2>\n".self::print_r($_SESSION['messages'],'get_diagnostics');
 	unset($_SESSION['messages']);
       }
       b_cnf::get('nodrupal',($_GET['nodrupal']=0));
@@ -1786,6 +1782,7 @@ class b_debug{
 
     if ($txt === 'get_diagnostics'){
       $txt = '';
+      $doNotPrint = True;
     }elseif (!defined('cnf_dev') || !defined('YBhere') || (!cnf_dev && !YBhere)){
       return;
     }

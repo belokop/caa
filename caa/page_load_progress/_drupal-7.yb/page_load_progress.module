@@ -43,7 +43,7 @@ function page_load_progress_init() {
   if (0 !== strpos(current_path(), 'admin/structure/views/')) {
     $settings = array(
       'delay' => variable_get('page_load_progress_time', 10),
-      'elements' => variable_get('page_load_progress_elements', '.form-submit'),
+      'elements' => variable_get('page_load_progress_elements', '.form-submit,.page-load-progress'),
     );
     drupal_add_js(array('page_load_progress' => $settings), 'setting');
     drupal_add_js(drupal_get_path('module', 'page_load_progress') .'/js/page_load_progress.js', 'file');

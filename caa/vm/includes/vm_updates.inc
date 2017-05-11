@@ -169,15 +169,15 @@ function vm_compat_update_48(){
 // Another strange thing...
 function vm_compat_update_47(){
   foreach(array_merge(array(HUT_BI),array_keys(VM::$known_hut_codes)) as $code) $w[] = "hut_code != '$code'";
-  $q = myPear_db()->qquery("SELECT hut_id,hut_name,hut_code,a_id,a_name FROM abs_huts LEFT JOIN abs_rooms ON hut_id=a_hutid WHERE (".join(' AND ',$w).")",True);
+  $q = myPear_db()->qquery("SELECT hut_id FROM abs_huts WHERE (".join(' AND ',$w).")",True);
   while($r = myPear_db()->next_record($q)){
-    myPear_db()->qquery("DELETE FROM abs_rooms WHERE a_hutid = $r[hut_id]",True);
-    myPear_db()->qquery("DELETE FROM abs_huts  WHERE hut_id = $r[hut_id]",True);
+    myPear_db()->qquery("DELETE FROM abs_rooms WHERE a_hutid = ".$r['hut_id'],True);
+    myPear_db()->qquery("DELETE FROM abs_huts  WHERE  hut_id = ".$r['hut_id'],True);
   }
 }
 
 function vm_compat_update_46($only_report=False){
-  foreach(array('bList_vm_accommodationOptions'=>['lm_key'],
+  foreach(array('bList_vm_accommodationOptions'=>array('lm_key'),
 		) as $bList=>$targets){
     $q = myPear_db()->qquery("SELECT l_id FROM zzz_lists WHERE l_class = '$bList'");
     while($r = myPear_db()->next_record($q)){

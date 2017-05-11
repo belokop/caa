@@ -14,13 +14,15 @@
 }
 
 .page-load-progress-spinner {
-/*  background-image: url('../images/loader.gif'); */
-  background-image: url('../images/page_load_progress.gif'); 
+/*
+  background-image: url('../images/loader.gif');
+*/
+  background-image: url('loader.gif');
   background-repeat: no-repeat;
-  height: 128px;
+  height: 42px;
   left: 45%;
   position: absolute;
   top: 42%;
-  width: 128px;
+  width: 42px;
   z-index: 9999;
 }

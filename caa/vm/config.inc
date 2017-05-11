@@ -1,11 +1,11 @@
 <?php
-set_time_limit(0);
+// set_time_limit(0);
 /**
  * Visitors Manager (VM) configuration file
  */
-$releaseDate = '2017-05-03';
+$releaseDate = '2017-05-11';
 define('VM_MODULE'   , 'vm');
-define('VM_VERSION','5.13.12');
+define('VM_VERSION','5.13.13');
 
 //
 // transition problems...

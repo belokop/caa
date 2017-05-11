@@ -243,7 +243,7 @@ class b_tabs_myPear {
       print implode("\n",array('',
 			       x("div style='clear:both'",''),
 			       x("div id='b_tabs".(self::$myPearTabs_depth+1)."'",
-				 join("\n",array(x("div class='b_tabs_menu'",join("\n",array(x('ul class="form-submit page_load_progress" style="margin-bottom:0;"',join("\n",$li))))),
+				 join("\n",array(x("div class='b_tabs_menu'",join("\n",array(x('ul class="page-load-progress" style="margin-bottom:0;"',join("\n",$li))))),
 						 x("div style='clear:both'",''),
 						 x("div class='b_tabs_body'",$this->body_content)))),
 			       x("div style='clear:both'",''),

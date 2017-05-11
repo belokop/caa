@@ -115,6 +115,7 @@ You can correct eventual typos at any time (button \"edit\"), you may also cance
   private function prp_info($action,$av=Null,$formDB=array()){
 
     $this->prp_formDB = array_merge($this->prp_formDB,$formDB);
+    if (empty($this->prp_formDB['prp_tm'])) $this->prp_formDB['prp_tm'] = $this->prp_formDB['prp_day0'];
     switch (strToLower($action)){
     case 'reminder':
       $tit = 'Preprint '.$this->prp_formDB['prp_status'].' '. b_time::long_date($this->prp_formDB['prp_tm']).

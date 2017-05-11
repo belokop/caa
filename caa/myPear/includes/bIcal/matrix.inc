@@ -92,7 +92,7 @@ class bIcal_matrix extends bIcal {
       $this->t->tro();  
       $this->t->td('',"class='bIcal_name'"); 
       $this->t->td($this->arrow_left(),"class='bIcal_arrow_left'");
-      $class = "class='bIcal_nav page_load_progress'";
+      $class = "class='bIcal_nav page-load-progress'";
       $day1  = $this->day1;
 
       // Show the month name (above the dates, which come after). Add also the year if there is enough space.
@@ -147,7 +147,7 @@ class bIcal_matrix extends bIcal {
 
   protected function arrow_left(){
     if ($this->noNavig||$this->noNavig_arrows)  return '';
-    else return bIcons()->getButton(array('class'=>'page_load_progress',
+    else return bIcons()->getButton(array('class'=>'page-load-progress',
 						  'i'=>'i-arrow_left',
 						  'c'=>'bIcal_nav',
 						  'l'=>b_url::same('?'.b_reg::$current_module.'_day1='.$this->f_sunday($this->day1,'month-'))));
@@ -155,7 +155,7 @@ class bIcal_matrix extends bIcal {
 
   protected function arrow_right(){
     if ($this->noNavig||$this->noNavig_arrows)  return '';
-    else return bIcons()->getButton(array('class'=>'page_load_progress',
+    else return bIcons()->getButton(array('class'=>'page-load-progress',
 						  'i'=>'i-arrow_right',
 						  'c'=>'bIcal_nav',
 						  'l'=>b_url::same('?'.b_reg::$current_module.'_day1='.$this->f_sunday($this->day1,'month+'))));

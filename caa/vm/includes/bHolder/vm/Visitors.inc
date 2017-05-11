@@ -1835,25 +1835,25 @@ class bHolder_vm_Visitors extends bHolder_vm{
     if (!isset($cache[$say])){
       switch($say){
       case 'Y':       // pending visit
-	return bIcons()->getButton(array('class'=>'page_load_progress',
+	return bIcons()->getButton(array('class'=>'page-load-progress',
 					 'd'=>'Click to ACCEPT the application',
 					 'c'=>'only_online',
 					 'i'=>'i-finger_up',
 					 'l'=> b_url::same("?resetcache_once=1&approve_once=".$this->rec['v_id'])));
       case 'N':       // pending visit
-	return bIcons()->getButton(array('class'=>'page_load_progress',
+	return bIcons()->getButton(array('class'=>'page-load-progress',
 					 'd'=>'Click to DENY the application',
 					 'c'=>'only_online',
 					 'i'=>'i-finger_down',
 					 'l'=> b_url::same("?resetcache_once=1&refuse_once=".$this->rec['v_id'])));
       case 'YN':      // accepted visit, toggle
-	return bIcons()->getButton(array('class'=>'page_load_progress',
+	return bIcons()->getButton(array('class'=>'page-load-progress',
 					 'd'=>'Application accepted, click to DENY',
 					 'i'=>'i-accepted_yes',
 					 'l'=> b_url::same("?resetcache_once=1&refuse_once=".$this->rec['v_id'])));
 	
       case 'NY':      // rejected visit, toggle
-	return bIcons()->getButton(array('class'=>'page_load_progress',
+	return bIcons()->getButton(array('class'=>'page-load-progress',
 					 'd'=>'Application denied, click to ACCEPT',
 					 'i'=>'i-accepted_no',
 					 'l'=> b_url::same("?resetcache_once=1&approve_once=".$this->rec['v_id'])));
@@ -2090,7 +2090,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
 	  // Show either a click-able button or just an icon
 	  $img  = @$descr['i'] . ($yes_no ? '_on' : '_off');
 	  $icon = (!$already_payed && VM::hasRightTo($hasRightTo,$this->rec)
-		   ? bIcons()->getButton(array('class'=>'page_load_progress',
+		   ? bIcons()->getButton(array('class'=>'page-load-progress',
 					       'i'=>$img,
 					       'c'=>($yes_no ? 'only_online' : 'only_online opacity_on'),
 					       'd'=>$descr['i'].($yes_no ? '' : ' not')." to be $payed, click to change",

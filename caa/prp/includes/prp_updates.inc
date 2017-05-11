@@ -10,7 +10,27 @@ function prp_updates(){
       prp_update_03();
     }
     if (True){
+      prp_update_04();
     }
+  }
+}
+
+/*
+ * Fix a stupid bug...
+ */
+   prp_update_04();
+function prp_update_04(){
+  locateAndInclude('bForm_prp');
+  $q = myPear_db()->qquery("SELECT * FROM prp_list WHERE (YEAR(FROM_UNIXTIME(prp_day0)) = 2017) ".
+			   " AND (prp_report = 10) ".
+			   " ORDER BY prp_timestamp DESC",True);
+  while ($r=myPear_db()->next_record($q)){
+    if ($r['prp_status'] != PRP_RESERVED) continue;
+    if ($r['prp_avid']   != 51578) continue;
+    b_debug::print_r($r,date('Y-m-d H:i:s',$r['prp_day0']));
+    $sql = sprintf("UPDATE prp_list SET prp_report = %s WHERE prp_id = %s",bForm_prp::get_freePreprintNumber(),$r['prp_id']);
+    b_debug::xxx($sql);
+    myPear_db()->qquery($sql,True);
   }
 }
 

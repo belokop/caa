@@ -22,14 +22,14 @@ function page_load_progress_settings($form, &$form_state) {
       3000 => t('Show after a 3 seconds delay'),
       5000 => t('Show after a 5 seconds delay'),
     ),
-    '#default_value' => variable_get('page_load_progress_time', 3000),
+    '#default_value' => variable_get('page_load_progress_time', 10),
   );
 
   $form['page_load_progress_elements'] = array(
     '#type' => 'textfield',
     '#title' => t('Elements that will trigger the throbber'),
     '#description' => t('Enter the elements that will trigger the effect separated by commas. Classes should have their leading dot and ids their leading hashes.'),
-    '#default_value' => variable_get('page_load_progress_elements','.form-submit,.page_load_progress'),
+    '#default_value' => variable_get('page_load_progress_elements','.form-submit,.page-load-progress'),
   );
 
   return system_settings_form($form);

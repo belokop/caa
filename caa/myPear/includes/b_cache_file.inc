@@ -276,7 +276,7 @@ class b_cache_file{
     if (!self::$cacheEmpty) return bIcons()->getButton(array('i'=>'i-refresh',
 							     'd'=>'refresh the page',
 							     'l'=>b_url::same('?resetcache_once=1'),
-							     'class'=>'page_load_progress'));
+							     'class'=>'page-load-progress'));
     else return '';
   }
 

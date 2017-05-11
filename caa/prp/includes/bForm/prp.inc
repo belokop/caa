@@ -34,15 +34,15 @@ class bForm_prp extends bForm{
   /*
    *
    */
-  private function get_freePreprintNumber(){
+  static function get_freePreprintNumber(){
     $prp_report = 1;
+    $prp_reports = array();
     $q = myPear_db()->qquery("SELECT prp_report FROM prp_list WHERE (YEAR(FROM_UNIXTIME(prp_day0)) = YEAR(FROM_UNIXTIME(UNIX_TIMESTAMP()))) ".
 			     " AND prp_status != '".PRP_CANCELED."'".
-			     " AND prp_status != '".PRP_RESERVED."'".
 			     " ORDER BY prp_report",True);
     while ($r = myPear_db()->next_record($q)) $prp_reports[] = $r['prp_report'];
     while(in_array($prp_report,$prp_reports)) { $prp_report++; }
-    $this->dbg($prp_report,cnf_dev);
+    b_debug::xxx($prp_report);
     return $prp_report;
   }
 

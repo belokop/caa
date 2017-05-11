@@ -86,7 +86,7 @@ class bIcal_matrix_ea extends bIcal_matrix{
   
   protected function arrow_left(){
     if (ea_year <= EA_org_founded) return '';
-    else return bIcons()->getButton(array('class'=>'page_load_progress',
+    else return bIcons()->getButton(array('class'=>'page-load-progress',
 						  'i'=>'i-arrow_left',
                                                   'c'=>'bIcal_nav',
                                                   'l'=>b_url::same('?ea_year='.max(EA_org_founded,ea_year-1))));
@@ -94,7 +94,7 @@ class bIcal_matrix_ea extends bIcal_matrix{
 
   protected function arrow_right(){
     if (ea_year >= date('Y',time())) return '';
-    else return bIcons()->getButton(array('class'=>'page_load_progress',
+    else return bIcons()->getButton(array('class'=>'page-load-progress',
 						  'i'=>'i-arrow_right',
 						  'c'=>'bIcal_nav',
                                                   'l'=>b_url::same('?ea_year='.min(ea_year+1,date('Y',time())))));

@@ -137,7 +137,7 @@ class bIcal_matrix_visits extends bIcal_matrix{
 
     $this->showBody($mRegistrants);
 
-    $this->footer[] = b_checkBox::create($boxes,'<br/>','default','page_load_progress');
+    $this->footer[] = b_checkBox::create($boxes,'<br/>','default','page-load-progress');
     $this->showFooter();
     if (!empty($arg)) print $arg;
     bTiming()->cpu();
