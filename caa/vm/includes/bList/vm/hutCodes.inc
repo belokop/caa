@@ -123,11 +123,18 @@ class bList_vm_hutCodes extends bList_vm{
       $reply[$r['lm_key']] = $r['lm_value'];
       if (!empty($from_to)){
 	// Check that the hut is available for the given period 
-	$_freeRooms = bForm_vm_Lease::_freeRooms($accommodationOptions,
-						 $from_to[0],
-						 $from_to[1],
-						 False,Null,
-						 $r['lm_key']);
+	$_freeRooms = ($new = True
+		       ? bForm_vm_Lease::_freeRooms($accommodationOptions,
+						    array('v_start'=>$from_to[0],
+							  'v_end'  =>$from_to[1]),
+						    False,
+						    Null,
+						    $r['lm_key'])
+		       : bForm_vm_Lease::_freeRooms($accommodationOptions,
+						    $from_to[0],
+						    $from_to[1],
+						    False,Null,
+						    $r['lm_key']));
 	if (empty($_freeRooms)) unset($reply[$r['lm_key']]);
       }
     }

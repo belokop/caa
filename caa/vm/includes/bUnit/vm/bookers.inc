@@ -24,7 +24,7 @@ class bUnit_vm_bookers extends bUnit_vm{
     // Add managers to the bookers unit if there are duties for them
     foreach(VM_managers()->getMembers() as $x=>$rec){
       $um_id = $this->add_unitMember($rec['av_id'],'if_new');
-      $manager_duties = $this->arg_explode($this->get_memberInfo($rec['av_id'],'duties'));
+      $manager_duties = $this->safe_explode($this->get_memberInfo($rec['av_id'],'duties'));
       foreach($this->duties as $duty=>$d) if (@$d['def']==='manager') $manager_duties[] = $duty;
       $manager_duties = array_unique($manager_duties);
       sort($manager_duties);
@@ -99,7 +99,7 @@ class bUnit_vm_bookers extends bUnit_vm{
    */
   protected function edit_unitMember($av_id){
     $rec = $this->getUnitMember($av_id);
-    $rec['duties'] = $this->arg_explode(@$rec['duties']);
+    $rec['duties'] = $this->safe_explode(@$rec['duties']);
 
     myPear::setPageHeader('Booker '.bForm_Avatar::_fmtName('fl',$rec,False));
     
@@ -139,7 +139,7 @@ class bUnit_vm_bookers extends bUnit_vm{
    *
    */
   protected function format(){
-    $duties = $this->arg_explode(@$this->rec['duties']);
+    $duties = $this->safe_explode(@$this->rec['duties']);
     
     foreach(array_keys($this->duties) as $duty_code){
       if (in_array($duty_code,$duties)) $this->rec[$duty_code] = bIcons()->get('i-ok');

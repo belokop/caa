@@ -16,7 +16,7 @@ class bForm_vm_Hut extends bForm_vm {
 				 'hut_code'            => 'Accommodation option',
 				 'hut_url'             => 'Home page',
 				 'hut_status'          => 'Default accommodation?',
-				 'hut_capacity'        => 'Capacity (N rooms)',
+				 // 'hut_capacity'        => 'Capacity (N rooms)',
 				 );
   public static $compalsary = array('hut_name',
 				    'hut_code',
@@ -94,7 +94,7 @@ class bForm_vm_Hut extends bForm_vm {
   function __construct($id, $mode='RO') {
     parent::__construct($id, $mode);
     $this->dbg('completed');
-    $this->getValue('hut_capacity');
+    //    $this->getValue('hut_capacity');
   }
 
   /*
@@ -108,7 +108,7 @@ class bForm_vm_Hut extends bForm_vm {
     
     // Insert the status field in dialog if not empty 
     $fields = array('hut_name'    => array('textField'),
-		    'hut_capacity'=> array('textField'),
+		    // 'hut_capacity'=> array('textField'),
 		    'hut_code'    => array('selectMenu',VM_hutCodes()->getCodes()),
 		    'hut_url'     => array('textField'));
     if ($this->isDefault() || ($this->MODE == 'RW')){
@@ -182,26 +182,30 @@ class bForm_vm_Hut extends bForm_vm {
   /*
    *
    */
+  /*
   public static function _getCapacity($hut_id){
     $hut = myPear::getInstance_new('bForm_vm_Hut',$hut_id,'fatal');
     $reply = $hut->getCapacity();
     return $reply; 
   }
+  */
 
   /*
    *
    */
+  /*
   public function getCapacity(){
     $reply = $this->getValue('hut_capacity');
     return $reply;
   }
-  
+  */  
+
   /*
    * We do not care here about missing description
    */
   public function getValue($name, $asIs=True, $d_MBE=True){
     $v = parent::getValue($name, True, True);
-    if (($name == 'hut_capacity') && empty($v)) $v = 999;
+    if (($name == 'hut_capacity') && empty($v)) $v = VM_quantity2request;
     return $v;
   }
   

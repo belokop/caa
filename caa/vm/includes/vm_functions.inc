@@ -21,7 +21,7 @@ function VM_query($where=array(1),$join_rooms='',$debug=False){
     ." LEFT JOIN zzz_avatars ON v_avid = av_id "
     ." $join_rooms ";
   
-  foreach(explode(',',@$_GET['sBy']) as $f){
+  foreach(explode(',',str_ireplace(array('concat','(',')'),'',@$_GET['sBy'])) as $f){
     $ok = False;
     foreach(array('abs_leases',
 		  'abs_expenses',

@@ -3,9 +3,12 @@
 /**
  * Visitors Manager (VM) configuration file
  */
-$releaseDate = '2017-05-11';
+$releaseDate = '2017-05-20';
 define('VM_MODULE'   , 'vm');
-define('VM_VERSION','5.13.13');
+define('VM_VERSION','5.13.14');
+
+define('upgraded_rooms_specifications',(cnf_dev||cnf_demo));
+//define('upgraded_rooms_specifications',False);
 
 //
 // transition problems...
@@ -13,6 +16,7 @@ define('VM_VERSION','5.13.13');
 if (function_exists('drupal_get_path') && is_file($f=drupal_get_path('module','myPear').'/includes/drupal8_compat.inc')) require_once $f;
 define('modal_sendmail_dialog',cnf_dev||cnf_demo); // Doesn't want to work...
 define('include_payLunch_dinner',cnf_dev);
+if (upgraded_rooms_specifications) myPear::MESSAGE('Upgraded rooms specifications');
 
 //
 // Exclude from production version the options which under development 
@@ -48,6 +52,8 @@ define('VISIT_TYPE_RENT',         '_RENT');
 define('VISIT_TYPE_OTHER',        '_OTHER');
 
 define('reimbursement_email','reimbursement@nordita.org');
+define('VM_no_cotenants',-999);
+define('VM_room_is_full',-666);
 
 /*
  * VM root directories
@@ -100,15 +106,12 @@ define('VM_V_rdlMailSent',4096);        // Flag 'registration-deadline mail to o
 define('VM_V_rdlMailQueued',262144);    // Flag '"Event is endorsed" mail to organizer sent'
 
 /*
- * Policies are either 
- * - "human defined", like "to pay OR not to pay"
- * - "auto-controlled" like "was an action executed or not"
- * - "auto-controlled, might be changed by human2, like "to allocate office or not" for a visitor
- * Those flag are set in the VM::$v_policies array - item 't' (stands for "type")
+ *
  */
 define('auto_maintained', 'auto'); 
 define('when_approved',   'w_a'); 
 define('in_queue',        'queued');
+define('VM_everything',   'everything');
 
 /*
  * Define per-diem in the default currency
@@ -136,7 +139,9 @@ define('VM_reminding_period', 3); // in days
  * Infinite dates...
  */
 // Infinite hut capacity
-define('VM_capacity999',999);
+define('default_lease_pay',VM_everything);
+define('VM_quantity2request',-999);
+define('VM_quantity2request_text','Contact hotel');
 
 /*
  * Conference default budget
@@ -197,7 +202,6 @@ $GLOBALS['LODGING_FINDER'] = array(
 						       .'|I will book a room'
 						       //.'|myself|accommodation arranged|other|made accommodation request upon'
 						       ),
-				   // 'shared_lodging' =>('shared accommodation'),
 				   'default_lodging'=>join('|',array('(apartment|accommodation) paid.*by |arrange.*for me|organizers.*arrange my accommodation|'
 								     )),
 				   );
@@ -207,7 +211,7 @@ $GLOBALS['LODGING_FINDER'] = array(
 
 define('OFFICE_AUTO_ALLOCATABLE', 'visitors'); // offices with this status are auto-allocated by the bCover
 define('AP_AUTO_ALLOCATABLE','auto allocate'); // rooms with this status are auto-allocated by the bCover
-define('AP_SHARABLE','shared');                // rooms might be shared 
+define('AP_SHARABLE','shared');                // rooms is sharable 
 
 define('ICON_edit_event',  11);
 define('ICON_edit_room',   13);
@@ -354,6 +358,17 @@ class VM extends myPear{
   public static $isReady = False;
 
   /*
+   * Lease options, see bForm_vm_Lease::get_lease_options()
+   */
+  static $pay_options = array('nothing',
+			      'one',
+			      'two',
+			      'three',
+			      'four',
+			      'five'
+			      );
+
+  /*
    * Which forms (blankets) to send to the Visitors in the welcome mail
    * The forms are kept in the /templates directory
    */
@@ -442,6 +457,12 @@ class VM extends myPear{
 
   /*
    * Visit policy bits 
+   *
+   * Policies are either 
+   * - "human defined", like "to pay OR not to pay"
+   * - "auto-controlled" like "was an action executed or not"
+   * - "auto-controlled, might be changed by human2, like "to allocate office or not" for a visitor
+   * Those flag are set in the VM::$v_policies array - item 't' (stands for "type")
    */
   static $v_policies     = array();
 
@@ -574,6 +595,7 @@ class VM extends myPear{
   static public $formDummy = Null;
   static public $hut_bi    = 'hut_bi';   // "Built-in" hut
   static public $OA        = 'OA';       // "own accommodation" room
+  static public $RM        = 'RM';       // "remove accommodation" room
   static public $BR        = 'BR';       // "break in the visit" room (a place-holder)
 
   static public $auto_maintained = array(); // Helper, filled from the previous array
@@ -587,6 +609,8 @@ class VM extends myPear{
   static function start(){
     static $dejaVu = 0;
     if (!$dejaVu++){
+
+      self::_MENU()->context();
 
       // 'include_payLunch_dinner' is not yet fully debugged
       if (!include_payLunch_dinner){
@@ -651,12 +675,13 @@ class VM extends myPear{
 		    
 		    // "own accommodation" 
 		    self::$OA      =>array('class' =>'bForm_vm_Room',
-					   'a_code'=> LODGING_OA,
 					   'a_name'=> LODGING_OA_TXT),
 		    // gap in the visit
 		    self::$BR      =>array('class' =>'bForm_vm_Room',
-					   'a_code'=> LODGING_BR,					   
 					   'a_name'=> LODGING_BR_TXT),
+		    // remove accommodation
+		    //		    self::$RM      =>array('class' =>'bForm_vm_Room',
+		    //					   'a_name'=> LODGING_RM_TXT),
 		    ) as $instance=>$args){
 	
 	$class_name = $args['class'];
@@ -670,7 +695,8 @@ class VM extends myPear{
 	}else{
 	  // Hook the "build-in rooms" to the "build-in hut"
 	  $args['keys']  = array('a_hutid'    => self::$hut_bi->ID,
-				 'a_code'     => $args['a_code']);
+				 // 'a_code'     => $args['a_code'],
+				 );
 	  $args['fields']= array_merge($args['keys'],
 				       array('a_price'    => 0.000001,
 					     'a_area'     => 1,

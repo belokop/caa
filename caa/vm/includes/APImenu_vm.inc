@@ -211,13 +211,45 @@ class APImenu_vm extends APImenu_ea{
 						       //tab_vm_adm_acl,tab_vm_adm_fixClashes,   // too early...
 						       ),
 			     );
-  
+
   function __construct(){
     APImenu::set_context(VM_MODULE);
     parent::__construct();
   }
 
-
+  /*
+   * Check the URL and decide are we in the "organization" or "events" context
+   */ 
+  function context(){
+    static $contexts = array('org'  => array(tab_vm_adm,
+					     tab_vm_guests,
+					     tab_vm_home,
+					     // ??? tab_ea_off					  
+					     ),
+			     'event'=> array(tab_vm_reg,
+					     tab_vm_vis,
+					     tab_vm_end,
+					     tab_vm_ogz,
+					     // ??? tab_ea_off					  
+					     )
+			     );
+    
+    if (empty($_SESSION[__method__])) $_SESSION[__method__] = 'org';
+    if ($tab = @APItabs::$q[1]){
+      foreach($contexts as $context=>$tabs){
+	if (in_array($tab,$tabs)){
+	  if ($context == 'event'){
+	    VM::e_ID();
+	    if (!is_object(VM::$e)) $context = Null;
+	  }
+	  $_SESSION[__method__] = $context;
+	}
+      }
+    }
+    b_debug::xxx($_SESSION[__method__]);
+    return $_SESSION[__method__];
+  }
+  
   /*
    * Start the VM module
    */
@@ -531,14 +563,16 @@ class APImenu_vm extends APImenu_ea{
    * Main processing function
    */
   function process($tab,$dynamicTab=''){
-    
-    vm_init();
 
+    vm_init();
+    
     // There was an explicit request to send password. Do it
     if (isset($_GET['mo_once'])){
       $e = myPear::getInstance_new('bForm_vm_Event',$_GET['e_id'],array('strict','fatal'));
       VM_mailer()->remind_organizer($_GET['av_id'],$e,'pwd','send_now');
     }
+
+    VM::e_ID();
 
     bTiming()->cpu(__FUNCTION__);
     //    print bHolder_Logs::wic();
@@ -1270,11 +1304,10 @@ function _vm_title_callback($tab, $dTab=Null,$returnText=False){
 		 ? $tab
 		 : t($tab));
   }else{
+    if(isset(APItabs::$tab_definition[$tab]))  $text = APItabs::$tab_definition[$tab];
+    else myPear::ERROR(sprintf("??? %s: undefined tab \"%s\"\n",__METHOD__,$tab));
     if (is_object(bAuth::$av)){
       
-      if(isset(APItabs::$tab_definition[$tab]))  $text = APItabs::$tab_definition[$tab];
-      else myPear::ERROR(sprintf("??? %s: undefined tab \"%s\"\n",__METHOD__,$tab));
-
       if (VM_external_registrant_here){
 	switch($tab){
 	case tab_vm_vis:         $text = 'Event attenders';            break;

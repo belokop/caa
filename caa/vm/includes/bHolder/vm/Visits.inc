@@ -2,8 +2,8 @@
 locateAndInclude('bHolder_vm');
 class bHolder_vm_Visits extends bHolder_vm{
 
-  var $clashes = array();
-  var $clashe  = False;
+  var $Clashes = array();
+  var $clashingID  = Null;
   
   function __construct(){ 
     parent::__construct();
@@ -30,8 +30,8 @@ class bHolder_vm_Visits extends bHolder_vm{
   function rejectRecord(){
     if (b_cnf::getValue('showClashingVisits')){
       $visit = myPear::getInstance_new('bForm_vm_Visit',$this->rec['v_id'],array('strict','fatal'));
-      $this->clashe = $visit->getClashingVisits_byDate($this->rec['v_start'],$this->rec['v_end']));
-      return (!empty($this->clashe));
+      $this->clashingID = $visit->getClashingVisits_byDate($this->rec['v_start'],$this->rec['v_end']);
+      return (!empty($this->clashingID));
     }
   }
   
@@ -40,23 +40,26 @@ class bHolder_vm_Visits extends bHolder_vm{
     if (empty($h[@$_GET['sBy']])) { $_GET['sByDir']='DESC'; $_GET['sBy']   ='v_start'; }
     if (empty(    $_GET['sByDir'])) $_GET['sByDir']='DESC';
     $q = myPear_db()->query("SELECT *,av_lastname AS name FROM abs_visits ".
-			      " LEFT JOIN zzz_avatars ON av_id = v_avid ".
-			      " WHERE ".join(' AND ',$this->where). 
-			      " GROUP BY v_id ".
-			      " ORDER BY $_GET[sBy] $_GET[sByDir] ");
+			    " LEFT JOIN zzz_avatars ON av_id = v_avid ".
+			    " LEFT JOIN abs_leases ON v_id=lease_vid ".
+			    " LEFT JOIN abs_rooms ON a_id=lease_aid ".
+			    " WHERE ".join(' AND ',$this->where). 
+			    " GROUP BY v_id ".
+			    " ORDER BY $_GET[sBy] $_GET[sByDir] ");
     return $q;
   }
   
   function format() {
+    $url = b_url::same("?form=vm_Visit&mode=RO&id=".$this->rec['v_id']);
     $this->rec['name'] = bForm_Avatar::_fmtName('Lf',$this->rec);
-    if ($c=$this->clashe) {
+    if ($c=$this->clashingID) {
       $visit = myPear::getInstance_new('bForm_vm_Visit',$this->rec['v_id'],array('strict','fatal'));
-      $this->clashes[$visit->ID] = $c;
+      $this->Clashes[$visit->ID] = $c;
       $exp = $visit->getExp();
       if ($visit->exp_arePayed() && (int)$exp->ID) $exp->unlock(); // reopen the clashing object
       $url = b_url::same("?form=vm_Visit&mode=RO&id=".$this->rec['v_id']);
     }
-    foreach ($this->clashes as $pear=>$cl) if (in_array($visit->ID,$cl) || $pear==$visit->ID) {
+    foreach ($this->Clashes as $pear=>$cl) if (in_array($visit->ID,$cl) || $pear==$visit->ID) {
       $this->t->extraTD[] = bIcons()->getButton(array('l'=>$url,
 						      'd'=>'edit clash', 
 						      'i'=>'i-edit'));

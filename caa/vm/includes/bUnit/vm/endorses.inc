@@ -62,7 +62,7 @@ class bUnit_vm_endorses extends bUnit_vm{
    */
   protected function edit_unitMember($av_id){
     $rec = $this->getUnitMember($av_id);
-    $rec['v_types'] = $this->arg_explode(@$rec['v_types']);
+    $rec['v_types'] = $this->safe_explode(@$rec['v_types']);
 
     myPear::setPageHeader('Endorser '.bForm_Avatar::_fmtName('fl',$rec,False));
 
@@ -164,7 +164,7 @@ class bUnit_vm_endorses extends bUnit_vm{
     $rec = $this->getMember(array('um_avid'=>$av_id));
     
     // Do not bother about the programs yet
-    $v_types = array_diff($this->arg_explode(@$rec['v_types']),
+    $v_types = array_diff($this->safe_explode(@$rec['v_types']),
 			  array(VISIT_TYPE_PROGRAM));
     
     // Walk thru the requested visits and see what is not yet endorsed
@@ -186,7 +186,7 @@ class bUnit_vm_endorses extends bUnit_vm{
    */
   protected function format(){
     $virt_group = $v_types = array();
-    $this->rec['v_types'] = $this->arg_explode(@$this->rec['v_types']);
+    $this->rec['v_types'] = $this->safe_explode(@$this->rec['v_types']);
 
     foreach(VM::$endorsements as $v_type=>$groups){
       foreach($groups as $code=>$name) { 

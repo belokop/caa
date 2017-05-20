@@ -110,7 +110,7 @@ function myPear_updates(){
 }
 
 // watch the bug...
-myPear_update34(False);
+myPear_update34();//(False);
 myPear_update35();
 
 /*
@@ -162,18 +162,38 @@ function myPear_update35(){
  * Tentative problem
  */
 function myPear_update34($delete=True){
-  $q = myPear_db()->qquery("SELECT lm_id,lm_timestamp FROM zzz_list_members LEFT JOIN zzz_lists ON lm_lid = l_id ".
-			   " WHERE ((lm_key IS NULL) AND (lm_status IS NULL)) AND ((lm_value IS NULL) OR (l_class = 'bList_eaEmpRecords')) ".
-			   " ORDER BY lm_timestamp DESC",True);
+  static $dejaVu = 0; if ($dejaVu++) return;
+
+  $q = myPear_db()->qquery("SELECT * FROM `zzz_lists` ".
+			   " LEFT JOIN zzz_list_members ON lm_lid = l_id WHERE ".
+			   ($where = join(' AND ',array('lm_key    IS NULL',
+							'lm_status IS NULL',
+							'lm_value  IS NULL',
+							'lm_timestamp IS NOT NULL'))).
+			   " ORDER BY CONCAT(l_class) DESC",True);
   $ts  = array();
-  $ids = array(0);
   while($r = myPear_db()->next_record($q)){
-    $ids[]= 'lm_id='.$r['lm_id'];
-    $ts[] = $r['lm_timestamp'];
+    foreach($r as $k=>$v){
+      // if (empty($v)) $r[$k] = var_export($v,True);
+      if (strpos($k,'l_') === 0 && $k!='l_class') unset($r[$k]);
+      if ($v===Null)                              unset($r[$k]);
+    }
+    @$ts[str_replace('l_class=','',b_fmt::joinX(' ',$r))]++;
   }
-  if ($n = count($ts)){
-    myPear::WARNING_T("Found $n empty 'zzz_list_members' records:<pre>".join('<br>',$ts).'</pre>'); 
-    if ($delete) myPear_db()->qquery("DELETE FROM zzz_list_members WHERE ".join(' OR ',$ids),True);
+
+  $NN = 0;
+  krsort($ts);
+  foreach($ts as $txt=>$n){
+    $NN += $n;
+    $txts[] = "$txt ($n case".($n>1 ? "s)" : ")");
+  }
+  if ($NN){
+    myPear::WARNING("Found $NN empty 'zzz_list_members' records (NOTE, <em>'Null'</em> VALUES ARE NOT SHOWN):<pre>".join('<br>',$txts).'</pre>'); 
+    if ($delete){
+      $sql = "DELETE FROM zzz_list_members WHERE $where";
+      myPear::WARNING("Trying <em>$sql...</em>");
+      myPear_db()->qquery($sql,True);
+    }
   }
 }
 

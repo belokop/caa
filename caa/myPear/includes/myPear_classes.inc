@@ -319,7 +319,7 @@ class b_fmt{
 	//	if (cnf_dev) b_debug::xxx(var_export($reply,True));
       }
     }
-    if ($always_return_array && !is_array($reply)) $reply = array($reply);
+    if ($always_return_array && !is_array($reply)) $reply = (empty($reply) ? array() : array($reply));
     return $reply;
   }
 
@@ -1666,7 +1666,7 @@ class b_debug{
    * Unrecoverable error, stop the processing
    */
   public static $_internalError = 0;
-  static function internalError($txt='',$class=Null){
+  static function internalError($txt='',$for_var_dump=Null){
     // Sanity...
     if (!self::$_internalError++){
       
@@ -1675,6 +1675,8 @@ class b_debug{
 	if(cnf_dev || cnf_demo || YBhere) b_cnf::get('nodrupal',($_GET['nodrupal']=1));
 	myPear_db()->debug = cnf_dev || YBhere;
       }
+
+      if (is_array($for_var_dump)) var_dump('requested var_dump follows...',$for_var_dump);
       
       // Print diagnostics
       if (cnf_CLI){
@@ -3773,19 +3775,18 @@ class b_os{
    */  
   public static function write_excel_file($file,$input,$header = array()){
     $bytes = 0;
-
+    
     if (!empty($input)){
-      $fn = myPear_tmp . basename(tempnam('','')).'_'.basename($file);
       $fn = myPear_tmp . date('Y-m-d_',time()) . basename($file);
-      if ($fp = fopen($fn, 'w')){
-	// Inform Excel that the encoding is UTF8
-	// fprintf($fp, chr(0xEF).chr(0xBB).chr(0xBF));
-	foreach ($input as $fields){
-	  if (($n = fputcsv($fp, $fields)) === False) b_debug::internalError("Can't export $file");
-	  $bytes += $n;
-	}
-	fclose($fp);
+      $fp = fopen($fn, 'w');
+      // Inform Excel that the encoding is UTF8
+      // fputs($fp, "\xEF\xBB\xBF"); // UTF-8 BOM !!!!!
+      foreach ($input as $fields){
+	// foreach($fields as $k=>$f) $fields[$k] = mb_convert_encoding($f, 'UTF-16LE', 'UTF-8');
+	if (($n = fputcsv($fp,$fields,',','"')) === False) b_debug::internalError("Can't export $file");
+	$bytes += $n;
       }
+      fclose($fp);
     }
     if (empty($bytes)){
       myPear::ERROR("Can not open Excel output file");

@@ -114,6 +114,7 @@ function vm_updates(){
     }
 
     if (True){ // Fixes for the version "Easter 2017"
+      vm_compat_update_49();
     }
 
     myPear_logs()->doNotLog = False;
@@ -143,6 +144,524 @@ function vm_compat_update_ad_hocks(){
   // Another strange thing...
   vm_compat_update_47();
 
+}
+
+function vm_compat_update_49_2_Kronor_Hostel(){
+  static $h_2kr = 0;
+  if (!empty($h_2kr)) return;
+
+  locateAndInclude('bForm_vm_Hut');
+  
+  $h_2kr = myPear::getInstance_new('bForm_vm_Hut',array('hut_name'=>'2 Kronor Hostel'),'strict');
+  if (empty($h_2kr)){
+    $h_2kr = new bForm_vm_Hut('empty');
+    $h_2kr->updateDB(array('hut_name'=>'2 Kronor Hostel',
+			   'hut_code'=>'H',
+			   'hut_capacity'=>999,
+			   ));
+  }
+  
+  $r = myPear::getInstance_new('bForm_vm_Room',array('a_hutid'=>$h_2kr->ID),'strict');
+  if (empty($r)) {
+    $r = myPear::getInstance_new('bForm_vm_Room',array('a_name'=>'2 Kronor Hostel'),'strict');
+    $r->updateDB(array('a_name' => 'Bed',
+		       'a_hutid'=> $h_2kr->ID,
+		       ));
+  }
+  vm_compat_update_49_visits("a_id = ".$r->ID);
+
+  
+  $h_2kr = new bForm_vm_Hut('empty');
+  $h_2kr->updateDB(array('hut_name'=>'Interhostel AB',
+			 'hut_code'=>'H',
+			 'hut_capacity'=>999,
+			 ));
+  $r = myPear::getInstance_new('bForm_vm_Room',5495);
+  $r->updateDB(array('a_name' => 'Bed',
+		     'a_hutid'=> $h_2kr->ID,
+		     ));
+  vm_compat_update_49_visits("a_id = 5495");
+}
+
+function vm_compat_update_49_visits($where){
+  ob_start();
+  locateAndInclude('bHolder_vm_Visits');
+  $holder = new bHolder_vm_Visits();
+  $holder->noSort= True;
+  $holder->where[] = $where;
+  $holder->listEntries();
+  $list = ob_get_contents();
+  ob_end_clean();
+  myPear::MESSAGE($list);
+}
+
+/*
+ * Preparation for the new rooms classification
+ */
+vm_compat_update_49();
+function vm_compat_update_49(){
+  static $dejaVu = 0;
+  if ($dejaVu++) return;
+  if (!upgraded_rooms_specifications) return;
+  if (myPear_db()->columnExists('a_quantity','abs_rooms')){
+    myPear::MESSAGE("Conversion is already done!");
+    return;
+  }
+  
+
+  // Add a few new columns
+  if (!myPear_db()->columnExists('a_quantity','abs_rooms'))
+    myPear_db()->qquery("ALTER TABLE `abs_rooms` ADD `a_quantity` INT NOT NULL DEFAULT '".VM_quantity2request."' AFTER `a_capacity`",True); 
+  if (!myPear_db()->columnExists('lease_option','abs_leases'))
+    myPear_db()->qquery("ALTER TABLE `abs_leases` ADD `lease_option` VARCHAR(200) DEFAULT '".serialize(array('pay'=>VM_everything))."' AFTER `lease_end`",True);
+  
+  // Remove "a_code", it is redundant...
+  if (myPear_db()->columnExists('a_code','abs_rooms'))
+    myPear_db()->qquery("ALTER TABLE `abs_rooms` DROP `a_code`",True);
+  if (myPear_db()->columnExists('a_price_cleaning','abs_rooms'))
+    myPear_db()->qquery("ALTER TABLE `abs_rooms` DROP `a_price_cleaning`",True);
+
+  
+  //
+  // Remove obsolete entries
+  // 
+  $a_id2remove = array(42323,34518,271674,100748,126131,100746,100747,125270);
+  $a_id2remove = array(42323,34518,271674);
+  
+  if (!function_exists('vm_compat_update_49_cleanup')){
+    function vm_compat_update_49_cleanup($f,$ids){
+      $table = 'abs_leases';
+      if (strpos($f,'hut_') === 0) $table = 'abs_huts';
+      if (strpos($f,'a_')   === 0) $table = 'abs_rooms';
+      foreach($ids as $id){
+	myPear_db()->qquery("DELETE FROM $table WHERE $f = '$id'",True);
+	if ($f == 'a_id')  vm_compat_update_49_cleanup('lease_aid',array($id));
+	if ($f == 'hut_id')vm_compat_update_49_cleanup('a_hutid',  array($id));
+      }	
+    }
+  }
+  foreach(array('a_id'    =>$a_id2remove,
+		'hut_id'  =>array(247626),
+		) as $f=>$ids){
+    b_debug::xxx("removing $f=".join(',',$ids));
+    vm_compat_update_49_cleanup($f,$ids);
+  }
+  
+  vm_compat_update_49_2_Kronor_Hostel();
+  unset($_SESSION['a_price_myOrg']);
+
+  //
+  // Parse all the rooms names, extract options and write them to the database
+  //
+  $pivots = $table = array();
+  $q = myPear_db()->qquery("SELECT hut_id,hut_name,a_id,a_capacity,a_name,a_comment,a_price,a_status,lease_end ".
+			   " FROM abs_rooms ".
+			   " LEFT JOIN abs_huts ON a_hutid=hut_id ".
+			   " LEFT JOIN abs_leases ON lease_aid=a_id ".
+			   // " WHERE lease_aid IS NOT NULL ".
+			   " GROUP BY a_id ".
+			   " ORDER BY CONCAT(lease_end,hut_name) DESC"
+			   ,True);
+  while($r = myPear_db()->next_record($q)){
+    if ($r['hut_name'] == HUT_BI) continue;
+    if (empty($r['a_id'])){
+      b_debug::print_r($r,'??????????????????????????????????');
+      continue;
+    }
+    list($a_name,$a_pay,$sharable,$a_comment,$pay_comment) = vm_compat_update_49_parser($r,$table);
+   
+    vm_compat_update_49_set($r['a_id'],$a_name,$a_pay,$a_comment);
+
+    // See the usage of the room
+    $qqq = myPear_db()->qquery("SELECT lease_end FROM abs_leases WHERE lease_aid=".$r['a_id'],True);
+    $latest_lease = $n = 0;
+    while($rrr = myPear_db()->next_record($qqq)){
+      $n++;
+      $latest_lease = max($latest_lease,$rrr['lease_end']);
+    }
+    $room = array("Usage $n".($n>0?', last '.date('Y-m-d',$latest_lease):''),
+		  $r['a_capacity'],
+		  'price='.$r['a_price']);
+    if ($a_comment)       $room[] = $a_comment;
+    if ($v=@$r['a_start'])$room[] = date('Y-m-d',$v);
+    if ($v=@$r['a_end'])  $room[] = date('Y-m-d',$v);
+    if ($sharable)        $room[] = AP_SHARABLE;
+    if ($a_pay)           $room[] = "a_pay=$a_pay";
+
+    // Build "shrinking table"
+    if (empty($pivots[$r['hut_name']][$a_name]['root']) && !$sharable && ($n>0) && empty($a_pay)){
+      array_unshift($room,$r['a_id']);
+      $pivots[$r['hut_name']][$a_name]['root'] = $room;
+    }else{
+      if (($root_capac=@$pivots[$r['hut_name']][$a_name]['root'][2]) && ($room[1] == $root_capac)) unset($room[1]);
+      if (($root_price=@$pivots[$r['hut_name']][$a_name]['root'][3]) && ($room[2] == $root_price)) unset($room[2]);
+      if($sharable)
+       $shrbl[$r['hut_name']][$a_name][$r['a_id']] = $room;
+      $pivots[$r['hut_name']][$a_name][$r['a_id']] = $room;
+    }
+  }
+  b_debug::print_r($table);
+  // b_debug::print_r($a_pays,'a_pays','nosort');
+  b_debug::print_r($pivots,'pivots','nosort');
+  //  b_debug::print_r($shrbl, 'shrbl', 'nosort');
+
+  if (!function_exists('update49_get_pivot')){
+    function update49_get_pivot($d1){
+      $reply = @$d1['root'][0];
+      if (empty($reply)){
+	$reply = array_keys($d1);
+	$reply = $reply[0];
+      }
+      return $reply;
+    }
+  }
+
+  // Complete the story
+  locateAndInclude('bForm_vm_Room');
+  locateAndInclude('bList_vm_accommodationOptions');
+  foreach ($pivots  as $hut_name=>$d0){
+    foreach ($d0   as $a_name=>$d1){
+      // See the pivot
+      $a_root = new bForm_vm_Room(update49_get_pivot($d1));
+      if (count(array_keys($d1)) == 1){ //  && !empty($d1['root'])){
+	myPear::MESSAGE(x('h3',"OK=".$a_root->ID."=========================$hut_name.$a_name "));
+	$ids  = array(0);
+	$id2xs= array(bList_vm_accommodationOptions::id2x($a_root->ID));
+      }else{
+	ob_start();
+	$a_root->getForm();
+	$ob = ob_get_contents();
+	ob_end_clean();
+	myPear::MESSAGE(x('h3','============================'.$a_root->name()));
+	myPear::MESSAGE($ob);
+	$id2xs = $ids = array();
+	foreach ($d1 as $a_id=>$room){
+	  if ($a_id == 'root') continue;
+	  b_debug::print_r($room,"$a_id --> ".$a_root->ID);
+	  $ids[] = $a_id;
+	  $id2xs[] = bList_vm_accommodationOptions::id2x($a_id);
+	}
+      }
+      sort($ids);
+      myPear::MESSAGE('a_ids='.implode(',',$ids));	
+
+      myPear_db()->qquery("UPDATE abs_leases SET lease_aid = ".$a_root->ID." WHERE lease_aid = ".join(' OR lease_aid = ',$ids),True);
+      myPear_db()->qquery("DELETE FROM abs_rooms WHERE a_id = ".join(' OR a_id = ',$ids),True);
+
+      if (True){
+	//
+	// Just DELETE all the bList_vm_accommodationOptions, it is too complicated t
+	// Lets assume that the last ones are correct 
+	//
+	$q = myPear_db()->qquery("SELECT l_id FROM zzz_lists WHERE l_class = 'bList_vm_accommodationOptions'",True);
+	while($r = myPear_db()->next_record($q)){
+	  myPear_db()->qquery("DELETE FROM zzz_list_members WHERE lm_lid=$r[l_id]",True);
+	  myPear_db()->qquery("DELETE FROM zzz_lists WHERE l_id=$r[l_id]",True);
+	}
+	
+      }else{
+	vm_compat_update_49_bList_vm_accommodationOptions($r,$ids,$id2x,$a_id2remove);
+      }
+    }
+  }
+  unset($_SESSION['a_price_myOrg']);
+
+  //
+  // Matsällskapet has 5 rooms with optional extra bed 
+  //
+  global $m_hut_id;
+  $r = new bForm_vm_Room('empty');
+  $r->updateDB(array($a_name = 'Room with kitchenet & extra bed',
+		     'a_price'   => 680,
+		     'a_capacity'=> '2',
+		     'a_hutid'   => $m_hut_id));
+  
+  //
+  // Set the known number of rooms
+  //
+  foreach(array('BizApartment' => array('1' => 15,
+					'2' => 10,
+					'3' => VM_quantity2request,
+					'4' => VM_quantity2request,
+					),
+		'Matsällskapet'=> array('1' => 4,
+					'2' => 1,
+					),
+		'Nordita'      => array('any'=>1,
+					),
+		) as $hut_name=>$quantities){
+    $hut = myPear::getInstance_new('bForm_vm_Hut',array('hut_name'=>$hut_name),array('fatal'));
+    foreach($quantities as $a_capacity=>$a_quantity){
+      myPear_db()->qquery("UPDATE abs_rooms SET a_quantity = '$a_quantity' WHERE a_hutid = ".$hut->ID.
+			  ($a_capacity==='any'
+			   ? ''
+			   : " AND a_capacity='$a_capacity'"),True);
+    }
+  }
+}
+
+/*
+ *
+ */
+function vm_compat_update_49_bList_vm_accommodationOptions($r,$ids,$id2x,$a_id2remove){
+  
+  myPear::MESSAGE('id2xs='.implode(',',$id2xs));	
+
+  $q = myPear_db()->qquery("SELECT lm_id,lm_key,lm_option FROM zzz_list_members LEFT JOIN zzz_lists ON lm_lid=l_id".
+			   " WHERE l_class = 'bList_vm_accommodationOptions' AND lm_option REGEXP '".join('|',$id2xs)."'", True);
+  $q = myPear_db()->qquery("SELECT lm_id,lm_key,lm_option FROM zzz_list_members LEFT JOIN zzz_lists ON lm_lid=l_id".
+			   " WHERE l_class = 'bList_vm_accommodationOptions'",True);
+  while($r = myPear_db()->next_record($q)){
+    $lm_option = unserialize($r['lm_option']);
+    
+    // Check that the record is not empty
+    unset($lm_option['nrooms']);
+    foreach($a_id2remove as $a_id) unset($lm_option[bList_vm_accommodationOptions::id2x($a_id)]);
+    if (empty($lm_option)){
+      myPear_db()->qquery("DELETE FROM zzz_list_members WHERE lm_id=$r[lm_id]",True);
+      continue;
+    }
+    
+    if ($matches=array_intersect($id2xs,array_keys($lm_option))){
+      $hut = new bForm_vm_Hut($r['lm_key']);
+      // First unset removed rooms
+      foreach($id2xs as $id) unset($lm_option[$id]);
+      // Set the pivot
+      $lm_option[bList_vm_accommodationOptions::id2x($a_root->ID)] = 33333; // some strange value
+      ksort($lm_option);
+      b_debug::print_r($lm_option,'pivot='.bList_vm_accommodationOptions::id2x($a_root->ID),'nosort');
+      if (0) var_dump(($matches=array_intersect($id2xs,array_keys($lm_option))),
+		      array_diff(array_keys($lm_option),$matches));
+      myPear_db()->qquery("UPDATE zzz_list_members SET lm_option = '".serialize($lm_option)."' WHERE lm_id=$r[lm_id]",True);
+      myPear::MESSAGE($hut->name()."-$r[lm_key]; lm_option=".b_fmt::joinX(', ',$lm_option));
+      myPear::MESSAGE("matches=".join(', ',$matches));
+    }
+  }
+  
+  // Check duplicated accommodation records
+  $q = myPear_db()->qquery("SELECT COUNT(*) as count, hut_name,lm_key,lm_id,lm_option FROM zzz_list_members ".
+			   " LEFT JOIN zzz_lists ON l_id=lm_lid ".
+			   " LEFT JOIN abs_huts ON hut_id=lm_key ".
+			   " WHERE l_class = 'bList_vm_accommodationOptions' ".
+			   " GROUP BY CONCAT(lm_key,lm_option)  ".
+			   " HAVING count>1 ORDER BY lm_timestamp DESC",True);
+  $lm_option = array();
+  while($r = myPear_db()->next_record($q)){
+    myPear_db()->qquery("DELETE FROM zzz_list_members ".
+			" WHERE lm_key = $r[lm_key] AND lm_id != $r[lm_id] AND lm_option = '$r[lm_option]'",True);
+    $r['lm_option'] = unserialize($r['lm_option']);
+    $lm_option[$r['lm_key']] = $r['lm_option'];
+    b_debug::print_r($r,'DUPLICATIONS');
+  }
+  
+  $q = myPear_db()->qquery("SELECT COUNT(*) as count, hut_name,lm_key,lm_id,lm_option FROM zzz_list_members ".
+			   " LEFT JOIN zzz_lists ON l_id=lm_lid ".
+			   " LEFT JOIN abs_huts ON hut_id=lm_key ".
+			   " WHERE l_class = 'bList_vm_accommodationOptions' ".
+			   " GROUP BY CONCAT(lm_key)  ".
+			   " HAVING count>1 ORDER BY concat(hut_name)",True);
+  while($r = myPear_db()->next_record($q)){
+    unset($r['count']);
+    b_debug::print_r($r,'multiple rooms');
+    $qq = myPear_db()->qquery("SELECT hut_name,lm_key,lm_option FROM zzz_list_members ".
+			      " LEFT JOIN abs_huts ON hut_id=lm_key ".
+			      " WHERE lm_key=$r[lm_key] ORDER BY lm_key",True);
+    while($rr = myPear_db()->next_record($qq)){
+      b_debug::print_r($rr);
+    }
+  }
+}
+
+/*
+ *
+ */
+function vm_compat_update_49_set($a_id,$a_name,$a_pay,$a_comment){
+  locateAndInclude('bForm_vm_Lease');
+  
+  // Match the option
+  if (!empty($a_pay)){
+    foreach(VM::$pay_options as $o){
+      if (strpos($a_pay,$o) !== False) $pay_option = $o;
+    }
+    if (empty($pay_option)) b_debug::internalError("Unknown lease_option \"$a_pay\"");
+    // Save it
+    bForm_vm_Lease::get_lease_options(array('lease_aid'=>$a_id),'set',array('pay'=>$pay_option));
+  }
+  
+  foreach (array('a_name','a_comment') as $f){
+    $v = ucfirst(strtolower($$f));
+    myPear_db()->qquery("UPDATE abs_rooms SET $f = '$v' WHERE a_id = $a_id",True);
+  }
+}
+
+function vm_compat_update_49_parser($r,&$table){
+  if (!function_exists('pack_me')){
+    function pack_me(&$text){
+      $text = trim(str_replace('  ',' ',
+			       str_replace('  ',' ',
+					   str_ireplace(array('A bed in Double','Usually not a fixed rate'),'',
+						       str_replace(array(';','-',',','[',']','(',')','"'),' ',
+								   $text)))));
+    }
+  }
+  $std_names = array('Superior Single',
+		     'Superior',
+		     'Studio Small',
+		     'Studio Medium',
+		     // 'Studio Standard',
+		     'Studio Large',
+		     'One Bedroom Apartment',
+		     'Studio',
+		     'Guest apartment',
+		     );
+
+  $a_name    = $r['a_name'];
+  $a_comment = $x = $r['a_comment'];
+    
+  // Fix "syntax errors"
+  $fixes = array(
+		 '/ *\]/' => ']',
+		 '/\(ex \d*\)/' => '',
+		 '/\[\d[RL\*]*\]/' => '',    
+		 '/^\[(\d)([;\s])*(\w)/' => '[\\1] [\\3',
+		   );  
+  $a_name    = trim(preg_replace(array_keys($fixes),array_values($fixes),$a_name));
+  $a_comment = trim(preg_replace('/Studio Standard/i','Studio Medium',$a_comment));
+  if ($a_comment != $x) myPear::DEBUG("a_comment:<br>$x<br>$a_comment");
+  
+  // Strip out the capacity from the room name
+  $a_name= trim(str_replace('['.$r['a_capacity'].']','',$a_name));
+  if (empty($r['a_capacity'])) b_debug::print_r($r,'empty a_capacity');
+  
+  // Extract payments
+  //     from a_name
+  $pay = '/((Nordita)?[\w ]*pay(s|ed)[\w\s]+)/i';
+  $pay = '/([\w ]*pay(s|ed)[\w\s]+)/i';
+  preg_match($pay,$a_name,$match1);
+  if ($a_pay = trim(@$match1[0])){
+    $a_name = str_replace($a_pay,'',$a_name);
+  }
+  //     from a_comment
+  preg_match($pay,$r['a_comment'],$match2);
+  if ($pay_comment = @$match2[0]) $a_comment = trim(str_ireplace($pay_comment,'',$a_comment));
+
+  // Extract the room name
+  if    (preg_match('/('.join('|',$std_names).')/i',$a_name,$match))    $a_name = $match[1];
+  elseif(preg_match('/('.join('|',$std_names).')/i',$a_comment,$match)) $a_name = $match[1];
+  if ($a_name == 'Superior') $a_name .= ' Double';
+  $a_comment = str_ireplace($std_names,'',$a_comment);
+  
+  // Sharable room
+  $sharable = ($r['a_status'] == 'shared');
+  $a_name   = str_ireplace(AP_SHARABLE,'',$a_name);
+  $a_comment= str_ireplace(AP_SHARABLE,'',str_replace(array('A bed in','Double'),'',$a_comment));
+  
+  // Cosmetics...
+  $x = 'PAID BY THE TENANT';
+  if (stripos($a_comment,$x)!== False){
+    $pay_comment = $x;
+    $a_comment = str_ireplace($x,'',$a_comment);
+  }
+  
+  // Check what we got as the room name...
+  pack_me($a_name);
+  //  if (($r['hut_name'] == 'BizApartment') && (strToLower($a_name) == 'studio standard')) $a_name = 'Studio Medium'; 
+  //  if ((strToLower($r['hut_name']) == '2 kronor hostel') && (strToLower($a_name) == 'studio standard')) $a_name = 'Studio Medium'; 
+  if ((strToLower($r['hut_name']) == 'wenner-gren center') && (strToLower($a_name) == 'room')) $a_name = 'Room single'; 
+  if ((strToLower($r['hut_name']) == 'matsällskapet')){
+    global $m_hut_id;
+    $m_hut_id = $r['hut_id'];
+    $a_name = 'Room with kitchenet'; 
+    $a_comment = '';
+  }
+
+  if (empty($a_name)){
+    switch ($r['a_capacity']){
+    case 0:
+      b_debug::print_r($r,"??? capacity 0");
+    case 1: 
+      $a_name = 'Room Single';
+      if ($r['hut_name'] == 'Sky Hotel')    $a_name = 'Studio Small';
+      break;
+    case 2: 
+      $a_name = 'Room Double';
+      if ($r['hut_name'] == 'BizApartment') $a_name = 'Studio Medium'; 
+      if ($r['hut_name'] == 'Wallquistska') $a_name = 'apartment';
+     break;
+    case 3:
+      $a_name = 'Studio Large';
+      break;
+    case 4: 
+      if ($r['hut_name'] == 'BizApartment') $a_name = 'One Bedroom Apartment';
+      break;
+    default: b_debug::internalError("??? capacity ".$r['a_capacity']);
+    }
+  }
+    
+  //
+  // Print summary
+  //
+  $name = array();
+  
+  pack_me($a_comment);
+  pack_me($a_name);
+
+  if (!$a_name) $a_name = '???a_name';
+  if ($a_name){
+    $name[] = $r['a_capacity'];
+    $name[] = $a_name;
+    $id = sprintf('&#91;%s&#93; %s',$r['a_capacity'],$a_name);
+    @$table[$r['hut_name']][$id]++;
+    if (0){
+      $qq = myPear_db()->qquery("SELECT lease_id FROM abs_leases WHERE lease_aid=".$r['a_id'],True);
+      @$table[$r['hut_name']][$id.'_used'] += myPear_db()->num_rows($qq);
+    }
+  }
+  
+  pack_me($a_pay);
+  if ($a_pay){
+    $name[] = $a_pay;
+    @$table['pay'][$a_pay]++;
+  }
+  
+  if ($pay_comment){
+    pack_me($pay_comment);
+    if (False)      $name[] = $pay_comment;
+    @$table['pay_comment'][$pay_comment]++;
+  }
+  
+  if ($sharable){
+    $name[] = AP_SHARABLE;
+    @$table[AP_SHARABLE][AP_SHARABLE]++;
+  }
+
+  static $jhjh = 0;
+  if ($jhjh++ <3){ // Just debugging
+    locateAndInclude('bForm_vm_Lease');
+    $qq = myPear_db()->qquery("SELECT lease_id FROM abs_leases WHERE lease_aid=".$r['a_id'],True);
+    while($rr = myPear_db()->next_record($qq)){
+      $select = bForm_vm_Lease::get_lease_options($rr['lease_id'],'get');
+      b_debug::print_r($select,'Capacity='.$r['a_capacity'],'nosort');
+      break;
+    }
+  }
+  
+  $was = $now = array();
+  if (!empty($r['a_name']))    $was[] = $r['a_name'];
+  if (!empty($r['a_comment'])) $was[] = $r['a_comment'];
+  if (!empty($name))           $now[] = join(' -- ',$name);
+  if (!empty($a_comment))      $now[] = $a_comment;
+  
+  if (empty($a_name) || ($a_name == '???a_name')){
+    myPear::DEBUG("a_pay=$a_pay;  a_name=$a_name");
+    
+    $w=join(' ### OOO ### ',$was);
+    $n=join(' ### NNN ### ',$now);
+    myPear::DEBUG($r['hut_name']."<br>$w<br>$n");
+  }
+
+  $reply = array($a_name,$a_pay,$sharable,$a_comment,$pay_comment);
+  return $reply;
 }
 
 // Fix...
@@ -499,7 +1018,7 @@ function vm_compat_update_36(){
   // NOT NULL
   myPear_update_DBdefaults(array('abs_huts'      =>array('varchar(32)' =>array('hut_postcode','hut_code','hut_status','hut_entrance_code'),
 							 'varchar(230)'=>array('hut_name','hut_url','hut_city','hut_street')),
-				 'abs_rooms'=>array('int(11)'     =>array('a_area','a_price_cleaning','a_capacity'),
+				 'abs_rooms'     =>array('int(11)'     =>array('a_area','a_price_cleaning','a_capacity'),
 							 'varchar(128)'=>array('a_price'),
 							 'varchar(230)'=>array('a_comment')),
 				 'abs_visits'    =>array('varchar(32)' =>array('v_type','v_group'),

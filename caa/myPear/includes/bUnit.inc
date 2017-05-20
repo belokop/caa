@@ -1021,7 +1021,7 @@ class bUnit extends bList{
       if (empty($duty)){
         $accept = True;
       }else{
-        $duties = $this->arg_explode(@$this->get_memberInfo($av_id,$trigger));
+        $duties = $this->safe_explode(@$this->get_memberInfo($av_id,$trigger));
 	$accept = in_array($duty,$duties);
       }
       if ($accept) $reply[$av_id] = array('av_name' => (mb_strToUpper($this->get_memberInfo($av_id,'av_lastname'),'utf-8').' '.

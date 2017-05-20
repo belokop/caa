@@ -1,5 +1,7 @@
 Changes log                                                                                                                                                             
                                                                                                                                                                                  
+2017-05-20, Version 5.13.14,
+                                                                                                                                                                                 
 2017-05-11, Version 5.13.13,
                                                                                                                                                                                  
 2017-05-03, Version 5.13.12,
@@ -318,7 +320,7 @@ D       vm/includes/vm_editVisit.inc
 2012-04-01 version 4.0-beta, major update
 
 2012-03-06 version 3.5-m4 (design fixes release)
-  * Introduce bList_vm_cotenants list (editor for the shared apartments)
+  * Introduce bList_vm_cotenants list (editor for the sharable apartments)
 
 2012-02-06 version 3.5-m3 (design fixes release)
   * Improve bList / bUnit design

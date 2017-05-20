@@ -46,25 +46,28 @@ class APItabs{
 
   public  static $tab_definition = array();
   public  static $_ = '';
+  public  static $q = array();
   
   public static function define_tabs($tabs){
     foreach($tabs as $code=>$text) APItabs::define_tab($code,$text);
 
     // Convert url tab codes to human readable values
     $ok = True;
+    self::$q = array();
     foreach(explode('/',$_GET['q']) as $k=>$v){
       $hr = ($k > 0
 	     ? @$GLOBALS["code2tab"][$v]
 	     : $v);
       if (empty($hr)){
 	$ok = False;
+	break;
       }else{
-	$q[] = $hr;
 	// Keep the decoded tab for future use
 	self::$_ = $hr;
+	self::$q[] = $hr;
       }
     }
-    if ($ok) myPear::DEBUG("q = ".join('/',$q));
+    myPear::DEBUG(__CLASS__."::q = ".join('/',self::$q));
   }
 
   public static function define_tab($tab,$text){

@@ -462,8 +462,6 @@ class agenda_vm extends agenda{
        case 'default_lodging': 
 	 $default_lodging = True; 
 	 break;
-       case 'shared_lodging':
-	 myPear::WARNING($lodging);
        default:
 	 $reply[] = $lodging;
        }

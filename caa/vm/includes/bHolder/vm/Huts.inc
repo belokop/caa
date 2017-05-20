@@ -22,7 +22,7 @@ class bHolder_vm_Huts extends bHolder_vm{
     $header = array('hut_code'    => 'Accommodation<br/>option',
 		    'hut_name'    => 'Name',
 		    'hut_status'  => 'Default?',
-		    'hut_capacity'=> 'N rooms',
+		    // 'hut_capacity'=> 'N rooms',
 		    'hut_address' => 'Address',
 		    'hut_url'     => ' ',
 		    // 'hut_entrance_code' => 'entrance<br/>code',

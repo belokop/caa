@@ -573,6 +573,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
     $this->v = Null;
     if (!$reply && empty($this->av)) switch ($this->doing){
 	
+      case '2excel':
       case 'photos':
 	if (bForm_vm_Visit::_getStatus($this->rec) == STATUS_NO) return True;
       case 'budget':
@@ -744,7 +745,6 @@ class bHolder_vm_Visitors extends bHolder_vm{
       $this->total['name']     = $total_socialEvents;
       @$this->total['total_e'] += $total_socialEvents;
       @$this->total['total_r'] += $total_socialEvents;
-      // b_debug::print_r($this->total,'total');
     }
 
     foreach($this->total as $k=>$v){
@@ -773,12 +773,10 @@ class bHolder_vm_Visitors extends bHolder_vm{
       if (!empty($header[$header_element])){
 	ob_start();
 	if (is_object(VM::$e)){
-	  // VM::$e->accommodationOptions()->show_usage($hut_code);
 	  VM_accommodationOptions(VM::$e)->show_usage($hut_code);
 	}else{
 	  $av_id = @$_GET['host_avid_once'];
 	  if (empty($av_id) && is_object($this->av)) $av_id = $this->av->ID;
-	  //if (!empty($av_id)) bList::getListInstance(myOrg_ID,'bList_vm_accommodationOptions')->show_usage($hut_code,0,0,$av_id);
 	  if (!empty($av_id)) VM_accommodationOptions(myOrg_ID)->show_usage($hut_code,0,0,$av_id);
 	}
 	$result = ob_get_contents();
@@ -816,8 +814,6 @@ class bHolder_vm_Visitors extends bHolder_vm{
     foreach (array_keys($header) as $k) $t->css[$k]['align'] = 'align_right';    
 
     $this->set_colorCodesTH($header,$t->th_attr);
-
-    // b_debug::print_r($this->header_cache,'header',False);
 
     $t->preHeaders = $this->build_budget_preHeaders($header,$word_socialEvents);
     $t->noSort = True;
@@ -921,7 +917,6 @@ class bHolder_vm_Visitors extends bHolder_vm{
       // strange... TBU
     }else{
       if ($this->highlight = @$this->highlights[$c][$d]['h']){
-	// b_debug::print_r($this->highlights[$c][$d],"$c $d");
 	@$this->collected_highlights[$this->highlights[$c][$d]['z']][$this->highlight]++;
 	if (@$this->highlights[$c][$d]['s'] === 'fatal') @$this->fatal_fnc[$this->highlights[$c][$d]['d']]++;
       }
@@ -1179,7 +1174,8 @@ class bHolder_vm_Visitors extends bHolder_vm{
 	return VM_query($where);
 	
       case '2excel':
-	$_GET['sBy']   = 'hut_code,hut_name,a_name,av_lastname,av_id';
+	$_GET['sBy']   = 'CONCAT(hut_code,hut_name,a_name,av_lastname,av_id)';
+	$_GET['sBy']   = 'CONCAT(hut_name,a_name)';
 	$_GET['sByDir']= 'ASC';
 	return VM_query($where);
 	
@@ -1291,8 +1287,12 @@ class bHolder_vm_Visitors extends bHolder_vm{
       $this->t->showLineCounter = False;
 
       if ($v_projectid = $this->rec['v_projectid']){
-	$project = VM_projects()->getMember($v_projectid);
-	$this->rec['v_projectid'] = $project['lm_value'];
+	if ($this->rec['hut_code'] == HUT_BI){
+	  $this->rec['v_projectid'] = '';
+	}else{
+	  $project = VM_projects()->getMember($v_projectid);
+	  $this->rec['v_projectid'] = $project['lm_value'];
+	}
       }
 
       $v_id = $this->rec['v_id'];
@@ -1300,8 +1300,13 @@ class bHolder_vm_Visitors extends bHolder_vm{
       $this->rec['lease_end']   = date('Y-m-d',$this->rec['lease_end']);
       $this->rec['av_lastname'] = mb_strToUpper($this->rec['av_lastname']);
       $this->rec['av_firstname']= b_fmt::ucWords($this->rec['av_firstname']);
-      $this->rec['a_comment'] = preg_replace('/ - .*/','',$this->rec['a_comment']);
-      $this->t->extraTD[] = $this->rec['a_comment'];
+      if (upgraded_rooms_specifications){
+	locateAndInclude('bForm_vm_Lease');
+	$this->rec['a_comment'] = $this->t->extraTD[] = bForm_vm_Lease::get_lease_options($this->rec['lease_id'],'excel_int');
+      }else{
+	$this->rec['a_comment'] = preg_replace('/ - .*/','',$this->rec['a_comment']);
+	$this->t->extraTD[] = $this->rec['a_comment'];
+      }
 
       // Split the list by huts for better readability
       $hut_name = $this->split_by_huts($this->rec);
@@ -1313,8 +1318,8 @@ class bHolder_vm_Visitors extends bHolder_vm{
 	    $l = new bForm_vm_Lease($lease_id);
 	    if (!$l->getValue('lease_vid',1)){
 	      if (cnf_dev) b_debug::xxx("parentForm=$l->parentForm lease=$l ");
-	      if (cnf_dev) b_debug::print_r($l->formDB);
-	      if (cnf_dev) b_debug::print_r($this->rec);
+	      if (cnf_dev) b_debug::print_r($l->formDB,"??? no lease_vid for ".$l->__toString());
+	      if (cnf_dev) b_debug::print_r($this->rec,"??? no lease_vid for ".$l->__toString());
 	      continue;
 	    }
 	    $l->hookVisit();
@@ -1570,20 +1575,32 @@ class bHolder_vm_Visitors extends bHolder_vm{
    * Helper
    */  
   private function fill_excel($hut_name){
-    static $export_data = array('v_projectid' => 'Project',
-				'av_lastname' => 'Name',
-				'av_firstname'=> '',
-				'av_email'    => 'Email',
-				'av_city'     => 'City',
-				'lease_start' => 'Arrival',
-				'lease_end'   => 'Departure',
-				'cotenant'    => 'Co-tenant',
-				'a_area'      => 'Rum (kvm)',
-				'a_comment'   => '');
+    $export_data = array('v_projectid' => 'Project',
+			 'av_lastname' => 'Name',
+			 'av_firstname'=> '',
+			 'av_email'    => 'Email',
+			 'av_city'     => 'City',
+			 'lease_start' => 'Arrival',
+			 'lease_end'   => 'Departure',
+			 'cotenant'    => 'Co-tenant',
+			 'a_name'      => 'Rum',
+			 'a_area'      => 'Rum (kvm)',
+			 'a_comment'   => '');
+    if ($this->rec['lease_aid'] == VM::$OA->ID){
+      $unsets = array('v_projectid','cotenant','a_name','a_area','a_comment');
+    }elseif (upgraded_rooms_specifications){
+      $unsets = array('a_area');
+      $a_comment = bForm_vm_Lease::get_lease_options($this->rec['lease_id'],'excel_ext');
+    }else{
+      $a_comment = @$this->rec[$k];
+      $unsets = array('a_name');
+    }
+    foreach($unsets as $i) unset($export_data[$i]);
+    
     $data = $header = array();
-    foreach(array_keys($export_data) as $i){
-      $data[] = @$this->rec[$i];
-      $header[] = $export_data[$i];
+    foreach($export_data as $k=>$v){
+      $data[] = ($k == 'a_comment' ? $a_comment : @$this->rec[$k]);
+      $header[] = $v;
     }
     if (empty($this->excel_input[$hut_name])) $this->excel_input[$hut_name][] = $header;
     $this->excel_input[$hut_name][] = $data;
@@ -1779,6 +1796,9 @@ class bHolder_vm_Visitors extends bHolder_vm{
     return $reply;
   }
 
+  private function who_pays(){
+  }
+
   private function select_accommodation(){
     static $n_select = 0;
     
@@ -1791,8 +1811,8 @@ class bHolder_vm_Visitors extends bHolder_vm{
     }elseif(bForm_vm_Visit::_getStatus($this->rec) != STATUS_YES){
       $reply = $this->getGSF('.*',VM::e_ID());
     }elseif (is_object(VM::$e) && VM::hasRightTo('book_ah')){
-      //$rooms = bForm_vm_Lease::_freeRooms(VM::$e->accommodationOptions(),$this->rec['v_start'],$this->rec['v_end']);
-      $rooms = bForm_vm_Lease::_freeRooms(VM_accommodationOptions(VM::$e),$this->rec['v_start'],$this->rec['v_end']);
+   // $rooms = bForm_vm_Lease::_freeRooms(VM_accommodationOptions(VM::$e),$this->rec['v_start'],$this->rec['v_end']);
+      $rooms = bForm_vm_Lease::_freeRooms(VM_accommodationOptions(VM::$e),$this->rec);
       if (myPear::is_empty($n_select=@$this->rec['lease_id']))  $n_select = $this->rec['v_id'];
       VM::$formDummy->submitOnChange["_a_id:$n_select"] = True;
       $reply =  x("span class='only_online'",
@@ -1802,6 +1822,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
 		    "<input type='hidden' name='v_id'     value='".$this->rec['v_id']."'/>".
 		    "<noscript><input type='submit' value='go'/></noscript>"),
 		  'POST');
+      $reply .= $this->who_pays($this->rec['lease_id']);
       $reply .= $this->getGSF('share|accompan',VM::e_ID());
     }else{
       $reply = b_fmt::redText('no accommodation'); 
@@ -2372,12 +2393,6 @@ class bHolder_vm_Visitors extends bHolder_vm{
 	  }else{
 	    $av_id = @$_GET['host_avid_once'];
 	    if (empty($av_id) && is_object($this->av)) $av_id = $this->av->ID;
-	    if (!empty($av_id)){
-	      //bList::getListInstance(myOrg_ID,'bList_vm_accommodationOptions')->update();
-	      //bList::getListInstance(myOrg_ID,'bList_vm_accommodationOptions')->show($av_id);
-	      VM_accommodationOptions(myOrg_ID)->update();
-	      VM_accommodationOptions(myOrg_ID)->show($av_id);
-	    }
 	  }
 	  break;
 	  
@@ -2635,8 +2650,10 @@ class bHolder_vm_Visitors extends bHolder_vm{
 			'lease_start'=> 'Arrival',
 			'lease_end'  => 'Departure',
 			'cotenant'   => 'Cotenant',
+			'a_name'     => 'Room',
 			'a_area'     => 'Room<br/>(kvm)',
 			);
+	unset($header[(upgraded_rooms_specifications ? 'a_area' : 'a_name')]);
 	if (!VM_projects()->getProjectID(VM::$e->ID)) unset($header['v_projectid']);
 	break;
 

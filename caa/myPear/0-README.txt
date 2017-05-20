@@ -1,5 +1,7 @@
 Changes log                                                                                                                                                             
                                                                                                                                                                                  
+2017-05-20, Version 5.3.188,
+                                                                                                                                                                                 
 2017-05-11, Version 5.3.187,
                                                                                                                                                                                  
 2017-05-03, Version 5.3.186,

@@ -35,7 +35,7 @@ class bList_vm_cotenants extends bList_vm{
    */
   private function checkup(){
     foreach($this->getMembers() as $lm_id=>$rec){
-      $rec['leases'] = $this->arg_explode(@$rec['leases']);
+      $rec['leases'] = $this->safe_explode(@$rec['leases']);
       
       if ($damaged_entry = (($n=count($rec['leases'])) < 2)){
 	$message = "$n cotenants";
@@ -73,7 +73,7 @@ class bList_vm_cotenants extends bList_vm{
     
     $list = array();
     foreach($members as $lm_id=>$rec){
-      $rec['leases'] = $this->arg_explode(@$rec['leases']);
+      $rec['leases'] = $this->safe_explode(@$rec['leases']);
       $t = array();
       foreach ($rec['leases'] as $lease_id){
 	$info  = bForm_vm_Lease::_leaseInfo($lease_id);
@@ -104,10 +104,10 @@ class bList_vm_cotenants extends bList_vm{
 
   protected function message_deleteMember($args){
     $r = $this->getMember($args);
-    foreach($this->arg_explode(@$r['leases']) as $lease_id) $this->message_deleteMember_sharing($lease_id,$args);
+    foreach($this->safe_explode(@$r['leases']) as $lease_id) $this->message_deleteMember_sharing($lease_id,$args);
   }
   
-  private function message_deleteMember_sharing($lease_id,$args=array()){
+  function message_deleteMember_sharing($lease_id,$args=array()){
     $name = bForm_vm_Lease::_leaseInfo($lease_id,True);
     if (empty($name)){ 
       myPear::WARNING_T("non-existing lease in the share ".b_fmt::joinX(',',$args)); 
@@ -125,22 +125,26 @@ class bList_vm_cotenants extends bList_vm{
    *  - a_id
    */
   function get_candidate(&$rec){
-    $reply = array();
+    
     $tenants = bForm_vm_Lease::getTenants($rec['lease_start'],
 					  $rec['lease_end'],
 					  $rec['a_id']);
-    // if (cnf_dev) b_debug::print_r($tenants,$rec['av_lastname'].'\'s tenants '.b_time::period($rec['lease_start'],$rec['lease_end']));
-
+    b_debug::print_r($tenants,$rec['v_avid'].'\'s tenants '.b_time::period($rec['lease_start'],$rec['lease_end']));
+    
+    $reply = array();
     foreach($tenants as $lease_id=>$candidate_name){
       if ($rec['lease_id'] == $lease_id) continue;
-      if (!$this->get_cotenants($lease_id,False,array($rec['lease_start'],$rec['lease_end']))){
+      if (bForm_vm_Lease::get_lease_options($lease_id,VM_no_cotenants)){
+	myPear::DEBUG(__METHOD__."(): $candidate_name is VM_no_cotenants");
+      }elseif (!$this->get_cotenants($lease_id,False,array($rec['lease_start'],$rec['lease_end']))){
 	$reply[$lease_id] = $candidate_name;
       }
     }
-    //    $this->dbg($reply,True);
+    //    if (!empty($reply)) array_unshift($reply,array(VM_no_cotenants=>'*** NO COTENANTS PLEASE ***'));
+    myPear::DEBUG(__METHOD__.'(): '.b_fmt::joinX(',',$reply));
     return $reply;
   }
-
+  
   /*
    * Get cotenants (lease_id's) for the given lease
    *
@@ -152,9 +156,9 @@ class bList_vm_cotenants extends bList_vm{
   function get_cotenants($lease_id,$include_myself=False,$period=array()){
     $reply = $leases = array();
     if (!empty($lease_id)){
-      // the lease might present once in the list, otherwise something is wrong
+      // the lease might present only once in the list, otherwise something is wrong
       $r = $this->getMember(array('leases'=>$lease_id));
-      if ($leases = $this->arg_explode(@$r['leases'])){
+      if ($leases = $this->safe_explode(@$r['leases'])){
 	if (!$include_myself) $leases = array_values(array_diff($leases,array($lease_id)));
 	// exclude the leases which are outside the requested time period
 	$lease_ref = bForm_vm_Lease::_leaseInfo($lease_id);
@@ -187,7 +191,14 @@ class bList_vm_cotenants extends bList_vm{
    * Set cotenants
    */
   function set_cotenants($leases){
+    // Set flag 'no cotenants wanted'
+    if (in_array(VM_no_cotenants,array_keys($leases)) || in_array(VM_no_cotenants,$leases)){
+      bForm_vm_Lease::get_lease_options(b_cnf::get('lease_id'),'set',array(VM_no_cotenants=>VM_no_cotenants));
+      unset($leases[VM_no_cotenants]);
+      $leases = array_diff($leases,array(VM_no_cotenants));
+    }
     if (empty($leases)) return;
+
     if (cnf_dev){
       if (($n=count($leases)) < 2) b_debug::traceBack("just $n lease requested");
       b_debug::xxx('============================================');	b_debug::print_r($leases,'leases'); 
@@ -258,7 +269,7 @@ class bList_vm_cotenants extends bList_vm{
 
   function getMember($args,$set_as_current_member=False){
     $reply = parent::getMember($args,$set_as_current_member);
-    $reply['leases'] = $this->arg_explode(@$reply['leases']);
+    $reply['leases'] = $this->safe_explode(@$reply['leases']);
 
     if (($n=count($reply['leases'])) != ($nu=count(array_unique($reply['leases'])))) myPear::WARNING_T("$n leases, but only $nu are unique"); 
     return $reply;
@@ -271,7 +282,7 @@ class bList_vm_cotenants extends bList_vm{
 
   protected function format(){
     $cotenants = array();
-    foreach($this->arg_explode(@$this->r['leases']) as $lease_id){
+    foreach($this->safe_explode(@$this->r['leases']) as $lease_id){
       $cotenants[] = bForm_vm_Lease::_leaseInfo($lease_id,True);
     }
     sort($cotenants);

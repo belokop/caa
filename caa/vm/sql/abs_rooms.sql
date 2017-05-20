@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS `abs_rooms` (
   `a_phone` varchar(32) COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
   `a_area` int(11) NOT NULL DEFAULT '0',
   `a_price` varchar(128) COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
-  `a_price_cleaning` int(11) NOT NULL DEFAULT '0',
+  `a_price_extra_bed` int(11) NOT NULL DEFAULT '0',
   `a_capacity` int(11) NOT NULL DEFAULT '0',
   `a_status` varchar(32) COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
   `a_comment` varchar(230) COLLATE utf8_unicode_ci NOT NULL DEFAULT '',

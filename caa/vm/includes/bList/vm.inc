@@ -17,6 +17,9 @@ class bList_vm extends bList{
     
     // We might be called before the "official start"
     start_VM();
+
+    // Just in case...
+    if (empty($parent_ID_p) && VM::_MENU()->context() == 'event') $parent_ID_p = VM::$e;
     
     // Hook the parent Event Class
     if($parent_ID_p instanceof bForm_vm_Event){

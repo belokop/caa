@@ -1078,7 +1078,7 @@ class bList extends myPear_getValue{
   /*
    * Helper
    */
-  protected function arg_explode($value){
+  protected function safe_explode($value){
     $reply = array();
     if (!empty($value) && is_string($value)) $reply = explode(',',$value);
     elseif (is_array($value))                $reply = $value;

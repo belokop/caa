@@ -120,6 +120,7 @@ function template_hook_menu_link_alter(&$item, $menu) {
  * Implementation of hook_preprocess_menu_link()
  */
 function template_hook_preprocess_menu_link(&$variables) {
+  if (!defined('divider')) define('divider','divider'); // Menu divider
   if (in_array(divider,$variables['element']['#localized_options'])){
     $variables['element']['#attributes']['class'][] = divider;
   }

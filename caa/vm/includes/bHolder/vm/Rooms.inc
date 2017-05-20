@@ -2,7 +2,6 @@
 locateAndInclude('bHolder_vm');
 class bHolder_vm_Rooms extends bHolder_vm{
 
-  var $cleanCost = 0;
   var $rent      = 0;
   var $usage     = 0;
   var $ndays     = 0;
@@ -36,9 +35,17 @@ class bHolder_vm_Rooms extends bHolder_vm{
       unset($room);
     }
 
+    /*  
     // Hook the event if requested
     if (!empty($_GET['e_id_once'])){
-      $this->e = myPear::getInstance_new('bForm_vm_Event',$_GET['e_id_once']);
+    $this->e = myPear::getInstance_new('bForm_vm_Event',$_GET['e_id_once']);
+    print x('h3',$this->e->name());
+    }
+    */
+    if (VM::_MENU()->context() == 'org'){
+      print x('h3',myOrg_name);
+    }else{
+      $this->e = VM::$e;
       print x('h3',$this->e->name());
     }
     
@@ -128,20 +135,20 @@ class bHolder_vm_Rooms extends bHolder_vm{
 		      'n_nosort'    => 'N',
 		      'usage_nosort'=> 'usage',
 		      'rent_nosort' => 'rent<br/>cost',
-		      'clean_nosort'=> 'cleaning<br/>cost',
 		      ); 
       break;
       
     case 'list':  
     case 'list2':
     case 'list_hut':
-      $header = array('a_name'    => 'name',
-		      'a_comment' => 'comment',
-		      'a_price'   => 'monthly<br/>rent',
-		      //'a_price_cleaning'  => 'cleaning<br/>fee',
-		      'a_area'    => 'area<br/>(kvm)',
-		      'a_capacity'=> 'capacity<br/>(beds)',
-		      //'a_status'  => 'status',
+      $header = array('a_name'    => 'Name',
+		      'a_price'   => 'Monthly<br/>rent',
+		      'a_quantity'=> 'N rooms<br/>available',
+		      'a_area'    => 'Area<br/>(kvm)',
+		      //'a_capacity'=> 'Capacity<br/>(beds)',
+		      //'a_status'  => 'Status',
+		      'a_comment' => '',
+		      '_sharable' => '',
 		      ); 
       break;
     }
@@ -161,6 +168,7 @@ class bHolder_vm_Rooms extends bHolder_vm{
     $this->a = myPear::getInstance_new('bForm_vm_Room', @$this->rec['a_id'],'strict');
     $this->dbg($this->a->__toString());
 
+    $this->rec['a_name'] = sprintf('[%s] %s',$this->rec['a_capacity'],$this->rec['a_name']);
     if (empty($this->rec['n_nosort'])) 	  $this->rec['n_nosort'] = 0;
     if (isset($this->rec['a_start'])) if ($this->rec['a_start'] <= myPear_day0) unset($this->rec['a_start']); 
 
@@ -171,22 +179,32 @@ class bHolder_vm_Rooms extends bHolder_vm{
       if ($this->rec['a_end']   >= myPear_day9) unset($this->rec['a_end']); 
     }
 
-    // $a_price = $this->rec['a_price'];
-    $a_price = (empty($this->e)
-		? $this->rec['a_price']
-		: VM_accommodationOptions($this->e)->get_a_price($this->rec['a_id'],$this->rec['hut_id']));
-    $this->rec['a_price'] = (strpos($a_price,'=') === False
-			     ? b_fmt::escape(b_fmt::money($a_price))
-			     : str_replace(',','<br/>',$a_price));
+    // How many rooms, price, etc.
+    if (VM::_MENU()->context() == 'event'){
+      $room = new bForm_vm_Room($this->rec['a_id']);
+      foreach(bList_vm_accommodationOptions::$whatIsSaved as $item){
+	$this->rec[$item] = $room->getValue($item);
+	//VM_accommodationOptions($this->e)->get_a_value($this->rec['a_id'],$this->rec['hut_id'],$item);
+      }
+    }
+    if ($this->rec['a_quantity'] == VM_quantity2request) $this->rec['a_quantity'] = VM_quantity2request_text;
+    $this->rec['a_price'] = (strpos($this->rec['a_price'],'=') === False
+			     ? b_fmt::escape(b_fmt::money($this->rec['a_price']))
+			     : str_replace(',','<br/>',$this->rec['a_price']));
     
-    $cleanCost = $usage = 0;
-    
-    $s = @$this->rec['a_status'];
+    $usage = 0;
 
-    if     ($s == AP_SHARABLE)         $extraTD = $this->t->extraTD[] = bIcons()->get(array('i'=>'bb-2users',  'd'=>$s));
-    elseif ($s == AP_AUTO_ALLOCATABLE) $extraTD = $this->t->extraTD[] = bIcons()->get(array('i'=>'i-pc_edit','d'=>$s));
-    else                               $extraTD = $this->t->extraTD[] = '';
-    
+    $this->rec['_sharable'] = (bForm_vm_Room::_isSharable($this->rec)    
+			       ? 'Sharable'
+			       : '');
+    $extraTD = $this->t->extraTD[] = '';
+    /*
+    $s = @$this->rec['a_status'];
+    if (bForm_vm_Room::_isSharable($this->rec)) $extraTD = $this->t->extraTD[] = bIcons()->get(array('i'=>'bb-2users','d'=>$s));
+    if ($s == AP_AUTO_ALLOCATABLE)          $extraTD = $this->t->extraTD[] = bIcons()->get(array('i'=>'i-pc_edit','d'=>$s));
+    else                                    $extraTD = $this->t->extraTD[] = '';
+    */
+
     switch ($this->doing){
     case 'usage':
       $day1 = max($this->rf,$this->a->getValue('a_start',1));
@@ -201,14 +219,11 @@ class bHolder_vm_Rooms extends bHolder_vm{
       $q = myPear_db()->query("SELECT * FROM abs_leases WHERE lease_start <= $this->rt AND lease_end >= $this->rf AND lease_aid="
 			      .$this->a->ID." ORDER BY lease_start");
       while($r=myPear_db()->next_record($q)){
-	$cleanCost += $this->a->fee();
 	$this->rec['n_nosort']++;
 	$usage += b_time::diff($r['lease_end'],$r['lease_start']);
       }
       $this->usage += $usage;
       $this->ndays += b_time::diff($day9,$day1);
-      $this->cleanCost += $cleanCost;
-      $this->rec['clean_nosort'] = b_fmt::escape(b_fmt::money($cleanCost));
       $this->rec['usage_nosort'] = ((int)($usage*100/b_time::diff($day9,$day1))).'%';
       $this->t->extraTD[] = x('i',b_time::period(@$this->rec['a_start'],@$this->rec['a_end'])); 
       break;
@@ -315,12 +330,13 @@ class bHolder_vm_Rooms extends bHolder_vm{
   /*
    *
    */
-  public static function _queryAps($where=''){
-    if (!myPear_db()->columnExists(@$_GET['sBy'],'abs_rooms')) $_GET['sBy'] = 'a_name';
-    $q = myPear_db()->query("SELECT * FROM abs_huts ".
-			    " LEFT JOIN abs_rooms ON hut_id = a_hutid ".
-			    $where.
-			    " ORDER BY hut_name,$_GET[sBy] ".@$_GET['sByDir']);
+  public static function _queryAps($where='',$sBy=''){
+    if (!myPear_db()->columnExists(@$_GET['sBy'],'abs_rooms')) {$_GET['sBy'] = 'a_capacity'; $_GET['sByDir'] = 'ASC';}
+    $_GET['sBy'] = 'a_capacity';
+    $q = myPear_db()->qquery("SELECT * FROM abs_huts ".
+			     " LEFT JOIN abs_rooms ON hut_id = a_hutid ".
+			     $where.
+			     " ORDER BY CONCAT(hut_name,$_GET[sBy]) ".@$_GET['sByDir'],cnf_dev);
     return $q;
   }
 }

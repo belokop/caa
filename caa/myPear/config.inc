@@ -3,8 +3,8 @@ ini_set("allow_url_fopen", true);
 //var_dump(file_get_contents('php://input'));
 
 // myPear module 
-$releaseDate = '2017-05-11';
-define('myPear_VERSION','5.3.187');
+$releaseDate = '2017-05-20';
+define('myPear_VERSION','5.3.188');
 define('myPear_MODULE', 'myPear');
 define('myPear_DATE',    $releaseDate);
 
@@ -151,7 +151,7 @@ if (cnf_localhost && !cnf_myPear_taskManager){
   error_reporting(E_ALL); 
   if (!cnf_CLI) foreach(array(
 			      'warnings', 'showdb', 'showd', 'timing', 
-			      'showpv','showgv',
+			      // 'showpv','showgv',
 			      // 'showreg', // registry
 			      // 'showl',     
 			      // 'showi', // invocation

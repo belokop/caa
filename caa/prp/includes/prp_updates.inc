@@ -18,7 +18,6 @@ function prp_updates(){
 /*
  * Fix a stupid bug...
  */
-   prp_update_04();
 function prp_update_04(){
   locateAndInclude('bForm_prp');
   $q = myPear_db()->qquery("SELECT * FROM prp_list WHERE (YEAR(FROM_UNIXTIME(prp_day0)) = 2017) ".
