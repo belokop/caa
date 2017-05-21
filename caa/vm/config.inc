@@ -3,9 +3,9 @@
 /**
  * Visitors Manager (VM) configuration file
  */
-$releaseDate = '2017-05-20';
+$releaseDate = '2017-05-21';
 define('VM_MODULE'   , 'vm');
-define('VM_VERSION','5.13.14');
+define('VM_VERSION','5.13.15');
 
 define('upgraded_rooms_specifications',(cnf_dev||cnf_demo));
 //define('upgraded_rooms_specifications',False);
@@ -16,7 +16,7 @@ define('upgraded_rooms_specifications',(cnf_dev||cnf_demo));
 if (function_exists('drupal_get_path') && is_file($f=drupal_get_path('module','myPear').'/includes/drupal8_compat.inc')) require_once $f;
 define('modal_sendmail_dialog',cnf_dev||cnf_demo); // Doesn't want to work...
 define('include_payLunch_dinner',cnf_dev);
-if (upgraded_rooms_specifications) myPear::MESSAGE('Upgraded rooms specifications');
+if ((strpos(@$_GET['q'],VM_MODULE)===0) &&upgraded_rooms_specifications) myPear::MESSAGE('Upgraded rooms specifications');
 
 //
 // Exclude from production version the options which under development 
