@@ -941,7 +941,7 @@ class bForm_vm_Lease extends bForm_vm{
     $rec = array('lease_id'   =>$this->ID,
 		 'lease_start'=>$this->getValue('lease_start'),
 		 'lease_end'  =>$this->getValue('lease_end'),
-		 'v_eid'      =>$this->getValue('lease_vid'));
+		 'v_eid'      =>@$this->parentForm->e->ID);
     if ($a_id = $this->getValue('lease_aid')){
       $room = myPear::getInstance_new('bForm_vm_Room',$a_id,'strict');
       $rec['lease_aid'] = $a_id;
@@ -950,7 +950,9 @@ class bForm_vm_Lease extends bForm_vm{
       $rec['a_name']    = $room->getValue('a_name');
       $rec['a_capacity']= $room->getValue('a_capacity');
     }
-    return self::_freeRooms(VM_accommodationOptions($this->parentForm->e),
+    return self::_freeRooms((is_object($e=$this->parentForm->e)
+			     ? VM_accommodationOptions($e)
+			     : Null),
 			    $rec,
 			    $this->hasAccommodation(False));
   }
@@ -1010,7 +1012,7 @@ class bForm_vm_Lease extends bForm_vm{
       self::_dbg($hut->getValue('hut_id').' - '.$hut->name().' '. $hut->name_total_rooms($accommodationOptions));
       
       // Loop over all the rooms available for this time period
-      $q_r = myPear_db()->qquery(sprintf("SELECT a_id,a_price,a_name,a_quantity,a_capacity,a_quantity FROM abs_rooms ".
+      $q_r = myPear_db()->qquery(sprintf("SELECT a_id,a_price,a_name,a_quantity,a_capacity,a_quantity,hut_code FROM abs_rooms ".
 					 " LEFT JOIN abs_huts ON a_hutid=hut_id ".
 					 " WHERE a_end >= %s ".
 					 " AND ( a_start <= %s OR a_start = 0 OR a_start IS NULL) ".
