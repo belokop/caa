@@ -15,13 +15,14 @@ class bHolder_vm_Huts extends bHolder_vm{
     $_GET['sBy'] = 'hut_code';
     return myPear_db()->qquery("SELECT * FROM abs_huts ".
 			       " WHERE hut_code != '".HUT_BI."'".
-			       " ORDER BY hut_code,hut_name ASC ",$this->debug); 
+			       " ORDER BY CONCAT(hut_code,hut_name) ASC ",$this->debug); 
   }
     
   function header(){
     $header = array('hut_code'    => 'Accommodation<br/>option',
 		    'hut_name'    => 'Name',
 		    'hut_status'  => 'Default?',
+		    '_TR'         => ' ',
 		    // 'hut_capacity'=> 'N rooms',
 		    'hut_address' => 'Address',
 		    'hut_url'     => ' ',
@@ -41,9 +42,9 @@ class bHolder_vm_Huts extends bHolder_vm{
     bIcons()->reset();
     $edit_buttons = array();
     if ($this->isWritable()){
-    $edit_buttons[] = b_btn::submit('add new '.
-				    join(' / ',array_values(VM_hutCodes()->getCodes(Null,array(time(),time()+720*24*3600)))),
-				    b_url::same('?id=new&form=vm_Hut&clean_once=act_code,act_id'));
+      $edit_buttons[] = b_btn::submit('add new '.
+				      join(' / ',array_values(VM_hutCodes()->getCodes(array(),array(time(),time()+720*24*3600)))),
+				      b_url::same('?id=new&form=vm_Hut&clean_once=act_code,act_id'));
     }
     $this->t->tr(b_btn::UL_buttons($edit_buttons),'colspan=6');
   }
@@ -78,8 +79,8 @@ class bHolder_vm_Huts extends bHolder_vm{
 
     $hut = myPear::getInstance_new('bForm_vm_Hut',$this->rec['hut_id'],'fatal');
     if (!empty($this->rec['hut_url'])) $this->rec['hut_url'] = bJS()->modal_iframe($this->rec['hut_url'],x('em',x('span style="text-size:smaller"','See web page')),'');
-
-    $isWritable = $hut->isWritable();
+    $this->rec['_TR'] = $hut->name_total_rooms();
+    
     if ($hut->isWritable()){
       $this->t->extraTD[]=bIcons()->getButton(array('l'=>b_url::same("?form=vm_Hut&id=".$hut->ID),
 						    'd'=>'modify',

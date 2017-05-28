@@ -39,6 +39,7 @@ class bList_vm_cotenants extends bList_vm{
       
       if ($damaged_entry = (($n=count($rec['leases'])) < 2)){
 	$message = "$n cotenants";
+
       }else{
 	foreach ($rec['leases'] as $lease_id){
 	  if (empty($lease_id)){
@@ -53,8 +54,12 @@ class bList_vm_cotenants extends bList_vm{
       }
       
       if ($damaged_entry){
-	myPear::WARNING_T("damaged entry $lm_id - $message");
-	if (cnf_dev)    $this->dump();
+	if (cnf_dev){
+	  $this->dump();
+	  $msg = b_fmt::redText("damaged entry $lm_id - $message");
+	  b_debug::xxx($msg);
+	  myPear::ERROR($msg);
+	}	
 	$this->deleteMember($lm_id);
       }
     }
@@ -129,9 +134,9 @@ class bList_vm_cotenants extends bList_vm{
     $tenants = bForm_vm_Lease::getTenants($rec['lease_start'],
 					  $rec['lease_end'],
 					  $rec['a_id']);
-    b_debug::print_r($tenants,$rec['v_avid'].'\'s tenants '.b_time::period($rec['lease_start'],$rec['lease_end']));
+    b_debug::print_r($tenants,__function__.'(): "'.$rec['a_name'].'" tenants '.b_time::period($rec['lease_start'],$rec['lease_end']));
     
-    $reply = array();
+    $reply = array(VM_no_cotenants => '*** NO COTENANTS PLEASE ***');
     foreach($tenants as $lease_id=>$candidate_name){
       if ($rec['lease_id'] == $lease_id) continue;
       if (bForm_vm_Lease::get_lease_options($lease_id,VM_no_cotenants)){
@@ -140,8 +145,8 @@ class bList_vm_cotenants extends bList_vm{
 	$reply[$lease_id] = $candidate_name;
       }
     }
-    //    if (!empty($reply)) array_unshift($reply,array(VM_no_cotenants=>'*** NO COTENANTS PLEASE ***'));
-    myPear::DEBUG(__METHOD__.'(): '.b_fmt::joinX(',',$reply));
+    if (count(array_keys($reply)) == 1) $reply = array();
+    myPear::DEBUG(__METHOD__.'(): '.join(', ',array_values($reply)));
     return $reply;
   }
   
@@ -166,11 +171,14 @@ class bList_vm_cotenants extends bList_vm{
 	  $l = bForm_vm_Lease::_leaseInfo($l_id);
 	  // sanity
 	  if (empty($l['lease_start']) || empty($l['lease_end'])){
-	    myPear::WARNING_T("??? $l");
-	    // b_debug::print_r($l);
+	    myPear::WARNING_T("??? empty l[lease_start] ".var_export($l,True));
 	    continue;
 	  }
 	  //static $ccc = 0;	  myPear::DEBUG("??$l_id?? ".b_time::period($l['lease_start'],$l['lease_end']).' '.$l['lease_name']);
+	  if (empty($lease_ref['lease_start']) || empty($lease_ref['lease_end'])){
+	    myPear::WARNING_T("??? empty l[lease_start] ".var_export($lease_ref,True));
+	    continue;
+	  }
 	  $p = (empty($period)
 		? array($lease_ref['lease_start'],$lease_ref['lease_end'])
 		: $period);
@@ -191,17 +199,18 @@ class bList_vm_cotenants extends bList_vm{
    * Set cotenants
    */
   function set_cotenants($leases){
+    static $case=0; b_debug::xxx('======================================'.(++$case));
     // Set flag 'no cotenants wanted'
-    if (in_array(VM_no_cotenants,array_keys($leases)) || in_array(VM_no_cotenants,$leases)){
-      bForm_vm_Lease::get_lease_options(b_cnf::get('lease_id'),'set',array(VM_no_cotenants=>VM_no_cotenants));
-      unset($leases[VM_no_cotenants]);
-      $leases = array_diff($leases,array(VM_no_cotenants));
+    if (in_array(VM_no_cotenants,$leases)){
+      $this->dbg("set lease flag VM_no_cotenants",cnf_dev);
+      bForm_vm_Lease::get_lease_options(b_cnf::get('lease_id'),'set',array(VM_no_cotenants=>VM_no_cotenants),True);
+      $leases = array();
     }
     if (empty($leases)) return;
 
     if (cnf_dev){
       if (($n=count($leases)) < 2) b_debug::traceBack("just $n lease requested");
-      b_debug::xxx('============================================');	b_debug::print_r($leases,'leases'); 
+      b_debug::print_r($leases,__function__.'(leases)'); 
     }
     
     $lm_id    = 'new';
@@ -264,6 +273,8 @@ class bList_vm_cotenants extends bList_vm{
 				      $lm_id); 
       if (is_numeric($lm_id)) $this->message_addMember();
       if (cnf_dev)    $this->dump($memberID);
+
+      bForm_vm_Lease::update_fullRoomFlag($leases);
     }
   }
 

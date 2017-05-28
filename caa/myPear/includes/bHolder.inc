@@ -44,7 +44,10 @@ class bHolder {
       
       $this->showLineCounter = False;
       $this->close_t_on_exit = False;
-      if (!is_object($this->t))	$this->t = new b_table_zebra($this->header());
+      if (!is_object($this->t)){
+	$this->t = new b_table_zebra($this->header());
+	$this->t->th_attr = $this->th_attr;
+      }
 
       foreach($args as $k=>$v){
 	if ($k == 'h') $this->t->tr(x('h3',$v));
@@ -124,23 +127,28 @@ class bHolder {
     locateAndInclude('b_table');
   }
   
-  private $drawHeader_counter = 0;
-  function drawHeader(){
+  protected function new_t($setTitle=False){
     if (!(@$this->t instanceof b_table)) {
       // Copy the eventual b_table attributes to the proper class 
       if (!empty($this->t)) $this_t = $this->t;
       $header = $this->header();  // sets also title
-      if (!empty($this->title)) myPear::H1($this->title,'noTranslate');
-      print $this->title2;
+      if ($setTitle){
+	if (!empty($this->title)) myPear::H1($this->title,'noTranslate');
+	print $this->title2;
+      }
       $this->t = new b_table_zebra($header,$this->styles);
-      $this->t->preHeaders= $this->preHeaders;
       $this->t->th_attr   = $this->th_attr;
+      $this->t->preHeaders= $this->preHeaders;
       // ??? far too dangerous $this->t->delimiter[','] = '<br/>'; // replace ',' by '<br/>'
       $this->t->noSort    = $this->noSort;
       $this->t->showLineCounter = $this->showLineCounter;
       $this->t->repetValuesCol1only = @$_GET['sBy'];
       $this->t->css = $this->css;
     }
+  }
+  private $drawHeader_counter = 0;
+  function drawHeader(){
+    $this->new_t(True);
     if (!$this->drawHeader_counter++){
       $this->t->getHeader($forced=True,$this->title3);
       if (empty($this_t)) $this_t = array();
@@ -171,13 +179,15 @@ class bHolder {
     if ($q = $this->query()){
       while ($this->rec = myPear_db()->next_record($q)){
 	if (!$this->rejectRecord()){
-	  $this->format();
 	  if (!empty($this->rec)){	  
 	    $this->drawHeader();
-	    $this->t->prt($this->rec);    
-	    if (++$nLine > $this->maxLines){
-	      myPear::WARNING("$this->maxLines \"".str_replace('bHolder_','',get_class($this))."\" lines printed... Output stops");
-	      break;
+	    $this->format();
+	    if (!empty($this->rec)){	  
+	      $this->t->prt($this->rec);    
+	      if (++$nLine > $this->maxLines){
+		myPear::WARNING("$this->maxLines \"".str_replace('bHolder_','',get_class($this))."\" lines printed... Output stops");
+		break;
+	      }
 	    }
 	  }
 	}

@@ -110,7 +110,7 @@ function myPear_updates(){
 }
 
 // watch the bug...
-myPear_update34();//(False);
+myPear_update34();
 myPear_update35();
 
 /*

@@ -303,6 +303,21 @@ class b_btn{
 class b_fmt{
 
   /*
+   *
+   */
+  public static function safe_explode($delimiter,$value){
+    if (is_array($value)){
+      $reply = $value;
+    }else{
+      $reply = (strpos($value,$delimiter) !== False
+		? explode($delimiter,$value)
+		: $value);
+    }
+    b_debug::xxx($reply);
+    return $reply;
+  }
+
+  /*
    * Safe version of unserialize
    */
   public static function safe_decode($encoded,$always_return_array=False){
@@ -1815,7 +1830,10 @@ class b_debug{
       if (!$nosort) ksort($o);
   
       if (empty($txt)) $txt = self::__(array(3));
-      if ($dropped) $txt .= " (hidden: ".join(',',$dropped).")";
+      if ($dropped){
+	sort($dropped);
+	$txt .= " (hidden: ".join(',',$dropped).")";
+      }
       if (cnf_CLI){
 	ob_start();
 	print_r($o);

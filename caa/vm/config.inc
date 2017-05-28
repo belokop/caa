@@ -3,12 +3,9 @@
 /**
  * Visitors Manager (VM) configuration file
  */
-$releaseDate = '2017-05-21';
+$releaseDate = '2017-05-28';
 define('VM_MODULE'   , 'vm');
-define('VM_VERSION','5.13.15');
-
-define('upgraded_rooms_specifications',(cnf_dev||cnf_demo));
-//define('upgraded_rooms_specifications',False);
+define('VM_VERSION','5.13.16');
 
 //
 // transition problems...
@@ -16,7 +13,6 @@ define('upgraded_rooms_specifications',(cnf_dev||cnf_demo));
 if (function_exists('drupal_get_path') && is_file($f=drupal_get_path('module','myPear').'/includes/drupal8_compat.inc')) require_once $f;
 define('modal_sendmail_dialog',cnf_dev||cnf_demo); // Doesn't want to work...
 define('include_payLunch_dinner',cnf_dev);
-if ((strpos(@$_GET['q'],VM_MODULE)===0) &&upgraded_rooms_specifications) myPear::MESSAGE('Upgraded rooms specifications');
 
 //
 // Exclude from production version the options which under development 
@@ -52,7 +48,7 @@ define('VISIT_TYPE_RENT',         '_RENT');
 define('VISIT_TYPE_OTHER',        '_OTHER');
 
 define('reimbursement_email','reimbursement@nordita.org');
-define('VM_no_cotenants',-999);
+define('VM_no_cotenants',-777);
 define('VM_room_is_full',-666);
 
 /*
@@ -139,9 +135,11 @@ define('VM_reminding_period', 3); // in days
  * Infinite dates...
  */
 // Infinite hut capacity
-define('default_lease_pay',VM_everything);
 define('VM_quantity2request',-999);
 define('VM_quantity2request_text','Contact hotel');
+define('VM_quantity_total','total');
+define('VM_default_lease_pay',VM_everything);
+define('VM_default_a_quantity',VM_quantity2request);
 
 /*
  * Conference default budget
@@ -206,8 +204,6 @@ $GLOBALS['LODGING_FINDER'] = array(
 								     )),
 				   );
 
-//
-//
 
 define('OFFICE_AUTO_ALLOCATABLE', 'visitors'); // offices with this status are auto-allocated by the bCover
 define('AP_AUTO_ALLOCATABLE','auto allocate'); // rooms with this status are auto-allocated by the bCover
@@ -226,6 +222,7 @@ define('STATUS_CLASH',   'STATUS_CLASH');
 define('REG_INVOICE', 3);          
 define('REG_NYI',     0);          
 
+define('btn_ok', 'OK');            
 define('btn_edit_accommodation' , 'modify accommodation');
 define('btn_splitLease'         , 'split this accommodation');
 define('btn_edit_policy'        , 'modify policy');
@@ -234,7 +231,6 @@ define('btn_edit_ap',      'update information');
 define('btn_deleteAp',     'delete unused room');
 define('btn_deleteLease',  'delete this accommodation');   
 define('txt_deleteVisit',  'delete this visit');
-define('btn_ok',      'OK');            
 
 define('VM_visit_info'    , 'vInfo');
 define('VM_visit_host'    , 'vHost');

@@ -117,28 +117,21 @@ class bList_vm_hutCodes extends bList_vm{
   /*
    *
    */
-  function getCodes($accommodationOptions=Null,$from_to=array()){
+  function getCodes($already_known=array(),$from_to=Null){
     locateAndInclude('bForm_vm_Lease');
     foreach ($this->getMembers() as $r){
       $reply[$r['lm_key']] = $r['lm_value'];
-      if (!empty($from_to)){
-	// Check that the hut is available for the given period 
-	$_freeRooms = ($new = True
-		       ? bForm_vm_Lease::_freeRooms($accommodationOptions,
-						    array('v_start'=>$from_to[0],
-							  'v_end'  =>$from_to[1]),
-						    False,
-						    Null,
-						    $r['lm_key'])
-		       : bForm_vm_Lease::_freeRooms($accommodationOptions,
-						    $from_to[0],
-						    $from_to[1],
-						    False,Null,
-						    $r['lm_key']));
-	if (empty($_freeRooms)) unset($reply[$r['lm_key']]);
+      // Check that the hut is available for the given period 
+      if (!empty($from_to) && !bForm_vm_Lease::_freeRooms($already_known,
+							  array('lease_start'=>$from_to[0],
+								'lease_end'  =>$from_to[1]),
+							  Null,
+							  $r['lm_key'])){
+	unset($reply[$r['lm_key']]);
       }
     }
     if (empty($reply)) $reply = array();
+    $this->dbg($reply,cnf_dev);
     return $reply;
   }
 

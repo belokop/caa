@@ -2417,9 +2417,10 @@ class bForm extends myPear_getValue{
         if (preg_match("/^[0-9]*$/",$field)) { $field = $method; $method = 'textField'; }
       }
       //print "visible=".$this->_visible($field)." field=$field method=$method value=".$this->getValue($field)."<br/>";    
-      if     ($field == cnf_emptyString){
+      if ($field == cnf_emptyString){
         if (is_object($this->t)) $this->t->tr('&nbsp;');
       }elseif($field == b_rawData){
+	$this->dbg('b_rawData '.var_export($method,True),cnf_dev);
         $this->defineVariable($method[0],$field);
         $this->getFormRow($field,$method[1]);
       }else{

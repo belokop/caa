@@ -23,7 +23,35 @@ class bForm_vm_Event extends bForm_vm {
     // Follow changes in the policy definition
     if ($this->getValue('e_end') < time()) $this->set_e_v_policy(VM::$description[VISIT_TYPE_PROGRAM]['p']);
   }
-  
+
+  /*
+   *
+   */
+  function get_duplicate_attenders(){
+    $this->dbg(starting);
+    $q = myPear_db()->qquery("SELECT COUNT(*) AS n, av_firstname, av_lastname, v_avid FROM abs_visits ".
+			     " LEFT JOIN zzz_avatars ON av_id = v_avid ".
+			     " WHERE v_eid=".$this->ID.
+			     " GROUP BY av_id ".
+			     " HAVING n>1",cnf_dev);
+    while($r = myPear_db()->next_record($q)){
+      $list["$r[n] applications:"][] = bForm_Avatar::_fmtName('Lf',$r);
+    }
+    if (!empty($list)){
+      $msg[] = x('strong','Found duplicate applications for the event');
+      foreach($list as $n=>$names){
+	$msg[] = $n;
+	sort($names);
+	foreach($names as $a) $msg[] = x('em',$a);
+      }
+      myPear::ERROR(join('<br>',$msg));
+    }
+    $this->dbg(exiting);
+  }
+
+  /*
+   *
+   */  
   public function get_e_v_policy(){
     // Initialise policies for the event if not yet done
     if (!$this->getValue('e_v_policy')) $this->set_e_v_policy(VM::$description[VISIT_TYPE_PROGRAM]['p']);

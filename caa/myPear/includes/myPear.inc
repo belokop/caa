@@ -116,7 +116,7 @@ class myPear{
   }
 
   /*
-   * (string)'0' & (int)0 are not empty value for this function
+   * (string)'0' & (int)0 are NOT empty value for this function
    */
   public static function is_empty($value){
     $reply = empty($value) && ($value !== 0) && ($value !== '0');

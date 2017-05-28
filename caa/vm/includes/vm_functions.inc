@@ -6,7 +6,7 @@
 /*
  * Query VM database
  */
-function VM_query($where=array(1),$join_rooms='',$debug=False){
+function VM_query($where,$join_rooms='',$debug=False){
   if (empty($where)) $where = array(1);
   
   if (empty($join_rooms))  $join_rooms = ''
@@ -37,11 +37,9 @@ function VM_query($where=array(1),$join_rooms='',$debug=False){
       $_GET['sBy'] = 'av_lastname';
     }
   }
-  $q = myPear_db()->qquery($qquery = $query
-			   ." WHERE ".preg_replace("/=\s?is null/i",' IS NULL',join(' AND ',$where))
+  $q = myPear_db()->qquery($sql = $query." WHERE ".preg_replace("/=\s?is null/i",' IS NULL',join(' AND ',$where))
 			   ." ORDER BY $_GET[sBy] ".@$_GET['sByDir'],
 			   $debug||cnf_dev);
-  //  if (!myPear_db()->num_rows($q))   var_dump($qquery);
   $GLOBALS['VM_query_num_rows'] = myPear_db()->num_rows($q);
   return $q; 
 }

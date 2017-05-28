@@ -461,6 +461,13 @@ class b_table_zebra extends b_table {
   /*
    *
    */
+  public function reset_counter($new_value=0){
+    $this->counter = $new_value;
+  }
+
+  /*
+   *
+   */
   public $ignoreColor_for_changes = False;
   private static  $getIfChanged_cache = array();
   private function getIfChanged($item,$value) {

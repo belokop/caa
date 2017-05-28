@@ -208,6 +208,7 @@ class bHolder_prp_preprints extends bHolder{
   function format() {
     $t = b_fmt::escape($this->rec['prp_title'],'<');
     $a = b_fmt::escape($this->rec['prp_authors'],'<');
+    b_debug::xxx($t);
 
     $this->rec['serial'] = x('strong',bForm_prp::_serial($this->rec,False));
     $this->rec['preprint'] = $this->href(x('strong',$t)).' <br/>'.x('em',$a);

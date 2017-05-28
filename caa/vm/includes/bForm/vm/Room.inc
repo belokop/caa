@@ -1,13 +1,13 @@
 <?php
 /*
- * "Abstract room" class, represents a bookable accomodation object (Hotel room, rented apartment, etc).
+ * "Abstract room" class, represents a book-able accommodation object (Hotel room, rented apartment, etc).
  *
- * Has the followins properties:
+ * Has the following properties:
  * - Capacity (number of beds)
  * - First/Last dates when is available
  * - Price
  * - etc.
- * The roomss are grouped in a Building (Hut) 
+ * The rooms are grouped in a Building (Hut) 
  */
 
 define('VMaps_day1',b_time::txt2unix('2008-03-14'));
@@ -70,7 +70,7 @@ class bForm_vm_Room extends bForm_vm {
 	    $item_event = $_POST[$item];
 	    $item_org = parent::getValue($item,1,1);
 	    if ($item_org != $_SESSION[$item.'_myOrg'][$this->ID]){
-	      b_debug::xxx(sprintf("Unfortunatly was %s reset %s --> $item_org",$item,$_SESSION[$item.'_myOrg'][$this->ID]));
+	      b_debug::xxx(sprintf("Unfortunately was %s reset %s --> $item_org",$item,$_SESSION[$item.'_myOrg'][$this->ID]));
 	      // Put back the myOrg rent price since they are already auto-updated
 	      $this->updateDB(array($item=>$_SESSION[$item.'_myOrg'][$this->ID]));
 	      $this->getValue_reset($item, $_SESSION[$item.'_myOrg'][$this->ID]);
@@ -140,7 +140,6 @@ class bForm_vm_Room extends bForm_vm {
    */
   public function isSharable($lease=Null){
     return self::_isSharable(array('a_name'    =>$this->getValue('a_name',1,1),
-				   'a_status'  =>$this->getValue('a_status',1,1),
 				   'a_capacity'=>$this->getValue('a_capacity',1,1),
 				   'hut_name'  =>$this->hut->getValue('hut_name',1,1)), 
 			     $lease
@@ -149,11 +148,8 @@ class bForm_vm_Room extends bForm_vm {
   
   public static function _isSharable($rec,$lease=Null,$depth=0){
     
-    if (!is_array($rec)) $rec = array('a_status' => $rec);
-    if ((@$rec['hut_name'] === HUT_BI) || 
-	(@$rec['a_capacity'] < 2 && upgraded_rooms_specifications) ||
-	!upgraded_rooms_specifications){
-      $reply = (@$rec['a_status'] === AP_SHARABLE);
+    if ((@$rec['hut_name'] === HUT_BI) || (@$rec['a_capacity'] < 2)){
+      $reply = False;
     }else{
       if ((empty($rec['lease_start']) || empty($rec['lease_end']) || empty($rec['lease_aid'])) && !empty($lease)){
 	if (is_numeric($lease)) $lease = myPear::getInstance_new('bForm_vm_Lease',$lease);
@@ -199,7 +195,6 @@ class bForm_vm_Room extends bForm_vm {
       if (!empty($rec['a_name'])) $id .= " $rec[a_name]"; 
       if (empty($id)) $id = '???';
       myPear::DEBUG(__METHOD__."($id): ".var_export($reply,True));
-      myPear::MESSAGE(__METHOD__."($id): ".var_export($reply,True));
     }
     return $reply;
   }
@@ -220,20 +215,18 @@ class bForm_vm_Room extends bForm_vm {
       if (VM::_MENU()->context() == 'event'){
 	$this->hookHut();
 	if (($this->hut->getValue('hut_code') != HUT_BI) &&
-	    in_array($name,bList_vm_accommodationOptions::$whatIsSaved)){
+	    in_array($name,bList_vm_accommodationOptions::$whatIsSaved)){ // a_quantity & a_price
 	  if (empty($this->e)) $this->e = VM::$e;
 	  $value = VM_accommodationOptions($this->e)->get_a_value($this->ID,$this->hut->ID,$name);
 	  if ($reply != $value) $this->dbg(sprintf("myOrg $name='%s', Event $name='%s'",var_export($reply,True),var_export($value,True)),cnf_dev);
 	  $reply = $value;
 	}
       }
-    }else{
-      //      b_debug::traceBack('??? empty VM::_MENU()');
     }
     return $reply;
   }
 
-  public static function getReceipt($formDB=array(),$nDays){
+  public static function _getReceipt($formDB=array(),$nDays){
     $a_id = @$formDB['a_id'];
     $extraApFee = 0;
     $e = (empty($formDB['e_id'])
@@ -259,22 +252,41 @@ class bForm_vm_Room extends bForm_vm {
   public static function _daily_a_price($formDB,$e_class){
     locateAndInclude('bForm_vm_Lease');
     
-    $price = (empty($e_class)
-	      ? @$formDB['a_price']
-	      : VM_accommodationOptions($e_class)->get_a_value($formDB['a_id'],$formDB['hut_id']));
-    
     switch(bForm_vm_Lease::_hut_code($formDB)){
     case LODGING_OA:  
+      $price = 0;
       $reply = 0;
       break;
       
     default:
+      // Price for the room    
+      $price = (empty($e_class)
+		? @$formDB['a_price']
+		: VM_accommodationOptions($e_class)->get_a_value($formDB['a_id'],$formDB['hut_id']));
+      // Cotenants
+      /*
+      foreach(VM_cotenants()->get_cotenants($formDB['lease_id'],True) as $lm_id=>$cotenants){
+	$n_cotenants = count($cotenants);
+      }
+      */
+      if (empty($n_cotenants)) $n_cotenants = 1;
+      // Who pays?
+      $who_pays = bForm_vm_Lease::get_lease_options($formDB,'get_pay',array(),True);
+      if (empty($who_pays)) $who_pays = VM_default_lease_pay;
+      if ($who_pays == VM_everything){
+	$coeff = 1;
+      }else{
+	foreach(VM::$pay_options as $k=>$v) if ($v === $who_pays) $part = $k;
+	$coeff = $part / $formDB['a_capacity'];
+	myPear::DEBUG(__METHOD__."($formDB[lease_id]): price=\"$price\" coef=$coeff pay=$part=>$who_pays a_capacity=$formDB[a_capacity]");
+      }
+		    
       if (strpos($price,'=') === False){
 	if (empty($price)){
 	  $price = self::$defaultPrice;
-	  myPear::WARNING(sprintf("The monthly rent price for '%s' is not set, defaulted to %s",$formDB['a_name'],b_fmt::money($price)));
+	  myPear::ERROR(sprintf("The rent price for '%s' is not set, defaulted to %s",self::_a_name($formDB,True),b_fmt::money($price)));
 	}
-	$reply = (int)($price * 12 / 365); // convert montly -> daily price
+	$reply = (int)($coeff * $price * 12 / 365); // convert monthly -> daily price
       }else{
 	$ndays = b_time::diff($formDB['lease_end'],$formDB['lease_start']);
 	if (empty($ndays)) b_debug::print_r($formDB,'??? empty ndays');
@@ -283,6 +295,7 @@ class bForm_vm_Room extends bForm_vm {
 	  list($limit,$reply) = explode('=',$item);
 	  if ($ndays <= $limit) break;
 	}
+	$reply = $reply * $coeff;
       }
     }
     b_debug::xxx($price,array(2));
@@ -323,14 +336,11 @@ class bForm_vm_Room extends bForm_vm {
       $url = '';
     }
 
-    if ($a_hutid = $this->getValue('a_hutid')) {
-      $hut = new bForm_vm_hut($a_hutid);
-      $this->isRO['a_hutid'] = True;
-      $this->formBlock(' ', // Block name is "space" !!!! 
-		       '',
-		       array('a_hutid'=>$this->selectMenu('a_hutid',array($a_hutid=>$hut->name()))),
-		       $url);
-    }
+    $this->isRO['a_hutid'] = True;
+    $this->formBlock(' ', // Block name is "space" !!!! 
+		     '',
+		     array('a_hutid'=>$this->selectMenu('a_hutid',array($this->getValue('a_hutid')=>$this->hut->name()))),
+		     $url);
     
     $this->formBlock('Accommodation',
 		     ($this->embedded?'Accommodation':'Room'),
@@ -381,7 +391,7 @@ class bForm_vm_Room extends bForm_vm {
   }
   
   /*
-   * Check that the room is accesible for the given time period
+   * Check that the room is accessible for the given time period
    */
   static function _apIsAccessible($formDB, $start, $end){
     if (empty($formDB['a_start'])) $formDB['a_start'] = myPear_day0;
@@ -389,18 +399,32 @@ class bForm_vm_Room extends bForm_vm {
     $available = 
       (b_time::_($start) >= b_time::_($formDB['a_start'])) &&
       (b_time::_($end)   <= b_time::_($formDB['a_end']));
-    // myPear::DEBUG(($available ? '' : 'NOT ').'available for '.b_time::period($start,$end).': '.x('em',b_time::period($formDB['a_start'],$formDB['a_end']).' '.self::a_name($formDB)));
+    // myPear::DEBUG(($available ? '' : 'NOT ').'available for '.b_time::period($start,$end).': '.x('em',b_time::period($formDB['a_start'],$formDB['a_end']).' '.self::_a_name($formDB)));
     return $available;
   }
 
   /*
    *
    */
-  public static function a_name($formDB,$includeArea=False){
-    // $area = ($formDB['a_area']>9 && $formDB['a_area']<777) ? " ($formDB[a_area] sq.m.)" : '';
-    $reply = (($hut_name=@$formDB['hut_name']) && ($formDB['hut_code']!=HUT_BI) ? "$hut_name, " : '') . $formDB['a_name'];
-    if (empty($formDB['a_capacity'])) { b_debug::print_r($formDB,'??? a_capacity'); b_debug::traceBack();}
-    elseif (upgraded_rooms_specifications) $reply .= ' '.x('[',$formDB['a_capacity']);
+  public static function _a_name($rec,$includeHut=False,$includePay=False,$includeCapacity=True,$includeAname=True){
+    if (empty($rec['hut_code'])) b_debug::internalError("no hut_code",$rec);
+    if ($rec['hut_code']==HUT_BI){
+      $includeCapacity = False;
+      $includeAname = False;
+      $includeHut = True;
+      $rec['hut_name'] = $rec['a_name'];
+    }elseif (empty($rec['hut_name'])){
+      $includeHut = False;
+    }
+    $reply = sprintf('%s%s%s',
+		     $includeCapacity ? '&#91;'.$rec['a_capacity'].'&#93; ' : '',
+		     ($includeHut ? $rec['hut_name'].($includeAname?'.':'') : ''), 
+		     ($includeAname?$rec['a_name'] : '')
+		     );
+    if ($includePay){
+      if (empty($rec['lease_id'])) b_debug::internalError("includePay requested, but no lease_id",$rec);
+      $reply .= '<br/>'.x('em',' '.bForm_vm_Lease::get_lease_options($rec,'get_pay_HR',array(),True));
+    }
     return $reply;
   }
 
@@ -415,10 +439,10 @@ class bForm_vm_Room extends bForm_vm {
     }
     return $reply;
   }
-
-  function name($includeArea=False){
+  
+  function name(){
     return (myPear::is_int($this->ID)
-	    ? self::a_name($this->formDB,$includeArea)
+	    ? $this->getValue('a_name')
 	    : 'Adding new room');
   }
 

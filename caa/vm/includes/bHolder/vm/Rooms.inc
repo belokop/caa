@@ -1,4 +1,5 @@
 <?php
+locateAndInclude('bHolder');
 locateAndInclude('bHolder_vm');
 class bHolder_vm_Rooms extends bHolder_vm{
 
@@ -16,6 +17,7 @@ class bHolder_vm_Rooms extends bHolder_vm{
   private $current_hut = Null;
 
   public static function list_hut($hut_id,$e_id=Null){
+    if (empty($hut_id)) $hut_id = $_REQUEST['arg_once'];
     if (!empty($e_id)) $_REQUEST['e_id_once'] = $_GET['e_id_once'] = $e_id;
     $holder = new bHolder_vm_Rooms('list_hut',$hut_id);
     $holder->listEntries();
@@ -89,12 +91,12 @@ class bHolder_vm_Rooms extends bHolder_vm{
 	$this->current_hutID = $huts[$this->b_tabs_huts->active_tab()];
       }
       // Initialise tables
-      $this->t = new b_table_zebra($this->header());
+      $this->new_t();
       break;
 
     case 'list_hut':
       // Initialise tables
-      $this->t = new b_table_zebra($this->header());
+      $this->new_t();
 
       $this->current_hutID = $title;
       $this->current_hut = new bForm_vm_Hut($this->current_hutID);
@@ -131,7 +133,7 @@ class bHolder_vm_Rooms extends bHolder_vm{
     switch ($this->doing){
     case 'usage': 
       $header = array('a_name'      => 'name',
-		      'a_price'     => 'monthly<br/>rent',
+		      'a_price'     => '<br/>price',
 		      'n_nosort'    => 'N',
 		      'usage_nosort'=> 'usage',
 		      'rent_nosort' => 'rent<br/>cost',
@@ -142,7 +144,7 @@ class bHolder_vm_Rooms extends bHolder_vm{
     case 'list2':
     case 'list_hut':
       $header = array('a_name'    => 'Name',
-		      'a_price'   => 'Monthly<br/>rent',
+		      'a_price'   => 'Price',
 		      'a_quantity'=> 'N rooms<br/>available',
 		      'a_area'    => 'Area<br/>(kvm)',
 		      //'a_capacity'=> 'Capacity<br/>(beds)',
@@ -155,7 +157,7 @@ class bHolder_vm_Rooms extends bHolder_vm{
 
     if (!@$header[@$_GET['sBy']]) $_GET['sBy'] = 'a_name'; 
     foreach ($header as $k=>$v) {
-      if ($k!='a_name') 	$this->th_attr[$k] = "style='text-align:right;'";
+      if ($k!='a_name') $this->th_attr[$k] = "style='text-align:right;'";
     }
     return $header; 
   }
@@ -164,11 +166,12 @@ class bHolder_vm_Rooms extends bHolder_vm{
    *
    */  
   function format() {
+    foreach($this->header() as $k=>$v) if ($k!=='a_name') $this->t->css[$k]['align'] = 'align_right';
 
     $this->a = myPear::getInstance_new('bForm_vm_Room', @$this->rec['a_id'],'strict');
     $this->dbg($this->a->__toString());
 
-    $this->rec['a_name'] = sprintf('[%s] %s',$this->rec['a_capacity'],$this->rec['a_name']);
+    $this->rec['a_name'] = bForm_vm_Room::_a_name($this->rec,False);
     if (empty($this->rec['n_nosort'])) 	  $this->rec['n_nosort'] = 0;
     if (isset($this->rec['a_start'])) if ($this->rec['a_start'] <= myPear_day0) unset($this->rec['a_start']); 
 
@@ -194,16 +197,10 @@ class bHolder_vm_Rooms extends bHolder_vm{
     
     $usage = 0;
 
-    $this->rec['_sharable'] = (bForm_vm_Room::_isSharable($this->rec)    
+    $this->rec['_sharable'] = ($this->rec['a_capacity'] > 1    
 			       ? 'Sharable'
 			       : '');
     $extraTD = $this->t->extraTD[] = '';
-    /*
-    $s = @$this->rec['a_status'];
-    if (bForm_vm_Room::_isSharable($this->rec)) $extraTD = $this->t->extraTD[] = bIcons()->get(array('i'=>'bb-2users','d'=>$s));
-    if ($s == AP_AUTO_ALLOCATABLE)          $extraTD = $this->t->extraTD[] = bIcons()->get(array('i'=>'i-pc_edit','d'=>$s));
-    else                                    $extraTD = $this->t->extraTD[] = '';
-    */
 
     switch ($this->doing){
     case 'usage':

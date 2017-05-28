@@ -182,30 +182,70 @@ class bForm_vm_Hut extends bForm_vm {
   /*
    *
    */
-  /*
-  public static function _getCapacity($hut_id){
-    $hut = myPear::getInstance_new('bForm_vm_Hut',$hut_id,'fatal');
-    $reply = $hut->getCapacity();
-    return $reply; 
+  public function get_total_rooms($accommodationOptions=Null,$detailed=False){
+    $q = myPear_db()->query(sprintf("SELECT a_id,a_quantity,a_capacity FROM abs_rooms WHERE a_hutid = %s AND a_quantity REGEXP '%s' ORDER BY a_quantity ASC",
+				    $this->ID,VM_quantity_total),cnf_dev);
+    while ($r = myPear_db()->next_record($q)){
+      $a_capacities[] = $r['a_capacity'];
+      $a_quantity = (is_object($accommodationOptions)
+		     ? $accommodationOptions->get_a_value($r['a_id'],$this->ID,'a_quantity')
+		     : $r['a_quantity']);
+      $get_total_rooms = trim(str_replace('rooms','',
+					  str_replace('=','',
+						      str_replace(VM_quantity_total,'',$a_quantity))));
+      $a_qs[] = $get_total_rooms;
+    }
+    if (!empty($get_total_rooms)){
+      $a_qs = array_unique($a_qs);
+      if (count($a_qs) != 1){
+	sort($a_qs);
+	myPear::ERROR("Configuration error: ambigious \"total rooms\" (".join(',',$a_qs).") for ".$this->name().
+		      "<br><strong><em>In total $get_total_rooms room</em> is used</strong>");
+      }
+      sort($a_capacities);	
+      $this->get_total_rooms = ($detailed
+				? array($get_total_rooms => $a_capacities)
+				: $get_total_rooms);
+      $this->dbg($this->get_total_rooms,cnf_dev);
+    }else{
+      $this->get_total_rooms = 0;
+    }
+    return $this->get_total_rooms;
   }
-  */
 
   /*
    *
    */
-  /*
-  public function getCapacity(){
-    $reply = $this->getValue('hut_capacity');
+  public function name_total_rooms($accommodationOptions=Null){
+    $reply = '';
+    $TR = $this->get_total_rooms($accommodationOptions,True);
+    if (!empty($TR)){
+      foreach($TR as $n=>$a_capacities){
+	$n_rooms = $n;
+	foreach($a_capacities as $c) $reply .= '&#91;'.$c.'&#93; ';
+      }
+      $reply .= VM_quantity_total." $n_rooms rooms";
+    }
+    if (!empty($reply)) $this->dbg($reply,cnf_dev);
     return $reply;
   }
-  */  
+
+  //  public static function _getCapacity($hut_id){
+  //    $hut = myPear::getInstance_new('bForm_vm_Hut',$hut_id,'fatal');
+  //    $reply = $hut->getCapacity();
+  //    return $reply; 
+  //  }
+
+  //  public function getCapacity(){
+  //    $reply = $this->getValue('hut_capacity');
+  //    return $reply;
+  //  }
 
   /*
    * We do not care here about missing description
    */
   public function getValue($name, $asIs=True, $d_MBE=True){
     $v = parent::getValue($name, True, True);
-    if (($name == 'hut_capacity') && empty($v)) $v = VM_quantity2request;
     return $v;
   }
   

@@ -8,13 +8,17 @@ class bForm_vm_Lease extends bForm_vm{
    * Create menu "Nordita pays for N tenants only"
    * 'lease_option' is a serialized array
    */
-  public static function get_lease_options($lease_id,$mode='menu',$data=array()){
+  public static function get_lease_options($lease_id,$mode='menu',$data=array(),$verbose=False){
 
+    // Parse input arguments
     if (is_array($lease_id)){
-      foreach($lease_id as $k=>$v) {
+      $args = $lease_id;
+      foreach($args as $k=>$v) {
 	switch ($k){
-	case 'lease_id':
 	case 'lease_aid':
+	  // lease_id has the precedence
+	  if (!empty($column)) break;
+	case 'lease_id':
 	  $column = $k; 
 	  $lease_id = $v; 
 	  break;
@@ -23,56 +27,105 @@ class bForm_vm_Lease extends bForm_vm{
 	}
       }
     }else{
-      $column = 'lease_id';
+      $column   = 'lease_id'; 
+      $args = array($column => $lease_id);
     }    
 
+    // Complete the arguments for the recursive invocations
+    if (!in_array($mode,array('set','reset','menu'))){
+      $no_data = (is_string($data) && empty($args[$data]) && myPear_db()->columnExists($data,'abs_leases'));
+      if ($no_data || empty($lease_option)){
+	if (empty($lease_option)){
+	  $lease_option = array();
+	  $select[] = 'lease_option';
+	}
+	if ($no_data){
+	  $select[] = $data;
+	}
+	//      var_dump(is_string($data),is_string($data) && empty($args[$data]),$select);
+	$q = myPear_db()->qquery("SELECT ".join(',',$select)." FROM abs_leases WHERE $column = '$lease_id'",cnf_dev);
+	while($r = myPear_db()->next_record($q)){
+	  if ($no_data){
+	    $args[$data] = $r[$data]; 
+	  }
+	  if (empty($lease_option)){
+	    $args['lease_option'] = $r['lease_option']; 
+	    $lease_option = unserialize($r['lease_option']);
+	  }
+	}
+      }
+    }
+
+    
+    // Do the work
     switch($mode){
+      
+    case 'get':
+      // Sic, the reply is an array !!
+      $reply = $lease_option;
+      if (is_string($data)) $reply[$data] = @$args[$data];
+      break;
       
     case 'reset':
       if (empty($data)){
-	$lease_option = array('pay'=>default_lease_pay);
+	$lease_option = array('pay'=>VM_default_lease_pay);
       }else{
-	$lease_option = self::get_lease_options(array($column=>$lease_id),'get');
+	$lease_option = self::get_lease_options($args,'get');
 	unset($lease_option[$data]);
 	ksort($lease_option);
       }
       myPear_db()->qquery("UPDATE abs_leases SET lease_option='".serialize($lease_option)."' WHERE $column='$lease_id'",cnf_dev);
       $reply = True;
       break;
-
+      
     case 'set':
       // Get the current values
-      $lease_option = self::get_lease_options(array($column=>$lease_id),'get');
+      $lease_option = self::get_lease_options($args,'get');
       foreach($data as $k=>$v) $lease_option[$k] = $v;
       // Update
       ksort($lease_option);
       myPear_db()->qquery("UPDATE abs_leases SET lease_option='".serialize($lease_option)."' WHERE $column='$lease_id'",cnf_dev);
+      if (@$data['pay'] === 'one'){
+	if (empty($args['lease_id'])){
+	  $q = myPear_db()->qquery("SELECT lease_id FROM abs_leases WHERE $column='$lease_id'",True);
+	  $leases = array();
+	  while($r = myPear_db()->next_record($q)) $leases[] = $r['lease_id'];
+	}else{
+	  $leases = array($args['lease_id']);
+	}
+	foreach($leases as $lease_id){
+	  $l = bForm_vm_Lease::_leaseInfo($lease_id);
+	  bForm_vm_Lease::get_lease_options($l,'set',array(VM_no_cotenants=>VM_no_cotenants),True);
+	}
+      }
       $reply = True;
       break;
       
-    case 'get':
-      $q = myPear_db()->qquery("SELECT * FROM abs_leases WHERE $column = '$lease_id'",cnf_dev);
-      while($r = myPear_db()->next_record($q)){
-	$reply = unserialize($r['lease_option']);
-	if (is_string($data)) $reply[$data] = $r[$data];
-      }
-      if (empty($reply)) $reply = array(); 
-      break;
-
     case 'get_pay':
-      $r = self::get_lease_options(array($column=>$lease_id),'get');
-      $reply = @$r['pay'];
+    case 'get_pay_HR':
+      $r = self::get_lease_options($args,'get');
+      $reply = ((@$r['pay'] === VM_default_lease_pay) && ($data === 'RO')
+		? cnf_emptyString
+		: ($mode == 'get_pay'
+		   ? @$r['pay']
+		   : self::get_lease_options($args,'excel_int')));
       break;
-
+      
     case 'excel_int':
       // Generate an "internal" (i.e. for organizers,admins,etc) human readable comment how to pay for the accommodation
     case 'excel_ext':
       // Generate human readable comment for the hotel personnel how to pay for the accommodation
+      
+      $r = self::get_lease_options($args,'get','lease_aid');
+      if (empty($r['pay'])){
+	myPear::DEBUG("empty r[pay], return the default ".b_fmt::joinX(', ',$r));
+	//	b_debug::traceBack("empty r[pay], return the default");
+	$r['pay'] = VM_default_lease_pay;
+      }
 
-      $r = self::get_lease_options(array($column=>$lease_id),'get','lease_aid');
       if ($r['lease_aid'] == VM::$OA->ID){
 	$reply = '';
-      }elseif ($r['pay'] == default_lease_pay){
+      }elseif ($r['pay'] == VM_default_lease_pay){
 	$reply = '';
       }elseif ($r['pay'] == 'nothing'){
 	$reply = ($mode=='excel_ext'
@@ -81,14 +134,13 @@ class bForm_vm_Lease extends bForm_vm{
       }elseif(!empty($r['pay'])){
 	$reply = ($mode=='excel_ext'
 		  ? strToUpper(myOrg_nameS." pays for $r[pay] tenant")
-		  : myOrg_nameS." pays for $r[lease_option]");
+		  : myOrg_nameS." pays for $r[pay]");
       }else{
 	b_debug::internalError('empty lease_option');
       }
       break;
 
     case 'menu':
-    case 'menu_nodef':
       // Menu selector
       $q = myPear_db()->query("SELECT a_capacity FROM abs_rooms LEFT JOIN abs_leases ON lease_aid=a_id WHERE lease_id = '$lease_id'");
       $reply = array();
@@ -97,59 +149,71 @@ class bForm_vm_Lease extends bForm_vm{
 	  if ($k < $r['a_capacity']) $reply[$o] = myOrg_nameS." pays ".($k>0 ? 'for ' : '').$o;
 	}
       }
-      if (!empty($reply) && ($mode=='menu')) $reply[default_lease_pay] = myOrg_nameS." pays ".default_lease_pay;
+      if (!empty($reply)) $reply[VM_default_lease_pay] = ($data === 'RO'
+						       ? cnf_emptyString
+						       : myOrg_nameS." pays ".VM_default_lease_pay);
       break;
-
+      
     case VM_room_is_full:
-      $r = (empty($lease_option)
-	    ? self::get_lease_options(array($column=>$lease_id),'get')
-	    : $lease_option);
-      $reply = isset($r[VM_room_is_full]);
-      break;
-
     case VM_no_cotenants:
-      $r = (empty($lease_option)
-	    ? self::get_lease_options(array($column=>$lease_id),'get')
-	    : $lease_option);
-      $reply = isset($r[VM_no_cotenants]);
+      $reply = isset($lease_option[$mode]);
       break;
-
+      
     default:
       b_debug::internalError("Unexpected mode = \"$mode\"");
     }
-    if (!empty($reply))    b_debug::xxx($reply);
+    if ($verbose)  myPear::DEBUG(__FUNCTION__."($args[lease_id],$mode) ".x('em',($reply===cnf_emptyString ? b_fmt::escape($reply) : $reply)));
     return $reply;
   }
 
   /*
    *
    */
-  public static function shared_room_no_cotenants_wanted($lease_id){
-    $reply = self::get_lease_options($lease_id,VM_no_cotenants); 
-    b_debug::xxx($reply);
+  public static function shared_room_no_cotenants_wanted($lease_id,$verbose=False){
+    $reply = self::get_lease_options($lease_id,VM_no_cotenants,array(),False); 
+    if ($verbose) myPear::DEBUG(sprintf("%s(%s): <em>%s</em>",__FUNCTION__,(is_array($lease_id)?$lease_id['lease_id']:$lease_id),var_export($reply,True)));
     return $reply;
   }
 
   /*
    *
    */
-  public static function shared_room_is_full($lease_id){
-    $reply = (self::get_lease_options($lease_id,VM_room_is_full) ||
-	      self::shared_room_no_cotenants_wanted($lease_id));
-    if(1){
-      // debug
-      $q = myPear_db()->qquery(sprintf("SELECT lease_id,av_lastname,lease_option,v_id FROM abs_leases ".
-				       " LEFT JOIN abs_visits ON lease_vid = v_id ".
-				       " LEFT JOIN zzz_avatars ON av_id = v_avid ". 
-				       " WHERE lease_option REGEXP '%s|%s'",VM_no_cotenants,VM_room_is_full),cnf_dev);
-      while($r = myPear_db()->next_record($q)){
-	$lm_option = unserialize($r['lease_option']);
-	ksort($lm_option);
-	myPear::WARNING(b_fmt::joinX(', ',$lm_option).' '.$r['av_lastname']);
+  public static function shared_room_is_full($lease_id,$verbose=False){
+    $reply = (self::get_lease_options($lease_id,VM_room_is_full,array(),False) ||
+	      self::shared_room_no_cotenants_wanted($lease_id,False));
+    if ($verbose) myPear::DEBUG(sprintf("%s(%s): <em>%s</em>",__FUNCTION__,(is_array($lease_id)?$lease_id['lease_id']:$lease_id),var_export($reply,True)));
+    return $reply;
+  }
+
+  /*
+   * Check all the leases and (re)set flag VM_room_is_full
+   */
+  public static function update_fullRoomFlag($leases=array()){
+    // Get the list of leases
+    if (empty($leases)){
+	$q = myPear_db()->qquery("SELECT lease_id,lease_option,a_capacity FROM abs_leases LEFT JOIN abs_rooms ON a_id=lease_aid WHERE a_capacity > 1",True);
+	while($r = myPear_db()->next_record($q)) $leases[] = $r['lease_id'];
+    }
+    
+    // Walk thru the leases, set the value
+    foreach(array_unique($leases) as $lease_id){
+      self::update_fullRoomFlag_exec($lease_id);
+    }
+  }
+
+  private static function update_fullRoomFlag_exec($lease_id,$r=array()){
+    if (empty($r)) $r = bForm_vm_Lease::_leaseInfo($lease_id);
+    foreach(VM_cotenants()->get_cotenants($lease_id,True) as $lm_id=>$cotenants){
+      $n_cotenants = count($cotenants);
+      $VM_room_is_full = bForm_vm_Lease::get_lease_options($r,VM_room_is_full);
+      if ($n_cotenants == $r['a_capacity']){
+	if (!$VM_room_is_full) bForm_vm_Lease::get_lease_options($r,'set',array(VM_room_is_full=>VM_room_is_full));
+      }elseif($n_cotenants < $r['a_capacity']){
+	if ( $VM_room_is_full) bForm_vm_Lease::get_lease_options($r,'reset',VM_room_is_full);
+      }else{
+	myPear::ERROR(sprintf("a_capacity=%s but %s cotenants",$r['a_capacity'],$n_cotenants));
       }
     }
-    b_debug::xxx($reply);
-    return $reply;
   }
   
   /*
@@ -324,10 +388,10 @@ class bForm_vm_Lease extends bForm_vm{
   public static function queryLease($lease_ids,$debug=False){
     foreach($lease_ids as $lease_id) $where[] = "lease_id = $lease_id";
     return myPear_db()->query("SELECT * FROM abs_leases ".
-				 " LEFT JOIN abs_rooms ON lease_aid = a_id ". 
-				 " LEFT JOIN abs_visits     ON lease_vid = v_id ". 
-				 " LEFT JOIN zzz_avatars    ON v_avid = av_id ". 
-				" WHERE " . join(' OR ',$where));
+			      " LEFT JOIN abs_rooms ON lease_aid = a_id ". 
+			      " LEFT JOIN abs_visits     ON lease_vid = v_id ". 
+			      " LEFT JOIN zzz_avatars    ON v_avid = av_id ". 
+			      " WHERE " . join(' OR ',$where));
   }
 
   public static function _leaseInfo($lease_id,$name_only=False,$message=''){
@@ -366,12 +430,17 @@ class bForm_vm_Lease extends bForm_vm{
 	$this->hookRoom($lease_aid,$verbose=True);
 	
 	// assign cotenant(s) to the lease
-	if (is_numeric($lease_aid)&&($a = myPear::getInstance_new('bForm_vm_Room',$lease_aid,'strict')) && 
-	    ($a->isSharable($this) || self::shared_room_is_full($this->ID))){
+	if (is_numeric($lease_aid) && ($a = myPear::getInstance_new('bForm_vm_Room',$lease_aid,'strict')) 
+	    // && ($a->isSharable($this) || self::shared_room_is_full($this->ID))
+	    ){
 	  $cotenants = array();
 	  foreach(preg_grep('/cotenant\d+$/',array_keys($_POST)) as $k){
-	    if (empty($cotenants))	  $cotenants = array($this->ID);
-	    $cotenants[] = $_POST[$k];
+	    if ($_POST[$k] == VM_no_cotenants){
+	      VM_cotenants()->set_cotenants(array(VM_no_cotenants));
+	    }else{
+	      if (empty($cotenants))	  $cotenants = array($this->ID);
+	      $cotenants[] = $_POST[$k];
+	    }
 	    unset($_POST[$k]);
 	    unset($_REQUEST[$k]);
 	  }
@@ -394,6 +463,18 @@ class bForm_vm_Lease extends bForm_vm{
     return parent::updateDB_preflight();
   }
 
+  /*
+   *
+   */
+  function updateDB($data=array()){
+    if (isset($data['lease_start'])) $data['lease_start'] = b_time::check_in ($data['lease_start']);
+    if (isset($data['lease_end']))   $data['lease_end']   = b_time::check_out($data['lease_end']);
+    parent::updateDB($data);
+  }
+
+  /*
+   *
+   */
   function getValue($name,$asIs=True,$isMBE=True){
 
     // may be the value is in the cache already
@@ -459,8 +540,7 @@ class bForm_vm_Lease extends bForm_vm{
 	elseif(@$buffer['a_name'] === LODGING_BR_TXT) $reply = LODGING_BR;
 	elseif(@$buffer['a_name'] === LODGING_RM_TXT) $reply = LODGING_RM;
 	else {
-	  var_dump($buffer);
-	  b_debug::internalError("Unknown Built-in object \"".@$buffer['a_name']."\"");
+	  b_debug::internalError("Unknown Built-in object \"".@$buffer['a_name']."\"",$buffer);
 	}
       }elseif(!empty($hut_code)){
 	$reply = $hut_code;
@@ -513,7 +593,7 @@ class bForm_vm_Lease extends bForm_vm{
   function accommodationCost(){
     $this->readDefRecord();
     $receipt = ($ok=($a_id = (int)$this->getValue('a_id')))
-      ? bForm_vm_Room::getReceipt($this->formDB,$this->nDays())
+      ? bForm_vm_Room::_getReceipt($this->formDB,$this->nDays())
       : 0;
     $this->dbg($receipt);
     return array($receipt,$ok);
@@ -558,115 +638,124 @@ class bForm_vm_Lease extends bForm_vm{
       return;
     }
 
-    $this->dbg('------------start');
-    // check the start/end of the lease 
-    if ($this->myPost_bForm()){
-      $this->hookVisit();
-      if (isset($_POST['lease_start']) || isset($_POST['lease_end'])){
-	$this->setDate(array('lease_start'=>$this->getValue('lease_start'),
-			     'lease_end'  =>$this->getValue('lease_end')));
-	self::adjust_all($this->parentForm,$this->ID);
+    if ($this->parentForm->isApproved()){
+      $this->dbg('------------start');
+      // check the start/end of the lease 
+      if ($this->myPost_bForm()){
+	$this->hookVisit();
+	if (isset($_POST['lease_start']) || isset($_POST['lease_end'])){
+	  $this->setDate(array('lease_start'=>$this->getValue('lease_start'),
+			       'lease_end'  =>$this->getValue('lease_end')));
+	  self::adjust_all($this->parentForm,$this->ID);
+	}
       }
-    }
-    $this->isRO['lease_start'] = ($this->getValue('lease_start') == b_time::check_in ($this->parentForm->getValue('v_start')));
-    $this->isRO['lease_end']   = ($this->getValue('lease_end')   == b_time::check_out($this->parentForm->getValue('v_end')));
-
-    if ($this->embedded){ // call it here to prevent redefining the MODE by the "isEmbedded" function
-      $this->hookVisit();
-    }
-
-
-    foreach(array('lease_id','lease_aid','l_period','lease_start','lease_end') as $i){
-      bForm::nameCounter('resetCounter',$i);
-    }
-    
-    $this->getFormOpen();
-    
-    $block_header = array('Accommodation');
-    
-    // Optionally add button "split accommodation" & "remove splited accommodation"
-    if ($this->isWritable() && $this->isRO('lease_aid')){
-      $nLeases = count(self::_get_allLeases($this->getValue('lease_vid')));
-      if ($nLeases  > 0 && 
-	  $this->maySplit($this->hut_code()) && 
-	  $this->hasAccommodation()){
-	$block_header[] = b_btn::submit_icon('i-arrow_divide', 
-					     btn_splitLease,
-					     b_url::same("?action_once=".btn_splitLease.
-							 "&function=vm_edit_accommodation&resetcache_once=1&lease_id=$this->ID&v_id=".
-							 $this->parentForm->ID),
-					     $confirm=True,
-					     '');
-	
-      }
-      if ($nLeases > 1){
-	$block_header[] = b_btn::submit_icon('i-drop',
-					     btn_deleteLease,
-					     b_url::same("?action_once=".btn_deleteLease.
-							 "&function=vm_edit_accommodation&resetcache_once=1&lease_id=$this->ID&v_id=".
-							 $this->parentForm->ID),
-					     $confirm=True,
-					     '');
-      }
-    }
-    
-    // Cancel the accommodation menu if the event is in the past 
-    $dialog = array('lease_id' => array('textHidden'));
-    if ((time() - AUTO_EXPIRATION*86400) > $this->parentForm->getValue('v_end',1)) $this->isRO['lease_aid'] = !superUser_here;
-
-    if ($this->isRO('lease_aid') && (!$this->hasAccommodation() || ($this->getValue('lease_aid') == 0))){ 
-      $this->getValue_reset('lease_aid',b_fmt::redText('No accommodation'));
-      $dialog['lease_aid'] = array('textField');
-    }else{
-      $dialog['lease_aid'] = array('selectMenu',
-				   $this->freeRooms(),
-				   "onchange='submit()'");
-    }
-    
-    if (bForm_vm_Room::_isSharable($this->formDB,$this) || self::shared_room_is_full($this->ID)){
-      if ($this->MODE == 'RO' && !VM_cotenants()->get_cotenants($this->ID)) $this->MODE = 'RW';
-      $cotenant = self::select_cotenant('_cotenant',$this->formDB,($this->MODE == 'RW'));
-      if (!empty($cotenant)) $dialog[b_rawData] = array('Cotenant',$cotenant);
-    }
-
-    if ($this->isRO('lease_start') && $this->isRO('lease_end')){
-      if (($lease_start=$this->getValue('lease_start')) && ($lease_end=$this->getValue('lease_end'))){
-	$this->defineVariable(b_time::period($lease_start,$lease_end),'lease_aid');
+      $this->isRO['lease_start'] = ($this->getValue('lease_start') == b_time::check_in ($this->parentForm->getValue('v_start')));
+      $this->isRO['lease_end']   = ($this->getValue('lease_end')   == b_time::check_out($this->parentForm->getValue('v_end')));
+      
+      if ($this->embedded){ // call it here to prevent redefining the MODE by the "isEmbedded" function
+	$this->hookVisit();
       }
       
-    }else{
-      $minmax = array($this->parentForm->getValue('v_start'),
-		      $this->parentForm->getValue('v_end'));
-      $dialog['lease_start'] = array('datePickerField',$minmax);
-      $dialog['lease_end']   = array('datePickerField',$minmax);
-    }
-
-    // Who pays for the accommodation?
-    if ($this->getValue('lease_aid')){
-      $this->defineVariable(' ','_who_pays');
-      $this->formDB['_who_pays'] = self::get_lease_options($this->ID,'get_pay');
-      $dialog['_who_pays'] = array('selectMenu',
-				   self::get_lease_options($this->ID,'menu'),
-				   "onchange='submit()'");
-    }
-
-    // Accommodation wish
-    if ($this->parentForm->isVisitType_program() && ($_virt_wish=$this->parentForm->getValue('v_acc_wish',True))){
-      $this->defineVariable(array('_virt_wish'=>b_fmt::redText('Accommodation wish','greyText')),True);
-      $this->isRO['_virt_wish'] = True;
-      $this->formDB['_virt_wish'] = b_fmt::redText($_virt_wish,'greyText');;
-      $dialog['_virt_wish'] = array('textField');
-    }
+      
+      foreach(array('lease_id','lease_aid','l_period','lease_start','lease_end') as $i){
+	bForm::nameCounter('resetCounter',$i);
+      }
+      
+      $this->getFormOpen();
+      
+      $block_header = array('Accommodation');
+      
+      // Optionally add button "split accommodation" & "remove splited accommodation"
+      if ($this->isWritable() && $this->isRO('lease_aid')){
+	$nLeases = count(self::_get_allLeases($this->getValue('lease_vid')));
+	if ($nLeases  > 0 && 
+	    $this->maySplit($this->hut_code()) && 
+	    $this->hasAccommodation()){
+	  $block_header[] = b_btn::submit_icon('i-arrow_divide', 
+					       btn_splitLease,
+					       b_url::same("?action_once=".btn_splitLease.
+							   "&function=vm_edit_accommodation&resetcache_once=1&lease_id=$this->ID&v_id=".
+							   $this->parentForm->ID),
+					       $confirm=True,
+					       '');
+	  
+	}
+	if ($nLeases > 1){
+	  $block_header[] = b_btn::submit_icon('i-drop',
+					       btn_deleteLease,
+					       b_url::same("?action_once=".btn_deleteLease.
+							 "&function=vm_edit_accommodation&resetcache_once=1&lease_id=$this->ID&v_id=".
+							   $this->parentForm->ID),
+					       $confirm=True,
+					       '');
+	}
+      }
+      
+      // Cancel the accommodation menu if the event is in the past 
+      $dialog = array('lease_id' => array('textHidden'));
+      if ((time() - AUTO_EXPIRATION*86400) > $this->parentForm->getValue('v_end',1)) $this->isRO['lease_aid'] = !superUser_here;
+      
+      $a_id = $this->getValue('lease_aid');
+      if ($this->isRO('lease_aid') && (!$this->hasAccommodation() || !$a_id)){ 
+	$this->getValue_reset('lease_aid',b_fmt::redText('No accommodation'));
+	$dialog['lease_aid'] = array('textField');
+      }else{
+	$dialog['lease_aid'] = array('selectMenu',
+				     $this->freeRooms(),
+				     "onchange='submit()'");
+      }
+      
+      if ($this->hasAccommodation()){
+	// Cotenants
+	// !self::shared_room_no_cotenants_wanted($this->ID,True)
+	if (( self::shared_room_is_full($this->ID,True) || bForm_vm_Room::_isSharable($this->formDB,$this)) &&
+	    (!self::shared_room_no_cotenants_wanted($this->ID,True) || $this->MODE === 'RW')){
+	  if ($this->MODE == 'RO' && !VM_cotenants()->get_cotenants($this->ID)) $this->MODE = 'RW';
+	  $cotenant = self::select_cotenant('_cotenant',$this,($this->MODE === 'RW'));
+	  if (!empty($cotenant)) $dialog[b_rawData] = array('Cotenant',$cotenant);
+	}
+	
+	if ($this->isRO('lease_start') && $this->isRO('lease_end')){
+	  if (($lease_start=$this->getValue('lease_start')) && ($lease_end=$this->getValue('lease_end'))){
+	    $this->defineVariable(b_time::period($lease_start,$lease_end),'lease_aid');
+	  }
+	  
+	}else{
+	  $minmax = array($this->parentForm->getValue('v_start'),
+			  $this->parentForm->getValue('v_end'));
+	  $dialog['lease_start'] = array('datePickerField',$minmax);
+	  $dialog['lease_end']   = array('datePickerField',$minmax);
+	}
+	
+	// Who pays for the accommodation?
+	if ($this->getValue('lease_aid')){
+	  $this->defineVariable(' ','_who_pays');
+	  $this->formDB['_who_pays'] = $_who_pays = self::get_lease_options($this->ID,'get_pay',$this->MODE,cnf_dev);
+	  if ($_who_pays !== cnf_emptyString) $dialog['_who_pays'] = array('selectMenu',
+									   self::get_lease_options($this->ID,'menu',array(),cnf_dev),
+									   "onchange='submit()'");
+	}
+      }
+      
+      // Accommodation wish
+      if ($this->parentForm->isVisitType_program() && ($_virt_wish=$this->parentForm->getValue('v_acc_wish',True))){
+	$this->defineVariable(array('_virt_wish'=>b_fmt::redText('Accommodation wish','greyText')),True);
+	$this->isRO['_virt_wish'] = True;
+	$this->formDB['_virt_wish'] = b_fmt::redText($_virt_wish,'greyText');;
+	$dialog['_virt_wish'] = array('textField');
+      }
     
-    // print the block
-    if ($this->parentForm->isApproved()) $this->formBlock(VM_visit_lease.$this->ID,
-							  $block_header,
-							  $dialog,
-							  array('l'=>b_url::same("?function=vm_edit_accommodation&resetcache_once=1&lease_id=$this->ID&v_id=".
-										 $this->parentForm->ID),
-								'i'=>'i-hotel',
-								'd'=>btn_edit_accommodation));
-    $this->dbg('------------end');
+      // print the block
+      //      b_debug::print_r($dialog,'dialog');
+      $this->formBlock(VM_visit_lease.$this->ID,
+		       $block_header,
+		       $dialog,
+		       array('l'=>b_url::same("?function=vm_edit_accommodation&resetcache_once=1&lease_id=$this->ID&v_id=".
+					      $this->parentForm->ID),
+			     'i'=>'i-hotel',
+			     'd'=>btn_edit_accommodation));
+      $this->dbg('------------end');
+    }
   }
   
   /*
@@ -760,6 +849,7 @@ class bForm_vm_Lease extends bForm_vm{
    */
   function hookRoom($lease_aid,$verbose=True){
     if (cnf_dev) $verbose = True;
+    b_debug::xxx();
 
     if ($lease_aid === LODGING_RM){
       b_debug::xxx('REMOVE',array(2,$this->debug,'M'));
@@ -769,7 +859,7 @@ class bForm_vm_Lease extends bForm_vm{
       if ($verbose) myPear::MESSAGE_add($this->_periodToString('Remove accommodation for'));
       $this->getValue_reset_forced('lease_aid',0);
       $this->hookVisit();
-      //      self::get_lease_options($this->ID,$mode='reset');
+      self::get_lease_options($this->ID,$mode='reset');
     }elseif ($lease_aid && (($old_aid=@$this->formDB['lease_aid']) != $lease_aid)){
       // sanity
       if (!(myPear::getInstance_new('bForm_vm_Room',$lease_aid,'strict') instanceof bForm_vm_Room)) {
@@ -846,69 +936,286 @@ class bForm_vm_Lease extends bForm_vm{
   /*
    *
    */
-  public function freeRooms($lease_start=Null,$lease_end=Null){
-    if (empty($lease_start))  $lease_start = $this->getValue('lease_start'); 
-    if (empty($lease_end))    $lease_end   = $this->getValue('lease_end'); 
+  public function freeRooms(){
+
+    $rec = array('lease_id'   =>$this->ID,
+		 'lease_start'=>$this->getValue('lease_start'),
+		 'lease_end'  =>$this->getValue('lease_end'),
+		 'v_eid'      =>$this->getValue('lease_vid'));
+    if ($a_id = $this->getValue('lease_aid')){
+      $room = myPear::getInstance_new('bForm_vm_Room',$a_id,'strict');
+      $rec['lease_aid'] = $a_id;
+      $rec['hut_name']  = $room->hut->getValue('hut_name');
+      $rec['hut_code']  = $room->hut->getValue('hut_code');
+      $rec['a_name']    = $room->getValue('a_name');
+      $rec['a_capacity']= $room->getValue('a_capacity');
+    }
     return self::_freeRooms(VM_accommodationOptions($this->parentForm->e),
-			    array('lease_start'=>$lease_start,
-				  'lease_end'  =>$lease_end,
-				  'lease_id'   =>$this->ID,
-				  'v_eid'      =>$this->getValue('lease_vid')),
-			    $this->hasAccommodation(False),
-			    $this);
+			    $rec,
+			    $this->hasAccommodation(False));
   }
   
-  /*
-   * 
-   */
-  public static function _freeRooms($accommodationOptions,$v_start,$v_end, $hasAccommodation=False,$lease=Null,$hut_code=Null){
-    return bList_vm_accommodationOptions::get_availableRooms($accommodationOptions,$v_start,$v_end,$hasAccommodation);
+  private static function _dbg($txt,$function='_freeRooms',$args=array()){
+    foreach($args as $k=>$v) if (is_array($v)) $args[$k] = '&#91;'.join(',',$v).'&#93;';
+    myPear::DEBUG(sprintf("%s(%s): %s",$function,join(',',$args),$txt));
   }
-  
+
   /*
-   * Keep it, the new version does not work for the "invited guests"
+   * Check the pool and get a list of available rooms in the hut for the given dates & event 
    */
-  public static function _freeRooms_OBSOLETE($accommodationOptions,$v_start,$v_end, $hasAccommodation=False,$lease=Null,$hut_code=Null){
+  public static function _freeRooms($accommodationOptions,$rec,$hasAccommodation=False,$hut_code=Null){
+    
+    list($start,$end) = array(b_time::check_in($rec['lease_start']),
+			      b_time::check_out($rec['lease_end']));
 
-    $reply = array();
-    $where = array(0);
-    if (empty($accommodationOptions)){
-      //
-      // Check ALL available rooms
-      //
-      locateAndInclude('bList_vm_accommodationOptions');
-      foreach(bList_vm_accommodationOptions::get_allHuts() as $hut_id=>$hut_name){
-	$where[] = 'hut_id = '.$hut_id;
+    self::_dbg(b_time::period($start,$end),__function__,array($accommodationOptions,$hut_code));
+    
+    $huts = array();
+    if (!empty($hut_code)){
+      $where[] = empty($accommodationOptions)
+	? '1'
+	: ' hut_id != '.join(' AND hut_id !=  ',$accommodationOptions); // excludes
+      $where[] = (is_numeric($hut_code)
+		  ? "hut_code = '$hut_code'"
+		  : "1");
+      $q = myPear_db()->qquery("SELECT hut_id FROM abs_huts WHERE ".join(' AND ',$where),cnf_dev);
+      while ($r = myPear_db()->next_record($q)) $huts[] = $r['hut_id'];
+      $event_context = False;
+      $accommodationOptions = False;
+    }else{
+      // Chase for the associated event ID, since VM::_MENU()->context() 
+      // might give a wrong answer for the search results.
+      if (!is_object($accommodationOptions) && ($e_id = @$rec['v_eid'])){
+	self::_dbg("Recover e_id = $e_id");
+	$accommodationOptions = VM_accommodationOptions($e_id);
       }
-    }else{    
-      //
-      // Use only those "huts" which are selected by the administration, i.e. listed in vm_accommodationOptions
-      //
-      foreach($accommodationOptions->getMembers() as $x=>$r){
-
-	$OK = (empty($r['nrooms'])
-	       ? False
-	       : (count($accommodationOptions->get_occupiedRooms($r['lm_key'],$v_start,$v_end)) < $r['nrooms']));
-	if ($hasAccommodation && is_object($lease) && ($r['lm_key'] == bForm_vm_Room::a_hutid($lease->getValue('lease_aid')))) $OK = True;
-	if ($OK) $where[] = 'hut_id = '.$r['lm_key'];
+      $event_context = is_object($accommodationOptions);
+      if ($event_context){
+	// Use only those "huts" which are selected by the administration, i.e. listed in vm_accommodationOptions
+	foreach($accommodationOptions->getMembers() as $x=>$r) $huts[] = $r['lm_key'];
+      }else{
+	// Check ALL available rooms
+	foreach(bList_vm_accommodationOptions::get_allHuts() as $hut_id=>$hut_name) $huts[] = $hut_id;
       }
+    }
 
-      // array_merge sucks...
+    self::_dbg(b_fmt::redText("context ".($event_context ? 'event '.VM::$e->name() : 'org')));
+    self::_dbg('huts = '.join(', ',$huts));
+    
+    //Loop over all the huts for the event
+    $rooms = $descr = $n_TR = array();
+    foreach($huts as $hut_id){
+      $hut = new bForm_vm_Hut($hut_id);
+      $TR = $hut->get_total_rooms($accommodationOptions);
+      self::_dbg($hut->getValue('hut_id').' - '.$hut->name().' '. $hut->name_total_rooms($accommodationOptions));
+      
+      // Loop over all the rooms available for this time period
+      $q_r = myPear_db()->qquery(sprintf("SELECT a_id,a_price,a_name,a_quantity,a_capacity,a_quantity FROM abs_rooms ".
+					 " LEFT JOIN abs_huts ON a_hutid=hut_id ".
+					 " WHERE a_end >= %s ".
+					 " AND ( a_start <= %s OR a_start = 0 OR a_start IS NULL) ".
+					 " AND a_hutid = %s ".
+					 " AND hut_code != '".HUT_BI."' ".
+					 " ORDER BY CONCAT(hut_code,hut_name,a_capacity) ASC",
+					 $start,$end,$hut->ID),cnf_dev);
+      while ($r_room = myPear_db()->next_record($q_r)){
+	if (!empty($hut_code)){
+	  $reply[$hut->ID] = $hut->name();
+	  break;
+	}
+	// Room ID
+	$r_room['hut_name'] = $hut->name();
+	$id = bForm_vm_Room::_a_name($r_room,True);
+	self::_dbg($id);
+	if (!empty($rooms) && in_array($id,array_keys($rooms))){
+	  myPear::ERROR("Configuration error: $id is duplicate");
+	}else{
+	  $rooms[$id] = 0;
+	}
+	
+
+	if ($TR){
+	  $n_TR[$id] = $TR;
+	  $tt_booked_TR[$hut->ID] = 0;
+	  $my_booked_TR[$hut->ID] = 0;
+	  $xx_booked_TR[$hut->ID] = array();
+	}elseif($r_room['a_capacity'] == 1){
+	  $tt_booked_single[$id] = 0;
+	  $my_booked_single[$id] = 0;
+	  $xx_booked_single[$id] = array();
+	}elseif($r_room['a_capacity'] > 1){
+	  $tt_booked_shared[$id] = 0;
+	  $my_booked_shared[$id] = 0;
+	  $xx_booked_shared[$id] = array();
+	}else{ 
+	  b_debug::internalError("??? room capacity = '$r_room[a_capacity]'");
+	}
+
+	// How many rooms of this type have we for the event?
+	$a_quantity = ($event_context
+		       ? $accommodationOptions->get_a_value($r_room['a_id'],$hut->ID,'a_quantity')
+		       : $r_room['a_quantity']);
+	if (empty($a_quantity)) b_debug::print_r($r,"empty a_quantity for $id");
+	$descr[$id] = array($hut->ID,$r_room['a_id'],$a_quantity,$r_room['a_capacity']);
+
+	// Loop over leases for the room
+	if ($event_context){
+	  $q = myPear_db()->qquery($sql=sprintf("SELECT lease_id,v_eid,av_lastname,av_firstname,e_name ".
+						" FROM abs_leases ".
+						" LEFT JOIN abs_visits  ON lease_vid = v_id ".
+						" LEFT JOIN zzz_avatars ON v_avid = av_id ". 
+						" LEFT JOIN abs_events  ON v_eid = e_id ".
+						" WHERE lease_aid = %s ".
+						" AND lease_start <= $end ".
+						" AND lease_end   >= $start ORDER BY CONCAT (e_name,v_host_avid)",
+						$r_room['a_id']),True);
+	  while ($r = myPear_db()->next_record($q)){
+	    $myLease = (@$r['v_eid'] == VM::$e->ID);
+	    $r['a_capacity'] = $r_room['a_capacity'];
+	    $tenant = bForm_Avatar::_fmtName('Lf',$r) . (empty($r['e_name']) ? '' : ', '.x('em',$r['e_name']));
+	    if ($TR){
+	      if($r_room['a_capacity'] > 1) self::update_fullRoomFlag_exec($r['lease_id'],$r);
+	      $increment = (($r_room['a_capacity'] == 1) || bForm_vm_Lease::shared_room_is_full($r,1)
+			    ? 1
+			    : 0);
+	      $tt_booked_TR[$hut->ID] += $increment;
+	      if ($myLease) $my_booked_TR[$hut->ID] += $increment;
+	      else{
+		b_debug::print_r($r,$tenant);
+		$xx_booked_TR[$hut->ID][] = $tenant;
+	      }
+	    }elseif($r_room['a_capacity'] == 1){
+	      if (!empty($r['lease_id'])){
+		$tt_booked_single[$id]++;
+		if ($myLease) $my_booked_single[$id]++;
+		else{
+		  b_debug::print_r($r,$tenant);
+		  $xx_booked_single[$id][] = $tenant;
+		}
+	      }
+	    }elseif($r_room['a_capacity'] > 1){
+		    self::update_fullRoomFlag_exec($r['lease_id'],$r);
+	      if (bForm_vm_Lease::shared_room_is_full($r,1)){
+		$tt_booked_shared[$id]++;
+		if ($myLease) $my_booked_shared[$id]++;
+		else{
+		  b_debug::print_r($r,$tenant);
+		  $xx_booked_shared[$id][] = $tenant;
+		}
+	      }
+	    }else{
+	      b_debug::internalError('????????? capacity='.$r_room['a_capacity']);
+	    }
+	    if (False){
+	      ob_start();
+	      $n_tt = ($TR ? 'TR' :
+		       ($r_room['a_capacity'] == 1 
+			? $tt_booked_single[$id]
+			: $tt_booked_shared[$id]
+			));
+	      $v = new bForm_vm_Visit($r['lease_vid']);
+	      $msg = "$n_tt - ".$v->period().' '.$v->av->name();
+	      if ($v->e) $msg .= ' '.$v->e->name();
+	      ob_get_contents();
+	      ob_end_clean();
+	      if (empty($v->e) || (!empty($v->e) && $v->e->ID != VM::$e->ID))  self::_dbg(b_fmt::redText($msg));
+	      else                                                             self::_dbg($msg);
+	    }	 
+	  }
+	}
+      }
+    }
+
+    /*
+    // debug...
+    $r = $rooms;      b_debug::print_r($r,__function__.'(): available rooms','nosort');
+    $r = $descr;      b_debug::print_r($r,__function__.'(): desription','nosort');
+    $r = $n_TR;       b_debug::print_r($r,__function__.'(); n_TR','nosort');
+    $r = $tt_booked_TR;  b_debug::print_r($r,__function__.'(): tt_booked_TR','nosort');
+    $r=$tt_booked_single;b_debug::print_r($r,__function__.'(): bookings single');
+    $r=$xx_booked_single;b_debug::print_r($r,__function__.'(): STRANGES bookings single');
+    $r=$tt_booked_shared;b_debug::print_r($r,__function__.'(): bookings shared');
+    $r=$xx_booked_shared;b_debug::print_r($r,__function__.'(): STRANGES bookings shared');
+    */
+
+    // Prepare the reply
+    if (empty($reply)){
+      $reply = array();
       if (empty($hut_code)){
 	if ($hasAccommodation) $reply[LODGING_RM] = LODGING_RM_TXT;
-	foreach($accommodationOptions->get_BI() as $k=>$v) $reply[$k] = $v;
+	if ($event_context) foreach($accommodationOptions->get_BI() as $k=>$v) $reply[$k] = $v;
+      }
+      
+      foreach(array_keys($rooms) as $id){
+	list($hut_id,$a_id,$a_quantity,$a_capacity) = $descr[$id];
+	$skip = False;
+	$count = 0;
+	if (empty($hut_code)){
+	  if (empty($n_TR[$id])){	// Big unlimited hotels with a_quantity number of rooms of the given capacity
+	    if ($a_capacity==1){
+	      if (($count=$tt_booked_single[$id]) >= $a_quantity) $skip = "single booked $count/$a_quantity";
+	    }else{
+	      if (($count=$tt_booked_shared[$id]) >= $a_quantity) $skip = "shared booked $count/$a_quantity";
+	    }
+	    if ($a_quantity <= 0) $skip = 'not yet requested';
+	  }else{	// TR - hotel with fixed number of rooms of variable capacity
+	    foreach($tt_booked_TR as $h_id=>$x){
+	      if($hut_id == $h_id) $count = $x;
+	    }
+	    $a_quantity = $n_TR[$id];
+	    if ($count >= $a_quantity) $skip = sprintf("total number of booked rooms is reached %s/%s",$count,$a_quantity);
+	  }
+	  
+	  // increase a_quantity if the room was booked
+	  if ($count && ($count > $a_quantity)) { 	
+	    if (empty($xx_booked_single[$id]) && empty($xx_booked_shared[$id]) &&
+		empty($n_TR[$id])){ 
+	      myPear::WARNING("Increase a_quantity $a_quantity ==> $count for $id");
+	      $accommodationOptions->set_a_value(max($count,$a_quantity),$a_id,$hut_id,'a_quantity');
+	    }else{
+	      if (!empty($my_booked_single[$id]) || !empty($my_booked_shared[$id])){
+		$stranges = (empty($xx_booked_single[$id])
+			     ? $xx_booked_shared[$id]
+			     : $xx_booked_single[$id]);
+		myPear::WARNING(x('strong',b_time::period($start,$end)." $id is OVERBOOKED ($count rooms booked / $a_quantity available))").
+				"<br/>Clashing bookings:<br/>".join('<br/>',$stranges));
+	      }
+	      // Update the options
+	      if ($skip && $count) { 	// Update the options
+		if ($event_context){
+		//	  self::_dbg(b_fmt::redText("IGNORE $id - $skip, the room was booked $count/$a_quantity times (???)"));
+		//	  if (empty($n_TR[$id])) $accommodationOptions->set_a_value(max($count,$a_quantity),$a_id,$hut_id,'a_quantity');
+		}
+		//	$skip = False;
+	      }
+	    }
+	  }
+	}
+	
+	if ($skip){
+	  self::_dbg("Skip $id - $skip");
+	}else{
+	  // Save the room in the list... finally...
+	  $reply[$a_id] = $id;
+	  if ($event_context){
+	    list($n_free,$n_total) = (empty($n_TR[$id])
+				      ? array($a_quantity - ($a_capacity==1 ? $tt_booked_single[$id] : $tt_booked_shared[$id]),
+					      $a_quantity)
+				      : array($n_TR[$id]-$count,
+					      $n_TR[$id]));
+	    self::_dbg(b_fmt::redText("ACCEPT ".($a_quantity-$count)."(free)/$a_quantity(a_quantity) $id"));
+	  }
+	}
+      }
+      
+      // if the reference lease has a room attached, include it in the reply
+      if (($a_id = @$rec['lease_aid']) && empty($reply[$a_id])){
+	$reply[$a_id] = bForm_vm_Room::_a_name($rec,True);
+	self::_dbg(b_fmt::redText("FORCED ACCEPT ".$reply[$a_id]));
       }
     }
     
-    // Read the DB
-    $q = myPear_db()->query("SELECT a_start,a_end,a_area,a_id,a_name,a_capacity,a_comment,hut_code,hut_name FROM abs_rooms ".
-			    " LEFT JOIN abs_huts ON a_hutid = hut_id ".
-			    " WHERE ".join(' OR ',$where).
-			    " ORDER BY CONCAT(hut_name,a_capacity)");
-    while ($ra = myPear_db()->next_record($q)){
-      if (!empty($hut_code) && ($ra['hut_code'] != $hut_code)) continue;
-      if (bForm_vm_Room::_apIsAccessible($ra,$v_start,$v_end)) $reply[$ra['a_id']] = bForm_vm_Room::a_name($ra);
-    }
+    self::_dbg("reply=".join(',&nbsp;',array_values($reply)),__function__,array($accommodationOptions,$hut_code));
     return $reply;
   }
 
@@ -961,8 +1268,12 @@ class bForm_vm_Lease extends bForm_vm{
   /*
    * 
    */
-  public static function select_cotenant($name,$rec,$mode='auto'){
+  public static function select_cotenant($name,$recP,$mode='auto'){
     locateAndInclude('bForm_vm_Room');
+
+    $rec = (is_object($recP)
+	    ? $recP->formDB
+	    : $recP);
 
     if (($rec['lease_end'] < time()+24*3600) ||
 	!(bForm_vm_Room::_isSharable($rec) || self::shared_room_is_full($rec['lease_id']))) return '';
@@ -992,6 +1303,7 @@ class bForm_vm_Lease extends bForm_vm{
       
       // Remove the ansökande
       unset($candidates[$rec['lease_id']]);
+      if (is_object($recP) && self::shared_room_no_cotenants_wanted($rec)) $recP->getValue_reset($name_for_select,VM_no_cotenants);
       $debug = (empty($candidates) ? $x=array('empty...') : $candidates);
       b_debug::print_r($debug,"candidates for ".bForm_Avatar::_fmtName('Lf',$rec).' '.b_time::period($rec['lease_start'],$rec['lease_end']));
       if (empty($rec['v_id'])) b_debug::var_dump($rec,"empty(rec[v_id]");	

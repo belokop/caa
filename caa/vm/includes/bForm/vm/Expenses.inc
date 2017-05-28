@@ -274,8 +274,9 @@ class bForm_vm_Expenses extends bForm_vm{
    * Get living expenses for the visit
    */
   function living_ABC($accommodation_option,$method,$showFormula=False,$showDefaultOnly=True){
+    // get the value
     $reply = $this->living($showFormula,$showDefaultOnly,$accommodation_option);
-
+    // get the colors
     if ((int)$this->ID)  $this->colorCode[$method] = $this->colorCode['living'];
     else                 $this->colorCode[$method] = VM_color_budgetEstimate;
     return $reply;
@@ -530,7 +531,7 @@ class bForm_vm_Expenses extends bForm_vm{
     $this->textHidden('exp_vid',$this->visit->ID);
 
     // Show the dialog
-    b_debug::var_dump($dialog,'dialog');
+    // b_debug::var_dump($dialog,'dialog');
     $this->formBlock(VM_visit_expenses, 
 		     ($this->visit->getValue('v_type',1) == VISIT_TYPE_RENT ? 'Invoice ' : 'Expences'),
 		     $dialog,

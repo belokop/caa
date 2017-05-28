@@ -10,7 +10,7 @@ class bIcal_matrix_abs extends bIcal_matrix{
 
   function __construct(){
     parent::__construct();
-    $_GET['sBy'] = 'a_name';
+    $_GET['sBy'] = 'CONCAT(hut_code,hut_name,a_capacity)';
   }
   
   function show($matrix=Null){    
@@ -30,9 +30,9 @@ class bIcal_matrix_abs extends bIcal_matrix{
     $haveTenants = 0;
     $where = array("v_end   >=$this->day1",
 		   "v_start <=$this->day9");
-    if (is_object(VM::$e) && VM::$e->isOrganizer())  $where[] = "v_eid=".VM::$e->ID;
+    if (is_object(VM::$e)) // && (VM::$e->isOrganizer() 
+      $where[] = "v_eid=".VM::$e->ID;
 	
-
     /*
      * Show agenda entries if needed
      */    
@@ -147,11 +147,12 @@ class bIcal_matrix_abs extends bIcal_matrix{
   
   function fillEntry($r){
     $r['name'] = bForm_Avatar::_fmtName('Lf',$r);
-    if (!($app = $r['a_name'])) $app = 'Homeless';
+    $app = (empty($r['a_name'])
+	    ? 'Homeless'
+	    : bForm_vm_Room::_a_name($r,True,False,True,False));
 
     if ( (int)$r['lease_start'] <9999) $r['lease_start'] = $r['v_start'];
     if ( (int)$r['lease_end']   <9999) $r['lease_end']   = $r['v_end'];
-    if (@$r['a_area'] > 0 && @$r['a_area'] < 777) $app .= ", $r[a_area]kvm";
     $entry=array('day1' => $r['lease_start'],
 		 'day9' => $r['lease_end'],
 		 'text' => x("a href='".b_url::same("?function=vm_edit_accommodation&resetcache_once=1&lease_id=$r[lease_id]&v_id=$r[v_id]&action_once=".btn_edit_accommodation)."'",$r['name']),

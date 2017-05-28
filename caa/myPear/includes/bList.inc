@@ -412,7 +412,7 @@ class bList extends myPear_getValue{
       // The result of this query must be either unique or empty.
       // If it is not, then something is wrong...
       $q = myPear_db()->query("SELECT ".$this->TABLEID." FROM ".$this->TABLE." WHERE ".join(' AND ',$w));
-      if ($alarm = cnf_dev && (($n=myPear_db()->num_rows($q)) > 1)) b_debug::print_r($w,b_debug::__()." !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! $n records");
+      if ($alarm = (cnf_dev && (($n=myPear_db()->num_rows($q)) > 1))) b_debug::print_r($w,b_debug::__()." !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! $n records");
       while ($r = myPear_db()->next_record($q)){
 	if ($alarm) b_debug::print_r($r,get_class($this).'->'.__FUNCTION__.'()');
 	$this->ID = $r[$this->TABLEID];
@@ -430,7 +430,7 @@ class bList extends myPear_getValue{
 	// Get the default class name and member title from the configuration file.
 	// They might be changed later (TBI)
 	list($l_name,$l_member_title) = b_reg_bList::set__l_name__l_member_title($this,$this->keys);
-	$w[] = $this->keys['name'] . "='$l_name'";
+	$w[] = $this->keys['name']    . "='$l_name'";
 	$w[] = $this->keys['memberT'] . "='$l_member_title'";
 	
 	myPear_db()->query("INSERT INTO ".$this->TABLE." SET " . join(',',$w));
@@ -471,11 +471,14 @@ class bList extends myPear_getValue{
     myPear_db()->qquery("INSERT INTO $this->TABLE_member SET ".
 			join(',',array($this->hookParent(),
 				       $this->TABLEID_member.'='.$this->member_ID_lastAdded)),
-			(bool)$this->debug||cnf_show_db);
+			cnf_show_db);
     // ZZZZZ ?? YB 2017-03-26
     //    if (@$_POST[$this->TABLEID_member] === 'new') $_POST[$this->TABLEID_member] = $_REQUEST[$this->TABLEID_member] = $this->member_ID_lastAdded;
-    $this->getValue_reset($this->TABLEID_member,$this->member_ID_lastAdded);
-    $this->dbg($this->TABLEID_member.'='.var_export($this->getValue($this->TABLEID_member),True),True);
+
+    //    $this->getValue_reset($this->TABLEID_member,$this->member_ID_lastAdded);
+    b_cnf::set($this->TABLEID_member,$this->member_ID_lastAdded);
+
+    $this->dbg($this->TABLEID_member.'='.var_export($this->getValue($this->TABLEID_member,True),True),cnf_dev);
     return $this->member_ID_lastAdded;
   }
   
@@ -928,6 +931,7 @@ class bList extends myPear_getValue{
     $l_id      = @$rr[$this->TABLEID];
     $member_ID = @$rr[$this->TABLEID_member];
     $lm_id     = @$_POST[$this->TABLEID_member];
+    $lm_key    = @$_POST['lm_key'];
     $parent_id = @$_POST[$this->TABLEID_member_p];
     
     if (empty($l_id)){
@@ -962,6 +966,10 @@ class bList extends myPear_getValue{
     if ($reply){
       if ($lm_id !== Null)   $this->member_ID = $lm_id;
       if (@$_POST['um_status'] === 'off') $_POST['um_status'] == '';
+      // ???? Workaround...
+      if (!empty($lm_key) && !empty($lm_id)){
+	//	myPear_db()->qquery("UPDATE zzz_list_members SET lm_key = $lm_key WHERE lm_id=$lm_id",True);
+      }
     }
 
     if($this->debug || cnf_dev) $this->dbg(($reply ? 'YES ' : 'NO ').$this->TABLEID."=$l_id, member_ID=$member_ID",
@@ -1103,7 +1111,7 @@ class bList extends myPear_getValue{
       foreach(array_keys($this->list_quering) as $q){
 	if (@$this->isMBE[$q]) continue;
 	$value = $this->getMemberValue($lm_id,$q);
-	if (empty($value)){
+	if (myPear::is_empty($value)){
 	  $this->dbg("missing '$q'",(bool)(cnf_dev || $this->debug));
 	  $reply = False;
 	}

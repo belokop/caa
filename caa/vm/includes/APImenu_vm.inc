@@ -72,6 +72,7 @@ APItabs::define_tabs(array(
 
 			   'tab_vm_vis'               => 'Visits within events',
 			   'tab_vm_vis_acc'           => 'Accommodation options',
+			   'tab_vm_vis_amatrix'       => 'Who lives where',
 			   'tab_vm_vis_badges'        => 'Print badges',
 			   'tab_vm_vis_budget'        => 'Budget estimation',
 			   'tab_vm_vis_export'        => 'Export tenants Excel files',
@@ -130,6 +131,7 @@ class APImenu_vm extends APImenu_ea{
 			     tab_vm_vis       => array(tab_vm_ogz_vmatrix,
 						       tab_vm_ogz_omatrix,
 						       tab_vm_ogz_amatrix,
+						       tab_vm_vis_amatrix,
 						       tab_vm_vis_list, 
 						       tab_vm_vis_budget, 
 
@@ -237,16 +239,14 @@ class APImenu_vm extends APImenu_ea{
     if (empty($_SESSION[__method__])) $_SESSION[__method__] = 'org';
     if ($tab = @APItabs::$q[1]){
       foreach($contexts as $context=>$tabs){
-	if (in_array($tab,$tabs)){
-	  if ($context == 'event'){
-	    VM::e_ID();
-	    if (!is_object(VM::$e)) $context = Null;
-	  }
-	  $_SESSION[__method__] = $context;
-	}
+	if (in_array($tab,$tabs)) $_SESSION[__method__] = $context;
       }
     }
-    b_debug::xxx($_SESSION[__method__]);
+    if ($_SESSION[__method__] === 'event'){
+      VM::e_ID();
+      if (!(VM::$e instanceof bForm_vm_Event)) $_SESSION[__method__] = Null;
+    }
+    b_debug::xxx($_SESSION[__method__].($_SESSION[__method__]==='event' ? ' '.VM::$e->ID : ''));
     return $_SESSION[__method__];
   }
   
@@ -417,6 +417,9 @@ class APImenu_vm extends APImenu_ea{
 		     !VM::outOfScope() && 
 		     !VM::$e->isArchived() && 
 		     VM::$e->attenders()));
+	break;
+      case tab_vm_vis_amatrix:
+	$reply = !$this->access(tab_vm_ogz_amatrix)  && !$this->access(tab_vm_end_amatrix);
 	break;
 	
       case tab_vm_ogz_dup:
@@ -676,6 +679,7 @@ class APImenu_vm extends APImenu_ea{
       if (empty($engine)) {
 	$engine    = 'bIcal_matrix_offices';
       }
+    case tab_vm_vis_amatrix:
     case tab_vm_ogz_amatrix:
     case tab_vm_end_amatrix:
       if (empty($engine)){

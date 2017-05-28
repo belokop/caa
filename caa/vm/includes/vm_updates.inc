@@ -150,6 +150,7 @@ function vm_compat_update_49_2_Kronor_Hostel(){
   static $h_2kr = 0;
   if (!empty($h_2kr)) return;
 
+  b_debug::xxx();
   locateAndInclude('bForm_vm_Hut');
   
   $h_2kr = myPear::getInstance_new('bForm_vm_Hut',array('hut_name'=>'2 Kronor Hostel'),'strict');
@@ -157,7 +158,7 @@ function vm_compat_update_49_2_Kronor_Hostel(){
     $h_2kr = new bForm_vm_Hut('empty');
     $h_2kr->updateDB(array('hut_name'=>'2 Kronor Hostel',
 			   'hut_code'=>'H',
-			   'hut_capacity'=>999,
+			   'hut_city'=>'Stockholm',
 			   ));
   }
   
@@ -168,22 +169,24 @@ function vm_compat_update_49_2_Kronor_Hostel(){
 		       'a_hutid'=> $h_2kr->ID,
 		       ));
   }
-  vm_compat_update_49_visits("a_id = ".$r->ID);
+  //  vm_compat_update_49_visits("a_id = ".$r->ID);
 
   
   $h_2kr = new bForm_vm_Hut('empty');
   $h_2kr->updateDB(array('hut_name'=>'Interhostel AB',
+			 'hut_city'=>'Stockholm',
 			 'hut_code'=>'H',
-			 'hut_capacity'=>999,
 			 ));
   $r = myPear::getInstance_new('bForm_vm_Room',5495);
   $r->updateDB(array('a_name' => 'Bed',
 		     'a_hutid'=> $h_2kr->ID,
 		     ));
-  vm_compat_update_49_visits("a_id = 5495");
+  //  vm_compat_update_49_visits("a_id = 5495");
+  //  vm_compat_update_49_visits("lease_option = 'a:0:{}'");
 }
 
 function vm_compat_update_49_visits($where){
+  b_debug::xxx();
   ob_start();
   locateAndInclude('bHolder_vm_Visits');
   $holder = new bHolder_vm_Visits();
@@ -198,29 +201,45 @@ function vm_compat_update_49_visits($where){
 /*
  * Preparation for the new rooms classification
  */
-vm_compat_update_49();
 function vm_compat_update_49(){
   static $dejaVu = 0;
   if ($dejaVu++) return;
-  if (!upgraded_rooms_specifications) return;
+  b_debug::xxx();
   if (myPear_db()->columnExists('a_quantity','abs_rooms')){
     myPear::MESSAGE("Conversion is already done!");
     return;
   }
-  
+
+  vm_compat_update_49_check_lease_aid('update starts');
+
+  // Fixes  
+  myPear_db()->qquery("UPDATE abs_huts SET hut_url='http://www.elite.se' WHERE hut_id=271758",True);
 
   // Add a few new columns
-  if (!myPear_db()->columnExists('a_quantity','abs_rooms'))
-    myPear_db()->qquery("ALTER TABLE `abs_rooms` ADD `a_quantity` INT NOT NULL DEFAULT '".VM_quantity2request."' AFTER `a_capacity`",True); 
-  if (!myPear_db()->columnExists('lease_option','abs_leases'))
-    myPear_db()->qquery("ALTER TABLE `abs_leases` ADD `lease_option` VARCHAR(200) DEFAULT '".serialize(array('pay'=>VM_everything))."' AFTER `lease_end`",True);
-  
+  if (!myPear_db()->columnExists('a_quantity','abs_rooms')){
+    myPear_db()->qquery($sql="ALTER TABLE `abs_rooms` ADD `a_quantity` VARCHAR(200) NULL DEFAULT '".VM_default_a_quantity."' AFTER `a_capacity`",True); 
+    b_debug::xxx($sql);
+  }
+
+  if (!myPear_db()->columnExists('lease_option','abs_leases')){
+    myPear_db()->qquery($sql="ALTER TABLE `abs_leases` ADD `lease_option` VARCHAR(200) DEFAULT '".serialize(array())."' AFTER `lease_end`",True);
+    b_debug::xxx($sql);
+  }
+
   // Remove "a_code", it is redundant...
   if (myPear_db()->columnExists('a_code','abs_rooms'))
     myPear_db()->qquery("ALTER TABLE `abs_rooms` DROP `a_code`",True);
   if (myPear_db()->columnExists('a_price_cleaning','abs_rooms'))
     myPear_db()->qquery("ALTER TABLE `abs_rooms` DROP `a_price_cleaning`",True);
+  if (myPear_db()->columnExists('hut_capacity','abs_huts'))
+    myPear_db()->qquery("ALTER TABLE `abs_huts` DROP `hut_capacity`",True);
 
+  //
+  // decrease number of default hotels
+  //
+  foreach(array(271758,268297,271673,271758) as $hut_id) {
+    myPear_db()->qquery("UPDATE abs_huts SET hut_status = 'off' WHERE hut_id=$hut_id",True);    
+  }
   
   //
   // Remove obsolete entries
@@ -254,7 +273,7 @@ function vm_compat_update_49(){
   // Parse all the rooms names, extract options and write them to the database
   //
   $pivots = $table = array();
-  $q = myPear_db()->qquery("SELECT hut_id,hut_name,a_id,a_capacity,a_name,a_comment,a_price,a_status,lease_end ".
+  $q = myPear_db()->qquery("SELECT hut_id,hut_name,hut_code,a_id,a_capacity,a_name,a_comment,a_price,a_status,lease_end ".
 			   " FROM abs_rooms ".
 			   " LEFT JOIN abs_huts ON a_hutid=hut_id ".
 			   " LEFT JOIN abs_leases ON lease_aid=a_id ".
@@ -268,7 +287,12 @@ function vm_compat_update_49(){
       b_debug::print_r($r,'??????????????????????????????????');
       continue;
     }
+    vm_compat_update49_pack_me($r['a_price']);
+
+    // parce...
     list($a_name,$a_pay,$sharable,$a_comment,$pay_comment) = vm_compat_update_49_parser($r,$table);
+    if (empty($a_pay)) $a_pay = VM_default_lease_pay;
+    @$a_pays[$a_pay]++;
    
     vm_compat_update_49_set($r['a_id'],$a_name,$a_pay,$a_comment);
 
@@ -289,7 +313,12 @@ function vm_compat_update_49(){
     if ($a_pay)           $room[] = "a_pay=$a_pay";
 
     // Build "shrinking table"
-    if (empty($pivots[$r['hut_name']][$a_name]['root']) && !$sharable && ($n>0) && empty($a_pay)){
+    if (empty($pivots[$r['hut_name']][$a_name]['root']) 
+	&& !$sharable 
+	&& ($n>0) 
+	&& ($r['a_price'] !== '999=0')
+	&& empty($a_pay) 
+	){
       array_unshift($room,$r['a_id']);
       $pivots[$r['hut_name']][$a_name]['root'] = $room;
     }else{
@@ -300,10 +329,10 @@ function vm_compat_update_49(){
       $pivots[$r['hut_name']][$a_name][$r['a_id']] = $room;
     }
   }
-  b_debug::print_r($table);
-  // b_debug::print_r($a_pays,'a_pays','nosort');
-  b_debug::print_r($pivots,'pivots','nosort');
-  //  b_debug::print_r($shrbl, 'shrbl', 'nosort');
+  //  b_debug::print_r($table);
+  b_debug::print_r($a_pays,'a_pays','nosort');
+  // b_debug::print_r($pivots,'pivots','nosort');
+  // b_debug::print_r($shrbl, 'shrbl', 'nosort');
 
   if (!function_exists('update49_get_pivot')){
     function update49_get_pivot($d1){
@@ -316,10 +345,23 @@ function vm_compat_update_49(){
     }
   }
 
+  //
+  // Matsällskapet has 5 rooms with optional extra bed 
+  //
+  $hutm = myPear::getInstance_new('bForm_vm_Hut',array('hut_name'=>'Matsällskapet'),array('fatal'));
+  $a_name = 'Room with kitchenet & extra bed';
+  b_debug::xxx("Creating <em>$a_name</em> in ".$hutm->name());
+  $r = new bForm_vm_Room('empty');
+  $r->updateDB(array('a_name'    => $a_name,
+		     'a_price'   => '999=680',
+		     'a_area'    => 25,
+		     'a_capacity'=> 2,
+		     'a_hutid'   => $hutm->ID));
+
   // Complete the story
   locateAndInclude('bForm_vm_Room');
   locateAndInclude('bList_vm_accommodationOptions');
-  foreach ($pivots  as $hut_name=>$d0){
+  foreach ($pivots as $hut_name=>$d0){
     foreach ($d0   as $a_name=>$d1){
       // See the pivot
       $a_root = new bForm_vm_Room(update49_get_pivot($d1));
@@ -346,7 +388,8 @@ function vm_compat_update_49(){
       myPear::MESSAGE('a_ids='.implode(',',$ids));	
 
       myPear_db()->qquery("UPDATE abs_leases SET lease_aid = ".$a_root->ID." WHERE lease_aid = ".join(' OR lease_aid = ',$ids),True);
-      myPear_db()->qquery("DELETE FROM abs_rooms WHERE a_id = ".join(' OR a_id = ',$ids),True);
+      $ids2delete = array_diff($ids,array($a_root->ID));
+      myPear_db()->qquery("DELETE FROM abs_rooms WHERE a_id = ".join(' OR a_id = ',$ids2delete),True);
 
       if (True){
 	//
@@ -358,53 +401,124 @@ function vm_compat_update_49(){
 	  myPear_db()->qquery("DELETE FROM zzz_list_members WHERE lm_lid=$r[l_id]",True);
 	  myPear_db()->qquery("DELETE FROM zzz_lists WHERE l_id=$r[l_id]",True);
 	}
-	
-      }else{
-	vm_compat_update_49_bList_vm_accommodationOptions($r,$ids,$id2x,$a_id2remove);
+      }elseif(False){
+	vm_compat_update_49_convert_accommodationOptions($r,$ids,$id2x,$a_id2remove);
       }
     }
   }
   unset($_SESSION['a_price_myOrg']);
 
   //
-  // Matsällskapet has 5 rooms with optional extra bed 
+  // Set the known acc. options
   //
-  global $m_hut_id;
-  $r = new bForm_vm_Room('empty');
-  $r->updateDB(array($a_name = 'Room with kitchenet & extra bed',
-		     'a_price'   => 680,
-		     'a_capacity'=> '2',
-		     'a_hutid'   => $m_hut_id));
+  vm_compat_update_49_set_prices(Null,
+				 array('BizApartment' => array('1'   => array('a_quantity'=>15),
+							       '2'   => array('a_quantity'=>10),
+							       '3'   => array('a_quantity'=>VM_quantity2request),
+							       '4'   => array('a_quantity'=>VM_quantity2request),
+							       ),
+				       'Arcadia'      => array('1'   => array('a_price' => 34465,
+									      'a_name'  => 'Superior Single'),
+							       '2'   => array('a_price' => 40550,
+									      'a_name'  => 'Superior'),
+							       ),
+				       'Vanadis'      => array('1'   => array('a_price' => "999=575.89"),
+							       ),
+				       'Sky Hotel'    => array('1'   => array('a_price' => "3=1201,29=961,999=894"),
+							       ),				     
+				       'Matsällskapet'=> array('any' => array('a_quantity'=>VM_quantity_total.'=5'),
+							       '1'   => array('a_price' => "999=580"),
+							       '2'   => array('a_price' => "999=680"),
+							       ),
+				       'Nordita'      => array('any' =>array('a_quantity'=>1),
+							       ),
+				       ));
+  foreach(array(275657 => array( // Nov 2017 - International Workshop on Multifunctional Dirac Materials
+				 ),
+		276145 => array( // Oct 2017 - Many-Body Quantum Chaos, Bad Metals and Holography
+				   ),
+		267926 => array( // Sep 2017 - Current and Future Trends in Stochastic Thermodynamics
+				   ),
+		272180 => array( // Aug 2017 - Exascale Thinking of Particle Energization Problems
+				 ),
+		271769 => array( // Aug 2017 - Multicomponent and Strongly Correlated Superconductivity
+				   ),
+		272179 => array( // Aug 2017 - Nordita Master Class 2017
+				 ),
+		267917 => array( // Jul 2017 - Topological Phases in Cold Atom Systems
+				   ),
+		272163 => array( // Jul 2017 - Quantum Connections in Sweden
+				   ),
+		267906 => array( // Jul 2017 - Advances in Theoretical Cosmology in Light of Data
+				   ),
+		259860 => array( // Jun 2017 - The Physics of Extreme-Gravity Stars
+				'BizApartment' => array('1'   => array('a_price'=>'3=938,999=675'),
+							'2'   => array('a_price'=>'3=974,29=791'),
+							'3'   => array('a_quantity'=>VM_quantity2request),
+							'4'   => array('a_price'=>'3=3752,999=2700')
+							),
+				 ),
+		267898 => array( // May 2017 - Phase Transitions in Astrophysics, from ISM to Planets
+				'BizApartment' => array('1'   => array('a_price'=>'3=938,999=697'),
+							'2'   => array('a_price'=>'3=974,999=813'),
+							'3'   => array('a_quantity'=>VM_quantity2request),
+							'4'   => array('a_quantity'=>VM_quantity2request),
+							),
+				 ),
+		272157 => array( // May 2017 - Frontiers of topological quantum matter
+				   ),
+		) as $accOpt=>$array){
+    vm_compat_update_49_set_prices($accOpt,$array);
+  }
   
-  //
-  // Set the known number of rooms
-  //
-  foreach(array('BizApartment' => array('1' => 15,
-					'2' => 10,
-					'3' => VM_quantity2request,
-					'4' => VM_quantity2request,
-					),
-		'Matsällskapet'=> array('1' => 4,
-					'2' => 1,
-					),
-		'Nordita'      => array('any'=>1,
-					),
-		) as $hut_name=>$quantities){
+  unset($_SESSION['a_price_myOrg']);
+
+  // Check the result
+  vm_compat_update_49_check_lease_aid('update completed');
+}
+
+function vm_compat_update_49_set_prices($accOptions=Null,$array){
+  b_debug::xxx();
+  foreach($array as $hut_name=>$hut_data){
+    if (empty($hut_data)) continue;
     $hut = myPear::getInstance_new('bForm_vm_Hut',array('hut_name'=>$hut_name),array('fatal'));
-    foreach($quantities as $a_capacity=>$a_quantity){
-      myPear_db()->qquery("UPDATE abs_rooms SET a_quantity = '$a_quantity' WHERE a_hutid = ".$hut->ID.
-			  ($a_capacity==='any'
-			   ? ''
-			   : " AND a_capacity='$a_capacity'"),True);
+    b_debug::xxx("Updating options for ".$hut->name());
+    if (!empty($accOptions) && !is_object($accOptions)){
+      myPear::DEBUG(__FUNCTION__."($accOptions): Activate VM_accommodationOptions($accOptions)"); 
+      $accOptions = VM_accommodationOptions($accOptions);
     }
+    foreach($hut_data as $a_capacity=>$data){
+      $where = "a_hutid = ".$hut->ID . ($a_capacity==='any'
+					? ''
+					: " AND a_capacity='$a_capacity'");
+      foreach($data as $column=>$value){
+	if (is_object($accOptions) && in_array($column,bList_vm_accommodationOptions::$whatIsSaved)){
+	  $q = myPear_db()->qquery("SELECT a_id FROM abs_rooms WHERE $where",True);
+	  while($r = myPear_db()->next_record($q)){
+	    $accOptions->set_a_value($value,$r['a_id'],$hut->ID,$column);
+	  }
+	}else{
+	  myPear_db()->qquery("UPDATE abs_rooms SET $column = '$value' WHERE $where",True);
+	}
+      }
+    }
+  }
+}
+
+function vm_compat_update_49_check_lease_aid($id){
+  b_debug::xxx();
+  $q = myPear_db()->qquery("SELECT * FROM abs_leases LEFT JOIN abs_rooms ON lease_aid = a_id WHERE lease_aid > 0 GROUP BY lease_aid",True);
+  while($r = myPear_db()->next_record($q)){
+    if (empty($r['a_id'])) b_debug::print_r($r,'????????????? empty $a_id '.$id);
   }
 }
 
 /*
  *
  */
-function vm_compat_update_49_bList_vm_accommodationOptions($r,$ids,$id2x,$a_id2remove){
+function vm_compat_update_49_convert_accommodationOptions($r,$ids,$id2xs,$a_id2remove){
   
+  b_debug::xxx();
   myPear::MESSAGE('id2xs='.implode(',',$id2xs));	
 
   $q = myPear_db()->qquery("SELECT lm_id,lm_key,lm_option FROM zzz_list_members LEFT JOIN zzz_lists ON lm_lid=l_id".
@@ -476,11 +590,12 @@ function vm_compat_update_49_bList_vm_accommodationOptions($r,$ids,$id2x,$a_id2r
  *
  */
 function vm_compat_update_49_set($a_id,$a_name,$a_pay,$a_comment){
+  b_debug::xxx();
   locateAndInclude('bForm_vm_Lease');
   
   // Match the option
   if (!empty($a_pay)){
-    foreach(VM::$pay_options as $o){
+    foreach(array_merge(VM::$pay_options,array(VM_default_lease_pay)) as $o){
       if (strpos($a_pay,$o) !== False) $pay_option = $o;
     }
     if (empty($pay_option)) b_debug::internalError("Unknown lease_option \"$a_pay\"");
@@ -494,16 +609,16 @@ function vm_compat_update_49_set($a_id,$a_name,$a_pay,$a_comment){
   }
 }
 
+function vm_compat_update49_pack_me(&$text){
+  $text = trim(str_replace('  ',' ',
+			   str_replace('  ',' ',
+				       str_ireplace(array('A bed in Double','Usually not a fixed rate'),'',
+						    str_replace(array(';','-',',','[',']','(',')','"'),' ',
+								$text)))));
+}
+
 function vm_compat_update_49_parser($r,&$table){
-  if (!function_exists('pack_me')){
-    function pack_me(&$text){
-      $text = trim(str_replace('  ',' ',
-			       str_replace('  ',' ',
-					   str_ireplace(array('A bed in Double','Usually not a fixed rate'),'',
-						       str_replace(array(';','-',',','[',']','(',')','"'),' ',
-								   $text)))));
-    }
-  }
+  b_debug::xxx();
   $std_names = array('Superior Single',
 		     'Superior',
 		     'Studio Small',
@@ -544,6 +659,8 @@ function vm_compat_update_49_parser($r,&$table){
   //     from a_comment
   preg_match($pay,$r['a_comment'],$match2);
   if ($pay_comment = @$match2[0]) $a_comment = trim(str_ireplace($pay_comment,'',$a_comment));
+  //     from a_price
+  if ($r['a_price']==='999=0') $a_pay = 'nothing';
 
   // Extract the room name
   if    (preg_match('/('.join('|',$std_names).')/i',$a_name,$match))    $a_name = $match[1];
@@ -564,7 +681,7 @@ function vm_compat_update_49_parser($r,&$table){
   }
   
   // Check what we got as the room name...
-  pack_me($a_name);
+  vm_compat_update49_pack_me($a_name);
   //  if (($r['hut_name'] == 'BizApartment') && (strToLower($a_name) == 'studio standard')) $a_name = 'Studio Medium'; 
   //  if ((strToLower($r['hut_name']) == '2 kronor hostel') && (strToLower($a_name) == 'studio standard')) $a_name = 'Studio Medium'; 
   if ((strToLower($r['hut_name']) == 'wenner-gren center') && (strToLower($a_name) == 'room')) $a_name = 'Room single'; 
@@ -603,14 +720,14 @@ function vm_compat_update_49_parser($r,&$table){
   //
   $name = array();
   
-  pack_me($a_comment);
-  pack_me($a_name);
+  vm_compat_update49_pack_me($a_comment);
+  vm_compat_update49_pack_me($a_name);
 
   if (!$a_name) $a_name = '???a_name';
   if ($a_name){
     $name[] = $r['a_capacity'];
     $name[] = $a_name;
-    $id = sprintf('&#91;%s&#93; %s',$r['a_capacity'],$a_name);
+    $id = bForm_vm_Room::_a_name($r,False);
     @$table[$r['hut_name']][$id]++;
     if (0){
       $qq = myPear_db()->qquery("SELECT lease_id FROM abs_leases WHERE lease_aid=".$r['a_id'],True);
@@ -618,14 +735,14 @@ function vm_compat_update_49_parser($r,&$table){
     }
   }
   
-  pack_me($a_pay);
+  vm_compat_update49_pack_me($a_pay);
   if ($a_pay){
     $name[] = $a_pay;
     @$table['pay'][$a_pay]++;
   }
   
   if ($pay_comment){
-    pack_me($pay_comment);
+    vm_compat_update49_pack_me($pay_comment);
     if (False)      $name[] = $pay_comment;
     @$table['pay_comment'][$pay_comment]++;
   }
@@ -635,17 +752,6 @@ function vm_compat_update_49_parser($r,&$table){
     @$table[AP_SHARABLE][AP_SHARABLE]++;
   }
 
-  static $jhjh = 0;
-  if ($jhjh++ <3){ // Just debugging
-    locateAndInclude('bForm_vm_Lease');
-    $qq = myPear_db()->qquery("SELECT lease_id FROM abs_leases WHERE lease_aid=".$r['a_id'],True);
-    while($rr = myPear_db()->next_record($qq)){
-      $select = bForm_vm_Lease::get_lease_options($rr['lease_id'],'get');
-      b_debug::print_r($select,'Capacity='.$r['a_capacity'],'nosort');
-      break;
-    }
-  }
-  
   $was = $now = array();
   if (!empty($r['a_name']))    $was[] = $r['a_name'];
   if (!empty($r['a_comment'])) $was[] = $r['a_comment'];
