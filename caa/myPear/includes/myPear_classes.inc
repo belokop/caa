@@ -4141,7 +4141,6 @@ class b_cnf{
     }
     if (empty($reply)) $reply = False;
     if (cnf_show_w || $verbose || $class->debug)
-      // myPear::DEBUG(($reply ? 'YES - ' : 'NO - '),$class);
       b_debug::xxx(($reply ? 'YES - ' : 'NO - ').$msg,array(3,$class,True,'redText'));
     return $reply;
   }
