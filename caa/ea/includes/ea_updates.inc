@@ -63,12 +63,12 @@ function ea_updates(){
  */
 function ea_update20(){
   $lm_id = 338269;
-  $t = 'Masters student intern';
+  $title = 'Masters student intern';
   $q = myPear_db()->qquery("SELECT lm_option FROM zzz_list_members WHERE lm_id=$lm_id",cnf_dev);
   while ($r = myPear_db()->next_record($q)){
     $lm_option = unserialize($r['lm_option']);
-    if (!in_array($t,$lm_option)){
-      $lm_option[] = $t;
+    if (!in_array($title,array_values($lm_option))){
+      $lm_option[myOrg('nordita')->orgEmpTypes()->create_textKey($title)] = $title;
       myPear_db()->qquery("UPDATE zzz_list_members SET lm_option = '".serialize($lm_option)."' WHERE lm_id=$lm_id",cnf_dev);
     }
   }

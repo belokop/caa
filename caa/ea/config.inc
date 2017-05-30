@@ -8,7 +8,7 @@ if (function_exists('drupal_get_path') && file_exists($f=drupal_get_path('module
 
 // register the module in myPear registry
 $releaseDate = '2017-05-30';
-define('EA_VERSION','5.5.7');
+define('EA_VERSION','5.5.8');
 
 myOrg();
 b_reg::add_module(EA_MODULE,array('v' =>EA_VERSION,

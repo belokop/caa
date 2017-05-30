@@ -10,7 +10,7 @@ class bList_orgEmpTypes extends bList{
   
   var $list_quering = array('lm_key'    =>'Code',
 			    'lm_value'  =>'Employee Type',
-			    'empTitles' =>'empTitles',
+			    'empTitles' =>'Employee Titles<br/><em>Not yet editable...</em>',
 			    );
   var $list_showing = array(//'lm_key'  =>'Code',
 			    'lm_value'  =>'Employee Type',
@@ -35,15 +35,17 @@ class bList_orgEmpTypes extends bList{
     // Instantiate the bList
     parent::__construct(myOrg_ID);
 
+	// Wrong... should be done better...
+    /*
     if ($this->myPost_bList()){
       if (isset($_POST['empTitles'])){
 	$lm_id = $_POST['lm_id'];
 	$was_empTitles = unserialize($this->getMemberValue($lm_id,'lm_option'));
 	$new_empTitles = explode(',',$_POST['empTitles']);
-	$this->updateMember(array('lm_option'=>serialize($new_empTitles)), $lm_id);
-
+	//	$this->updateMember(array('lm_option'=>serialize($new_empTitles)), $lm_id);
       }
     }
+    */
   }
 
   /*
@@ -150,7 +152,8 @@ class bList_orgEmpTypes extends bList{
     $this->f->isRO['lm_value'] = True;
     if ($lm_key=$this->f->getValue('lm_key',True)) $this->f->isRO['lm_key'] = True;
     $lm_id  = $this->getValue('lm_id');
-    $this->f->formDB['empTitles'] = join(',',b_fmt::safe_decode($this->getMemberValue($lm_id,'lm_option',True)));
+    $this->f->isRO['empTitles'] = True; // To be done better...
+    $this->f->formDB['empTitles'] = join(', ',array_values(b_fmt::safe_decode($this->getMemberValue($lm_id,'lm_option',True))));
     foreach($this->list_quering as $k=>$v){
       if($k == 'lm_key'){
 	$this->f->textHidden($k,(empty($lm_key) ? $this->create_textKey() : $lm_key));
