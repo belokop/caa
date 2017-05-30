@@ -94,10 +94,17 @@ class bForm_Organization extends bForm {
     return $organizations[$org_id];
   }
 
-  private static function is_orgID_valid($org_id){
-    $org_id = trim($org_id);
-    $reply  = (myPear::is_int($org_id) || (is_string($org_id) && preg_match('/^[a-zA-Z0-9]*$/',$org_id)));
-    b_debug::xxx($reply,array(2));
+  /*
+   *
+   */
+  private static function is_orgID_valid(&$org_id){
+    $reply  = (myPear::is_int($org_id) || (is_string($org_id) && preg_match('/^([a-zA-Z0-9]*)\b/',trim($org_id),$match)));
+    if ($reply){
+      if (!empty($match[1])) $org_id = $match[1];
+    }else{
+      $org_id = Null;
+    }
+    b_debug::xxx($reply,cnf_dev);
     return $reply;
   }
 
@@ -111,15 +118,15 @@ class bForm_Organization extends bForm {
     b_reg::load_module(b_reg::$current_module);
 
     // Be shure that the org code is not fake
-    if (!self::is_orgID_valid($org_id)) $org_id = Null;
+    self::is_orgID_valid($org_id);
+    if (empty($org_id) && ($org_id=b_cnf::get('org'))) self::is_orgID_valid($org_id);
 
-    if (empty($org_id) && ($o=b_cnf::get('org')) && self::is_orgID_valid($o)){
-      $org_id = $o;
-    }
+    // Get an arbitrary Org. if org_id is empty
     if (empty($org_id) && function_exists($f=b_reg::$current_module.'_used_by_myOrg')){
       $org_ids = call_user_func($f);
       $org_id  = array_pop($org_ids);
     }
+    // Get a default if org_id is still empty
     if (empty($org_id) && !empty($default)){
       $org_id = $default;
     }
@@ -135,6 +142,7 @@ class bForm_Organization extends bForm {
       }
       $org_id = @self::$code2id[$org_id];
     }
+    b_debug::xxx($org_id);
     return $org_id;
   }
 

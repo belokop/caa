@@ -40,7 +40,7 @@ class bList_eaEmpRecords extends bList{
 			   'e_rate'     =>'', // placekeeper
 			   'e_inst'     =>'Institute',
 			   'e_cc'       =>'Country',
-			   'lm_value'  =>'Position',  
+			   'lm_value'   =>'Position',  
 			   'lm_key'     =>'Start of position',
 			   'lm_status'  =>'End of position',
 			   );
@@ -708,12 +708,15 @@ class bList_eaEmpRecords extends bList{
   protected function draw_buttons(){
     static $dejaVu = 0;
     if ($reply = parent::draw_buttons()){
-      $this->dbg('MODE = '.$this->MODE);
-      $this->dbg('$this->av->MODE = '.$this->av->MODE);
-      if (($this->MODE == 'RO') || (b_cnf::get('from_bList') && ($this->av->MODE == 'RO'))){
-	// Print a button to update the parent Avatar record
+      $this->dbg('MODE = '.$this->MODE,cnf_dev);
+      $this->dbg('$this->av->MODE = '.$this->av->MODE,cnf_dev);
+      $this->dbg('from_bForm='.var_export(b_cnf::get('from_bForm'),True),cnf_dev);
+      if (($this->MODE == 'RO') || 
+	  (b_cnf::get('from_bForm')) ||
+	  (b_cnf::get('from_bList') && ($this->av->MODE == 'RO'))){
+      	// Print a button to update the parent Avatar record
 	locateAndInclude('b_tabs');
-	if ($this->av->isWritable() && ! b_tabs::$inside){
+	if ($this->av->isWritable() && ((b_cnf::get('from_bForm') || !b_tabs::$inside))){
 	  $reply[] = b_btn::submit('update personal data',
 				   b_url::same("?from_bList=0&mode=RO&form=Avatar_ea&av_id=".$this->av->ID."&id=".$this->av->ID));
 	}
@@ -733,7 +736,7 @@ class bList_eaEmpRecords extends bList{
 	}
       }
     }
-    $this->dbg('$reply',cnf_dev);
+    $this->dbg($reply,cnf_dev);
     return $reply;
   }
 
@@ -876,82 +879,84 @@ class bList_eaEmpRecords extends bList{
     $this->dbg($reply,cnf_dev);
     return $reply;
   }
-
+  
   /*
    *
    */
   function show($arg1=''){
     $this->dbg();
-
+    
     if(!$this->av->isEA()) b_debug::internalError("$av is not EA");
     if (b_cnf::get('from_bForm')){
-      $this->av->getForm();
+      $this->dbg('from_bForm',cnf_dev);
+      //      $this->av->getForm();
+      parent::show();
     }else{
-    bTiming()->cpu(get_class($this).__FUNCTION__);
-
-    $photo = $this->av->getPhoto();
-
-    ob_start();
-    $this->t = new b_table_zebra($this->header());
-    $this->t->repetValuesCol1only = $this->repetValuesCol1only;
-    $this->t->highlightRows = empty($photo); // works bad for the photo
-    $this->t->getHeader();
-
-    //
-    // The very first (two) line(s) is the personal information with an optional photo
-    //
-    foreach($this->birth_record() as $n=>$this->r){
-      $this->format();
-      $this->r['edit_what'] = $n;
-      if (($n==0) && !empty($photo)) $this->t->pendingObject = array($photo);
-      $this->t->extraTD[] = ($this->isMemberEditable()
-			     ? b_btn::link('ICON_edit',b_url::same("?from_bList=1&from_bForm=0&form=Avatar_ea&id=".$this->av->ID."&mode=RW&block_once=av_birth_block"))
-			     : '');
+      bTiming()->cpu(get_class($this).__FUNCTION__);
       
-      $this->t->extraTD[] = '';
-      $this->t->prt($this->r);
-    }
-    
-    
-    //
-    // Now show the "study group"
-    //
-    // First Habilitation
-    foreach($this->getMembers() as $this->r){
-      if (!empty($this->r) && in_array(@$this->r['rec_type'],self::$emp_groups[emp_education])){
+      $photo = $this->av->getPhoto();
+      
+      ob_start();
+      $this->t = new b_table_zebra($this->header());
+      $this->t->repetValuesCol1only = $this->repetValuesCol1only;
+      $this->t->highlightRows = empty($photo); // works bad for the photo
+      $this->t->getHeader();
+      
+      //
+      // The very first (two) line(s) is the personal information with an optional photo
+      //
+      foreach($this->birth_record() as $n=>$this->r){
 	$this->format();
-	$this->t->extraTD[] = $this->button_editListMember();
-	$this->t->extraTD[] = $this->button_deleteListMember();
-	$this->t->extraTD[]='';
+	$this->r['edit_what'] = $n;
+	if (($n==0) && !empty($photo)) $this->t->pendingObject = array($photo);
+	$this->t->extraTD[] = ($this->isMemberEditable()
+			       ? b_btn::link('ICON_edit',b_url::same("?from_bList=1&from_bForm=0&form=Avatar_ea&id=".$this->av->ID."&mode=RW&block_once=av_birth_block"))
+			       : '');
+	
+	$this->t->extraTD[] = '';
 	$this->t->prt($this->r);
       }
-    }
-    
-    // Then PhD & MS
-    foreach(array('phd','ms') as $c){
-      if ($this->r = $this->get_studyRecord_fromAvatar($c)){
-	$this->format();
-	if (!empty($this->r)){ // $this->format might clean the record
-	  $this->r['edit_what'] = $c;
-	  $this->t->extraTD[] = ($this->isMemberEditable()
-				 ? b_btn::link('ICON_edit',
-					       b_url::same("?from_bList=1&from_bForm=0&&form=Avatar_ea&id=".$this->av->ID."&mode=RW&block_once=edu_$c"))
-				 : '');
+      
+      
+      //
+      // Now show the "study group"
+      //
+      // First Habilitation
+      foreach($this->getMembers() as $this->r){
+	if (!empty($this->r) && in_array(@$this->r['rec_type'],self::$emp_groups[emp_education])){
+	  $this->format();
+	  $this->t->extraTD[] = $this->button_editListMember();
+	  $this->t->extraTD[] = $this->button_deleteListMember();
 	  $this->t->extraTD[]='';
 	  $this->t->prt($this->r);
 	}
       }
-    }
-
-    // Save the groups as the b_tabs prefix
-    $content = ob_get_contents();
-    ob_end_clean();
-
-    // Now print the rest, i.e. the "true" employment records.
-    // The "Who am I" &  "study" groups are saved as b_tabs->body_prefix, and will be printed first
-    parent::show($content);
-    
-    bTiming()->cpu();
+      
+      // Then PhD & MS
+      foreach(array('phd','ms') as $c){
+	if ($this->r = $this->get_studyRecord_fromAvatar($c)){
+	  $this->format();
+	  if (!empty($this->r)){ // $this->format might clean the record
+	    $this->r['edit_what'] = $c;
+	    $this->t->extraTD[] = ($this->isMemberEditable()
+				   ? b_btn::link('ICON_edit',
+						 b_url::same("?from_bList=1&from_bForm=0&&form=Avatar_ea&id=".$this->av->ID."&mode=RW&block_once=edu_$c"))
+				   : '');
+	    $this->t->extraTD[]='';
+	    $this->t->prt($this->r);
+	  }
+	}
+      }
+      
+      // Save the groups as the b_tabs prefix
+      $content = ob_get_contents();
+      ob_end_clean();
+      
+      // Now print the rest, i.e. the "true" employment records.
+      // The "Who am I" &  "study" groups are saved as b_tabs->body_prefix, and will be printed first
+      parent::show($content);
+      
+      bTiming()->cpu();
     }
   }
 

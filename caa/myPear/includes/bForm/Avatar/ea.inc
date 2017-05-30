@@ -180,7 +180,10 @@ class bForm_Avatar_ea extends bForm_Avatar{
     self::_init();
 
   }
-  
+
+  /*
+   *
+   */  
   static function _init(){
     // Fill the description for orgEmpTypes & orgGroups
     if (myPear_db()->isReady() && empty(self::$av2er['e_rate']['d'])){
@@ -202,7 +205,7 @@ class bForm_Avatar_ea extends bForm_Avatar{
   }
 
   /*
-   * Update the 'av_position' & 'av_institute' field in the avatar record from the current EA record(s)
+   * Update the 'av_position' & 'av_institute' & 'av_office' field in the avatar record from the current EA record(s)
    */
   private $dejuVu_update_AVpos_AVinst = 0;
   private function update_AVpos_AVinst(){
@@ -251,13 +254,20 @@ class bForm_Avatar_ea extends bForm_Avatar{
   /*
    * Create (if not yet done) the instance of bList_eaEmpRecords 
    */
-  function hook_employment(){
+  function hook_employment($just_hook=False){
     
     locateAndInclude('bList_eaEmpRecords');
     if (!is_object($this->eaRecords) && $this->isEA()){
       $this->eaRecords = bList::getListInstance($this,'bList_eaEmpRecords');
       $this->tips        = $this->eaRecords->tips;
       $this->tips_byMode = $this->eaRecords->tips_byMode;
+      
+      // Update av_office in EArecords
+      if ($this->myPost_bForm() && ($av_office = @$_POST['av_office'])){
+	foreach($this->eaRecords->get_currentEmploymentRecords() as $r){
+	  $this->eaRecords->updateMember(array('e_off'=>$av_office),$r['lm_id']);
+	}
+      }
       
       // Hook the bList_eaEmpRecords updates as if they come for the Avatar 
       if ($this->eaRecords->myPost_bList() && !isset($_POST['_post_bForm_ID_once'])){
@@ -267,13 +277,14 @@ class bForm_Avatar_ea extends bForm_Avatar{
       }
     }
 
-    // Update avatar av_institute & av_position.
-    // We do it on the fly since "myOrg" might change since the previous invication 
-    $this->update_AVpos_AVinst();    
-
-    // Optionally adjust statuses
-    if ((@$_GET['av_id'] == $this->ID) || (@$_GET['id'] == $this->ID)) $this->adjust_status();
-
+    if (!$just_hook){      
+      // Update avatar av_institute & av_position.
+      // We do it on the fly since "myOrg" might change since the previous invication 
+      $this->update_AVpos_AVinst();    
+      
+      // Optionally adjust statuses
+      if ((@$_GET['av_id'] == $this->ID) || (@$_GET['id'] == $this->ID)) $this->adjust_status();
+    }
     return $this->eaRecords;
   }
 
@@ -572,7 +583,13 @@ class bForm_Avatar_ea extends bForm_Avatar{
   /*
    * The method assumes that the Avatar is employed by the "current organization"
    */
+  private $getForm_dejaVu = 0;
   function getForm(){
+    
+    if ($this->getForm_dejaVu++){
+      var_dump("??? dejaVu ".__method__);
+      return;
+    }
 
     // Complete the definition of variables used during the dialog
     $this->defineVariables_fine_tuning();
@@ -593,14 +610,11 @@ class bForm_Avatar_ea extends bForm_Avatar{
       //
       // Show the employment records instead of Avatar form, if the referrer is bList_eaRecords and the form is complete
       //
-      $from_bList = (bool)b_cnf::get('from_bList');
-      $from_bForm = (bool)b_cnf::get('from_bForm');
-      $block_once = @$_GET['block_once'];
+      // $dbg=sprintf(__METHOD__.'(): from_bList=%s',var_export(b_cnf::get('from_bList'),True)); static $dbg_was='?'; if ($dbg != $dbg_was) var_dump($dbg); $dbg_was=$dbg;
 
       // We are called from "update EA dialog" to update Phd/MS/Birth blocks.
       // Update the Avatar record and then show the EA records (as the user expects)
-      if ($from_bList || $block_once){
-	$this->dbg(sprintf('from_bForm=%s from_bList=%s block_once=%s',var_export($from_bForm,True),var_export($from_bList,True),$block_once),cnf_dev);
+      if (($block_once = @$_GET['block_once']) || b_cnf::get('from_bList')){
 	$this->formOK();
 	if ($this->MODE == 'RO'){
 	  $this->hook_employment()->getForm();
@@ -610,30 +624,21 @@ class bForm_Avatar_ea extends bForm_Avatar{
 
       // An "inversed" case. We are called from the "Avatar dialog", but will query an EA record. 
       // The results will go both to the EA & Avatar records
-      if (($block_once === 'office_contract') && ($this->MODE == 'RW')){
+      if (($block_once === 'block_employment') && ($this->MODE == 'RW')){
 	$records = $this->hook_employment()->get_currentEmploymentRecords(($this->isE(True) 
 									   ? array('e_org'=>myOrg_ID)
 									   : array()),
 									  $this->getValue('av_ddate',True));
-	if ($r = @$records[0]){
-	  foreach(array('from_bList' => 1,
-			'act_code'   => 'edit',
-			'act_id'     => $r['l_id'],  
-			'act_lmid'   => $r['lm_id'], 
-			'act_parent' => $this->ID,
-			'lm_id'      => $r['lm_id'], 
-			) as $k=>$v) $_POST[$k] = $_GET[$k] = $_REQUEST[$k] = $v;
-	}else{
-	  foreach(array('from_bList' => 1,
-			'act_code'   => 'add',
-			'act_id'     => $this->eaRecords->ID,
-			'act_lmid'   => 'new',
-			'act_parent' => $this->ID,
-			'lm_id'      => 'new',
-			) as $k=>$v) $_POST[$k] = $_GET[$k] = $_REQUEST[$k] = $v;
-	}
-	b_cnf::set('from_bForm',1);
-	b_cnf::set('from_bList',0);
+	$r_exists = (bool)($r = @$records[0]);
+	foreach(array('from_bForm' => 1,
+		      'from_bList' => 0,
+		      'act_parent' => $this->ID,
+		      'act_code'   => ($r_exists ? 'edit'     : 'add'),
+		      'act_id'     => ($r_exists ? $r['l_id'] : $this->eaRecords->ID),
+		      'act_lmid'   => ($r_exists ? $r['lm_id']: 'new'), 
+		      'lm_id'      => ($r_exists ? $r['lm_id']: 'new'), 
+		      ) as $k=>$v) $_POST[$k] = $_GET[$k] = $_REQUEST[$k] = $v;
+	$this->dbg();
 	$bList_eaEmpRecords = bList::getListInstance($this,'bList_eaEmpRecords');
 	$bList_eaEmpRecords->getForm();
 	return;
@@ -740,9 +745,9 @@ Seem to be useless....
 	//	$reply = !(int)$this->ID || $this->isEA();
 	break;
 	
-      case 'office_contract':
-      case 'office_off':
-      case 'office_rg':
+      case 'block_employment':
+      case 'block_office':
+      case 'block_researchGroup':
 	$reply = ($this->isE(True) || $this->isV());
 	break;
 	
@@ -829,7 +834,7 @@ Seem to be useless....
 			 'av_position'     => array('textField')));
 
       $this->submitOnChange['e_rate'] = True;
-      $this->formBlock('office_contract',
+      $this->formBlock('block_employment',
 		       myOrg_name.' employment',
 		       $dialog,
 		       array('i'=>$icon,
@@ -839,7 +844,7 @@ Seem to be useless....
       // Group
       //    
       if ($groups=myOrg()->orgGroups()->get_groups()){
-	$this->formBlock('office_rg',
+	$this->formBlock('block_researchGroup',
 			 'Research group',
 		       array('_virt_emp_record' => array('textHidden'),
 			     'e_gid'            => array('checkBoxes',$groups),
@@ -854,7 +859,7 @@ Seem to be useless....
       $dialog = array('_virt_emp_record' => array('textHidden'),
 		      'av_phone'   => array('textField'));
       if ($groups) $dialog['av_office'] = array('textField');
-      $this->formBlock('office_off',
+      $this->formBlock('block_office',
 		       'Office location',
 		       $dialog,
 		       array('i'=>$icon,

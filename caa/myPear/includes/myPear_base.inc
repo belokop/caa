@@ -30,10 +30,11 @@ class myPear_base{
     //b_debug::watchDog($this->MODE,$this,(stripos(get_class($this),'Lease')));
     //b_debug::watchDog("$this->t",get_class($this),True);
     //b_debug::watchDog($this->debug,$this,(stripos(get_class($this),'Avatar') !== False));
-    //$x=defined('superUser_here');  if (class_exists('b_debug',0)) b_debug::watchDog($x);
     //if (stripos(get_class($this),'Visit') !== False)    b_debug::watchDog(@$this->isRO['v_status'],$this);
     //    b_debug::watchDog($_REQUEST['vm_eventSelector']);
     //    b_debug::watchDog($this->errorsInTheForm, $this);
+    $x=b_cnf::get('from_bForm');  if (class_exists('b_debug',0)) b_debug::watchDog($x,'from_bForm');
+    $x=b_cnf::get('from_bList');  if (class_exists('b_debug',0)) b_debug::watchDog($x,'from_bList');
 
     switch(func_num_args()){
     case 0: 

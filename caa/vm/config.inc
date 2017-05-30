@@ -3,9 +3,9 @@
 /**
  * Visitors Manager (VM) configuration file
  */
-$releaseDate = '2017-05-28';
+$releaseDate = '2017-05-30';
 define('VM_MODULE'   , 'vm');
-define('VM_VERSION','5.13.17');
+define('VM_VERSION','5.13.18');
 
 //
 // transition problems...
@@ -31,6 +31,8 @@ define('see_mails_exchange_with_attenders',(send_infoMail_to_applicants ||
 //
 // Define the VM policy 
 //
+// Check occupied rooms outside the event?
+define('ignore_external_leases_when_booking',True);
 define('auto_accept_guest_invitations',True); // introduced 2017-03-27
 define('dont_show_reimbursements',True);      // introduced 2017-03-27
 define('show_guests_by_group',True);

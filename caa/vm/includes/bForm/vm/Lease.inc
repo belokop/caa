@@ -108,13 +108,11 @@ class bForm_vm_Lease extends bForm_vm{
 		? cnf_emptyString
 		: ($mode == 'get_pay'
 		   ? @$r['pay']
-		   : self::get_lease_options($args,'excel_int')));
+		   : self::get_lease_options($args,'get_pay_excel_int')));
       break;
       
-    case 'excel_int':
-      // Generate an "internal" (i.e. for organizers,admins,etc) human readable comment how to pay for the accommodation
-    case 'excel_ext':
-      // Generate human readable comment for the hotel personnel how to pay for the accommodation
+    case 'get_pay_excel_int':      // Generate an "internal" (i.e. for organizers,admins,etc) human readable comment how to pay for the accommodation
+    case 'get_pay_excel_ext':      // Generate comment "how the accommodation is payed" readable by the hotel personnel 
       
       $r = self::get_lease_options($args,'get','lease_aid');
       if (empty($r['pay'])){
@@ -128,11 +126,11 @@ class bForm_vm_Lease extends bForm_vm{
       }elseif ($r['pay'] == VM_default_lease_pay){
 	$reply = '';
       }elseif ($r['pay'] == 'nothing'){
-	$reply = ($mode=='excel_ext'
+	$reply = ($mode=='get_pay_excel_ext'
 		  ? strToUpper('Payed by the tenant')
 		  : myOrg_nameS." pays nothing");
       }elseif(!empty($r['pay'])){
-	$reply = ($mode=='excel_ext'
+	$reply = ($mode=='get_pay_excel_ext'
 		  ? strToUpper(myOrg_nameS." pays for $r[pay] tenant")
 		  : myOrg_nameS." pays for $r[pay]");
       }else{
@@ -1068,6 +1066,7 @@ class bForm_vm_Lease extends bForm_vm{
 						" LEFT JOIN zzz_avatars ON v_avid = av_id ". 
 						" LEFT JOIN abs_events  ON v_eid = e_id ".
 						" WHERE lease_aid = %s ".
+						(ignore_external_leases_when_booking ? " AND v_eid = ".$accommodationOptions->e->ID : '').
 						" AND lease_start <= $end ".
 						" AND lease_end   >= $start ORDER BY CONCAT (e_name,v_host_avid)",
 						$r_room['a_id']),True);

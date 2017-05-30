@@ -4,7 +4,7 @@ locateAndInclude('bList');
 class bList_vm extends bList{
 
   // The parent event (if set)
-  protected $e = Null;
+  public $e = Null;
 
   public $title = '';
   public $summary = array();

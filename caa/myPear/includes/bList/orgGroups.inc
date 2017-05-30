@@ -153,7 +153,7 @@ class bList_orgGroups extends bList{
 	$url  = b_url::same(array('form' => 'bForm_Avatar_ea',
 				  'id'   => $av_id,
 				  'mode' =>'RW',
-				  'block_once'=>'office_rg'),
+				  'block_once'=>'block_researchGroup'),
 			    b_url::get_GET('^(act_|ed_bList)',True));
 	
 	$not_defined = True;

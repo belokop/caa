@@ -8,8 +8,10 @@ locateAndInclude('bList');
 
 class bList_orgEmpTypes extends bList{
   
-  var $list_quering = array('lm_key'  =>'Code',
-			    'lm_value'  =>'Employee Type');
+  var $list_quering = array('lm_key'    =>'Code',
+			    'lm_value'  =>'Employee Type',
+			    'empTitles' =>'empTitles',
+			    );
   var $list_showing = array(//'lm_key'  =>'Code',
 			    'lm_value'  =>'Employee Type',
 			    'empTitles' =>'',
@@ -32,6 +34,16 @@ class bList_orgEmpTypes extends bList{
 
     // Instantiate the bList
     parent::__construct(myOrg_ID);
+
+    if ($this->myPost_bList()){
+      if (isset($_POST['empTitles'])){
+	$lm_id = $_POST['lm_id'];
+	$was_empTitles = unserialize($this->getMemberValue($lm_id,'lm_option'));
+	$new_empTitles = explode(',',$_POST['empTitles']);
+	$this->updateMember(array('lm_option'=>serialize($new_empTitles)), $lm_id);
+
+      }
+    }
   }
 
   /*
@@ -45,7 +57,8 @@ class bList_orgEmpTypes extends bList{
   function isWritable(){
     return b_cnf::check_conditions(array(False=>(array('not EA' => (b_reg::$current_module != EA_MODULE))),
                                          'default' => parent::isWritable()),
-				   $this);
+				   $this,
+				   cnf_dev);
   }
   
   protected function isMemberEditable(){
@@ -56,7 +69,7 @@ class bList_orgEmpTypes extends bList{
    * The type is not deletable unless it is not used
    */
   protected function isMemberDeletable(){
-    locateAndInclude('bList_orgEmpTypes');
+    locateAndInclude('bList_eaEmpRecords');
     static $noname = '???';
     $nMembers = bList_eaEmpRecords::countEmpByType($this->r['lm_key']);
     if (empty($this->r['lm_value'])) $this->r['lm_value'] = $noname;
@@ -65,7 +78,8 @@ class bList_orgEmpTypes extends bList{
 					 False=>array('RO'    => !$this->isWritable(),
 						      '!empty'=> ($nMembers > 0)),
 					 'default' => True),
-				   $this);
+				   $this,
+				   cnf_dev);
   }
 
   /*
@@ -135,6 +149,8 @@ class bList_orgEmpTypes extends bList{
     $this->bForm($this->list_quering,$inverted=True);
     $this->f->isRO['lm_value'] = True;
     if ($lm_key=$this->f->getValue('lm_key',True)) $this->f->isRO['lm_key'] = True;
+    $lm_id  = $this->getValue('lm_id');
+    $this->f->formDB['empTitles'] = join(',',b_fmt::safe_decode($this->getMemberValue($lm_id,'lm_option',True)));
     foreach($this->list_quering as $k=>$v){
       if($k == 'lm_key'){
 	$this->f->textHidden($k,(empty($lm_key) ? $this->create_textKey() : $lm_key));
@@ -176,15 +192,15 @@ class bList_orgEmpTypes extends bList{
       foreach($this->getMembers() as $lm_id=>$r){
 	if (empty($r['lm_key']))   $r['lm_key']   = str_repeat('?',++$k_counter).'Unknown_lm_key';
 	if (empty($r['lm_value'])) $r['lm_value'] = str_repeat('?',++$v_counter).'Unknown_lm_value';
-	if (!empty($this->_code2text[strToLower($r['lm_key'])]))   b_debug::internalError(sprintf("??? clashing key '%s'",strToLower($r['lm_key'])));
-	if (!empty($this->_code2text[strToLower($r['lm_value'])])) b_debug::internalError(sprintf("??? clashing key '%s'",strToLower($r['lm_value'])));
+	if (!empty($this->_code2text[strToLower($r['lm_key'])]))   b_debug::internalError(sprintf("??? clashing lm_key='%s'",strToLower($r['lm_key'])),$this->_code2text);;
+	if (!empty($this->_code2text[strToLower($r['lm_value'])])) b_debug::internalError(sprintf("??? clashing lm_value='%s'",strToLower($r['lm_value'])),$this->_code2text);
 	$this->_code2text[strToLower($r['lm_key'])]   = $r['lm_value'];
 	$this->_code2tits[strToLower($r['lm_key'])]   = $r['lm_option'];
 	$this->_text2code[strToLower($r['lm_value'])] = $r['lm_key'];
 
 	foreach(unserialize($r['lm_option']) as $k=>$v){
-	  if (!empty($this->_code2text[strToLower($k)])) b_debug::internalError(sprintf("??? clashing key '%s'",strToLower($k)));
-	  if (!empty($this->_code2text[strToLower($v)])) b_debug::internalError(sprintf("??? clashing key '%s'",strToLower($v)));
+	  if (!empty($this->_code2text[strToLower($k)])) b_debug::internalError(sprintf("??? clashing k='%s'",strToLower($k)),$r);
+	  if (!empty($this->_code2text[strToLower($v)])) b_debug::internalError(sprintf("??? clashing v='%s'",strToLower($v)),$r);
 	  $this->_code2text[strToLower($k)] = $v;
 	  $this->_text2titl[strToLower($v)] = $r['lm_key'];
 	  $this->_text2code[strToLower($v)] = $k;
@@ -317,7 +333,7 @@ class bList_orgEmpTypes extends bList{
    * Formatting for the employmentType record listing
    */
   protected function format(){
-    locateAndInclude('bList_orgEmpTypes');
+    locateAndInclude('bList_eaEmpRecords');
     parent::format();
 
     $nMembers = bList_eaEmpRecords::countEmpByType($this->r['lm_key']);
@@ -360,7 +376,7 @@ class bList_orgEmpTypes extends bList{
 	$url  = b_url::same(array('form' => 'bForm_Avatar_ea',
 				  'id'   => $av_id,
 				  'mode' =>'RW',
-				  'block_once'=>'office_contract'),
+				  'block_once'=>'block_employment'),
 			    b_url::get_GET('^(act_|ed_bList)',True));
 	
 	$EmpRec_class = bList::getListInstance($av_id,'bList_eaEmpRecords');

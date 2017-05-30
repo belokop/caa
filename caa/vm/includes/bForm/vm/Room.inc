@@ -244,64 +244,66 @@ class bForm_vm_Room extends bForm_vm {
 
 
   /*
-   *    $p = array(24 => '3=1003,29=620,999=601',
-   *               30 => '3=1110,29=730,999=619',
-   *	           41 => '3=1503,29=1084,999=1003',
-   *	           50 => '3=1503,29=1084,999=1003');
+   * Get the daily rent to be payed by the Organization (the members of family to be payed by the tenant)
    */
-  public static function _daily_a_price($formDB,$e_class){
+  public static function _daily_a_price($rec,$e_class){
     locateAndInclude('bForm_vm_Lease');
     
-    switch(bForm_vm_Lease::_hut_code($formDB)){
+    switch(bForm_vm_Lease::_hut_code($rec)){
     case LODGING_OA:  
-      $price = 0;
       $reply = 0;
       break;
       
     default:
-      // Price for the room    
-      $price = (empty($e_class)
-		? @$formDB['a_price']
-		: VM_accommodationOptions($e_class)->get_a_value($formDB['a_id'],$formDB['hut_id']));
-      // Cotenants
-      /*
-      foreach(VM_cotenants()->get_cotenants($formDB['lease_id'],True) as $lm_id=>$cotenants){
-	$n_cotenants = count($cotenants);
-      }
-      */
-      if (empty($n_cotenants)) $n_cotenants = 1;
       // Who pays?
-      $who_pays = bForm_vm_Lease::get_lease_options($formDB,'get_pay',array(),True);
+      $who_pays = bForm_vm_Lease::get_lease_options($rec,'get_pay');
+      myPear::DEBUG(__METHOD__."($rec[a_id]): <em>".bForm_vm_Lease::get_lease_options($rec,'get_pay_HR')."</em>");
+    
       if (empty($who_pays)) $who_pays = VM_default_lease_pay;
       if ($who_pays == VM_everything){
-	$coeff = 1;
+	$reply = self::_daily_a_price_basic($rec,$e_class);
+      }elseif ($who_pays == VM::$pay_options[0]){ // nothing
+	$reply = 0;
       }else{
-	foreach(VM::$pay_options as $k=>$v) if ($v === $who_pays) $part = $k;
-	$coeff = $part / $formDB['a_capacity'];
-	myPear::DEBUG(__METHOD__."($formDB[lease_id]): price=\"$price\" coef=$coeff pay=$part=>$who_pays a_capacity=$formDB[a_capacity]");
-      }
-		    
-      if (strpos($price,'=') === False){
-	if (empty($price)){
-	  $price = self::$defaultPrice;
-	  myPear::ERROR(sprintf("The rent price for '%s' is not set, defaulted to %s",self::_a_name($formDB,True),b_fmt::money($price)));
+	// If "nordita pays for 1/2/..." find the price of the studio of this size
+	foreach(VM::$pay_options as $k=>$v) if ($v === $who_pays) $n_particapants = $k;
+	$q = myPear_db()->qquery("SELECT a_id,a_price FROM abs_rooms WHERE a_hutid=$rec[hut_id] AND a_capacity = $n_particapants",cnf_dev);
+	while ($r=myPear_db()->next_record($q)) {
+	  $rec['a_id'] = $rec['lease_aid'] = $r['a_id'];
+	  $rec['a_price'] = $r['a_price'];
 	}
-	$reply = (int)($coeff * $price * 12 / 365); // convert monthly -> daily price
-      }else{
-	$ndays = b_time::diff($formDB['lease_end'],$formDB['lease_start']);
-	if (empty($ndays)) b_debug::print_r($formDB,'??? empty ndays');
-	if (empty($ndays)) b_debug::traceBack('???');
-	foreach(explode(',',$formDB['a_price']) as $item){
-	  list($limit,$reply) = explode('=',$item);
-	  if ($ndays <= $limit) break;
-	}
-	$reply = $reply * $coeff;
+	$reply = self::_daily_a_price_basic($rec,$e_class);
       }
     }
-    b_debug::xxx($price,array(2));
+    myPear::DEBUG(__METHOD__."($rec[a_id]): <em>$reply</em>");
     return $reply;
   }
 
+  private static function _daily_a_price_basic($rec,$e_class){
+    locateAndInclude('bForm_vm_Lease');
+    
+    $price_basic = (empty($e_class)
+		    ? @$rec['a_price']
+		    : VM_accommodationOptions($e_class)->get_a_value($rec['a_id'],$rec['hut_id']));
+    
+    if (strpos($price_basic,'=') === False){
+      $reply = (int)($price_basic * 12 / 365); // convert monthly -> daily price
+    }else{
+      $ndays = b_time::diff($rec['lease_end'],$rec['lease_start']);
+      if (empty($ndays)){
+	b_debug::print_r($rec,'??? empty ndays');
+	b_debug::traceBack('???');
+      }
+      foreach(explode(',',$rec['a_price']) as $item){
+	list($limit,$reply) = explode('=',$item);
+	if ($ndays <= $limit) break;
+      }
+      $reply = $reply;
+    }
+    myPear::DEBUG(__METHOD__."($rec[a_id]): <em>$price_basic --> $reply</em>");
+    return $reply;
+  }
+  
   function period(){
     $reply = '';
     if (($d=(int)$this->getValue('a_start',1)) > myPear_day0) $reply .= b_time::strftime('%e %h %Y ->',$d);

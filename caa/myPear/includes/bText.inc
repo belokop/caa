@@ -569,7 +569,7 @@ class bText{
 			  'zh' => 'Chinese',
 			  'zu' => 'Zulu',
 			  );
-    return $langs[preg_replace('/[-_].*/','',mb_strToLower($code))];
+   return @$langs[preg_replace('/[-_].*/','',mb_strToLower($code))];
   }
 }
 

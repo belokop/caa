@@ -81,7 +81,6 @@ class bHolder_vm_Visitors extends bHolder_vm{
   private $organizers = array();
   private $tabs_toShow = array();
   private $b_tabs = Null;
-  //  private $excel_input = Null;
 
   // True if the event has no budget assigned
   private $event_is_bankrupt = true; 
@@ -1305,7 +1304,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
       $this->rec['lease_end']   = date('Y-m-d',$this->rec['lease_end']);
       $this->rec['av_lastname'] = mb_strToUpper($this->rec['av_lastname']);
       $this->rec['av_firstname']= b_fmt::ucWords($this->rec['av_firstname']);
-      $this->rec['a_comment'] = $this->t->extraTD[] = bForm_vm_Lease::get_lease_options($this->rec,'excel_int');
+      $this->rec['a_comment'] = $this->t->extraTD[] = bForm_vm_Lease::get_lease_options($this->rec,'get_pay_excel_int');
 
       // Split the list by huts for better readability
       $hut_name = $this->split_by_huts($this->rec);
@@ -1590,7 +1589,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
       $unsets = array('v_projectid','cotenant','a_name','a_area','a_comment');
     }else{
       $unsets = array('a_area');
-      $a_comment = bForm_vm_Lease::get_lease_options($this->rec,'excel_ext');
+      $a_comment = bForm_vm_Lease::get_lease_options($this->rec,'get_pay_excel_ext');
     }
     foreach($unsets as $i) unset($export_data[$i]);
     
@@ -1657,7 +1656,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
       $args = array('mail_once'      =>$id,
 		    'v_id'           =>$this->rec['v_id'],
 		    'hut_id'         =>$this->rec['hut_id'],
-		    'a_name'         =>$this->rec['a_name'],
+		    'a_name'         =>bForm_vm_Room::_a_name($this->rec,False),
 		    'resetcache_once'=>1,
 		    'preview_once'   =>$preview_only,
 		    );
@@ -1802,7 +1801,6 @@ class bHolder_vm_Visitors extends bHolder_vm{
     if (VM::outOfScope()){
       $reply = $this->getGSF('.*');
     }elseif ($a = @$this->rec['a_name']){
-      $reply = $a . str_ireplace('<br>',' ',str_ireplace('<br/>',' ',$this->getGSF('share|travel.*support|accompan')));
       $reply = bForm_vm_Room::_a_name($this->rec,False,True);
     }elseif ($this->rec['v_end'] < time()){
       $reply = '';
