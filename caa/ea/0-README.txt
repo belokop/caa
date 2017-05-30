@@ -1,5 +1,7 @@
 Changes log                                                                                                                                                             
                                                                                                                                                                                  
+2017-05-30, Version 5.5.7,
+                                                                                                                                                                                 
 2017-05-30, Version 5.5.6,
 D       ea/acc2ea.php
 D       ea/ssn2ea.php
