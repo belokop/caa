@@ -377,6 +377,17 @@ class b_table_zebra extends b_table {
       }
     }
   }
+
+  /*
+   * To write or not the anchor
+   */
+  private function anchor(){
+    $reply = (empty($this->extraTD['anchor'])
+	      ? ''
+	      : "\n<tr><td><a name='".$this->extraTD['anchor']."'></a></td></tr>  <!-- anchor -->\n");
+    unset($this->extraTD['anchor']);
+    return $reply;
+  }
   
   /*
    * produce a "gray zebra" listing
@@ -385,6 +396,7 @@ class b_table_zebra extends b_table {
   function prt($row,$highlight='') { 
     if (empty($row)) return;
     bTiming()->cpu('b_table');
+
     if (cnf_CLI){
       foreach ($this->header as $k=>$v)  if (!empty($v)) $this->CLI_buffer[$k] = $v;
     }else{    
@@ -403,6 +415,8 @@ class b_table_zebra extends b_table {
 	$this->justPrintedTableRow = $test;
       }
       
+      print $this->anchor(); 
+
       if ($this->BGcode == 1) $this->BGcode=2;
       else                    $this->BGcode=1;
       $this->tro(); 

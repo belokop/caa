@@ -3558,6 +3558,9 @@ class b_url{
     self::repack_init();
 
     // Parse the initial URL, add the "php_self" if missing
+    if (strpos($url,'#') === False)    $anchor = '';
+    else list($url,$anchor) = explode('#',$url,2);
+
     $url = trim(preg_replace('/^location:/i','',trim($url)));
     if (is_string($url)){
       if (preg_match('#https?:/#',$url)) return $url;
@@ -3613,6 +3616,7 @@ class b_url{
 
     // Return encoded the result in the form of URL
     $reply = trim($_prf) . trim(b_fmt::joinX('&amp;',$_myGET,''));
+    if ($anchor) $reply .= '#'.$anchor;
     return $reply;
   }
 
@@ -3627,6 +3631,13 @@ class b_url{
   static function same($myGET=array(), $myDrop=array(), $asA=''){
 
     self::repack_init();
+
+    if (!is_array($myDrop)){
+      $anchor = empty($myDrop) ? '' : '#'.$myDrop;
+      $myDrop = array();
+    }else{
+      $anchor = '';
+    }
     
     $_myDrop = $myDrop;
     $_myGET  = b_crypt::parse_query_string($myGET);
@@ -3657,7 +3668,8 @@ class b_url{
     $reply = self::repack('?',$_myGET,$_myDrop);
     // Workaround for D8
     if (HOSTED_BY_CMS_vrsn == 8) $reply = D8::compat($_GET['q']).$reply;
-    //    b_debug::xxx($reply);
+    $reply .= $anchor;
+    if ($anchor) b_debug::xxx($reply);
     return $reply; 
   }
   

@@ -6,6 +6,8 @@
  */
 locateAndInclude('bList');
 
+define('editable_empTitles',False);
+
 class bList_orgEmpTypes extends bList{
   
   var $list_quering = array('lm_key'    =>'Code',
@@ -95,8 +97,9 @@ class bList_orgEmpTypes extends bList{
     $this->dbg($reply,True);
     return $reply;
   }
-
-  function create_textKey($text,$parent=Null){
+  
+  function create_textKey($text='',$parent=Null){
+    if (empty($text)) b_debug::traceBack('??');
     if (empty($parent)){
       $counter = count($this->getMembers());
     }else{
@@ -148,20 +151,37 @@ class bList_orgEmpTypes extends bList{
     if (empty($this->member_ID))      $this->updateMember();
     
     // Show the dialog    
+    if (editable_empTitles) unset($this->list_quering['empTitles']);
     $this->bForm($this->list_quering,$inverted=True);
     $this->f->isRO['lm_value'] = True;
     if ($lm_key=$this->f->getValue('lm_key',True)) $this->f->isRO['lm_key'] = True;
     $lm_id  = $this->getValue('lm_id');
-    $this->f->isRO['empTitles'] = True; // To be done better...
-    $this->f->formDB['empTitles'] = join(', ',array_values(b_fmt::safe_decode($this->getMemberValue($lm_id,'lm_option',True))));
-    foreach($this->list_quering as $k=>$v){
-      if($k == 'lm_key'){
-	$this->f->textHidden($k,(empty($lm_key) ? $this->create_textKey() : $lm_key));
-      }else{
-	$this->f->textField($k);
+
+    // employee titles
+    if (editable_empTitles){
+      $this->f->textHidden('lm_key',(empty($lm_key) ? $this->create_textKey() : $lm_key));
+      $this->f->textField('lm_value');
+      $text = 'Employee Titles';
+      foreach(b_fmt::safe_decode($this->getMemberValue($lm_id,'lm_option'),True) as $code=>$title){
+	$this->f->defineVariable(array($code=>$text),True); $text = '&nbsp;';
+	$this->f->getValue_reset($code,$title);
+	$this->f->textField($code);
+      }
+    }else{
+      $this->f->isRO['empTitles'] = True; 
+      $this->f->formDB['empTitles'] = join(', ',array_values(b_fmt::safe_decode($this->getMemberValue($lm_id,'lm_option'),True)));
+      foreach($this->list_quering as $k=>$v){
+	if($k == 'lm_key'){
+	  $this->f->textHidden($k,(empty($lm_key) ? $this->create_textKey() : $lm_key));
+	}else{
+	  $this->f->textField($k);
+	}
       }
     }
-    $this->f->closeForm();
+    $this->f->closeForm(btn_update,
+			(editable_empTitles && $this->f->isWritable()  
+			 ? array('add new employee title' => b_url::same("?addET_once=yes"))
+			 : array()));
   }
 
   /*

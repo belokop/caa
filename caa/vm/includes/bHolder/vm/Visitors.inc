@@ -1857,24 +1857,24 @@ class bHolder_vm_Visitors extends bHolder_vm{
 					 'd'=>'Click to ACCEPT the application',
 					 'c'=>'only_online',
 					 'i'=>'i-finger_up',
-					 'l'=> b_url::same("?resetcache_once=1&approve_once=".$this->rec['v_id'])));
+					 'l'=> b_url::same("?resetcache_once=1&approve_once=".$this->rec['v_id'],$this->anchor())));
       case 'N':       // pending visit
 	return bIcons()->getButton(array('class'=>'page-load-progress',
 					 'd'=>'Click to DENY the application',
 					 'c'=>'only_online',
 					 'i'=>'i-finger_down',
-					 'l'=> b_url::same("?resetcache_once=1&refuse_once=".$this->rec['v_id'])));
+					 'l'=> b_url::same("?resetcache_once=1&refuse_once=".$this->rec['v_id'],$this->anchor())));
       case 'YN':      // accepted visit, toggle
 	return bIcons()->getButton(array('class'=>'page-load-progress',
 					 'd'=>'Application accepted, click to DENY',
 					 'i'=>'i-accepted_yes',
-					 'l'=> b_url::same("?resetcache_once=1&refuse_once=".$this->rec['v_id'])));
+					 'l'=> b_url::same("?resetcache_once=1&refuse_once=".$this->rec['v_id'],$this->anchor())));
 	
       case 'NY':      // rejected visit, toggle
 	return bIcons()->getButton(array('class'=>'page-load-progress',
 					 'd'=>'Application denied, click to ACCEPT',
 					 'i'=>'i-accepted_no',
-					 'l'=> b_url::same("?resetcache_once=1&approve_once=".$this->rec['v_id'])));
+					 'l'=> b_url::same("?resetcache_once=1&approve_once=".$this->rec['v_id'],$this->anchor())));
 	
 	
       case 'Yx':      // pending visit, example
@@ -1922,7 +1922,6 @@ class bHolder_vm_Visitors extends bHolder_vm{
 			|| !in_array($this->doing,array('lists','budget',)) 
 			)){
       $this->dbg('not my case? '.($not_my_case ? 'YES' : 'NO'));
-      //      $t = $reply; array_unshift($t,1,$this->rec['v_id']); $this->dbg($t,True);
       return array('','');
     }
 
@@ -2072,7 +2071,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
 	case VM_V_invoiceSent:
 	  if (VM_reimberser_here) $icon=bIcons()->getButton(array('i'=>'i-invoice',
 								  'd'=>'print invoice',
-								  'l'=>b_url::same("?invoice_once=yes&v_id=".$this->rec['v_id'])));
+								  'l'=>b_url::same("?invoice_once=yes&v_id=".$this->rec['v_id'],$this->anchor())));
 	  break; 
 	  */
 	    
@@ -2112,7 +2111,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
 					       'i'=>$img,
 					       'c'=>($yes_no ? 'only_online' : 'only_online opacity_on'),
 					       'd'=>$descr['i'].($yes_no ? '' : ' not')." to be $payed, click to change",
-					       'l'=>b_url::same("?resetcache_once=1&toggle_once=$p&v_id=".$this->rec['v_id'])))
+					       'l'=>b_url::same("?resetcache_once=1&toggle_once=$p&v_id=".$this->rec['v_id'],$this->anchor())))
 		   : bIcons()->get      (array('i'=>$img,
 					       'c'=>($yes_no ? 'only_online' : 'only_online opacity_on'),
 					       'd'=>$descr['i'].($yes_no ? '' :' not')." $payed")));
@@ -2179,20 +2178,31 @@ class bHolder_vm_Visitors extends bHolder_vm{
   }
 
   /*
+   *
+   */
+  private function anchor(){
+    $reply = trim(str_replace(array(' ','-'),'',bForm_Avatar::_fmtName('fl',$this->rec,False)));
+    return $reply;
+  }
+
+  /*
    * Draw control buttons depending on the status of the visit
    */
   private function printPolicies(){ 
     if (($this->rec['v_type'] == VISIT_OUT_OF_SCOPE) || $this->current_tab_does_not_need_buttons()) return;
     
     // Gather the buttons
-    $this->t->extraTD = array_merge($this->btn_approve_reject(),
-				    $this->btn_payments(),
-				    $this->btn_admin());
+    $this->t->extraTD = array_merge(($a=$this->btn_approve_reject()),
+				    ($b=$this->btn_payments()),
+				    ($c=$this->btn_admin()));
     if (empty(VM::$e)) array_unshift($this->t->extraTD,
 				     bIcons()->get(array('i'=>@VM::$description[$this->rec['v_type']],
 							 'c'=>'only_online')));
+    if ($a !== array('','') || 
+	$b !== array('','') ||
+	$c !== array('','')) $this->t->extraTD['anchor'] = $this->anchor();
   }
-
+  
   /*
    * Cancel ambiguous message "really paid" when nothing was yet paid
    */

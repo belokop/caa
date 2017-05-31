@@ -88,11 +88,9 @@ class bIcons{
 	}elseif ($l = @self::$iconsPool[$icon]['la']){
 	  $reply = bJS()->modal_ajax($l,$this->get($button['i']));
 	}elseif ($l = @self::$iconsPool[$icon]['l']){
-	  $href = array($l);
-	  if ($d=@self::$iconsPool[$icon]['d']) $href[] = "action_once=".b_fmt::escape($d);
-
+	  if ($d=@self::$iconsPool[$icon]['d']) $l = b_url::repack($l,array('action_once'=>$d));
 	  $c = (isset($button['class']) ? $button['class'] : '');
-	  $a = "a class='mypear_a blackText only_online $c' href='".join('&',$href)."'";
+	  $a = "a class='mypear_a blackText only_online $c' href='$l'";
 	  
 	  // Repeat the submit button in the description (in the 'explain pane'), 
 	  // but guarantee that it is unique.
