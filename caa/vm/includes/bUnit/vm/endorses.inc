@@ -134,7 +134,7 @@ class bUnit_vm_endorses extends bUnit_vm{
    * The reminder is sent once every "VM_reminding_period" days 
    */
   function remind(){
-    if (@$_SESSION[__METHOD__]++) return;
+    if (@$_SESSION[__method__]++) return;
     
     // Tell the encoder which URL should be at the login time
     $_GET['q_once'] = join('/',array(VM_MODULE,

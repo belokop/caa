@@ -153,7 +153,13 @@ class bDB extends mysqli{
     // Timing...
     if (strpos($query,' ') === False) $queryType = $query;
     else list($queryType,$body) = explode(' ',$query,2);
-    if ($do_bTiming=function_exists('bTiming')) bTiming()->cpu('q'.strToUpper($queryType));
+    if ($do_bTiming=function_exists('bTiming')){
+      if (strToLower($queryType)=='select'){
+	bTiming()->cpu(strpos(trim($body),'*')===0 ? 'qSELECT*' : 'qSELECTx');
+      }else{
+	bTiming()->cpu('q'.strToUpper($queryType));
+      }
+    }
 
     // Debugging (RnD if you want...)
     if (cnf_dev || YBhere){

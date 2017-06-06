@@ -228,6 +228,15 @@ class bHolder_vm_Visitors extends bHolder_vm{
       $this->bList_parent = myOrg_ID;
     }
 
+    // 
+    // Complete the redirected "who payes"
+    //
+    if (($lease_id  = @$_POST['_post_bForm_ID_once']) &&
+	($pay_option= @$_POST['_virt_pay']) &&
+	(myPear::getInstance_new("bForm_vm_Lease",$lease_id,array('nocache','strict')))){
+      bForm_vm_Lease::_set_who_pays($lease_id,$pay_option);
+    } 
+
     //
     // Complete the reimbursement update
     //
@@ -431,14 +440,15 @@ class bHolder_vm_Visitors extends bHolder_vm{
 
       }elseif($p = preg_grep('/_c_id:\d+$/',array_keys($_POST))){
 	// The co-tenant is selected, create an entry in bList_vm_cotenants
-	if ($_POST[$p[0]] == VM_no_cotenants){
-	  VM_cotenants()->set_cotenants(array(VM_no_cotenants));
-	}else{
-	  VM_cotenants()->set_cotenants(array($_POST[$p[0]],
-					      $_POST['lease_id']));
-	}
+	list($id,$lease_id) = explode(':',$p[0],2);
+	VM_cotenants()->set_cotenants(array($_POST[$p[0]],
+					    $lease_id));
+      }elseif($p = preg_grep('/_p_id:(\d+)$/',array_keys($_POST))){
+	// The "who pays" is selected, create an entry 
+	list($id,$lease_id) = explode(':',$p[0],2);
+	bForm_vm_Lease::set_lease_options($lease_id,array('pay'=>$_POST[$p[0]]));
+	
       }elseif($p = preg_grep('/_a_id:\d+$/',array_keys($_POST))){
-
 	// Book a room according to the selection
 	$v = new bForm_vm_Visit($_POST['v_id']);
 	if ($p[0] == LODGING_RM){
@@ -903,7 +913,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
 
     if (!VM_administrator_here) return;
 
-    bTiming()->cpu(__FUNCTION__);
+    bTiming()->cpu(__function__);
     $this->fnc_beslut = bForm_vm_Visit::_formalitiesNotCompleted($this->rec);
     $this->highlight = '';
 
@@ -1167,11 +1177,11 @@ class bHolder_vm_Visitors extends bHolder_vm{
       switch ($this->doing){
       case 'doorLabels':   
       case 'deskLabels':
-	return VM_query($where, "LEFT JOIN abs_offices ON o_id = v_oid");
+	return VM_query($where,"LEFT JOIN abs_offices ON o_id = v_oid");
 	
       case 'lists':
 	$_GET['sBy']   = (split_by_huts
-			  ? 'v_status,hut_code,hut_name,a_name,av_lastname,av_id'
+			  ? 'CONCAT(v_status,hut_name,a_capacity,av_lastname,av_id)'
 			  : 'av_lastname,lease_start');
 	$_GET['sByDir']= 'ASC';
 	return VM_query($where);
@@ -1211,7 +1221,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
 	if (!VM::$e) $where[] = "(v_eid = 0 OR v_eid IS NULL)";
       }
     }
-    return VM_query($where,'',$this->debug);
+    return VM_query($where);
   }
   
   /*
@@ -1222,7 +1232,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
   private $scholar_summary = array();
   function format(){
 
-    bTiming()->cpu(__FUNCTION__);
+    bTiming()->cpu(__function__);
 
     // Decode the default event policy and fix it on the fly if necessary    
     if (empty($this->rec['v_eid'])){
@@ -1254,7 +1264,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
 	$this->rec["space$n"] = '';
       }
       
-      // Cut the too long names
+      // Cut the long names
       foreach(array('av_firstname'=>1,
 		    'av_city'=>1,
 		    'av_institute'=>3) as $i=>$l){
@@ -1304,7 +1314,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
       $this->rec['lease_end']   = date('Y-m-d',$this->rec['lease_end']);
       $this->rec['av_lastname'] = mb_strToUpper($this->rec['av_lastname']);
       $this->rec['av_firstname']= b_fmt::ucWords($this->rec['av_firstname']);
-      $this->rec['a_comment'] = $this->t->extraTD[] = bForm_vm_Lease::get_lease_options($this->rec,'get_pay_excel_int');
+      $this->rec['a_comment'] = $this->t->extraTD[] = bForm_vm_Lease::get_lease_options($this->rec,'get_pay_HR_int');
 
       // Split the list by huts for better readability
       $hut_name = $this->split_by_huts($this->rec);
@@ -1409,7 +1419,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
 	  $this->dbg($this->rec['av_lastname'].": to pay $d[f] - ".($to_pay?'YES':'NO'));
 	  if ($to_pay){
 	    if ($this->exp === Null) $this->exp = $this->v->getExp();
-	    $this->rec[$pay.'_r'] = $this->exp->getValue($d['f'],       1,1); // really payed
+	    $this->rec[$pay.'_r'] = $this->exp->getValue($d['f'],       1,1); // really paid
 	    $this->rec[$pay.'_e'] = $this->exp->getValue($d['f'].'_est',1,1); // Organizer estimate
 	    if(empty($this->rec[$pay.'_e']))$this->rec[$pay.'_e'] = $this->exp->{$pay}(False,True);  // Default value
 	    
@@ -1427,7 +1437,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
 	      }
 	    }
 	    
-	    // Let the secretary introduce the payed amount
+	    // Let the secretary introduce the paid amount
 	    if (VM_reimberser_here && (stripos($this->doing,'budget')!==False)){
 	      if (empty($this->rec[$pay.'_r'])){
 		if ($this->header_counters === Null) $this->header(False);
@@ -1522,11 +1532,18 @@ class bHolder_vm_Visitors extends bHolder_vm{
       $this->rec['_a_name'] = $this->select_accommodation();
       $this->rec['_o_name'] = @$this->rec['o_name'];
       $this->rec['space1']  = ' ';
-      if ((time() < $this->rec['e_end']) && !bForm_vm_Lease::shared_room_no_cotenants_wanted($this->rec['lease_id'],True)){
-	$this->rec['cotenant']= x('em',bForm_vm_Lease::select_cotenant('_c_id:',
-								       $this->rec,
-								       (VM::hasRightTo('book_ah')?'auto':'RO')));
-      }      
+      $this->rec['cotenant'] = (bForm_vm_Room::_mightBeSharable($this->rec)
+				? (bForm_vm_Lease::_room_is_full($this->rec,True)
+				   ? x('em',join(',',VM_cotenants()->get_cotenants($this->rec['lease_id'],False,'names')))
+				   : x('em',bForm_vm_Lease::select_cotenant('_c_id:',
+									    $this->rec,
+									    (VM::hasRightTo('book_ah')&&time()<$this->rec['e_end']?'auto':'RO'),
+									    $this->anchor(True))))
+				: '');
+      $this->rec['cotenant'] .= bForm_vm_Lease::select_who_pays('_p_id:',
+								$this->rec,
+								(VM::hasRightTo('book_ah')&&time()<$this->rec['e_end']?'RW':'RO'),
+								$this->anchor(True));
       
       if ($this->av) $this->rec['name'] = $this->rec['_e_name'];
       if (empty($this->rec['name'])) $this->rec['name'] = @VM::$description[$this->rec['v_type']]['d'];
@@ -1589,7 +1606,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
       $unsets = array('v_projectid','cotenant','a_name','a_area','a_comment');
     }else{
       $unsets = array('a_area');
-      $a_comment = bForm_vm_Lease::get_lease_options($this->rec,'get_pay_excel_ext');
+      $a_comment = bForm_vm_Lease::get_lease_options($this->rec,'get_pay_HR_ext');
     }
     foreach($unsets as $i) unset($export_data[$i]);
     
@@ -1681,7 +1698,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
 
     if ($this->keep_thisRec) return;
 
-    bTiming()->cpu(__FUNCTION__);
+    bTiming()->cpu(__function__);
     switch($this->doing){
 
     case 'budget_byProjects':
@@ -1775,7 +1792,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
       }
       $th[$k] = "class='".join(' ',$c)."'"; 
     }
-    b_debug::print_r($th,__METHOD__);
+    b_debug::print_r($th,__method__);
   }
   
   /*
@@ -1787,8 +1804,9 @@ class bHolder_vm_Visitors extends bHolder_vm{
       $reply = bForm_vm_Visit::_getGSF($what,$this->rec,'li');
       if ($include_accommodation_wish && !empty($this->rec['v_acc_wish']))    $reply[] = x('li',$this->rec['v_acc_wish']);
       if (empty($reply)) $reply = '';
-      else $reply = x('ul style="font-size:smaller"',join(' ',$reply));
+      else $reply = x('ul class="smallerText"',join(' ',$reply));
     }
+    $this->dbg($reply,cnf_dev);
     return $reply;
   }
 
@@ -1800,17 +1818,17 @@ class bHolder_vm_Visitors extends bHolder_vm{
     
     if (VM::outOfScope()){
       $reply = $this->getGSF('.*');
-    }elseif ($a = @$this->rec['a_name']){
-      $reply = bForm_vm_Room::_a_name($this->rec,False,True);
-    }elseif ($this->rec['v_end'] < time()){
-      $reply = '';
     }elseif(bForm_vm_Visit::_getStatus($this->rec) != STATUS_YES){
       $reply = $this->getGSF('.*',VM::e_ID());
+    }elseif (!empty($this->rec['a_name'])){
+      $reply = bForm_vm_Room::_a_name($this->rec,False,True);
+    }elseif ($this->rec['v_end'] < time()){
+      $reply = b_fmt::redText('no accommodation'); 
     }elseif (is_object(VM::$e) && VM::hasRightTo('book_ah')){
       if (myPear::is_empty($n_select=@$this->rec['lease_id']))  $n_select = $this->rec['v_id'];
       VM::$formDummy->submitOnChange["_a_id:$n_select"] = True;
       $reply =  x("span class='only_online'",
-		  x("form action='".b_url::same()."' method='post' enctype='multipart/form-data' name='ACC$n_select'",
+		  x("form action='".b_url::same('?',$this->anchor(True))."' method='post' enctype='multipart/form-data' name='ACC$n_select'",
 		    VM::$formDummy->selectMenu_exec("_a_id:$n_select",
 						    bForm_vm_Lease::_freeRooms(VM_accommodationOptions(VM::$e),$this->rec),
 						    '',
@@ -1940,7 +1958,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
       return $reply;
     }
 
-    bTiming()->cpu(__FUNCTION__);
+    bTiming()->cpu(__function__);
 
     // 
     // See what should we do, depends on the visit status   
@@ -2053,7 +2071,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
 			|| (is_object(VM::$e) && VM::$e->isEventEndorsed())
 			))      $this->dbg('not_my_case '.$this->rec['av_lastname']);
 
-    bTiming()->cpu(__FUNCTION__);
+    bTiming()->cpu(__function__);
     $reply = array();
     foreach(bForm_vm_Visit::_getPolicies($this->rec) as $p=>$descr){
       // The event policy has precedence over the visit policy
@@ -2065,7 +2083,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
       $icon = '';
       // don't draw useless button for the passed events
       if(!$not_my_case && (($yes_no || ($this->rec['v_end'] > time()-30*86400)))){
-	$already_payed = Null;
+	$already_paid = Null;
 	switch($p){
 	  /*
 	case VM_V_invoiceSent:
@@ -2080,41 +2098,41 @@ class bHolder_vm_Visitors extends bHolder_vm{
 	    $av = myPear::getInstance_new('bForm_Avatar_vm',$this->rec['av_id'],array('fatal','nocache'));
 	    if ($av->isE(True) && $av->get_staffOffice()) break;
 	  }
-	  $already_payed = '';
+	  $already_paid = '';
 	  $hasRightTo = 'assign_offices';
-	  $payed = 'provided';
+	  $paid = 'provided';
 
 	case VM_E_provideLunches:
 	case VM_E_conferenceDinner:
-	  if ($already_payed === Null){
-	    $already_payed = '';
-	    var_dump($descr['i'],'already_payed===Null');
+	  if ($already_paid === Null){
+	    $already_paid = '';
+	    var_dump($descr['i'],'already_paid===Null');
 	  }
 
 	case VM_V_payPerdiem:
-	  if ($already_payed === Null){
-	    $already_payed = (bool)(is_object($this->exp) && $this->exp->scholarshipP(False,False));
+	  if ($already_paid === Null){
+	    $already_paid = (bool)(is_object($this->exp) && $this->exp->scholarshipP(False,False));
 	    $hasRightTo = 'setup_reimbursement';
-	    $payed = 'payed';
+	    $paid = 'paid';
 	  }
 	case VM_V_payTrip:
-	  if ($already_payed === Null){
-	    $already_payed = (bool)(is_object($this->exp) && $this->exp->scholarshipT(False,False));
+	  if ($already_paid === Null){
+	    $already_paid = (bool)(is_object($this->exp) && $this->exp->scholarshipT(False,False));
 	    $hasRightTo = 'setup_reimbursement';
-	    $payed = 'payed';
+	    $paid = 'paid';
 	  }
 	  
 	  // Show either a click-able button or just an icon
 	  $img  = @$descr['i'] . ($yes_no ? '_on' : '_off');
-	  $icon = (!$already_payed && VM::hasRightTo($hasRightTo,$this->rec)
+	  $icon = (!$already_paid && VM::hasRightTo($hasRightTo,$this->rec)
 		   ? bIcons()->getButton(array('class'=>'page-load-progress',
 					       'i'=>$img,
 					       'c'=>($yes_no ? 'only_online' : 'only_online opacity_on'),
-					       'd'=>$descr['i'].($yes_no ? '' : ' not')." to be $payed, click to change",
+					       'd'=>$descr['i'].($yes_no ? '' : ' not')." to be $paid, click to change",
 					       'l'=>b_url::same("?resetcache_once=1&toggle_once=$p&v_id=".$this->rec['v_id'],$this->anchor())))
 		   : bIcons()->get      (array('i'=>$img,
 					       'c'=>($yes_no ? 'only_online' : 'only_online opacity_on'),
-					       'd'=>$descr['i'].($yes_no ? '' :' not')." $payed")));
+					       'd'=>$descr['i'].($yes_no ? '' :' not')." $paid")));
 	default:
 	}
       }else{
@@ -2128,7 +2146,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
 
   /*
    * Button 
-   * $reply = array($edit_visit,$delete_v,$exp_arePayed);
+   * $reply = array($edit_visit,$delete_v,$exp_arePaid);
    */
   private function btn_admin(){
 
@@ -2137,13 +2155,13 @@ class bHolder_vm_Visitors extends bHolder_vm{
 	|| !$this->isWritable() 
 	|| in_array($this->doing,array('show_mails_exchange',)))   return array();
     
-    bTiming()->cpu(__FUNCTION__);
+    bTiming()->cpu(__function__);
     locateAndInclude('bForm_vm_Expenses');    
     
     $notTooLate = (!VM::isEventEndorsed() || $this->rec['v_end'] < time() || 
 		   (VM::isEventEndorsed() && bForm_vm_Visit::_getStatus($this->rec) == STATUS_PENDING));
     
-    $exp_arePayed= (bForm_vm_Expenses::_exp_arePayed($this->rec)
+    $exp_arePaid= (bForm_vm_Expenses::_exp_arePaid($this->rec)
 		    ? bIcons()->get(array('d'=>'Paid up',
 					  'c'=>'only_online',
 					  'i'=>'i-bundle'))
@@ -2167,7 +2185,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
 		       : '')
 		    : '');
     
-    $reply = array($edit_visit,$delete_v,$exp_arePayed);
+    $reply = array($edit_visit,$delete_v,$exp_arePaid);
     if ($this->doing == 'budget_byProjects'){
       if (empty($this->rec['v_projectid'])) $reply[] = b_btn::submit_icon('i-wallet',
 									  'set project number',
@@ -2178,11 +2196,29 @@ class bHolder_vm_Visitors extends bHolder_vm{
   }
 
   /*
-   *
+   * Return the anchor of the PREVIOUS record
    */
-  private function anchor(){
-    $reply = trim(str_replace(array(' ','-'),'',bForm_Avatar::_fmtName('fl',$this->rec,False)));
-    return $reply;
+  private $counter = 0;
+  private function anchor($rec=array()){
+    static $anchor = 'content', $anchor_was = '';
+    $true_anchor = False;
+    $anchor_now = trim(str_replace(array(' ','-'),'',bForm_Avatar::_fmtName('fl',(is_array($rec)
+										  ? $rec
+										  : $this->rec),
+									    False)));
+    if (is_array($rec)) return $anchor_now;
+
+    if (empty($anchor_was)) $anchor_was = $anchor_now;
+    if ($true_anchor){
+      $anchor = $anchor_now;
+    }elseif ($anchor_was != $anchor_now){
+      $anchor = (++$this->counter < 3
+		 ? 'content'
+		 : $anchor_was);
+    }
+    $anchor_was = $anchor_now;
+    $this->dbg("anchor=$anchor  (was $anchor_was)");
+    return $anchor;
   }
 
   /*
@@ -2200,7 +2236,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
 							 'c'=>'only_online')));
     if ($a !== array('','') || 
 	$b !== array('','') ||
-	$c !== array('','')) $this->t->extraTD['anchor'] = $this->anchor();
+	$c !== array('','')) $this->t->extraTD['anchor'] = $this->anchor($this->rec);
   }
   
   /*
@@ -2224,7 +2260,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
   private $something_was_paid = False;
   function listEntries_summary(){
     //     $this->dbg($this->b_tabs->active_tab_name(),True);
-    bTiming()->cpu(__FUNCTION__);
+    bTiming()->cpu(__function__);
 
     // Initialise the counters... TBD better...
     $this->header();
@@ -2468,7 +2504,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
       print "<input class='mdl_button bg_green only_online' type='submit'>\n";
       print "</form>\n";
     }
-    print "\n<!-- exiting \"".__FUNCTION__."($this->doing)\" =========================================== -->\n";
+    print "\n<!-- exiting \"".__function__."($this->doing)\" =========================================== -->\n";
     bTiming()->cpu();
   }
   
@@ -2591,7 +2627,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
       $this->t->close();
       unset($this->t);
     }
-    print "\n<!-- exiting \"".__FUNCTION__."($project)\" =========================================== -->\n";
+    print "\n<!-- exiting \"".__function__."($project)\" =========================================== -->\n";
   }
   
   /*

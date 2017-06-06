@@ -21,7 +21,7 @@ class bIcal_matrix_visits extends bIcal_matrix{
     myPear::H1('empty');
     if (!empty($this->graphTitle)) print x('h3',$this->graphTitle);
     
-    bTiming()->cpu(__FUNCTION__);
+    bTiming()->cpu(__function__);
 
     if (empty($this->day9)) $this->day9 = $this->day1 + 40*86400;
     $this->nDaysToShow = (int)(($this->day9 - $this->day1)/86400);

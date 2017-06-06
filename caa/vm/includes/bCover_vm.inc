@@ -169,7 +169,7 @@ class bCover_vm extends bCover {
       return VM_query($where,"LEFT JOIN abs_offices ON o_id = v_oid");
 
     case 'Cotenants':
-      return bForm_vm_Lease::queryLease(array_merge($this->leases,$this->leases_current),$this->debug);
+      return bForm_vm_Lease::_queryLease(array_merge($this->leases,$this->leases_current));
     default:
       b_debug::internalError('? unexpected invocation');
     }
@@ -370,11 +370,11 @@ class bCover_vm extends bCover {
     switch($this->whatToAllocate){
     case 'Offices':   $query = bHolder_vm_Offices::queryOffices("o_status = 'visitors'"); break;
     case 'Apartment': $query = bHolder_vm_Rooms::_queryAps(); break;
-    case 'Cotenants': $query = bForm_vm_Lease::queryLease($this->leases,$this->debug); break;
+    case 'Cotenants': $query = bForm_vm_Lease::_queryLease($this->leases); break;
     }
     while ($r=myPear_db()->next_record($query)) {
       //      if (isset($r['o_status']) && ($r['o_status'] != OFFICE_AUTO_ALLOCATABLE)) continue;
-      //      if (isset($r['a_status']) && ($r['a_status'] !=     AP_AUTO_ALLOCATABLE)) continue;
+      //      if (isset($r['a_status']) && ($r['a_status'] !=     ROOM_AUTO_ALLOCATABLE)) continue;
       if (empty($r[room_d1])) $r[room_d1] = myPear_day0;
       if (empty($r[room_d9])) $r[room_d9] = myPear_day9;
       if (b_time::inInterval($this->day1, $this->day9,
@@ -435,7 +435,7 @@ class bCover_vm extends bCover {
     case 'Cotenants': 
       $q = (empty($this->leases_current)
 	    ? Null
-	    : bForm_vm_Lease::queryLease($this->leases_current,$this->debug));
+	    : bForm_vm_Lease::_queryLease($this->leases_current);
       $q = Null;
       break;
     }

@@ -219,7 +219,7 @@ class bList_vm_reimbursementRates extends bList_vm{
    *
    */    
   function get_policies($v_type){
-    bTiming()->cpu(__FUNCTION__);
+    bTiming()->cpu(__function__);
     $reply = array();
     foreach($this->getMembers() as $lm_id=>$r){
       if ($s_plc = @$r['s_plc']) $reply[$s_plc] = ((int)$r['s_rate'] > 0) || bForm::_checkBoxIsOn('s_rate',$r);

@@ -1052,9 +1052,9 @@ class bForm extends myPear_getValue{
   /*
    */
   public function selectMenu_exec($name,$values=array(),$extras='',$onlyRW=False) {
-    $selected = $this->getValue($name,True);
-    if (!$selected)              $selected = @$values['default'];
     if (empty($values)) $values = array();
+    $selected = $this->getValue($name,True);
+    if (!$selected) $selected = @$values['default'];
     if (!$this->isRO($name,$onlyRW)){
       $s = array();
       if (!empty($values)){
@@ -1173,7 +1173,7 @@ class bForm extends myPear_getValue{
       return; 
     }
     
-    $this->dbg(starting);
+    //    $this->dbg(starting);
     bTiming()->cpu(get_class($this).'.'.__FUNCTION__);
     if ($this->debug) b_debug::print_r($data,$this.'[updateDB] input:');
 
@@ -1228,7 +1228,7 @@ class bForm extends myPear_getValue{
     }
     $this->updateDB_recursion = 0;
     bTiming()->cpu();
-    $this->dbg(exiting);
+    //    $this->dbg(exiting);
     return $this->ID;
   }
 
@@ -1551,7 +1551,7 @@ class bForm extends myPear_getValue{
     }
 
     if ($this->_visible($name,$data) && !self::nameCounter($name)){
-      if (($name != b_rawData) && $this->isRO($name)){
+      if ((strpos($name,b_rawData)===0) && $this->isRO($name)){
 	if (preg_match("/^https?:/",$data))$data = bJS()->modal_iframe($data,$data); // $data = "<a href='$data'>$data</a>";
 	elseif(  @$this->isPRE[$name])   $data = "<pre>$data</pre>";
 	elseif(! @$this->isUL[$name])    $data = b_fmt::longString($data,$this->normalLine);
@@ -2173,7 +2173,9 @@ class bForm extends myPear_getValue{
    * Check is the field (sql column) is ReadOnly
    */
   protected function isRO($name,$onlyRW=False){
-    $reply = ((($this->MODE == 'RO') || @$this->isRO[$name]) && !@$this->isRW_forced[$name] && !$onlyRW);
+    $reply = ((($this->MODE == 'RO') || @$this->isRO[$name]) &&
+	      !@$this->isRW_forced[$name] &&
+	      !$onlyRW);
     return $reply;
   }
 
@@ -2419,7 +2421,7 @@ class bForm extends myPear_getValue{
       //print "visible=".$this->_visible($field)." field=$field method=$method value=".$this->getValue($field)."<br/>";    
       if ($field == cnf_emptyString){
         if (is_object($this->t)) $this->t->tr('&nbsp;');
-      }elseif($field == b_rawData){
+      }elseif (strpos($field,b_rawData)===0){
 	$this->dbg('b_rawData '.var_export($method,True),cnf_dev);
         $this->defineVariable($method[0],$field);
         $this->getFormRow($field,$method[1]);

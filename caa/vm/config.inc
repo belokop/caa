@@ -3,9 +3,9 @@
 /**
  * Visitors Manager (VM) configuration file
  */
-$releaseDate = '2017-05-31';
+$releaseDate = '2017-06-06';
 define('VM_MODULE'   , 'vm');
-define('VM_VERSION','5.13.19');
+define('VM_VERSION','5.13.20');
 
 //
 // transition problems...
@@ -13,6 +13,10 @@ define('VM_VERSION','5.13.19');
 if (function_exists('drupal_get_path') && is_file($f=drupal_get_path('module','myPear').'/includes/drupal8_compat.inc')) require_once $f;
 define('modal_sendmail_dialog',cnf_dev||cnf_demo); // Doesn't want to work...
 define('include_payLunch_dinner',cnf_dev);
+
+// Customization
+// Office name mask (say 132:004 or C5:d001) 
+define('VM_office_regexp','\b(\w*:\w*)\b'); 
 
 //
 // Exclude from production version the options which under development 
@@ -50,8 +54,8 @@ define('VISIT_TYPE_RENT',         '_RENT');
 define('VISIT_TYPE_OTHER',        '_OTHER');
 
 define('reimbursement_email','reimbursement@nordita.org');
-define('VM_no_cotenants',-777);
-define('VM_room_is_full',-666);
+define('VM_room_is_full','R-F');
+define('VM_no_cotenants','N-C');
 
 /*
  * VM root directories
@@ -138,7 +142,7 @@ define('VM_reminding_period', 3); // in days
  */
 // Infinite hut capacity
 define('VM_quantity2request',-999);
-define('VM_quantity2request_text','Contact hotel');
+define('VM_quantity2request_text','Contact hotel for availability');
 define('VM_quantity_total','total');
 define('VM_default_lease_pay',VM_everything);
 define('VM_default_a_quantity',VM_quantity2request);
@@ -208,8 +212,7 @@ $GLOBALS['LODGING_FINDER'] = array(
 
 
 define('OFFICE_AUTO_ALLOCATABLE', 'visitors'); // offices with this status are auto-allocated by the bCover
-define('AP_AUTO_ALLOCATABLE','auto allocate'); // rooms with this status are auto-allocated by the bCover
-define('AP_SHARABLE','shared');                // rooms is sharable 
+define('ROOM_AUTO_ALLOCATABLE','auto allocate'); // rooms with this status are auto-allocated by the bCover
 
 define('ICON_edit_event',  11);
 define('ICON_edit_room',   13);
@@ -764,32 +767,41 @@ class VM extends myPear{
    * Currently selected event ID
    */
   static function e_ID($e_ID=Null){
-    if (isset($_REQUEST['vm_eventSelector'])){
-      $e_ID = $_GET['vm_eventSelector'] = $_POST['vm_eventSelector'] = $_REQUEST['vm_eventSelector'];
-      b_cnf::set('vm_eventSelector',$e_ID);
-    }
-
-    start_VM();
-    if ($e_ID===Null) $e_ID = (int)b_cnf::get('vm_eventSelector');
-    
-    if ((int)$e_ID > 0){
-      if (!is_object(self::$e))	self::$e = myPear::getInstance_new('bForm_vm_Event',$e_ID,'strict');
-      if ($e_ID != ($id=@self::$e->ID)){
-	self::$e = myPear::getInstance_new('bForm_vm_Event',$e_ID,'strict');
-	myPear::WARNING_T("Change VM::e_ID $id -> $e_ID ");
+    bTiming()->cpu(__function__);
+    static $cache = array();
+    $cache_id = serialize(array(var_export($e_ID,True),
+				var_export(@$_REQUEST['vm_eventSelector'],True)));
+    if (!isset($cache[$cache_id])){
+      
+      if (isset($_REQUEST['vm_eventSelector'])){
+	$e_ID = $_GET['vm_eventSelector'] = $_POST['vm_eventSelector'] = $_REQUEST['vm_eventSelector'];
+	b_cnf::set('vm_eventSelector',$e_ID);
       }
+      
+      start_VM();
+      if ($e_ID===Null) $e_ID = (int)b_cnf::get('vm_eventSelector');
+      
+      if ((int)$e_ID > 0){
+	if (!is_object(self::$e))	self::$e = myPear::getInstance_new('bForm_vm_Event',$e_ID,'strict');
+	if ($e_ID != ($id=@self::$e->ID)){
+	  self::$e = myPear::getInstance_new('bForm_vm_Event',$e_ID,'strict');
+	  myPear::WARNING_T("Change VM::e_ID $id -> $e_ID ");
+	}
+      }
+      
+      if (is_object(self::$e)){
+	$e_ID = self::$e->ID;
+	b_cnf::set('vm_eventSelector',$e_ID);
+      }else{
+	$e_ID = self::$e = Null;
+	b_cnf::set('vm_eventSelector',0);
+      }
+      $name = (is_object(self::$e) ? ' = '.self::$e->name() : '-no-event-');
+      b_debug::xxx(var_export($e_ID,True).' '.$name, array(2,'orangeText',cnf_dev));
+      $cache[$cache_id] = $e_ID;
     }
-    
-    if (is_object(self::$e)){
-      $e_ID = self::$e->ID;
-      b_cnf::set('vm_eventSelector',$e_ID);
-    }else{
-      $e_ID = self::$e = Null;
-      b_cnf::set('vm_eventSelector',0);
-    }
-    $name = (is_object(self::$e) ? ' = '.self::$e->name() : '-no-event-');
-    b_debug::xxx(var_export($e_ID,True).' '.$name, array(2,'orangeText',cnf_dev));
-    return $e_ID;
+    bTiming()->cpu();
+    return $cache[$cache_id];
   }
   
   /*
@@ -797,14 +809,19 @@ class VM extends myPear{
    * is it marked in the list events Agenda events as "not my event"
    */
   static function outOfScope($e=Null){
-    bTiming()->cpu(__FUNCTION__);
-    locateAndInclude('bList_vm_agendaEvents');
+    bTiming()->cpu(__function__);
     self::e_ID();
     if ($e === Null) $e = self::$e;
-    $reply = (is_object($e) && bList_vm_agendaEvents::eventOutOfScope($e->getValue('e_code')));
+    $cache_id = (is_object($e) ? $e->ID : 'org');
+    static $cache = array();
+    if (!isset($cache[$cache_id])){
+      locateAndInclude('bList_vm_agendaEvents');
+      $reply = (bool)(is_object($e) && bList_vm_agendaEvents::eventOutOfScope($e->getValue('e_code')));
+      if (is_object($e)) b_debug::xxx($e->name().'? '.x('strong',var_export($reply,True)),array(2,cnf_show_out));
+      $cache[$cache_id] = $reply;
+    }
     bTiming()->cpu();
-    if (is_object($e)) b_debug::xxx($e->name().'? '.x('strong',var_export($reply,True)),array(2,cnf_show_out));
-    return $reply;
+    return $cache[$cache_id];
   }
 
   static function isArchived($e=Null){
@@ -813,7 +830,7 @@ class VM extends myPear{
   }
 
   static function isEventEndorsed($e=Null){
-    if (is_null($e)) $e = self::$e;
+    if ($e === Null) $e = self::$e;
     return (is_object($e) && $e->isEventEndorsed());
   }
 
@@ -825,14 +842,14 @@ class VM extends myPear{
     // Visits with the closed budget can be edited by the superuser only
     if (is_array($argv)){
       locateAndInclude('bForm_vm_Expenses');
-      if (bForm_vm_Expenses::_exp_arePayed($argv)) $reply = False;
+      if (bForm_vm_Expenses::_exp_arePaid($argv)) $reply = False;
     }
 
     if (!defined('VM_manager_here') || VM_manager_here) return True;
     if (superUser_here)        return True;
     if (!is_object(bAuth::$av))return False;
     
-    bTiming()->cpu(__FUNCTION__);
+    bTiming()->cpu(__function__);
     switch($what){
       
     case 'request_visits': 
@@ -904,7 +921,7 @@ class VM extends myPear{
     }
     
     if (!isset($reply) && cnf_dev) b_debug::internalError("unexpected case ".var_export($what,True));
-    if (cnf_show_a||cnf_show_acl) myPear::DEBUG(__METHOD__."($what) <em>".($reply?'YES':'NO')."</em>");
+    if (cnf_show_a||cnf_show_acl) myPear::DEBUG(__method__."($what) <em>".($reply?'YES':'NO')."</em>");
     bTiming()->cpu();
     return $reply;
   }
@@ -920,12 +937,12 @@ function start_VM(){
   static $dejaVu = 0;
   if (!VM::$isReady && !$dejaVu++){
     b_debug::xxx(starting,array(2,'redText',cnf_dev));
-    bTiming()->cpu(__FUNCTION__);
+    bTiming()->cpu(__function__);
 
     locateAndInclude('APImenu_vm');
 
     // Set the flag "visits outside the events" if the latter is selected
-    if (APItabs::$_ === tab_vm_guests){
+    if (defined('tab_vm_guests') && (APItabs::$_ === tab_vm_guests)){
       $_GET['vm_eventSelector'] = $_POST['vm_eventSelector'] = $_REQUEST['vm_eventSelector'] = EVT_ANY;
       b_debug::xxx("force EVT_ANY");
     }

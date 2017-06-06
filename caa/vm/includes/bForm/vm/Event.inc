@@ -418,7 +418,7 @@ class bForm_vm_Event extends bForm_vm {
     }
 
     $reply = b_mask::get($buffer['e_policy'], $policy);
-    if ($debug||cnf_show_pe) myPear::DEBUG(__METHOD__."($policy) <em>".VM::$e_policies[$policy]['d'].($reply?' yes':' no').'</em>');
+    if ($debug||cnf_show_pe) myPear::DEBUG(__method__."($policy) <em>".VM::$e_policies[$policy]['d'].($reply?' yes':' no').'</em>');
     return  (bool)$reply;
   }
 

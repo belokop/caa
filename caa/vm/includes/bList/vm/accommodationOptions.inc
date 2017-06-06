@@ -13,8 +13,6 @@
  */
 locateAndInclude('bList_vm');
 
-define('new_pack',False);
-
 /*
  *
  */
@@ -106,10 +104,8 @@ class bList_vm_accommodationOptions extends bList_vm{
       if ($packed_value === Null){
 	$reply = Null;
       }else{
-	list($a_quantity,$a_price) = (new_pack
-				      ? array($packed_value['a_quantity'],$packed_value['a_price'])
-				      : explode('#',$packed_value)
-				      );
+	if (strpos($packed_value,'#') === False)b_debug::internalError('?',$r);
+	list($a_quantity,$a_price) = explode('#',$packed_value);
 	$reply = ($what === 'a_quantity'
 		  ? $a_quantity
 		  : $a_price);
@@ -528,10 +524,8 @@ class bList_vm_accommodationOptions extends bList_vm{
     if (!in_array($id,$this->packed_items)) $this->packed_items[] = $id;
     
     $lm_id = $this->addMember(array('lm_key'=>$hut_id));
-    $this->updateMember(array($id=>(new_pack
-				    ? $option
-				    : $option['a_quantity'].'#'.$option['a_price']),
-			      $lm_id));
+    $this->updateMember(array($id=>$option['a_quantity'].'#'.$option['a_price']),
+			$lm_id);
     
     $this->dbg("add '$id' to lm_option");
   }      

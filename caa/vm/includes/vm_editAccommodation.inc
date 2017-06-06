@@ -2,6 +2,8 @@
 b_debug::xxx(__FILE__);
 if (!empty($_REQUEST['id'])) myPear::WARNING_T("_GET[id] is not empty, but is ignored...");
 
+locateAndInclude('bIcal_matrix_abs');
+
 //
 // Instantiate the Visit and (may be) the Lease
 //
@@ -64,19 +66,27 @@ if (!(int)$v->ID){
   //
   // Show the acoommodation matrix
   VM_cotenants();
-  locateAndInclude('bIcal_matrix_abs');
-  $m = new bIcal_matrix_abs();
-  $m->showLegend = False;
-  $m->day1 = $v->getValue('v_start')-3*86400;
-  $m->day9 = $v->getValue('v_end')  +3*86400;
-  $m->imposedEntries = $v->readCompleteDefRecord();
-  $m->a_id = ($id=b_cnf::getValue('a_id') ? explode(',',$id) : array(99999999));
+
+  $imposedEntries = $v->readCompleteDefRecord();
   foreach($v->get_allLeases(True) as $l){
     foreach(VM_cotenants()->get_cotenants($l->ID) as $lm_id=>$co_leases){
-      foreach($co_leases as $co_lease_ID) $m->imposedEntries[] = bForm_vm_Lease::_leaseInfo($co_lease_ID);
+      foreach($co_leases as $co_lease_ID) $imposedEntries[] = bForm_vm_Lease::_leaseInfo($co_lease_ID);
     }
   }
-  $m->show();
-  
+  bIcal_matrix_abs::_show($v->getValue('v_start')-3*86400,
+			  $v->getValue('v_end')  +3*86400,
+			  $imposedEntries,
+			  ($id=b_cnf::getValue('a_id') ? explode(',',$id) : array(99999999)));
   print '<hr/>' . $editing_dialog;
+}
+
+function bIcal_matrix_abs_spec($start,$end,$imposedEntries=array(),$a_ids=array(99999999)){
+ locateAndInclude('bIcal_matrix_abs');
+  $m = new bIcal_matrix_abs();
+  $m->showLegend = False;
+  $m->day1 = $start;
+  $m->day9 = $end;
+  $m->imposedEntries = $imposedEntries;
+  $m->a_id = $a_ids;
+  $m->show();
 }

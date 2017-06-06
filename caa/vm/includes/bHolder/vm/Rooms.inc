@@ -110,7 +110,7 @@ class bHolder_vm_Rooms extends bHolder_vm{
   function query(){
     switch ($this->doing){
     case 'usage':
-      $w[] = "(a_status = '".AP_AUTO_ALLOCATABLE."' OR a_name REGEXP 'Nordita')";
+      $w[] = "(a_status = '".ROOM_AUTO_ALLOCATABLE."' OR a_name REGEXP 'Nordita')";
       $w[] = "a_start <= $this->rt";
       $w[] ="(a_end   >= $this->rf OR a_end = 0)";
       $q = myPear_db()->query("SELECT * FROM abs_rooms WHERE ".join(' AND ',$w).
@@ -146,10 +146,12 @@ class bHolder_vm_Rooms extends bHolder_vm{
       $header = array('a_name'    => 'Name',
 		      'a_price'   => 'Price',
 		      'a_quantity'=> 'N rooms<br/>available',
-		      'a_area'    => 'Area<br/>(kvm)',
+		      '_rooms'    => 'N rooms<br/>',
+		      '_tenants'  => 'N tenants<br/>accomodated',
+		      //'a_area'    => 'Area<br/>(kvm)',
 		      //'a_capacity'=> 'Capacity<br/>(beds)',
 		      //'a_status'  => 'Status',
-		      'a_comment' => '',
+		      //'a_comment' => '',
 		      '_sharable' => '',
 		      ); 
       break;
@@ -159,6 +161,12 @@ class bHolder_vm_Rooms extends bHolder_vm{
     foreach ($header as $k=>$v) {
       if ($k!='a_name') $this->th_attr[$k] = "style='text-align:right;'";
     }
+    if (VM::_MENU()->context() !== 'event'){
+      unset($header['_rooms'],$header['_tenants']);
+    }else{
+      $header['_rooms'] = 'N rooms<br/>used/available';
+      unset($header['a_quantity']);
+    }
     return $header; 
   }
 
@@ -167,11 +175,14 @@ class bHolder_vm_Rooms extends bHolder_vm{
    */  
   function format() {
     foreach($this->header() as $k=>$v) if ($k!=='a_name') $this->t->css[$k]['align'] = 'align_right';
+    foreach(array('a_comment') as $k) $this->t->class[$k] = array('opaqueText');
 
     $this->a = myPear::getInstance_new('bForm_vm_Room', @$this->rec['a_id'],'strict');
     $this->dbg($this->a->__toString());
 
     $this->rec['a_name'] = bForm_vm_Room::_a_name($this->rec,False);
+    if ($this->rec['a_comment']) $this->rec['a_name'] .= '<br/>'.x('em class="smallerText"',$this->rec['a_comment']);
+
     if (empty($this->rec['n_nosort'])) 	  $this->rec['n_nosort'] = 0;
     if (isset($this->rec['a_start'])) if ($this->rec['a_start'] <= myPear_day0) unset($this->rec['a_start']); 
 
@@ -189,6 +200,13 @@ class bHolder_vm_Rooms extends bHolder_vm{
 	$this->rec[$item] = $room->getValue($item);
 	//VM_accommodationOptions($this->e)->get_a_value($this->rec['a_id'],$this->rec['hut_id'],$item);
       }
+      list($this->rec['_tenants'],
+	   $_rooms) = bForm_vm_Lease::_room_usage($this->rec['a_id']);
+      $a_quantity = VM_accommodationOptions(VM::$e)->get_a_value($room->ID,$room->getValue('a_hutid'),'a_quantity');
+      if ($a_quantity == VM_quantity2request) $a_quantity = VM_quantity2request_text;
+      $this->rec['_rooms'] = ($_rooms > 0
+			      ? sprintf("%s/%s",$_rooms,$a_quantity)
+			      : $a_quantity);
     }
     if ($this->rec['a_quantity'] == VM_quantity2request) $this->rec['a_quantity'] = VM_quantity2request_text;
     $this->rec['a_price'] = (strpos($this->rec['a_price'],'=') === False
@@ -197,7 +215,7 @@ class bHolder_vm_Rooms extends bHolder_vm{
     
     $usage = 0;
 
-    $this->rec['_sharable'] = ($this->rec['a_capacity'] > 1    
+    $this->rec['_sharable'] = (bForm_vm_Room::_mightBeSharable($this->rec)
 			       ? 'Sharable'
 			       : '');
     $extraTD = $this->t->extraTD[] = '';

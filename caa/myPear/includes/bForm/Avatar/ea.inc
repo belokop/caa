@@ -768,9 +768,8 @@ Seem to be useless....
       $records = $ea->get_currentEmploymentRecords(array('e_org'=>myOrg_ID),
 						   $this->getValue('av_ddate',True));
       foreach($records as $k=>$r){ 
-	b_debug::print_r($r);
-	// Check the AlbaNova campus room numbering convention
-	if (preg_match("/\b(\w*:\w*)\b/",@$r['e_off'],$m)){
+	// Check the campus room numbering/naming convention
+	if (preg_match('/'.VM_office_regexp.'/',@$r['e_off'],$m)){
 	  $office = $m[1];
 	  break;
 	}

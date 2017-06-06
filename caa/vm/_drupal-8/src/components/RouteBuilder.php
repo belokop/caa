@@ -12,7 +12,7 @@ class RouteBuilder{
   
   public function routes(){
     static $dejaVu = 0;
-    printf("%s   <br>\n",__METHOD__);
+    printf("%s   <br>\n",__method__);
     $this->dbg(++$dejaVu);
   }
 

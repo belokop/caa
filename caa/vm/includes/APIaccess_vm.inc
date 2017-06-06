@@ -119,8 +119,8 @@ class APIaccess_vm extends APIaccess{
     
     bForm_Avatar::set_context(bAuth::$av,VM_MODULE);
     
-    // $_SESSION[myPear_cache][__METHOD__][$av_id] = Null;
-    if (@$_SESSION[myPear_cache][__METHOD__][$av_id] === Null){
+    // $_SESSION[myPear_cache][__method__][$av_id] = Null;
+    if (@$_SESSION[myPear_cache][__method__][$av_id] === Null){
       
       // Check the organization_role
       $organizational_duty = myPear::org_duty($av_id,array(RANK__superuser,
@@ -145,11 +145,11 @@ class APIaccess_vm extends APIaccess{
 	
 	// Fill list of positions which might be browsed
 	if (!empty($rank)){                         
-	  $_SESSION[myPear_cache][__METHOD__][$av_id][$e_id] = $rank;
+	  $_SESSION[myPear_cache][__method__][$av_id][$e_id] = $rank;
 	} 
       }
     }
-    if (empty($_SESSION[myPear_cache][__METHOD__][$av_id]))$_SESSION[myPear_cache][__METHOD__][$av_id] = array();
-    return    $_SESSION[myPear_cache][__METHOD__][$av_id];
+    if (empty($_SESSION[myPear_cache][__method__][$av_id]))$_SESSION[myPear_cache][__method__][$av_id] = array();
+    return    $_SESSION[myPear_cache][__method__][$av_id];
   }
 }

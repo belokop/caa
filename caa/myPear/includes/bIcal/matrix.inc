@@ -384,7 +384,6 @@ function formatTime($v,$showTime=False) {
 }
 
 function bIcal_formatName($name,$nn){
-  $reply = $name;
-  for ($n=1; $n<$nn; $n++) $reply .= ';';
+  $reply = $name . str_repeat(';',$nn);
   return $reply;
 }

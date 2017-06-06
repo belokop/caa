@@ -61,7 +61,7 @@ class agenda_vm extends agenda{
     static $alreadySyncing = 0;
     if ($alreadySyncing++) return;
 
-    bTiming()->cpu(__FUNCTION__);
+    bTiming()->cpu(__function__);
     set_time_limit(0);
     $this->dbg(starting);
     myPear::H1("Syncing visitors database with Agenda");

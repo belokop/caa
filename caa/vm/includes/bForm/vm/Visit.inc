@@ -45,7 +45,7 @@ class bForm_vm_Visit extends bForm_vm {
   
   /*
    * Check does the avatar have visit with the active policy,
-   * say, with payed trip 
+   * say, with paid trip 
    */
   public static function is_visitPolicyOn($av_id,$policy){
     $reply = False;
@@ -188,14 +188,14 @@ class bForm_vm_Visit extends bForm_vm {
     $v_type = $buffer['v_type'];
     foreach($buffer['e_v_policy'] as $p){
       if (empty(VM::$v_policies[$p])){
-	if (cnf_dev) myPear::DEBUG(__METHOD__."() - Get unknown policy '$p', ignore...");
+	if (cnf_dev) myPear::DEBUG(__method__."() - Get unknown policy '$p', ignore...");
       }else{
 	if (!cnf_dev) if ($p == VM_V_payPerdiem) continue;
 	if (!cnf_dev) if ($p == VM_V_payOther)   continue;
 	$policies[$p] = VM::$v_policies[$p];
       }
     }
-    // if (cnf_dev) myPear::DEBUG(__FUNCTION__.'() - '.b_fmt::joinX(',',$policies));
+    // if (cnf_dev) myPear::DEBUG(__function__.'() - '.b_fmt::joinX(',',$policies));
     return $policies;
   }
 
@@ -205,9 +205,9 @@ class bForm_vm_Visit extends bForm_vm {
   function getGSF($what='travel.*support',$li='<li>'){
     $gsf = self::_getGSF($what,array('v_gsf'=>$this->getValue('v_gsf',True)),$li);
     if (empty($gsf))$reply = '';
-    else  $reply = (empty($li)
-		    ? join('<br/>',$gsf)
-		    : x('ul',str_replace('<br/>',' ',join(' ',$gsf)))); 
+    else  $reply = x('span class=smallerText',empty($li)
+		     ? join('<br/>',$gsf)
+		     : x('ul',str_replace('<br/>',' ',join(' ',$gsf)))); 
     return $reply;
   }
 
@@ -234,7 +234,7 @@ class bForm_vm_Visit extends bForm_vm {
 
   /*
    * Get the value for the given policy
-   * (i.e. is the letter sent, should the per-diem to be payed, etc.)
+   * (i.e. is the letter sent, should the per-diem to be paid, etc.)
    *
    * The policy might be 'locked', 
    * which means that all the decisions about the visit are signed,
@@ -271,7 +271,7 @@ class bForm_vm_Visit extends bForm_vm {
       if (!empty($buffer['v_policy'])){
 	$reply = (bool)b_mask::get($buffer['v_policy'],$policy);
 	if(cnf_show_pv || ($onlyIfExpected === 'verbose')){
-	  myPear::DEBUG(@$buffer['id'].__FUNCTION__."($buffer[av_lastname],$policy) ".x('i',VM::$v_policies[$policy]['d'].($reply?' YES ':' NO  ')));
+	  myPear::DEBUG(@$buffer['id'].__function__."($buffer[av_lastname],$policy) ".x('i',VM::$v_policies[$policy]['d'].($reply?' YES ':' NO  ')));
 	}
       }
     }
@@ -288,7 +288,7 @@ class bForm_vm_Visit extends bForm_vm {
     if (!in_array($policy,array_keys(VM::$v_policies)))      return;
 
     if (!$recursion_ok && $this->setPolicyRecursion++){
-      if (cnf_dev) b_debug::traceBack(__FUNCTION__."() - recursion".$this->setPolicyRecursion);
+      if (cnf_dev) b_debug::traceBack(__function__."() - recursion".$this->setPolicyRecursion);
       return;
     }
 
@@ -528,12 +528,17 @@ class bForm_vm_Visit extends bForm_vm {
        locateAndInclude('bForm_vm_Lease');
        foreach(bForm_vm_Lease::_get_allLeases($v_id) as $lease_id=>$hut_code){
 	 if ($mode === 'classes'){
-	   if (empty($v)) $v = (is_object($v_id) ? $v_id : new bForm_vm_Visit($v_id));
+	   if (empty($v)){
+	     if (!is_object($v_id) && !is_numeric($v_id)) b_debug::internalError("??? v_id = ".var_export($v_id,True));
+	     $v = (is_object($v_id) ? $v_id : new bForm_vm_Visit($v_id));
+	   }
 	   $l = new bForm_vm_Lease($lease_id,$v);
 	   $l->hookVisit($v);
 	   $reply[] = $l;
+	 }elseif($mode === 'hut_codes'){
+	   $reply[] = $hut_code;
 	 }else{
-	   if (!empty($hut_code)) $reply[] = $hut_code;
+	   if ($hut_code !== HUT_BI) $reply[] = $lease_id;
 	 }
        }
      }
@@ -802,7 +807,6 @@ class bForm_vm_Visit extends bForm_vm {
     $this->defineTypes(array('submitOnChange'=>array('v_group' => !myPear::is_empty($this->getValue('v_group',1))),
 			     'isADMIN'       =>array('v_comment'),
 			     'isMBE'         =>array('v_projectid', 
-						     'v_accompaning',
 						     'v_acc_wish',
 						     'v_comment',
 						     'v_chance',
@@ -822,12 +826,11 @@ class bForm_vm_Visit extends bForm_vm {
 						     'v_created',
 						     'v_admin_avid',						
 						     'e_name',
-						     'v_accompaning'=> !VM::hasRightTo('edit_visit',$this),
 						     'v_oid'        => !VM::hasRightTo('edit_visit',$this),
 						     '_virt_updated_by',
 						     '_virt_owner'),
 			     'isPRIVATE'     =>array('v_owner_avid',
-						     'v_accompaning',
+						     //'v_accompaning',
 						     'v_type',
 						     //'v_acc_wish',
 						     '_virt_updated_by',
@@ -971,31 +974,7 @@ class bForm_vm_Visit extends bForm_vm {
       $dialog['Visit_dates'] = array('datePickerField2','v_start','v_end','i-a-arrive','i-a-depart');
     }
 
-    // Accompanying persons
-    if ($_virt_accompaning = $this->getGSF($trigger='accompan','')){
-      $n = trim(str_replace(array('(',')'),' ',self::$_getGSF[$trigger]));
-      if (is_int($n))                           $v_accompaning = $n;
-      elseif(preg_match('/\b(three|3)\b/i',$n)) $v_accompaning = 3;
-      elseif(preg_match('/\b(two|2)\b/i',  $n)) $v_accompaning = 2;
-      elseif(preg_match('/\b(one|1)\b/i',  $n)) $v_accompaning = 1;
-      if (isset($v_accompaning)){
-	$this->getValue_reset('v_accompaning',$v_accompaning);
-	$this->isRO['v_accompaning'] = True;
-      }
-    }
-    $dialog['v_accompaning'] = array('selectMenu',array(0=>'coming alone',
-							1=>'me + 1',
-							2=>'me + 2',
-							3=>'me + 3',
-							// 4=>'me + 4',
-							));
-    // Show the v_accompaning wish
-    if (!empty($_virt_accompaning)){
-      $this->defineVariable(array('_virt_accompaning'=>' '),True);
-      $this->formDB['_virt_accompaning']= $_virt_accompaning;
-      $this->isRO['_virt_accompaning']  = True;
-      $dialog['_virt_accompaning'] = array('textField');
-    }
+    if (!$this->get_allLeases('count')) $this->dialog_accompaning($dialog,$this);
     
     // Show the block
     $this->formBlock(VM_visit_info,
@@ -1003,6 +982,42 @@ class bForm_vm_Visit extends bForm_vm {
 		     $dialog,
 		     array('i'=>'i-portfolio_edit',
 			   'l'=>$this->sameURL_but(array('mode'=>$mode))));
+  }
+
+  /*
+   *
+   */
+  function dialog_accompaning(&$dialog,$class){
+    // Accompanying persons
+    if ($_virt_accompaning = $this->getGSF($trigger='accompan','')){
+      
+      $n = trim(str_replace(array('(',')'),' ',self::$_getGSF[$trigger]));
+      if (is_int($n))                           $v_accompaning = $n;
+      elseif(preg_match('/\b(four|4)\b/i',$n))  $v_accompaning = 4;
+      elseif(preg_match('/\b(three|3)\b/i',$n)) $v_accompaning = 3;
+      elseif(preg_match('/\b(two|2)\b/i',  $n)) $v_accompaning = 2;
+      elseif(preg_match('/\b(one|1)\b/i',  $n)) $v_accompaning = 1;
+      if (isset($v_accompaning) && $v_accompaning > 0){
+	$this->getValue_reset_forced('v_accompaning',$v_accompaning);
+	$class->defineVariable(array('v_accompaning'=>'Accompanying persons'),True);
+	$class->getValue_reset('v_accompaning',$v_accompaning);
+	$class->isRO['v_accompaning'] = True;
+	$dialog['v_accompaning'] = array('selectMenu',array(0=>'coming alone',
+							    1=>'me + 1',
+							    2=>'me + 2',
+							    3=>'me + 3',
+							    4=>'me + 4',
+							    ));
+      }
+    }
+
+    // Show the v_accompaning wish
+    if (0) if (!empty($_virt_accompaning)){
+      $this->defineVariable(array('_virt_accompaning'=>' '),True);
+      $this->formDB['_virt_accompaning']= $_virt_accompaning;
+      $this->isRO['_virt_accompaning']  = True;
+      $dialog['_virt_accompaning'] = array('textField');
+    }
   }
   
   /*
@@ -1136,7 +1151,9 @@ class bForm_vm_Visit extends bForm_vm {
     if ($v_gsf = $this->getValue('v_gsf',True)){    
       $dialog = array();
       $v_gsf = unserialize($v_gsf);
-      $accommodation = ($c = $this->getValue('v_acc_wish',True)) ? array('Accommodation' => $c) : array();
+      $accommodation = (($v_acc_wish = $this->getValue('v_acc_wish',True)) 
+			? array('Accommodation' => $v_acc_wish)
+			: array());
       foreach(array_merge($accommodation,$v_gsf) as $q=>$a){
 	$this->defineVariable($q,$f='_virt_'.b_crypt::hash($q));
 	$this->isRO[$f] = True;
@@ -1181,7 +1198,7 @@ class bForm_vm_Visit extends bForm_vm {
 	if (in_array($p,VM::$auto_maintained)) continue;
 	
 	$k = '_virt_policy_' . $p;
-	if ($this->exp_arePayed()) $this->isRO[$k] = True;
+	if ($this->exp_arePaid()) $this->isRO[$k] = True;
 	$this->defineVariable($descr['d'],$k);
 	$this->formDB[$k] = ($this->getPolicy($p) ? 'yes' : 'no');
 	$dialog[$k] = array('checkBox',0,
@@ -1190,7 +1207,7 @@ class bForm_vm_Visit extends bForm_vm {
       }
 	  /*
 	if ($this->MODE == 'RW' || ($value==='yes' || $this->isWritable())){
-	  if ($this->exp_arePayed()) $this->isRO[$k] = True;
+	  if ($this->exp_arePaid()) $this->isRO[$k] = True;
 	  $dialog[$k] = array('checkBox');
 	}
 	  */
@@ -1204,7 +1221,7 @@ class bForm_vm_Visit extends bForm_vm {
     $this->formBlock(VM_visit_policy,'Visit '.($this->isApproved() ? 'policy' : 'status'),
 		     $dialog,
 		     array('d'=>'',
-			   'i'=>($this->exp_arePayed()?'i-lock':'i-user1_edit'),
+			   'i'=>($this->exp_arePaid()?'i-lock':'i-user1_edit'),
 			   'l'=>$this->sameURL_but(array('mode' =>'RW'))));
   }
   
@@ -1392,7 +1409,7 @@ class bForm_vm_Visit extends bForm_vm {
 
 
     // Do not allow any changes for the closed visits (closing is done by the finance) 
-    $this->declareRO($this->exp_arePayed());
+    $this->declareRO($this->exp_arePaid());
     
     /*
      * Open the form and put  the calendar block into "pending objects" for the table class.
@@ -1751,9 +1768,9 @@ class bForm_vm_Visit extends bForm_vm {
     return $reply;
   }
 
-  function exp_arePayed($lock=Null){
+  function exp_arePaid($lock=Null){
     $this->hookDependancies();
-    $reply = (bool)(is_object($this->exp) && $this->exp->exp_arePayed());
+    $reply = (bool)(is_object($this->exp) && $this->exp->exp_arePaid());
     $this->dbg($reply);
     return $reply;
   }
@@ -1864,7 +1881,7 @@ class bForm_vm_Visit extends bForm_vm {
 
     // return the list of clashing visit IDs
     $reply = $clashes[$v_id]['ids'];
-    if ($reply) myPear::DEBUG(__METHOD__."($v_id): ".join(', ',$reply)); 
+    if ($reply) myPear::DEBUG(__method__."($v_id): ".join(', ',$reply)); 
     return $reply;
   }
   
@@ -2014,7 +2031,7 @@ class bForm_vm_Visit extends bForm_vm {
 
     }
 
-    //    if (cnf_show_pv && !empty($reply))  myPear::DEBUG(__FUNCTION__."($buffer[v_id]) <em>".(empty($reply) ? '&lt;OK&gt;' : $reply)."</em>");
+    //    if (cnf_show_pv && !empty($reply))  myPear::DEBUG(__function__."($buffer[v_id]) <em>".(empty($reply) ? '&lt;OK&gt;' : $reply)."</em>");
     return $reply;
   }
   
@@ -2101,7 +2118,7 @@ class bForm_vm_Visit extends bForm_vm {
   private $isWritable = Null;
   function isWritable(){
     if ($this->isWritable === Null){ 
-      bTiming()->cpu(__FUNCTION__);
+      bTiming()->cpu(__function__);
       $this->hookDependancies();
       $exp_owner = (is_object($this->exp)
 		    ? ($this->exp->getValue('exp_owner_avid') == @bAuth::$av->ID)

@@ -56,7 +56,7 @@ function VM_mailer_render($what,$args=array(),$preview=False){
   switch($what){
     
   case 'SHOW_ID':
-    $reply = __METHOD__;
+    $reply = __method__;
     break;
     
   case 'SHOW_DESCRIPTION': 
@@ -153,7 +153,7 @@ class bMailer_vm extends bMailer{
     $verbose = cnf_dev || VM_administrator_here; // VM_observer_here;    
    
     // Do it ones per session...
-    if (!@$_SESSION[__METHOD__]++){
+    if (!@$_SESSION[__method__]++){
       locateAndInclude('bForm_vm_Event');
       // Select events where the registration deadline is over AND event has not yet started
       $q = myPear_db()->query("SELECT e_id FROM abs_events WHERE e_start > ".time()." AND e_reg_end < ".time()." ORDER BY e_start ASC");
@@ -188,7 +188,7 @@ class bMailer_vm extends bMailer{
 	      myPear::WARNING($msg = 'Organizer '.$av->fmtName('fl').' has not yet registered for his event '.$e->name());
 	      $info_body[] = $msg;
 	      $mode = 'reg';
-	      if (!@$_SESSION[__METHOD__.$mode]++)  $this->remind_organizer($av,$e,$mode,True);
+	      if (!@$_SESSION[__method__.$mode]++)  $this->remind_organizer($av,$e,$mode,True);
 	    }
 	  }
 	}
@@ -591,7 +591,7 @@ Visit information:
     // Preview and/or send the mail
     //
     locateAndInclude('bTpl');
-    $tpl = new bTpl(array('title' => __METHOD__,
+    $tpl = new bTpl(array('title' => __method__,
 			  'render'=> VM_mailer_render('SHOW_ID'),
 			  'body'  => "
 Dear <firstname/> <lastname/>,
@@ -610,7 +610,7 @@ Best regards,
 Organizing committee for \"<event/>\".
 "));
     
-    $this->template = __METHOD__;
+    $this->template = __method__;
     if($ok = $this->send(array(),
 			 $this->visit->av->getEmail(),
 			 'Your application for '.myOrg_name.' event',
@@ -621,7 +621,7 @@ Organizing committee for \"<event/>\".
       $this->visit->setPolicy(VM_V_infoMailQueued,0);
       myPear::MESSAGE(sprintf('Info mail is sent to %s',$this->visit->av->name()));
     }
-    $msg = sprintf('%s(%s) %s',__FUNCTION__,$this->visit->av->getEmail(),($ok ? 'OK' : 'NOT sent ...'));
+    $msg = sprintf('%s(%s) %s',__function__,$this->visit->av->getEmail(),($ok ? 'OK' : 'NOT sent ...'));
     $this->dbg($msg, cnf_dev||cnf_CLI);
     myPear_logs()->syslog($msg);
     $this->debug = $debug_sv;
@@ -688,7 +688,7 @@ Organizing committee for \"<event/>\".
     }
 
     locateAndInclude('bTpl');
-    $tpl = new bTpl(array('title' => __METHOD__,
+    $tpl = new bTpl(array('title' => __method__,
 			  'render'=> VM_mailer_render('SHOW_ID'),
 			  'body'  => "
 Dear <firstname/> <lastname/>,
@@ -701,7 +701,7 @@ We regret to inform you that we are not able to accommodate your request to part
 Sincerely,
 Organizing committee for \"<event/>\"."));
       
-    $this->template = __METHOD__;
+    $this->template = __method__;
     if ($ok = $this->send(array(),
 			  $this->visit->av->getEmail(),
 			  "Application denied",

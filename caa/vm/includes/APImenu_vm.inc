@@ -128,13 +128,13 @@ class APImenu_vm extends APImenu_ea{
 			     tab_vm_home      => array(),
 			     tab_vm_reg       => array(),
 			     divider,
-			     tab_vm_vis       => array(tab_vm_ogz_vmatrix,
+			     tab_vm_vis       => array(tab_vm_vis_list, 
+						       tab_vm_vis_budget, 
+						       tab_vm_vis_amatrix,
+						       tab_vm_ogz_vmatrix,
 						       tab_vm_ogz_omatrix,
 						       tab_vm_ogz_amatrix,
-						       tab_vm_vis_amatrix,
-						       tab_vm_vis_list, 
-						       tab_vm_vis_budget, 
-
+						       
 						       tab_vm_vis_se_setup=>divider,
 						       tab_vm_vis_acc, 
 
@@ -182,10 +182,6 @@ class APImenu_vm extends APImenu_ea{
 						       ),
 			     tab_vm_vmatrix   => array(),
 			     divider,
-			     // Replace this whole tree by one button "tab_vm_adm_acc" below...
-			     //tab_vm_acc       => array(      
-			     //			       tab_vm_acc_rooms, tab_vm_acc_assign, tab_vm_acc_huts, tab_vm_acc_add, tab_vm_acc_usage,
-			     //			       ),
 			     tab_vm_adm       => array(
 						       tab_vm_adm_acc,
 						       tab_vm_adm_se_setup,
@@ -568,6 +564,11 @@ class APImenu_vm extends APImenu_ea{
   function process($tab,$dynamicTab=''){
 
     vm_init();
+    start_VM();
+
+    locateAndInclude('bForm_vm_Lease');
+    if (!VM::$isReady) b_debug::internalError("??? VM is not ready");
+    bForm_vm_Lease::print_lease_options();
     
     // There was an explicit request to send password. Do it
     if (isset($_GET['mo_once'])){
@@ -577,7 +578,7 @@ class APImenu_vm extends APImenu_ea{
 
     VM::e_ID();
 
-    bTiming()->cpu(__FUNCTION__);
+    bTiming()->cpu(__function__);
     //    print bHolder_Logs::wic();
     
     if (isset($_REQUEST['vm_day1'])) b_cnf::set('vm_day1',(b_time::txt2unix($_REQUEST['vm_day1'])));
@@ -1165,7 +1166,7 @@ class APImenu_vm extends APImenu_ea{
       VM::$e = Null;
     }
 
-    //    if (cnf_dev) b_debug::print_r($reply,__FUNCTION__.' '.@$events[$closest_eID],'nosort');
+    //    if (cnf_dev) b_debug::print_r($reply,__function__.' '.@$events[$closest_eID],'nosort');
     if (!defined('vm_day1') || $need_only_one_event)      $events = array();
 
     // b_debug::print_r($events,'events','nosort');    
@@ -1185,7 +1186,7 @@ class APImenu_vm extends APImenu_ea{
    * Set the event selected for viewing as the "current event"
    */
   function eventSelector(){
-    $this->dbg(__METHOD__);
+    $this->dbg(__method__);
     if (!bAuth::authenticated()) return;
 
     // Get list of events customized for the logged-in user
@@ -1239,7 +1240,7 @@ class APImenu_vm extends APImenu_ea{
    */
   private function set_buildInObjects(){
     // this should be called only once
-    if (!@$_SESSION[__FUNCTION__]++){
+    if (!@$_SESSION[__function__]++){
       
       locateAndInclude('bForm_vm_Visit');
       foreach(VM_projects()->get_projects($buildInOnly=True) as $id=>$type){
@@ -1309,7 +1310,7 @@ function _vm_title_callback($tab, $dTab=Null,$returnText=False){
 		 : t($tab));
   }else{
     if(isset(APItabs::$tab_definition[$tab]))  $text = APItabs::$tab_definition[$tab];
-    else myPear::ERROR(sprintf("??? %s: undefined tab \"%s\"\n",__METHOD__,$tab));
+    else myPear::ERROR(sprintf("??? %s: undefined tab \"%s\"\n",__method__,$tab));
     if (is_object(bAuth::$av)){
       
       if (VM_external_registrant_here){

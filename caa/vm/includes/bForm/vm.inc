@@ -21,7 +21,7 @@ class bForm_vm extends bForm {
 
   private $isWritable_vm = Null;
   function isWritable(){
-    bTiming()->cpu(__FUNCTION__);
+    bTiming()->cpu(__function__);
     if ($this->isWritable_vm === Null) $this->isWritable_vm = (bool)VM_manager_here || parent::isWritable();
     $this->dbg($this->isWritable_vm);
     bTiming()->cpu();

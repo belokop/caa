@@ -20,7 +20,7 @@ function vm_updates(){
     ini_set("memory_limit", "-1");
     set_time_limit(0);
 
-    bTiming()->cpu(__FUNCTION__);
+    bTiming()->cpu(__function__);
     myPear_db()->noAutoCommit('start');
     myPear_logs()->doNotLog = True;
     
@@ -115,6 +115,7 @@ function vm_updates(){
 
     if (True){ // Fixes for the version "Easter 2017"
       vm_compat_update_49();
+      vm_compat_update_50();
     }
 
     myPear_logs()->doNotLog = False;
@@ -132,7 +133,7 @@ function vm_updates(){
 vm_compat_update_ad_hocks();
 
 function vm_compat_update_ad_hocks(){
-  if (!@$_SESSION[__FUNCTION__]++){
+  if (!@$_SESSION[__function__]++){
     locateAndInclude('b_updates');
     myPear_db()->truncateTable('zzz_templates');
     myPear_update_zzz_lists(VM_MODULE);
@@ -144,6 +145,25 @@ function vm_compat_update_ad_hocks(){
   // Another strange thing...
   vm_compat_update_47();
 
+}
+
+// Set the "room is full flag" if there are <a_capacity> cotenants
+// Set the "room is full flag" if there are there are accompaning persons
+vm_compat_update_50();
+function vm_compat_update_50(){
+  if (!VM::$isReady || !myPear_db()->columnExists('lease_option','abs_leases')) return;
+  //  if (@$_SESSION[__function__]++) return;
+  b_debug::xxx(' ');
+  $leases = array();
+  $dejaVu = array();
+  foreach(VM_cotenants()->getMembers() as $lm_id=>$rec){
+    $leases = explode(',',$rec['leases']);
+    bList_vm_cotenants::set_options($leases);
+    foreach($leases as $lease_id){
+      $l = bForm_vm_Lease::_leaseInfo($lease_id,array('lease_aid','v_accompaning','a_capacity','lease_id'));
+      bForm_vm_Lease::_v_accompaning($l);
+    }
+  }
 }
 
 function vm_compat_update_49_2_Kronor_Hostel(){
@@ -198,6 +218,7 @@ function vm_compat_update_49_visits($where){
   myPear::MESSAGE($list);
 }
 
+
 /*
  * Preparation for the new rooms classification
  */
@@ -222,6 +243,7 @@ function vm_compat_update_49(){
   }
 
   if (!myPear_db()->columnExists('lease_option','abs_leases')){
+  //myPear_db()->qquery($sql="ALTER TABLE `abs_leases` ADD `lease_option` VARCHAR(200) DEFAULT '".serialize(array('pay'=>VM_default_lease_pay))."' AFTER `lease_end`",True);
     myPear_db()->qquery($sql="ALTER TABLE `abs_leases` ADD `lease_option` VARCHAR(200) DEFAULT '".serialize(array())."' AFTER `lease_end`",True);
     b_debug::xxx($sql);
   }
@@ -273,7 +295,7 @@ function vm_compat_update_49(){
   // Parse all the rooms names, extract options and write them to the database
   //
   $pivots = $table = array();
-  $q = myPear_db()->qquery("SELECT hut_id,hut_name,hut_code,a_id,a_capacity,a_name,a_comment,a_price,a_status,lease_end ".
+  $q = myPear_db()->qquery("SELECT hut_id,hut_name,hut_code,a_id,a_capacity,a_name,a_comment,a_price,a_status,lease_end,lease_id ".
 			   " FROM abs_rooms ".
 			   " LEFT JOIN abs_huts ON a_hutid=hut_id ".
 			   " LEFT JOIN abs_leases ON lease_aid=a_id ".
@@ -294,7 +316,7 @@ function vm_compat_update_49(){
     if (empty($a_pay)) $a_pay = VM_default_lease_pay;
     @$a_pays[$a_pay]++;
    
-    vm_compat_update_49_set($r['a_id'],$a_name,$a_pay,$a_comment);
+    vm_compat_update_49_set($r['a_id'],$a_name,$a_pay,$a_comment,$r['a_capacity']);
 
     // See the usage of the room
     $qqq = myPear_db()->qquery("SELECT lease_end FROM abs_leases WHERE lease_aid=".$r['a_id'],True);
@@ -309,7 +331,7 @@ function vm_compat_update_49(){
     if ($a_comment)       $room[] = $a_comment;
     if ($v=@$r['a_start'])$room[] = date('Y-m-d',$v);
     if ($v=@$r['a_end'])  $room[] = date('Y-m-d',$v);
-    if ($sharable)        $room[] = AP_SHARABLE;
+    if ($sharable)        $room[] = 'shared';
     if ($a_pay)           $room[] = "a_pay=$a_pay";
 
     // Build "shrinking table"
@@ -370,12 +392,15 @@ function vm_compat_update_49(){
 	$ids  = array(0);
 	$id2xs= array(bList_vm_accommodationOptions::id2x($a_root->ID));
       }else{
-	ob_start();
-	$a_root->getForm();
-	$ob = ob_get_contents();
-	ob_end_clean();
-	myPear::MESSAGE(x('h3','============================'.$a_root->name()));
-	myPear::MESSAGE($ob);
+	if (0){
+	  // Show the room description in the MESSAGE pane
+	  ob_start();
+	  $a_root->getForm();
+	  $ob = ob_get_contents();
+	  ob_end_clean();
+	  myPear::MESSAGE(x('h3','============================'.$a_root->name()));
+	  myPear::MESSAGE($ob);
+	}
 	$id2xs = $ids = array();
 	foreach ($d1 as $a_id=>$room){
 	  if ($a_id == 'root') continue;
@@ -385,7 +410,7 @@ function vm_compat_update_49(){
 	}
       }
       sort($ids);
-      myPear::MESSAGE('a_ids='.implode(',',$ids));	
+            myPear::MESSAGE('a_ids='.implode(',',$ids));	
 
       myPear_db()->qquery("UPDATE abs_leases SET lease_aid = ".$a_root->ID." WHERE lease_aid = ".join(' OR lease_aid = ',$ids),True);
       $ids2delete = array_diff($ids,array($a_root->ID));
@@ -484,7 +509,7 @@ function vm_compat_update_49_set_prices($accOptions=Null,$array){
     $hut = myPear::getInstance_new('bForm_vm_Hut',array('hut_name'=>$hut_name),array('fatal'));
     b_debug::xxx("Updating options for ".$hut->name());
     if (!empty($accOptions) && !is_object($accOptions)){
-      myPear::DEBUG(__FUNCTION__."($accOptions): Activate VM_accommodationOptions($accOptions)"); 
+      myPear::DEBUG(__function__."($accOptions): Activate VM_accommodationOptions($accOptions)"); 
       $accOptions = VM_accommodationOptions($accOptions);
     }
     foreach($hut_data as $a_capacity=>$data){
@@ -519,7 +544,7 @@ function vm_compat_update_49_check_lease_aid($id){
 function vm_compat_update_49_convert_accommodationOptions($r,$ids,$id2xs,$a_id2remove){
   
   b_debug::xxx();
-  myPear::MESSAGE('id2xs='.implode(',',$id2xs));	
+    myPear::MESSAGE('id2xs='.implode(',',$id2xs));	
 
   $q = myPear_db()->qquery("SELECT lm_id,lm_key,lm_option FROM zzz_list_members LEFT JOIN zzz_lists ON lm_lid=l_id".
 			   " WHERE l_class = 'bList_vm_accommodationOptions' AND lm_option REGEXP '".join('|',$id2xs)."'", True);
@@ -547,8 +572,8 @@ function vm_compat_update_49_convert_accommodationOptions($r,$ids,$id2xs,$a_id2r
       if (0) var_dump(($matches=array_intersect($id2xs,array_keys($lm_option))),
 		      array_diff(array_keys($lm_option),$matches));
       myPear_db()->qquery("UPDATE zzz_list_members SET lm_option = '".serialize($lm_option)."' WHERE lm_id=$r[lm_id]",True);
-      myPear::MESSAGE($hut->name()."-$r[lm_key]; lm_option=".b_fmt::joinX(', ',$lm_option));
-      myPear::MESSAGE("matches=".join(', ',$matches));
+      //      myPear::MESSAGE($hut->name()."-$r[lm_key]; lm_option=".b_fmt::joinX(', ',$lm_option));
+      //      myPear::MESSAGE("matches=".join(', ',$matches));
     }
   }
   
@@ -589,18 +614,19 @@ function vm_compat_update_49_convert_accommodationOptions($r,$ids,$id2xs,$a_id2r
 /*
  *
  */
-function vm_compat_update_49_set($a_id,$a_name,$a_pay,$a_comment){
+function vm_compat_update_49_set($a_id,$a_name,$a_pay,$a_comment,$a_capacity){
   b_debug::xxx();
   locateAndInclude('bForm_vm_Lease');
   
-  // Match the option
+  // Set the "pay" option
   if (!empty($a_pay)){
     foreach(array_merge(VM::$pay_options,array(VM_default_lease_pay)) as $o){
       if (strpos($a_pay,$o) !== False) $pay_option = $o;
     }
     if (empty($pay_option)) b_debug::internalError("Unknown lease_option \"$a_pay\"");
     // Save it
-    bForm_vm_Lease::get_lease_options(array('lease_aid'=>$a_id),'set',array('pay'=>$pay_option));
+    $q = myPear_db()->qquery("SELECT lease_id FROM abs_leases WHERE lease_aid = $a_id");
+    while($r = myPear_db()->next_record($q)) bForm_vm_Lease::_set_who_pays($r['lease_id'],$pay_option);
   }
   
   foreach (array('a_name','a_comment') as $f){
@@ -670,8 +696,8 @@ function vm_compat_update_49_parser($r,&$table){
   
   // Sharable room
   $sharable = ($r['a_status'] == 'shared');
-  $a_name   = str_ireplace(AP_SHARABLE,'',$a_name);
-  $a_comment= str_ireplace(AP_SHARABLE,'',str_replace(array('A bed in','Double'),'',$a_comment));
+  $a_name   = str_ireplace('shared','',$a_name);
+  $a_comment= str_ireplace('shared','',str_replace(array('A bed in','Double'),'',$a_comment));
   
   // Cosmetics...
   $x = 'PAID BY THE TENANT';
@@ -748,8 +774,8 @@ function vm_compat_update_49_parser($r,&$table){
   }
   
   if ($sharable){
-    $name[] = AP_SHARABLE;
-    @$table[AP_SHARABLE][AP_SHARABLE]++;
+    $name[] = 'shared';
+    @$table['shared']['shared']++;
   }
 
   $was = $now = array();
@@ -1090,7 +1116,7 @@ function vm_compat_update_37(){
  * Strict MySQL fixes & other
  */
 function vm_compat_update_36(){
-  //  if (@$_SESSION[__FUNCTION__]++) return;
+  //  if (@$_SESSION[__function__]++) return;
 
   // Add visit policies default for the event.
   if (!myPear_db()->columnExists('e_v_policy','abs_events')){
@@ -1485,7 +1511,7 @@ function vm_compat_update_22(){
 }
 
 function vm_compat_update_21(){
-  myPear_db()->qquery("UPDATE abs_rooms SET a_status = '".AP_SHARABLE."' WHERE a_name REGEXP 'Shared'",1);
+  myPear_db()->qquery("UPDATE abs_rooms SET a_status = '".'shared'."' WHERE a_name REGEXP 'Shared'",1);
 }
 
 function vm_compat_update_20(){
@@ -1506,7 +1532,7 @@ function vm_compat_update_19(){
 }
 
 function vm_compat_update_18(){
-  if (!@$_SESSION[__FUNCTION__]++){
+  if (!@$_SESSION[__function__]++){
     foreach(array('hvzm'    =>VISIT_TYPE_OTHER,
 		  'eross'   =>VISIT_TYPE_OTHER,
 		  'larsam'  =>VISIT_TYPE_OTHER,
@@ -1555,7 +1581,7 @@ function vm_compat_update_18(){
 }
 
 function vm_compat_update_17(){
-  if (!@$_SESSION[__FUNCTION__]++){
+  if (!@$_SESSION[__function__]++){
     if (!myPear_db()->columnExists('v_group','abs_visits')){
       myPear_db()->query( "ALTER TABLE `abs_visits` ADD `v_group` VARCHAR( 32 ) NOT NULL AFTER `v_type`"); 
       myPear_db()->reset_cache();
@@ -1596,7 +1622,7 @@ function vm_compat_update_16(){
       if ($e_id=$r['um_status']){
 	VM_organizers($r['um_status'])->add_unitMember($r['um_avid']);
       }else{
-	b_debug::print_r($r,__FUNCTION__);
+	b_debug::print_r($r,__function__);
       }
     }
     $q = myPear_db()->query("DELETE FROM zzz_units WHERE u_id = '$u_id'");
@@ -1620,7 +1646,7 @@ function vm_compat_update_15(){
 }
 
 function vm_compat_update_14(){
-  if (!@$_SESSION[__FUNCTION__]++){
+  if (!@$_SESSION[__function__]++){
     if (myPear_db()->columnExists('e_admin_avid','abs_events')){
       myPear_db()->qquery("ALTER TABLE `abs_events` CHANGE `e_admin_avid` `e_endorser_avid` INT( 11 ) NULL DEFAULT NULL",1); 
       myPear_db()->reset_cache();

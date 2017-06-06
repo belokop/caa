@@ -56,7 +56,7 @@ class bHolder_vm_Visits extends bHolder_vm{
       $visit = myPear::getInstance_new('bForm_vm_Visit',$this->rec['v_id'],array('strict','fatal'));
       $this->Clashes[$visit->ID] = $c;
       $exp = $visit->getExp();
-      if ($visit->exp_arePayed() && (int)$exp->ID) $exp->unlock(); // reopen the clashing object
+      if ($visit->exp_arePaid() && (int)$exp->ID) $exp->unlock(); // reopen the clashing object
       $url = b_url::same("?form=vm_Visit&mode=RO&id=".$this->rec['v_id']);
     }
     foreach ($this->Clashes as $pear=>$cl) if (in_array($visit->ID,$cl) || $pear==$visit->ID) {

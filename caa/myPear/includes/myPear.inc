@@ -791,7 +791,7 @@ class myPear{
 
   static public function WARNING  ($text,$class=Null){ self::MESSAGE($text, $class, 'warning','WARNING'); }
 
-  static public function WARNING_T($text,$class=Null){ if (cnf_dev) self::MESSAGE($text, $class, 'SICK');  }
+  static public function WARNING_T($text,$class=Null){ if (cnf_localhost) self::MESSAGE($text, $class, 'SICK');  }
   
   static public function MESSAGE2 ($text,$class=Null){ self::MESSAGE($text, $class, 'message_bottom'); }
 

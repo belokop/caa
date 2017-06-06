@@ -6,40 +6,54 @@
 /*
  * Query VM database
  */
-function VM_query($where,$join_rooms='',$debug=False){
-  if (empty($where)) $where = array(1);
-  
-  if (empty($join_rooms))  $join_rooms = ''
-			     .'LEFT JOIN abs_leases ON lease_vid = v_id '
-			     .'LEFT JOIN abs_rooms ON a_id = lease_aid '
-			     .'LEFT JOIN abs_huts ON a_hutid = hut_id '
-			     .'LEFT JOIN abs_expenses ON v_id = exp_vid '
-			     // .'LEFT JOIN abs_offices  ON v_oid = o_id'
-			     ;
-  $query = "SELECT *,av_lastname AS name FROM abs_visits "
+function VM_query($where=array(1),$join_rooms=(' LEFT JOIN abs_leases ON v_id = lease_vid '
+					       .'LEFT JOIN abs_rooms ON a_id = lease_aid '
+					       .'LEFT JOIN abs_huts ON hut_id = a_hutid '
+					       // .'LEFT JOIN abs_expenses ON v_id = exp_vid '
+					       // .'LEFT JOIN abs_offices  ON v_oid = o_id'
+					       )){
+  //  $query = "SELECT * "
+  $query = "SELECT av_id,av_lastname,av_firstname,av_city,av_institute "
+    .",v_id,v_type,v_host_avid,v_start,v_end,v_avid,v_status,v_acc_wish,v_eid,v_projectid,v_accompaning,v_gsf "
+    .",e_id,e_policy,e_name,e_start,e_end,e_v_policy "
+    .(strpos($join_rooms,'abs_rooms')  === False ? "" : ",a_id,a_name,a_capacity ")
+    .(strpos($join_rooms,'abs_huts')   === False ? "" : ",hut_id,hut_name,hut_name,hut_code")
+    .(strpos($join_rooms,'abs_leases') === False ? "" : ",lease_id,lease_start,lease_end,lease_option,lease_aid ")
+    .(strpos($join_rooms,'abs_offices')=== False ? "" : ",o_id,o_name,o_capacity,o_phone ")
+    .(strpos($join_rooms,'abs_expenses')=== False ? "" : ",exp_closed,exp_currency,exp_id,exp_living,exp_other,exp_owner_avid,exp_perdiem,exp_travel,exp_vid")
+    ." FROM abs_visits "
     ." LEFT JOIN abs_events  ON v_eid = e_id "
     ." LEFT JOIN zzz_avatars ON v_avid = av_id "
     ." $join_rooms ";
-  
-  foreach(explode(',',str_ireplace(array('concat','(',')'),'',@$_GET['sBy'])) as $f){
+
+  // extract sql tables used
+  $tables = array('abs_visits','abs_events','zzz_avatars');
+  foreach(preg_split('/LEFT *JOIN| FROM /i',preg_replace('/.* FROM /i','',$query)) as $join){
+    $table = trim(preg_replace('/ .*/','',trim($join)));
+    if (!empty($table)) $tables[] = $table;
+  }
+
+  // check validity of ORDER BY  
+  $orderBy = explode(',',str_ireplace(array('concat','(',')'),'',@$_GET['sBy']));
+  foreach($orderBy as $f){
     $ok = False;
-    foreach(array('abs_leases',
-		  'abs_expenses',
-		  'abs_rooms',
-		  'abs_visits',
-		  'abs_events',
-		  'abs_huts',
-		  'zzz_avatars') as $t){
-      if (myPear_db()->columnExists($f,$t) && (strpos($query,$t) !== False)) $ok = True;
+    $f = trim($f); 
+    foreach($tables as $t){
+      if (myPear_db()->columnExists($f,$t)) $ok = True;
     }
     if (!$ok){
-      if(cnf_dev) myPear::DEBUG(__FUNCTION__."() - cancel sBy=$f");
-      $_GET['sBy'] = 'av_lastname';
+      myPear::DEBUG(__function__."() - cancel sBy=$f");
+      unset($orderBy[$f]);
     }
   }
-  $q = myPear_db()->qquery($sql = $query." WHERE ".preg_replace("/=\s?is null/i",' IS NULL',join(' AND ',$where))
-			   ." ORDER BY $_GET[sBy] ".@$_GET['sByDir'],
-			   $debug||cnf_dev);
+  if (empty($orderBy)) $orderBy = array('av_lastname');
+  $_GET['sBy'] = 'CONCAT('.join(',',$orderBy).')';
+
+  // do the query
+  $query = $query." WHERE ".preg_replace("/=\s?is null/i",' IS NULL',join(' AND ',$where)).
+    " ORDER BY $_GET[sBy] ".@$_GET['sByDir'];
+  $q = myPear_db()->qquery($query,cnf_dev);
+
   $GLOBALS['VM_query_num_rows'] = myPear_db()->num_rows($q);
   return $q; 
 }

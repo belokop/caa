@@ -36,7 +36,7 @@ class bForm_vm_Expenses extends bForm_vm{
    * Update the estimates (say, the rates are updated)
    */
   static public function _updateEstimates($parentID){
-    if (cnf_dev) myPear::DEBUG(__METHOD__."($parentID)");
+    if (cnf_dev) myPear::DEBUG(__method__."($parentID)");
     foreach (($pay_items=array_diff(array_keys(self::$pay_items),array('exp_other'),array('_exp_totalExpenses'))) as $item) $set[] = "${item}_est = 0";
     if ($parentID == myOrg_ID){
       // Get all guest visits which are not yet reimbursed
@@ -62,7 +62,7 @@ class bForm_vm_Expenses extends bForm_vm{
   }
   
   function __construct($id, $mode='RO') {
-    bTiming()->cpu(__FUNCTION__);
+    bTiming()->cpu(__function__);
     parent::__construct($id, $mode);
     if (@$_GET['blanks_once'] === 'yes') $this->getBlanketts('message');
     bTiming()->cpu();
@@ -227,19 +227,19 @@ class bForm_vm_Expenses extends bForm_vm{
     $this->hookVisit();
     
     // silently accept the fact ...
-    if ($payed=@$this->formDB['exp_perdiem']){
+    if ($paid=@$this->formDB['exp_perdiem']){
       $this->visit->setPolicy(VM_V_payPerdiem,True);
-      return ($showFormula ? ' - payed' : $payed);
+      return ($showFormula ? ' - paid' : $paid);
     }
     
-    $payed = @$this->getValue('exp_perdiem');
+    $paid = @$this->getValue('exp_perdiem');
     if ($this->visit->getPolicy(VM_V_payPerdiem)){
       list($perdiem,$trip) = $this->visit->reimbursementRates()->get_rates($this->visit->formDB);
       $perdiem_esmimation = $perdiem * ($n = $this->visit->nDays(True));
       if ($showDefaultOnly){
 	return $perdiem_esmimation;
       }else{
-	if ($payed)                          $formula = ' - payed';
+	if ($paid)                          $formula = ' - paid';
 	else                                 $formula = "($perdiem*$n=".$perdiem_esmimation.")";
 	return $this->get_estimation('exp_perdiem',$perdiem_esmimation,$showDefaultOnly,$formula,$showFormula);
       }
@@ -252,8 +252,8 @@ class bForm_vm_Expenses extends bForm_vm{
   function scholarshipT($showFormula=False,$showDefaultOnly=False){
     $this->hookVisit();
     
-    // Was the reimbursement payed already?
-    $payed = $this->getValue('exp_travel');
+    // Was the reimbursement paid already?
+    $paid = $this->getValue('exp_travel');
 
     if ($this->visit->getPolicy(VM_V_payTrip)){
       list($perdiem,$trip) = $this->visit->reimbursementRates()->get_rates($this->visit->formDB);
@@ -261,7 +261,7 @@ class bForm_vm_Expenses extends bForm_vm{
 	return $trip;
       }else{
 	$z = $this->visit->reimbursementRates()->tripCostFromResidentshipCountry;
-	if ($payed)    $formula = "payed";
+	if ($paid)    $formula = "paid";
 	elseif($z)     $formula = "$z[country_name]-".b_fmt::money($z['pay']);
 	else           $formula = "???";
 	return $this->get_estimation('exp_travel',@$z['pay'],$showDefaultOnly,$formula,$showFormula);
@@ -536,7 +536,7 @@ class bForm_vm_Expenses extends bForm_vm{
 		     ($this->visit->getValue('v_type',1) == VISIT_TYPE_RENT ? 'Invoice ' : 'Expences'),
 		     $dialog,
 		     array('d'=> 'update budget',
-			   //'i'=> ($this->exp_arePayed()?'i-lock':'i-dollar'),
+			   //'i'=> ($this->exp_arePaid()?'i-lock':'i-dollar'),
 			   'i'=> 'i-dollar',
 			   'l'=> b_url::same("?id=$this->ID&mode=RW&form=vm_Expenses&exp_vid=".$this->visit->ID)));
     $this->buttons_external[] = b_btn::submit('back to the visit', b_url::same(array('id'  => $this->visit->ID,
@@ -608,16 +608,16 @@ class bForm_vm_Expenses extends bForm_vm{
     }
   }
 
-  public static function _exp_arePayed($formDB){
+  public static function _exp_arePaid($formDB){
     $reply = (@$formDB['exp_closed'] === 'yes') || 
       ((@$formDB['exp_travel'] + @$formDB['exp_perdiem'] + @$formDB['exp_other']) > 0);
-    //    if (cnf_dev) myPear::DEBUG(@$formDB['id'].__FUNCTION__.'() '.x('em',var_export($reply,True)));
+    //    if (cnf_dev) myPear::DEBUG(@$formDB['id'].__function__.'() '.x('em',var_export($reply,True)));
     return $reply;
   }
   
-  function exp_arePayed($lock=Null){
+  function exp_arePaid($lock=Null){
     $this->hookVisit();
-    $reply = self::_exp_arePayed(array('id'        => $this->visit->__toString().'->',
+    $reply = self::_exp_arePaid(array('id'        => $this->visit->__toString().'->',
 				       'exp_closed'=> $this->getValue('exp_closed'),
 				       'exp_travel'=> $this->getValue('exp_travel'),
 				       'exp_perdiem'=>$this->getValue('exp_perdiem'),
@@ -631,7 +631,7 @@ class bForm_vm_Expenses extends bForm_vm{
    */
   private $isWritable = Null;
   function isWritable(){
-    bTiming()->cpu(__FUNCTION__);
+    bTiming()->cpu(__function__);
     $this->hookVisit();
     $this->visit->hookEvent();
     if ($this->isWritable === Null) $this->isWritable = (bool)b_cnf::check_conditions(array('default' => $this->visit->isWritable()),

@@ -472,9 +472,9 @@ class b_fmt{
     if (empty($text))  return '';
     if     (is_object($text)) $text = $text->__toString();
     elseif (is_array($text))  $text = 'array('.join(',',$text).')';
-    return "<span class='$color'>".trim($text)."</span>"; 
+    return '<span class='.$color.'>'.trim($text).'</span>'; 
   }
-
+  
 
   /*
    * Populate the jQuery accordion:
@@ -1559,88 +1559,87 @@ class b_debug{
       if (self::$starting_exiting = ($s_e_s || $s_e_e)){
 	if ($s_e_e) self::$s_e_depth--;
 	$toPrint = True;
-	$color = 'fuchsiaText';
 	$color = 'orangeText';
       }
     }
     
     if (!self::$starting_exiting){
-    // Object
-    if (is_object($text)) $text = (method_exists($text,'__toString')
-				   ? $text->__toString()
-				   : "Object ".get_class($text));
-    
-    switch(func_num_args()){
-    case 0:
-      $flags = $default_flags;      // no arguments, mark a function entry point
-      $text = ' ';
-      break;
-
-    case 1:
-      $flags = array_merge($default_flags,array(True)); // always print 
-      break;
-
-    case 2:
-    default:
-      if(empty($flags))      $flags = $default_flags;  
-      if(!is_array($flags))  $flags = array_merge($default_flags,array($flags)); 
-    }
-
-    if (!is_array($flags)) self::internalError('xxx');
-
-    $text = b_fmt::_($text);
-    foreach($flags as $k => $item){
-      if ($k === 'name'){
-	$class  = $item;
-      }elseif(is_bool($item)){     
-	$toPrint = (bool)$item; 
-      }elseif(is_numeric($item)){
-	$level  = (int)$item;
-      }elseif(is_object($item)){             
-	$class  = $item;
-      }elseif(is_string($item)){
-	switch(strToUpper($item)){
-	case 'DB':
-	  $stringFormat = 'DB';
-	  break;
-	case 'I': // Instance
-	  $stringFormat = 'I';
-	  if ($toPrint===Null) $toPrint = cnf_show_i;
-	  $level = 2;
-	  break; 
-	case 'C': // configuration - options, variables
-	  $stringFormat = 'C';
-	  if ($toPrint===Null) $toPrint = (bool)@$_GET['showc'] || (bool)@$_SESSION[CONST_cnfOptions]['showc'];
-	  $level = 2;
-	  $color='maroonText';
-	  break;
-	case 'L': // Load &  require
-	  $stringFormat = 'L';
-	  if ($toPrint===Null) $toPrint = cnf_show_l;
-	  break;
-	case 'T': // Just the text, no calling sequence
-	  $stringFormat = 'Text';
-	  break;
-	case 'AA': // APIaccess debug
-	  $stringFormat = 'AA';
-	  if ($toPrint===Null) $toPrint = cnf_show_a;
-	  if (!isset($level))    $level = 2;
-	  break;
-	case 'N': // nordita module debug
-	  if ($toPrint===Null) $toPrint = (bool)b_cnf::get('nordebug');
-	case 'M': // menu debug
-	  $stringFormat = 'M';
-	case 'A': // menu access debug
-	  if (!isset($stringFormat)) $stringFormat = 'A';
-	  if ($toPrint===Null) $toPrint = cnf_show_m;
-	  if (!isset($level))    $level = 2;
-	  break;
-	default: // color or level
-	  if (($n=(int)$item)>0 && (string)$n===$item)  $level = $n; 
-	  elseif (!empty($item)) $color  = $item;
+      // Object
+      if (is_object($text)) $text = (method_exists($text,'__toString')
+				     ? $text->__toString()
+				     : "Object ".get_class($text));
+      
+      switch(func_num_args()){
+      case 0:
+	$flags = $default_flags;      // no arguments, mark a function entry point
+	$text = ' ';
+	break;
+	
+      case 1:
+	$flags = array_merge($default_flags,array(True)); // always print 
+	break;
+	
+      case 2:
+      default:
+	if(empty($flags))      $flags = $default_flags;  
+	if(!is_array($flags))  $flags = array_merge($default_flags,array($flags)); 
+      }
+      
+      if (!is_array($flags)) self::internalError('xxx');
+      
+      $text = b_fmt::_($text);
+      foreach($flags as $k => $item){
+	if ($k === 'name'){
+	  $class  = $item;
+	}elseif(is_bool($item)){     
+	  $toPrint = (bool)$item; 
+	}elseif(is_numeric($item)){
+	  $level  = (int)$item;
+	}elseif(is_object($item)){             
+	  $class  = $item;
+	}elseif(is_string($item)){
+	  switch(strToUpper($item)){
+	  case 'DB':
+	    $stringFormat = 'DB';
+	    break;
+	  case 'I': // Instance
+	    $stringFormat = 'I';
+	    if ($toPrint===Null) $toPrint = cnf_show_i;
+	    $level = 2;
+	    break; 
+	  case 'C': // configuration - options, variables
+	    $stringFormat = 'C';
+	    if ($toPrint===Null) $toPrint = (bool)@$_GET['showc'] || (bool)@$_SESSION[CONST_cnfOptions]['showc'];
+	    $level = 2;
+	    $color='maroonText';
+	    break;
+	  case 'L': // Load &  require
+	    $stringFormat = 'L';
+	    if ($toPrint===Null) $toPrint = cnf_show_l;
+	    break;
+	  case 'T': // Just the text, no calling sequence
+	    $stringFormat = 'Text';
+	    break;
+	  case 'AA': // APIaccess debug
+	    $stringFormat = 'AA';
+	    if ($toPrint===Null) $toPrint = cnf_show_a;
+	    if (!isset($level))    $level = 2;
+	    break;
+	  case 'N': // nordita module debug
+	    if ($toPrint===Null) $toPrint = (bool)b_cnf::get('nordebug');
+	  case 'M': // menu debug
+	    $stringFormat = 'M';
+	  case 'A': // menu access debug
+	    if (!isset($stringFormat)) $stringFormat = 'A';
+	    if ($toPrint===Null) $toPrint = cnf_show_m;
+	    if (!isset($level))    $level = 2;
+	    break;
+	  default: // color or level
+	    if (($n=(int)$item)>0 && (string)$n===$item)  $level = $n; 
+	    elseif (!empty($item)) $color  = $item;
+	  }
 	}
       }
-    }
     }
 
     if ($toPrint || cnf_debug){    
@@ -3084,7 +3083,8 @@ class b_timing{
 			      'transaction',
 			      'locateAndInclude','load_located_file',
 			      'getValue','getMembers','getMember','get_memberInfo','getButton',
-			      'qSELECT','qNEXT','qUPDATE','qALTER','qINSERT');
+			      'qSELECT*','qSELECTx','qNEXT','qUPDATE','qALTER','qINSERT',
+			      'outOfScope','e_ID');
     
     if ($this->doTheWork && !empty($this->cpus)){
       $tt = new b_table();      $tt->tro(); $tt->tdo();
@@ -3669,7 +3669,6 @@ class b_url{
     // Workaround for D8
     if (HOSTED_BY_CMS_vrsn == 8) $reply = D8::compat($_GET['q']).$reply;
     $reply .= $anchor;
-    if ($anchor) b_debug::xxx($reply);
     return $reply; 
   }
   
