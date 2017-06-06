@@ -1055,14 +1055,18 @@ class bForm extends myPear_getValue{
     if (empty($values)) $values = array();
     $selected = $this->getValue($name,True);
     if (!$selected) $selected = @$values['default'];
+    $select_what = (empty($values['<select>'])
+		    ? ''
+		    : $values['<select>'].' ');
+    unset($values['<select>'],$values['<default>']);
     if (!$this->isRO($name,$onlyRW)){
       $s = array();
       if (!empty($values)){
-	if (!$selected)                    $s[] = x("option value='NULL' selected","<-- select -->");
-	elseif (empty($values[$selected])) $s[] = x("option value='$selected' selected",$selected); // strictly speaking this is not correct...
+	if (!$selected)                     $s[] = x("option value='NULL' selected","<-- select ${select_what}-->");
+	elseif (empty($values[$selected]))  $s[] = x("option value='$selected' selected",$selected); // strictly speaking this is not correct...
 	foreach ($values as $k=>$v){ 
-	  if(strstr($k,'separator'))$s[] = x("option value='' disabled='disabled' class='select_separator'",'');
-	  elseif($k != 'default')   $s[] = x("option value='$k'".($selected==$k?" selected='selected'":''), $v);
+	  if(strpos($k,'separator')!==False)$s[] = x("option value='' disabled='disabled' class='select_separator'",'');
+	  elseif($k != 'default')           $s[] = x("option value='$k'".($selected==$k?" selected='selected'":''), $v);
 	}
       }
       if (preg_match("/class='(.*)'/",$extras,$m)){

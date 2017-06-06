@@ -1537,7 +1537,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
 				   ? x('em',join(',',VM_cotenants()->get_cotenants($this->rec['lease_id'],False,'names')))
 				   : x('em',bForm_vm_Lease::select_cotenant('_c_id:',
 									    $this->rec,
-									    (VM::hasRightTo('book_ah')&&time()<$this->rec['e_end']?'auto':'RO'),
+									    (VM::hasRightTo('book_ah')&&time()<$this->rec['e_end']?'if_empty':False),
 									    $this->anchor(True))))
 				: '');
       $this->rec['cotenant'] .= bForm_vm_Lease::select_who_pays('_p_id:',
@@ -2199,14 +2199,14 @@ class bHolder_vm_Visitors extends bHolder_vm{
    * Return the anchor of the PREVIOUS record
    */
   private $counter = 0;
-  private function anchor($rec=array()){
+  private function anchor($true_anchor=False){
     static $anchor = 'content', $anchor_was = '';
     $true_anchor = False;
     $anchor_now = trim(str_replace(array(' ','-'),'',bForm_Avatar::_fmtName('fl',(is_array($rec)
 										  ? $rec
 										  : $this->rec),
 									    False)));
-    if (is_array($rec)) return $anchor_now;
+    if (!empty($true_anchor)) return $anchor_now;
 
     if (empty($anchor_was)) $anchor_was = $anchor_now;
     if ($true_anchor){
@@ -2236,7 +2236,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
 							 'c'=>'only_online')));
     if ($a !== array('','') || 
 	$b !== array('','') ||
-	$c !== array('','')) $this->t->extraTD['anchor'] = $this->anchor($this->rec);
+	$c !== array('','')) $this->t->extraTD['anchor'] = $this->anchor();
   }
   
   /*

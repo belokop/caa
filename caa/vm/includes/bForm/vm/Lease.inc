@@ -277,7 +277,10 @@ class bForm_vm_Lease extends bForm_vm{
 	    myPear::DEBUG("$debug k = $k o=$o text=".$reply[$o]);
 	  }
 	}
-	if (!empty($reply)) $reply[VM_default_lease_pay] = b_fmt::redText("Room paid by ".myOrg_nameS,$color);
+	if (!empty($reply)){
+	  $reply[VM_default_lease_pay] = b_fmt::redText("Room paid by ".myOrg_nameS,$color);
+	  $reply['<select>'] = 'who pays';
+	}
       }else{
 	// RO mode
 	$pay = self::get_lease_options($args,'get_pay');
@@ -1351,6 +1354,7 @@ class bForm_vm_Lease extends bForm_vm{
     if (empty($hut_code)){
       if ($hasAccommodation) $reply[LODGING_RM] = LODGING_RM_TXT;
       if ($event_context) foreach($accommodationOptions->get_BI() as $k=>$v) $reply[$k] = $v;
+      if (!empty($reply)) $reply['separator1'] = '';
     }
 
     // Populate the reply with non-overbooked rooms
@@ -1382,6 +1386,7 @@ class bForm_vm_Lease extends bForm_vm{
       $reply[$a_id] = bForm_vm_Room::_a_name($rec,True);
       self::_dbg(b_fmt::redText("FORCED ACCEPT (lease exists) ".$reply[$a_id]));
     }
+    if (!empty($reply)) $reply['<select>'] = 'accommodation';
 
     self::_dbg("reply=".join(',&nbsp;',array_values($reply)),__function__,array($accommodationOptions,$hut_code));
     bTiming()->cpu();
@@ -1481,7 +1486,7 @@ class bForm_vm_Lease extends bForm_vm{
   /*
    *
    */
-  public static function select_cotenant($name,$recP,$MODE='auto',$anchor=''){
+  public static function select_cotenant($name,$recP,$RW,$anchor=''){
     locateAndInclude('bForm_vm_Room');
     
     $rec = (is_object($recP)
@@ -1498,13 +1503,11 @@ class bForm_vm_Lease extends bForm_vm{
     
     $cotenants = VM_cotenants()->get_cotenants($lease_id);
     
-    $RW = False;
     if (!is_object($recP) && (!empty($cotenants) || self::get_lease_options($rec,VM_no_cotenants))){
+      // The cotenant can't be changed in the "applicants list", this would be too messy
       $RW = False;
-    }elseif ($MODE === 'auto' && empty($cotenants)){
+    }elseif ($RW === 'if_empty' && empty($cotenants)){
       $RW = True;
-    }elseif (is_bool($MODE)){
-      $RW = $MODE;
     }
 
     myPear::DEBUG(__method__."($lease_id): RW = ".var_export($RW,True));
@@ -1530,6 +1533,7 @@ class bForm_vm_Lease extends bForm_vm{
 	  }
 	}
       }
+      if (!empty($candidates)) $candidates['<select>'] = 'cotenant';
       
       // $debug = (empty($candidates) ? $x=array('empty...') : $candidates);
       // b_debug::print_r($debug,"candidates for ".bForm_Avatar::_fmtName('Lf',$rec).' '.b_time::period($rec['lease_start'],$rec['lease_end']));
