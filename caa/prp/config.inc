@@ -2,7 +2,7 @@
 
 $releaseDate = '2017-06-10';
 define('PRP_MODULE'   , 'prp');
-define('PRP_VERSION','5.2.10');
+define('PRP_VERSION','5.2.11');
 
 define('PRP_OK'          , 'ok');
 define('PRP_CANCELED'    , 'canceled');
@@ -65,8 +65,20 @@ class PRP extends myPear{
   static public function _MENU()         { return self::_fromCache('APImenu_prp'); } 
 
   static public function _HOLDER()       { return self::_fromCache('bHolder_prp_preprints'); } 
-
+  
+  static function valid_extension($name){
+    static $valid_extensions = array('zip','tex','tar','ps','gz','pdf','doc','jpg');
+    if (empty($name) ||
+	(stripos($name,'http:/')  !== False) ||
+	(stripos($name,'https:/') !== False)) return False;
+    if (!($reply = preg_match('/\.('.join('|',$valid_extensions).')/i',trim($name)))){
+      myPear::WARNING("File name \"$name\" is not valid, ".
+		      "valid file extensions are<br/>".join(', ',$valid_extensions));
+    }
+    return $reply;
+  }
 }
+
 
 function PRP_access(){
   static $_ACCESS = Null;

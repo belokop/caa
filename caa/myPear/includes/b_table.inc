@@ -447,7 +447,7 @@ class b_table_zebra extends b_table {
 			 : "align_left");
 	}
 	//	if (is_array($this->class[$k])) 	var_dump($this->class[$k]);
-	if (is_array($this->class[$k])) $this->class[$k] = join(' ',$this->class[$k]);
+	if (is_array(@$this->class[$k])) $this->class[$k] = join(' ',$this->class[$k]);
 	$css_style = ($css=@$this->css[$k]['style']) ? " style='$css'" : '';
 	$css_class = ($cls=@$this->class[$k])        ? " $cls" : '';
 

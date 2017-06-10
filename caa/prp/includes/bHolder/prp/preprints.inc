@@ -188,8 +188,11 @@ class bHolder_prp_preprints extends bHolder{
      return $header; 
    }
 
+   /*
+    *
+    */
    private function href($title){
-     if (preg_match('/\.(gz|pdf|doc)$/',($l=trim($this->rec['prp_archive'])))){
+     if (PRP::valid_extension($l=trim($this->rec['prp_archive']))){
        $reply = (file_exists($l)
 		 ? x("a href='$l'",$title)
 		 : $title);

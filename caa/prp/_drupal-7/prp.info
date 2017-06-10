@@ -5,4 +5,4 @@ core = 7.x
 stylesheets[all][] = css/preprints.css
 dependencies[] = myPear
 dependencies[] = ea
-version = 7.x-5.2.10
+version = 7.x-5.2.11
