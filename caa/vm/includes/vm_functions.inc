@@ -36,22 +36,21 @@ function VM_query($where=array(1),$join_rooms=(' LEFT JOIN abs_leases ON v_id = 
   // check validity of ORDER BY  
   $was = $orderBy = explode(',',str_ireplace(array('concat','(',')'),'',@$_GET['sBy']));
   foreach($orderBy as $f){
-    $ok = False;
     $f = trim($f); 
+    $ok = False;
     foreach($tables as $t){
-      if (myPear_db()->columnExists($f,$t)) $ok = True;
+      if (myPear_db()->columnExists($f,$t)) { $ok = True; break; }
     }
     if (!$ok){
-      myPear::DEBUG(__function__."() - cancel sBy=$f");
+      b_debug::_debug("cancel sBy=$f");
       unset($orderBy[$f]);
     }
   }
-  if (empty($orderBy)) $orderBy = array('av_lastname');
   // remove "concat", it does crazy things...
   $_GET['sBy'] = join(',',$orderBy);
 
   // do the query
-  $query = $query." WHERE ".preg_replace("/=\s?is null/i",' IS NULL',join(' AND ',$where))." ORDER BY $_GET[sBy] ".@$_GET['sByDir'];
+  $query = $query." WHERE ".preg_replace("/=\s?is null/i",' IS NULL',join(' AND ',$where)).(($sBy=trim($_GET['sBy'])) ? " ORDER BY $sBy ".@$_GET['sByDir'] : "");;
   $q = myPear_db()->qquery($query,cnf_dev);
   $GLOBALS['VM_query_num_rows'] = myPear_db()->num_rows($q);
   return $q; 
