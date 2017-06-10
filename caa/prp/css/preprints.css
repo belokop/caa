@@ -1,0 +1,14 @@
+.prp_serial{
+   background: transparent;
+   text-align: left !important; 
+   font-weight: bold;
+   white-space: nowrap !important; 
+}
+
+.prp_authors{
+   font-style: italic;
+}
+
+.prp_title{
+   font-weight: bold;
+}

@@ -33,9 +33,9 @@ class myPear_base{
     //if (stripos(get_class($this),'Visit') !== False)    b_debug::watchDog(@$this->isRO['v_status'],$this);
     //    b_debug::watchDog($_REQUEST['vm_eventSelector']);
     //    b_debug::watchDog($this->errorsInTheForm, $this);
-    $x=b_cnf::get('from_bForm');  if (class_exists('b_debug',0)) b_debug::watchDog($x,'from_bForm');
-    $x=b_cnf::get('from_bList');  if (class_exists('b_debug',0)) b_debug::watchDog($x,'from_bList');
-
+    //    $x=b_cnf::get('from_bForm');  if (class_exists('b_debug',0)) b_debug::watchDog($x,'from_bForm');
+    //    $x=@$this->rec['lease_option'];  if (class_exists('b_debug',0)) b_debug::watchDog($x,'lease_option');
+    
     switch(func_num_args()){
     case 0: 
       return b_debug::xxx(' ',  array(3,$this, (bool)($this->debug||self::$_debug), $this->dbg_color));
@@ -51,5 +51,4 @@ class myPear_base{
       return b_debug::xxx($arg1,array(3+$arg3, $this, (bool)($arg2 || $this->debug || self::$_debug), $this->dbg_color));
     }
   }
-    
 }

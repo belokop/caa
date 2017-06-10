@@ -446,7 +446,8 @@ class b_table_zebra extends b_table {
 			 ? "align_right"
 			 : "align_left");
 	}
-	if (!empty($this->class[$k]) && is_array($this->class[$k])) $this->class[$k] = join(' ',$this->class[$k]);
+	//	if (is_array($this->class[$k])) 	var_dump($this->class[$k]);
+	if (is_array($this->class[$k])) $this->class[$k] = join(' ',$this->class[$k]);
 	$css_style = ($css=@$this->css[$k]['style']) ? " style='$css'" : '';
 	$css_class = ($cls=@$this->class[$k])        ? " $cls" : '';
 
@@ -458,7 +459,7 @@ class b_table_zebra extends b_table {
 	}else{
 	  $cs = '';
 	}
-	$this->td($cell, "$cs class=b_table-zebra$this->BGcode $highlight $text_align$css_class" . $css_style);
+	$this->td($cell, "$cs class=b_table-zebra$this->BGcode $highlight ".$text_align.$css_class.$css_style);
       }
 
       if (empty($this->extraTD))   $this->extraTD = array();

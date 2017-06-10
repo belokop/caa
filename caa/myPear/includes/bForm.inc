@@ -98,7 +98,8 @@ class bForm extends myPear_getValue{
      */
     if ((strpos($id,'=') !== False) || (stripos($id,'REGEXP')!==False)){
       $q = myPear_db()->query("SELECT ".$this->TABLEID." FROM $this->TABLE WHERE $id");
-      if (($n=myPear_db()->num_rows($q)) > 1) myPear::WARNING_T("Found $n records",$this);
+      if (($n=myPear_db()->num_rows($q)) > 1) myPear::WARNING_T("Found $n records <br>".
+								"SELECT ".$this->TABLEID." FROM $this->TABLE WHERE $id",$this);
       while ($r=myPear_db()->next_record($q)) $this->ID = $r[$this->TABLEID];
       if (empty($this->ID)) $this->ID = 'new';
     }else{
@@ -312,7 +313,7 @@ class bForm extends myPear_getValue{
     if (!empty($this->submitOnChange[$name])){
       if ($type != 'change') $r[] = "onclick='submit()'";
       $r[] = "onchange='submit()'";
-      $r[] = "class='page-load-progress $class'";
+      $r[] = "class='form-submit $class'";
       $reply = join(' ',$r);
     }else{
       $reply = (empty($class) ? "" : "class='$class'");
@@ -1055,16 +1056,17 @@ class bForm extends myPear_getValue{
     if (empty($values)) $values = array();
     $selected = $this->getValue($name,True);
     if (!$selected) $selected = @$values['default'];
-    $select_what = (empty($values['<select>'])
+    $select_what = (empty($values['<select_name>'])
 		    ? ''
-		    : $values['<select>'].' ');
-    unset($values['<select>'],$values['<default>']);
+		    : $values['<select_name>'].' ');
+    unset($values['<select_name>'],$values['<default>']);
     if (!$this->isRO($name,$onlyRW)){
       $s = array();
       if (!empty($values)){
 	if (!$selected)                     $s[] = x("option value='NULL' selected","<-- select ${select_what}-->");
 	elseif (empty($values[$selected]))  $s[] = x("option value='$selected' selected",$selected); // strictly speaking this is not correct...
 	foreach ($values as $k=>$v){ 
+	  $v = strip_tags($v);
 	  if(strpos($k,'separator')!==False)$s[] = x("option value='' disabled='disabled' class='select_separator'",'');
 	  elseif($k != 'default')           $s[] = x("option value='$k'".($selected==$k?" selected='selected'":''), $v);
 	}

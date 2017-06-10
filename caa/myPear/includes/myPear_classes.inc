@@ -188,8 +188,8 @@ class b_btn{
 	       bIcons()->get('32-phone2').' '.$text.
 	       x("form method='post' enctype='multipart/form-data' name='confirmator'",
 		 (join("\n",array(join("\n",$hd),
-				  "<input type='submit' class='page-load-progress' name='$act_confirmation' value='yes'>",
-				  "<input type='submit' class='page-load-progress' name='$act_confirmation' value='no'>")))));
+				  "<input type='submit' class='form-submit' name='$act_confirmation' value='yes'>",
+				  "<input type='submit' class='form-submit' name='$act_confirmation' value='no'>")))));
       if ($printQuestion) print  $txt;
       else                return $txt;
     }
@@ -200,7 +200,7 @@ class b_btn{
    * Raison d'être - to have multiple submit buttons in the form, not all of them "parts" of the <form>
    */
   static function submit($text, $url='', $confirm=False, $class='', $img=''){
-    $style = sprintf("style='padding:1px; font-size:small;' class='%s page-load-progress'",$class);
+    $style = sprintf("style='padding:1px; font-size:small;' class='%s form-submit'",$class);
     list($img,$type)= (!empty($img)
 		       ? array("src='$img'", 'image')
 		       : array('',           'submit'));
@@ -229,7 +229,7 @@ class b_btn{
     $text_action = strip_tags($text_action);
     return x("span class='only_online'",
              x("a href='$url'".($confirm ? " onClick='return confirm(\"Really $text_action?\");'" : ""),
-	       bIcons()->get(array('i'=>$icon,'d'=>$text_action,'class'=>"page-load-progress $min100"))));
+	       bIcons()->get(array('i'=>$icon,'d'=>$text_action,'class'=>"form-submit $min100"))));
   }
 
   /*
@@ -283,7 +283,7 @@ class b_btn{
     }
 
     // Optionally confirm the request
-    if (is_bool($img) && ($confirm = $img)) $onclick = "class='page-load-progress' title='$text' onclick='return submitConfirm(this);'"; 
+    if (is_bool($img) && ($confirm = $img)) $onclick = "class='form-submit' title='$text' onclick='return submitConfirm(this);'"; 
     
     if (strpos($url,'?') === 0) $url = b_url::repack($url); 
     return x("span class='only_online'","<a class='mypear_a' ".@$onclick." href='$url'>$button</a>");
@@ -877,15 +877,14 @@ class b_fmt{
       if (is_array($v))    $v = b_fmt::join($v);
       elseif(is_object($v))$v = get_class($v);
       else                 $v = trim($v);
-      switch($isArrayAssociative){
-      case True:
+      if($isArrayAssociative){
 	if (in_array($k,array('password','pwd'))) $v = 'x';
 	if    ($glue2==':')   $item = "$k: $v";
 	elseif($glue2==' ')   $item = "$k  $v";
+	elseif($k=='')        $item = "$glue2$v$glue2";
 	else                  $item = "$k$glue3$glue2$v$glue2";
 	$aa[] = $item;
-	break;
-      case False:
+      }else{
 	$aa[] = $v;
       }
     }
@@ -1677,6 +1676,87 @@ class b_debug{
   } 
   
   /*
+   * Another debug facility
+   */
+  private static function parse_line($call,$class=Null){
+    $max_a_m = 3; // number of array elements to parse
+    $max_s_l = 30;// maximal string length 
+    
+    // Parse arguments
+    $args = array();
+    foreach($call['args'] as $arg){
+      if (is_object($arg)){
+	$arg = $arg->__toString();
+      }elseif(is_array($arg)){
+	if (empty($arg)){
+	  $arg = '[]';
+	}else{
+	  $ids = preg_grep('/_id$/',array_keys($arg)); 
+	  $a=array();
+	  foreach($ids as $x_id) if (count($a)<$max_a_m) $a[$x_id]=$arg[$x_id];
+	  if (empty($a)) foreach($arg as $k=>$v){ if(count($a)>$max_a_m)break; if (b_fmt::isArrayAssociative($arg)){ $a[$k] = $v;}else{$a[] = $v;}}
+	  if (count($a) < count($arg)) $a[''] = '...';
+	  $arg = sprintf('&#91;%s&#93;',b_fmt::joinX(',',$a));
+	}
+      }elseif(is_numeric($arg)){
+	// keep as is
+      }elseif(is_string($arg) || is_bool($arg) || is_numeric($arg)){
+	$arg = var_export(mb_strcut($arg,0,$max_s_l),True);
+      }else{
+	var_dump($arg);
+	$arg = var_export($arg,True);
+      }
+      $args[] = $arg;
+    }
+    
+    $reply = sprintf("%s%s%s%s(%s)",
+		     (($c=@$call['class']) ? str_replace(array('bList_','bUnit_','bForm_'),'',$c) : ''),
+		     (is_object($class) ? x('(',@$class->ID) : ''),
+		     (($t=@$call['type']) ? $t : ''),
+		     $call['function'],
+		     join(', ',$args));
+    return $reply;
+  }
+
+  /*
+   *
+   */
+  public static function _debug($txt='',$mode=1){
+
+    if (!cnf_dev) return;
+    
+    // extract the parameters
+    if (!is_array($mode)) $mode = array($mode);
+    list($level,$color,$class) = array(1,'blueText',Null);
+    foreach($mode as $m){
+      if    (is_numeric($m)) $level = $m;
+      elseif(is_string($m))  $color = $m;
+      elseif(is_object($m))  $class = $m;
+    }
+    
+    $calls = debug_backtrace(False,$level+1);
+    myPear::DEBUG(b_fmt::redText(self::parse_line($calls[$level],$class).': '.x('em',$txt),$color));
+  }
+
+  /*
+   *
+   */
+  static function traceBack($id='',$object=Null,$ignore_args=False){
+    $tb = array(x('strong',(empty($id) ? 'TraceBack:' : $id)));
+    ob_start();
+    $calls = debug_backtrace(False);
+    $t = new b_table_zebra(array('n'=>'','b'=>'','l'=>''));
+    $t->showLineCounter = False;
+    foreach($calls as $k=>$call) $t->prt(array('n'=>x('code class=smallerText',"$k"),
+					       'b'=>x('code class=smallerText',self::parse_line($call)),
+					       'l'=>x('code class=smallerText',preg_replace(';(.*/caa|'.trim(`pwd`).')/;','',@$calls[$k]['file'].'#'.@$calls[$k]['line']))));
+    $t->close();
+    $tb[] = ob_get_contents();
+    ob_end_clean();
+    myPear::DEBUG(join('<br>',$tb));
+  }
+  
+  /*
    * Unrecoverable error, stop the processing
    */
   public static $_internalError = 0;
@@ -1873,14 +1953,16 @@ class b_debug{
   /*
    * Print php back_trace in the "debug" section
    */
-  static function traceBack($id='',$object=Null,$ignore_args=False){
+  static function traceBack_OBSOLETE($id='',$object=Null,$ignore_args=False){
     if (cnf_CLI){
       print "\n".self::getTraceBack(False,$ignore_args)."\n";
       return;
     }
-    if (!defined('cnf_dev') || !defined('YBhere') || (!cnf_dev && !YBhere)) return;
-    elseif(b_cnf::get('nodrupal')) print      self::getTraceBack();
-    else{
+    if (!defined('cnf_dev') || !defined('YBhere') || (!cnf_dev && !YBhere)){
+      return;
+    }elseif(b_cnf::get('nodrupal')){
+      print self::getTraceBack();
+    }else{
       if (empty($id)) $id = 'TraceBack:';
       myPear::DEBUG(x('strong',$id).'<br/>'.		    
 		    self::getTraceBack(True,$ignore_args));
@@ -1925,7 +2007,7 @@ class b_debug{
   /*
    *
    */
-  public static function getTraceBack($cutLongStrings=False,$ignore_args=False){
+  public static function getTraceBack($cutLongStrings=True,$ignore_args=False){
     ob_start();
     if ($ignore_args)  debug_print_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
     else               debug_print_backtrace();
@@ -1938,7 +2020,7 @@ class b_debug{
 			   '/\]$/'        =>'</td><td></td></tr>',
 			   '/^#(\d*) /'   =>'<tr><td class="traceback align-right">\\1 - </td><td>',
 			   '/called at ./'=>'</td><td>',
-			   );		  
+			   );
       $srv = trim(dirname(dirname(dirname(__FILE__))));
       foreach(explode("\n",$trace) as $line){
 	foreach(array('call_user_func_array',
@@ -1950,12 +2032,12 @@ class b_debug{
 				str_replace("$srv/",'',
 					    str_replace(getcwd(),'&lt;cwd&gt',$line)));
       }
-      if ($cutLongStrings){
+      if (True||$cutLongStrings){
 	$lines_cut = array(); 
 	foreach($lines as $line){
 	  $line_cut = array();
 	  foreach(explode('</td><td>',$line) as $l) $line_cut[] .= (strpos($l,'<') === False
-								    ? b_fmt::strcut($l, 60, '...')
+								    ? b_fmt::strcut($l, 100, '...')
 								    : $l);
 	  $lines_cut[] = implode('</td><td>',$line_cut);
 	}

@@ -173,11 +173,10 @@ class bHolder_vm_Visitors extends bHolder_vm{
       //
       switch($sendmail_once=$_GET['sendmail_once']){
       case 'send':
-	myPear::DEBUG("sendmail_once='$sendmail_once'",$this);
+	b_debug::_debug("sendmail_once='$sendmail_once'",$this);
 	break;
       default:
-	myPear::DEBUG("sendmail_once='$sendmail_once'... What to do???",$this);
-	
+	b_debug::_debug("sendmail_once='$sendmail_once'... What to do???",$this);
       }
     }
   }
@@ -441,8 +440,8 @@ class bHolder_vm_Visitors extends bHolder_vm{
       }elseif($p = preg_grep('/_c_id:\d+$/',array_keys($_POST))){
 	// The co-tenant is selected, create an entry in bList_vm_cotenants
 	list($id,$lease_id) = explode(':',$p[0],2);
-	VM_cotenants()->set_cotenants(array($_POST[$p[0]],
-					    $lease_id));
+	VM_cotenants()->set_cotenants(array_merge(explode(',',$_POST[$p[0]]),
+						  array($lease_id)));
       }elseif($p = preg_grep('/_p_id:(\d+)$/',array_keys($_POST))){
 	// The "who pays" is selected, create an entry 
 	list($id,$lease_id) = explode(':',$p[0],2);
@@ -1542,7 +1541,6 @@ class bHolder_vm_Visitors extends bHolder_vm{
 				: '');
       $this->rec['cotenant'] .= bForm_vm_Lease::select_who_pays('_p_id:',
 								$this->rec,
-								(VM::hasRightTo('book_ah')&&time()<$this->rec['e_end']?'RW':'RO'),
 								$this->anchor(True));
       
       if ($this->av) $this->rec['name'] = $this->rec['_e_name'];
@@ -1871,25 +1869,25 @@ class bHolder_vm_Visitors extends bHolder_vm{
     if (!isset($cache[$say])){
       switch($say){
       case 'Y':       // pending visit
-	return bIcons()->getButton(array('class'=>'page-load-progress',
+	return bIcons()->getButton(array('class'=>'form-submit',
 					 'd'=>'Click to ACCEPT the application',
 					 'c'=>'only_online',
 					 'i'=>'i-finger_up',
 					 'l'=> b_url::same("?resetcache_once=1&approve_once=".$this->rec['v_id'],$this->anchor())));
       case 'N':       // pending visit
-	return bIcons()->getButton(array('class'=>'page-load-progress',
+	return bIcons()->getButton(array('class'=>'form-submit',
 					 'd'=>'Click to DENY the application',
 					 'c'=>'only_online',
 					 'i'=>'i-finger_down',
 					 'l'=> b_url::same("?resetcache_once=1&refuse_once=".$this->rec['v_id'],$this->anchor())));
       case 'YN':      // accepted visit, toggle
-	return bIcons()->getButton(array('class'=>'page-load-progress',
+	return bIcons()->getButton(array('class'=>'form-submit',
 					 'd'=>'Application accepted, click to DENY',
 					 'i'=>'i-accepted_yes',
 					 'l'=> b_url::same("?resetcache_once=1&refuse_once=".$this->rec['v_id'],$this->anchor())));
 	
       case 'NY':      // rejected visit, toggle
-	return bIcons()->getButton(array('class'=>'page-load-progress',
+	return bIcons()->getButton(array('class'=>'form-submit',
 					 'd'=>'Application denied, click to ACCEPT',
 					 'i'=>'i-accepted_no',
 					 'l'=> b_url::same("?resetcache_once=1&approve_once=".$this->rec['v_id'],$this->anchor())));
@@ -2125,7 +2123,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
 	  // Show either a click-able button or just an icon
 	  $img  = @$descr['i'] . ($yes_no ? '_on' : '_off');
 	  $icon = (!$already_paid && VM::hasRightTo($hasRightTo,$this->rec)
-		   ? bIcons()->getButton(array('class'=>'page-load-progress',
+		   ? bIcons()->getButton(array('class'=>'form-submit',
 					       'i'=>$img,
 					       'c'=>($yes_no ? 'only_online' : 'only_online opacity_on'),
 					       'd'=>$descr['i'].($yes_no ? '' : ' not')." to be $paid, click to change",
@@ -2202,8 +2200,8 @@ class bHolder_vm_Visitors extends bHolder_vm{
   private function anchor($true_anchor=False){
     static $anchor = 'content', $anchor_was = '';
     $true_anchor = False;
-    $anchor_now = trim(str_replace(array(' ','-'),'',bForm_Avatar::_fmtName('fl',(is_array($rec)
-										  ? $rec
+    $anchor_now = trim(str_replace(array(' ','-'),'',bForm_Avatar::_fmtName('fl',(is_array($this->rec)
+										  ? $this->rec
 										  : $this->rec),
 									    False)));
     if (!empty($true_anchor)) return $anchor_now;

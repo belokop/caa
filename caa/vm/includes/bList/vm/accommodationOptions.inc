@@ -41,6 +41,7 @@ class bList_vm_accommodationOptions extends bList_vm{
     $q = myPear_db()->query("SELECT hut_id,hut_name FROM abs_huts WHERE hut_code != '".HUT_BI."' ORDER BY hut_code");
     $reply = array();
     while($r = myPear_db()->next_record($q)){
+      var_dump($r);
       $reply[$r['hut_id']] = $r['hut_name'];
     }
     return $reply;

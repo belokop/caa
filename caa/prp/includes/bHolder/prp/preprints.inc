@@ -158,16 +158,25 @@ class bHolder_prp_preprints extends bHolder{
 
   }
 
+  /*
+   *
+   */
+  private $t_classes = array();
   function drawHeader(){
+    static $dejaVu = 0;
     parent::drawHeader();
-
-    $this->t->autoBreakLine = True;
-    $this->t->class['serial'] = 'bg_transp b_nowrap'; 
-    print x('tr',x('td',''));
+    if (is_object($this->t) && !$dejaVu++){
+      $this->t->autoBreakLine = True;
+      $this->t_classes['_serial'] = 'prp_serial';
+      print x('tr',x('td',''));
+    }
   }
 
+  /*
+   *
+   */
   function header(){
-    $header = array('serial' => ' ');
+    $header = array('_serial' => ' ');
     if ($this->doing == 'managing'){
       if (PRP_censor_here)      $header['prp_avid']  = 'Entered by';
       $header['prp_field'] = 'Field';
@@ -181,15 +190,19 @@ class bHolder_prp_preprints extends bHolder{
   
   private function href($title){
     if (preg_match('/\.(gz|pdf|doc)$/',($l=trim($this->rec['prp_archive'])))){
-      $reply = x("a href='$l'",$title);
+      $reply = (file_exists($l)
+		? x("a href='$l'",$title)
+		: $title);
     }elseif ($url=$this->rec['prp_archive']){
       $reply = bJS()->modal_iframe($url,$title,'',True);
     }elseif($this->rec['prp_local']){
       $p = new bForm_prp($this->rec['prp_id']);
       $l = $p->url_local();
-      $reply = x("a href='$l'",$title);
+      $reply = (file_exists($l)
+		? x("a href='$l'",$title)
+		: $title);
     }else{
-      $reply = x("a href='#'",$title);
+      $reply = $title;
     }
     return $reply;
   }
@@ -206,12 +219,13 @@ class bHolder_prp_preprints extends bHolder{
    *
    */
   function format() {
+    foreach($this->t_classes as $k=>$v) $this->t->class[$k] = $v;
     $t = b_fmt::escape($this->rec['prp_title'],'<');
     $a = b_fmt::escape($this->rec['prp_authors'],'<');
     b_debug::xxx($t);
 
-    $this->rec['serial'] = x('strong',bForm_prp::_serial($this->rec,False));
-    $this->rec['preprint'] = $this->href(x('strong',$t)).' <br/>'.x('em',$a);
+    $this->rec['_serial'] = bForm_prp::_serial($this->rec,False);
+    $this->rec['preprint'] = $this->href(x('span class="prp_title"',$t)).' <br/>'.x('span class="prp_authors"',$a);
     $this->rec['prp_publisher'] = str_replace(',','&#44;',$this->rec['prp_publisher']);
     if ($doi=$this->rec['prp_doi'])  $this->rec['prp_publisher'] = bJS()->modal_iframe("http://dx.doi.org/doi:$doi",x('strong',$this->rec['prp_publisher']));
     
@@ -229,7 +243,7 @@ class bHolder_prp_preprints extends bHolder{
     switch ($this->rec["prp_status"]) {
     case PRP_RESERVED:
       $this->rec['preprint'] = $this->href(x('strong class="redText"',$t)).'<br/>'.x('em class="redText"',$a);
-      foreach($this->header() as $k=>$v) $this->t->class[$k] = 'redText';
+      foreach($this->header() as $k=>$v) $this->t->class[$k][] = 'redText';
       $this->rec['prp_avid'] .= '<br/>'.date(' Y-m-d',(empty($this->rec['prp_tm'])
 						       ? $this->rec['prp_day0']
 						       : $this->rec['prp_tm']));
@@ -245,12 +259,12 @@ class bHolder_prp_preprints extends bHolder{
       break;
       
     case PRP_CANCELED:
-      foreach($this->header() as $k=>$v) $this->t->class[$k] = 'overstrike greyText';
+      foreach($this->header() as $k=>$v) $this->t->class[$k][] = 'overstrike greyText';
       $this->t->extraTD[] = bIcons()->get(array('d'=>'canceled','i'=>'i-drop2'));
       break;
       
     case PRP_OK:
-      if (is_object($this->t)) $this->t->class = array();
+      if (is_object($this->t)) $this->t->class = $this->t_classes;
     }
   }
   

@@ -615,20 +615,20 @@ function vm_compat_update_49_convert_accommodationOptions($r,$ids,$id2xs,$a_id2r
  *
  */
 function vm_compat_update_49_set($a_id,$a_name,$a_pay,$a_comment,$a_capacity){
-  b_debug::xxx();
   locateAndInclude('bForm_vm_Lease');
   
   // Set the "pay" option
-  if (!empty($a_pay)){
-    foreach(array_merge(VM::$pay_options,array(VM_default_lease_pay)) as $o){
-      if (strpos($a_pay,$o) !== False) $pay_option = $o;
-    }
-    if (empty($pay_option)) b_debug::internalError("Unknown lease_option \"$a_pay\"");
-    // Save it
-    $q = myPear_db()->qquery("SELECT lease_id FROM abs_leases WHERE lease_aid = $a_id");
-    while($r = myPear_db()->next_record($q)) bForm_vm_Lease::_set_who_pays($r['lease_id'],$pay_option);
+  foreach(array('nothing','one','two',VM_default_lease_pay) as $o){
+    if (strpos($a_pay,$o) !== False) $pay_option = $o;
   }
-  
+  if (empty($pay_option)) $pay_option = VM_default_lease_pay;
+
+  // Save it in the lease
+  b_debug::xxx($pay_option);
+  $q = myPear_db()->qquery("SELECT lease_id FROM abs_leases WHERE lease_aid = $a_id");
+  while($r = myPear_db()->next_record($q)) bForm_vm_Lease::_set_who_pays($r['lease_id'],$pay_option);
+
+  // Set room name & comment
   foreach (array('a_name','a_comment') as $f){
     $v = ucfirst(strtolower($$f));
     myPear_db()->qquery("UPDATE abs_rooms SET $f = '$v' WHERE a_id = $a_id",True);

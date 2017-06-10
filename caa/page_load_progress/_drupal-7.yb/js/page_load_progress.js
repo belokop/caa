@@ -9,9 +9,7 @@
     attach: function(context, settings) {
       var delay = Number(Drupal.settings.page_load_progress.delay);
       var exit_elements = String(Drupal.settings.page_load_progress.elements).split(',');
-      var screen_lock = '<div class="page-load-progress-lock-screen hidden">\n\
-                          <div class="page-load-progress-spinner"></div>\n\
-                         </div>';
+      var screen_lock = '<div class="page-load-progress-lock-screen hidden"><div class="page-load-progress-spinner"></div></div>';
       var body = $('body', context);
       for (i in exit_elements) {
         $(exit_elements[i]).click(function() {
@@ -19,11 +17,9 @@
         });
       }
       var lockScreen = function () {
-        body.append(screen_lock);
-        body.css({
-          'overflow' : 'hidden'
-        });
-        $('.page-load-progress-lock-screen').fadeIn('slow');
+	  body.append(screen_lock); 
+	  body.css({'overflow' : 'hidden'}); 
+	  $('.page-load-progress-lock-screen').fadeIn('slow');
       }
     }
   };

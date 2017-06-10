@@ -107,10 +107,10 @@ class bForm_vm_Event extends bForm_vm {
 		       ? b_btn::submit(($on_off ? 'YES' : 'NO').", click to change",
 				       $url=b_url::same("?confirm_yes&resetcache_once=1&toggle_once=$policy"), 
 				       $confirm=True, 
-				       $class='page-load-progress',
+				       $class='form-submit',
 				       $img=bIcons()->get($on_off ? $i_on : $i_off))
 		       */
-		       ? bIcons()->getButton(array('class'=>'page-load-progress',
+		       ? bIcons()->getButton(array('class'=>'form-submit',
 						   'i'=>($on_off ? $i_on : $i_off),
 						   //'c'=>($on_off ? '' : 'opacity_on'),
 						   'd'=>($on_off ? 'YES' : 'NO').", click to change",

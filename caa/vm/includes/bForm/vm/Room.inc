@@ -213,7 +213,7 @@ class bForm_vm_Room extends bForm_vm {
       if (!empty($rec['av_lastname'])) $id = $rec['av_lastname'];
       if (!empty($rec['a_name'])) $id .= " $rec[a_name]"; 
       if (empty($id)) $id = '???';
-      myPear::DEBUG(__method__."($id): ".var_export($reply,True));
+      b_debug::_debug(var_export($reply,True));
     }
     return $reply;
   }
@@ -264,7 +264,8 @@ class bForm_vm_Room extends bForm_vm {
 
 
   /*
-   * Get the daily rent to be paid by the Organization (the members of family to be paid by the tenant)
+   * Get the daily rent to be paid by the Organization for acconmodating an Avatar 
+   * (the members of family to be paid by the tenant)
    */
   public static function _daily_a_price($rec,$e_class=Null){
     locateAndInclude('bForm_vm_Lease');
@@ -277,8 +278,8 @@ class bForm_vm_Room extends bForm_vm {
     default:
       // Who pays?
       $who_pays = bForm_vm_Lease::get_lease_options($rec,'get_pay',array(),True);
-      myPear::DEBUG(__method__."($rec[a_id],$e_class): <em>Nordita pays $who_pays</em>");
-    
+      b_debug::_debug("Nordita pays $who_pays");
+      
       if (empty($who_pays)) $who_pays = VM_default_lease_pay;
       if ($who_pays == VM_everything){
 	$cotenants = VM_cotenants()->get_cotenants($rec['lease_id'],True,'names');
@@ -298,7 +299,7 @@ class bForm_vm_Room extends bForm_vm {
 	$reply = self::_daily_a_price_basic($rec,$e_class);
       }
     }
-    myPear::DEBUG(__method__."($rec[a_id],$e_class): <em>$reply</em>");
+    b_debug::_debug($reply);
     return $reply;
   }
 
@@ -323,7 +324,7 @@ class bForm_vm_Room extends bForm_vm {
 	if ($ndays <= $limit) break;
       }
     }
-    myPear::DEBUG(__method__."($rec[a_id],$e_class): <em>ndays=$ndays, daily price: $price_basic --> $reply</em>");
+    b_debug::_debug("ndays=$ndays, daily price: $price_basic --> $reply");
     return $reply;
   }
   
@@ -423,7 +424,6 @@ class bForm_vm_Room extends bForm_vm {
     $available = 
       (b_time::_($start) >= b_time::_($formDB['a_start'])) &&
       (b_time::_($end)   <= b_time::_($formDB['a_end']));
-    // myPear::DEBUG(($available ? '' : 'NOT ').'available for '.b_time::period($start,$end).': '.x('em',b_time::period($formDB['a_start'],$formDB['a_end']).' '.self::_a_name($formDB)));
     return $available;
   }
 
@@ -459,11 +459,7 @@ class bForm_vm_Room extends bForm_vm {
 		     );
     if ($includePay){
       if (empty($rec['lease_id'])) b_debug::internalError("includePay requested, but no lease_id",$rec);
-      $cotenants = VM_cotenants()->get_cotenants($rec['lease_id'],False,'names');
-      if (!empty($cotenants)) $r[] = '&#91;Shared&#93';
-
-      $r[] = bForm_vm_Lease::get_lease_options($rec,'get_pay_HR',array(),True);
-      $reply .= x('em',join(' ',$r));
+      $reply .= x('em',bForm_vm_Lease::get_lease_options($rec,'pay_room',array(),True));
     }
     return $reply;
   }

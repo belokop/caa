@@ -3,9 +3,9 @@
 /**
  * Visitors Manager (VM) configuration file
  */
-$releaseDate = '2017-06-06';
+$releaseDate = '2017-06-10';
 define('VM_MODULE'   , 'vm');
-define('VM_VERSION','5.13.21');
+define('VM_VERSION','5.13.22');
 
 //
 // transition problems...
@@ -361,13 +361,7 @@ class VM extends myPear{
   /*
    * Lease options, see bForm_vm_Lease::get_lease_options()
    */
-  static $pay_options = array('nothing',
-			      'one',
-			      'two',
-			      'three',
-			      'four',
-			      'five'
-			      );
+  static $pay_options = array('nothing','one');
 
   /*
    * Which forms (blankets) to send to the Visitors in the welcome mail

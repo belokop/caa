@@ -27,13 +27,15 @@ class bList_vm_cotenants extends bList_vm{
    */
   function __construct(){
     parent::__construct(myOrg_ID);
-    $this->checkup();
+    //    $this->checkup();
   }
 
   /*
    * Fix eventual mistakes in the database
    */
   private function checkup(){
+    if (@$_SESSION[__method__]++) return;
+
     foreach($this->getMembers() as $lm_id=>$rec){
       $rec['leases'] = $this->safe_explode(@$rec['leases']);
       
@@ -81,10 +83,10 @@ class bList_vm_cotenants extends bList_vm{
       $rec['leases'] = $this->safe_explode(@$rec['leases']);
       $t = array();
       foreach ($rec['leases'] as $lease_id){
-	$info  = bForm_vm_Lease::_leaseInfo($lease_id);
+	$info  = bForm_vm_Lease::_leaseInfo($lease_id,array('a_name'));
 	$t[]   = sprintf("%s(%s)",$lease_id,$info['lease_name']);
 	$a_name= $info['a_name'];
-	}
+      }
       $list[$lm_id] = sprintf("<tt>%s=>%s %-25s %s\n",$rec['lm_key'],$rec['lm_value'],$a_name,join(' + ',$t));
     }
     if (!empty($list)) b_debug::print_r($list,$txt);
@@ -99,7 +101,6 @@ class bList_vm_cotenants extends bList_vm{
   }
 
   protected function message_createList(){
-    // var_dump(__method__,$this->name(True),myOrg_name);
     myPear::MESSAGE('Creating new list "'.trim($this->name(True)).'" for '.myOrg_name);
   }
 
@@ -135,24 +136,41 @@ class bList_vm_cotenants extends bList_vm{
    *  - lease_end
    *  - a_id
    */
-  function get_candidate(&$rec){
-    
-    $tenants = bForm_vm_Lease::getTenants($rec['lease_start'],
-					  $rec['lease_end'],
-					  $rec['a_id']);
-    //    b_debug::print_r($tenants,__function__.'(): "'.$rec['a_name'].'" tenants '.b_time::period($rec['lease_start'],$rec['lease_end']));
-    
+  function get_candidate($rec){
+
+    // Get the current cotenants 
+    if (cnf_dev){
+      $current_cotenants = array();
+      foreach(VM_cotenants()->get_cotenants($rec) as $lm_id=>$leases) $current_cotenants = $leases;
+      b_debug::_debug("current_cotenants=".join(',',$current_cotenants));
+    }
+
+    $q = myPear_db()->query(sprintf("SELECT lease_id,lease_option,a_capacity,av_firstname,av_lastname,v_status,hut_code,lease_aid".
+				    " FROM abs_leases ".
+				    " LEFT JOIN abs_rooms ON lease_aid = a_id ". 
+				    " LEFT JOIN abs_huts  ON a_hutid = hut_id ". 
+				    " LEFT JOIN abs_visits     ON lease_vid = v_id ". 
+				    " LEFT JOIN zzz_avatars    ON v_avid = av_id ". 
+				    " WHERE ".join(' AND ',array("a_id = %s",
+								 "lease_option NOT REGEXP '%s|%s'",
+								 "lease_id != %s",					
+								 "lease_start <= %s",
+								 "lease_end >= %s")),
+				    $rec['a_id'],VM_no_cotenants,VM_room_is_full,$rec['lease_id'],$rec['lease_end'],$rec['lease_start']),cnf_dev);
     $reply = array(VM_no_cotenants => $this->VM_no_cotenants_text($rec['lease_id']));
-    foreach($tenants as $lease_id=>$candidate_name){
-      if ($rec['lease_id'] == $lease_id) continue;
-      if (bForm_vm_Lease::_room_is_full($lease_id)){
-	myPear::DEBUG(__method__."(): $candidate_name _room_is_full");
-      }elseif (!$this->get_cotenants($lease_id,False,array($rec['lease_start'],$rec['lease_end']))){
-	$reply[$lease_id] = $candidate_name;
+    while($r = myPear_db()->next_record($q)){
+      if (bForm_vm_Lease::_room_is_full($r)){
+	b_debug::internalError("$r[av_lastname] _room_is_full, but is in the candidates list");
+      }elseif(($names=$this->get_cotenants($r,True,'info')) && (count($names) < $rec['a_capacity'])){
+	$reply[join(',',array_keys($names))] = join(',',array_values($names));
+      }else{
+	$reply[$r['lease_id']] = bForm_Avatar::_fmtName('Lf',$r);
       }
     }
-    if (count(array_keys($reply)) == 1) $reply = array();
-    myPear::DEBUG(__method__.'(): '.join(', ',array_values($reply)));
+    if (count($reply) == 1) $reply = array();
+    asort($reply);
+
+    b_debug::_debug(join(', ',array_values($reply)));
     return $reply;
   }
   
@@ -164,67 +182,77 @@ class bList_vm_cotenants extends bList_vm{
    * @param  $period (optional) check for this time period
    * @return array(lm_id => array(leases))
    */
-  function get_cotenants($lease_id,$include_myself=False,$period=array()){
-    static $cache = array(),$count=array();
-
+  private static $cache_get_cotenants = array();
+  private static $count_get_cotenants = array();
+  function get_cotenants($rec,$include_myself=False,$period=array()){
+    
     bTiming()->cpu(__function__);
-
+    
+    if (!is_array($rec)) $rec = array('lease_id'=>$rec);
+    
     // What do we want on output?
     if($return_names = ($period === 'names')) $period = array();
+    if($return_info  = ($period === 'info'))  $period = array();
     
-    $cache_id = serialize(array($lease_id,$period));
-    if (@$count[$cache_id]) $this->dbg('call #'.(int)@$count[$cache_id]++,cnf_dev);
+    $cache_id = serialize($rec);
+    $this->dbg('call #'.(int)(@self::$count_get_cotenants[$cache_id]++),cnf_dev);
     
-    $reply = $leases = $names = array();
-    if (empty($cache[$cache_id]) && !empty($lease_id)){
+    if (empty(self::$cache_get_cotenants[$cache_id])){
+      $reply = $leases = $names = $periods = array();
+
       // the lease might present only once in the list, otherwise something is wrong
-      $r = $this->getMember(array('leases'=>$lease_id));
-      if ($leases = $this->safe_explode(@$r['leases'])){
-	// exclude the leases which are outside the requested time period
-	$lease_ref = bForm_vm_Lease::_leaseInfo($lease_id);
+      $q = myPear_db()->qquery($sql=sprintf("SELECT lm_id,lm_option FROM zzz_list_members WHERE lm_lid=%s AND lm_option REGEXP 'leases.*%s'",
+					    $this->ID,$rec['lease_id']),cnf_dev);
+      while($r = myPear_db()->next_record($q)){
+	$lm_id = $r['lm_id'];
+	$lm_option = unserialize($r['lm_option']);
+	$leases = $this->safe_explode($lm_option['leases'],True);
 	foreach($leases as $l_id){
-	  $l = bForm_vm_Lease::_leaseInfo($l_id);
-	  // sanity
-	  if (empty($l['lease_start']) || empty($l['lease_end'])){
-	    myPear::WARNING_T("??? empty l[lease_start] ".var_export($l,True));
-	    continue;
-	  }
-	  //static $ccc = 0;	  myPear::DEBUG("??$l_id?? ".b_time::period($l['lease_start'],$l['lease_end']).' '.$l['lease_name']);
-	  if (empty($lease_ref['lease_start']) || empty($lease_ref['lease_end'])){
-	    myPear::WARNING_T("??? empty l[lease_start] ".var_export($lease_ref,True));
-	    continue;
-	  }
-	  $p = (empty($period)
-		? array($lease_ref['lease_start'],$lease_ref['lease_end'])
-		: $period);
-	  if (!b_time::inInterval($l['lease_start'],$l['lease_end'], $p[0],$p[1])){
-	    myPear::WARNING_T($lease_ref['lease_name'].' & '.$l['lease_name'].' are NOT cotenants for '.b_time::period($l['lease_start'],$l['lease_end']));
-	    $leases = array_values(array_diff($leases,array($l_id)));
-	  }else{
-	    $names[$l_id] = bForm_Avatar::_fmtName('Lf',$l);
-	  }
+	  $l = ($l_id == $rec['lease_id'] && !empty($rec['lease_start'])
+		? $rec
+		: bForm_vm_Lease::_leaseInfo($l_id,array('lease_start','lease_end','av_firstname','av_lastname')));
+	  $names[$l_id] = bForm_Avatar::_fmtName('Lf',$l);
+	  $periods[$l_id] = array($l['lease_start'],$l['lease_end']);
 	}
       }
-      if (!empty($leases)) $reply[$r['lm_id']] = $leases;
-      $cache[$cache_id] = array('reply'=>$reply,
-				'names'=>$names);
+      if (!empty($lm_id)) $reply[$lm_id] = $leases;
+      self::$cache_get_cotenants[$cache_id] = array('reply'=>$reply,
+						    'names'=>$names,
+						    'periods'=>$periods);
+
     }
 
     // Extract reply from the cache
-    if ($return_names){
-      $names = $cache[$cache_id]['names'];
-      if (!$include_myself) unset($names[$lease_id]);
-      $reply = array_values($names);
-      sort($reply);
-      if ($reply) $this->dbg(join(', ',$reply),cnf_dev);
-    }else{
-      $reply = $cache[$cache_id]['reply'];
-      foreach(array_keys($reply) as $lm_id){
-	if (!$include_myself) $reply[$lm_id] = array_diff($reply[$lm_id],array($lease_id));
-	sort($reply[$lm_id]);
-	$leases = $reply[$lm_id];
+    if (!empty($period)){
+      $names = self::$cache_get_cotenants[$cache_id]['names']; 
+      foreach(self::$cache_get_cotenants[$cache_id]['periods'] as $l_id=>$p){
+	if (!b_time::inInterval($period[0],$period[1], $p[0],$p[1])){
+	  $lease_ref = bForm_vm_Lease::_leaseInfo($rec['lease_id'],array('lease_id'));
+	  myPear::WARNING_T($lease_ref['lease_name'].' & '.$l['lease_name'].' are NOT cotenants for '.b_time::period($l['lease_start'],$l['lease_end']));
+	  unset($names[$l_id]);
+	}
       }
-      if ($reply) $this->dbg(join(', ',$leases),cnf_dev);
+      $reply = array_values($names);
+      if ($reply) $this->dbg(join(', ',$reply),cnf_dev);
+    }elseif ($return_names || $return_info){
+      $names = self::$cache_get_cotenants[$cache_id]['names'];
+      if (!$include_myself) unset($names[$rec['lease_id']]);
+      if ($return_names){
+	$reply = array_values($names);
+	sort($reply);
+      }else{
+	$reply = $names;
+	ksort($reply);
+      }  
+      if ($reply) $this->dbg(b_fmt::joinX(', ',$reply),cnf_dev);
+    }else{
+      $reply = self::$cache_get_cotenants[$cache_id]['reply'];
+      if (empty($reply))	$reply = array();
+      foreach($reply as $lm_id=>$leases){
+	if (!$include_myself) $reply[$lm_id] = array_diff($reply[$lm_id],array($rec['lease_id']));
+	sort($reply[$lm_id]);
+	$this->dbg("$lm_id=>array(".join(', ',$reply[$lm_id]).")",cnf_dev);
+      }
     }
     bTiming()->cpu();
     return $reply;
@@ -237,7 +265,7 @@ class bList_vm_cotenants extends bList_vm{
     foreach($leases as $lease_id){
       $rec = bForm_vm_Lease::_leaseInfo($lease_id,array('a_capacity','hut_code','lease_id','lease_aid','lease_option'));
       if ($rec['a_capacity'] == count($leases) && !bForm_vm_Lease::get_lease_options($rec,VM_no_cotenants)){
-	b_debug::xxx("$lease_id - VM_no_cotenants");
+	b_debug::_debug("$lease_id - VM_no_cotenants");
 	bForm_vm_Lease::set_lease_options($rec,array(VM_no_cotenants=>1));
       }
     }
@@ -247,11 +275,18 @@ class bList_vm_cotenants extends bList_vm{
    * Set cotenants
    */
   function set_cotenants($leases){
-    static $case=0; b_debug::xxx('======================================'.(++$case));
     // Set flag 'no cotenants wanted'
     if (in_array(VM_no_cotenants,$leases)){
       $this->dbg("set lease flag VM_no_cotenants for lease_id=".$leases[1],cnf_dev);
-      bForm_vm_Lease::set_lease_options($leases[1],array(VM_no_cotenants=>1),True);
+      $_leaseInfo = bForm_vm_Lease::_leaseInfo($leases[1],array('v_accompaning','av_lastname','av_firstname',
+								'a_capacity','lease_aid','lease_option','lease_id','v_status','hut_code'));
+      bForm_vm_Lease::set_lease_options($_leaseInfo,array(VM_no_cotenants=>1),True);
+      if (($n = @$_leaseInfo['v_accompaning']) && (bForm_vm_Lease::get_lease_options($_leaseInfo,'get_pay') != VM::$pay_options[1])){
+	bForm_vm_Lease::set_lease_options($_leaseInfo,array('pay'=>VM::$pay_options[1]),True);
+	myPear::MESSAGE(sprintf("Impose \"%s\" for %s",
+				bForm_vm_Lease::get_lease_options($_leaseInfo,'pay_room',array(),True),
+				bForm_Avatar::_fmtName('LF',$_leaseInfo))); 
+      }
       $leases = array();
     }
     if (empty($leases)) return;
@@ -267,7 +302,7 @@ class bList_vm_cotenants extends bList_vm{
     $this->names = $leases_current = array();
 
     foreach($leases as $lease_id) {
-      $leases_rec[$lease_id] = $r = bForm_vm_Lease::_leaseInfo($lease_id);
+      $leases_rec[$lease_id] = $r = bForm_vm_Lease::_leaseInfo($lease_id,array('lease_start','lease_end'));
       if (empty($r['lease_start'])) b_debug::internalError('empty lease_start',$r);
       $lm_key   = min($lm_key,  $r['lease_start']);
       $lm_value = max($lm_value,$r['lease_end']);
@@ -289,7 +324,7 @@ class bList_vm_cotenants extends bList_vm{
       if (in_array($lease_id,$leases)){
 	bForm_vm_Lease::_leaseInfo($lease_id,$name_only=True,'is already there');
       }else{
-	$l = bForm_vm_Lease::_leaseInfo($lease_id);
+	$l = bForm_vm_Lease::_leaseInfo($lease_id,array('lease_start','lease_end'));
 	$toKeep = True;
 	foreach($leases_rec as $l_id=>$r){
 	  if (in_array($l_id,$leases_current)) continue;

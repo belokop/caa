@@ -12,7 +12,7 @@ function VM_query($where=array(1),$join_rooms=(' LEFT JOIN abs_leases ON v_id = 
 					       // .'LEFT JOIN abs_expenses ON v_id = exp_vid '
 					       // .'LEFT JOIN abs_offices  ON v_oid = o_id'
 					       )){
-  //  $query = "SELECT * "
+  b_debug::_debug();
   $query = "SELECT av_id,av_lastname,av_firstname,av_city,av_institute "
     .",v_id,v_type,v_host_avid,v_start,v_end,v_avid,v_status,v_acc_wish,v_eid,v_projectid,v_accompaning,v_gsf "
     .",e_id,e_policy,e_name,e_start,e_end,e_v_policy "
@@ -20,7 +20,7 @@ function VM_query($where=array(1),$join_rooms=(' LEFT JOIN abs_leases ON v_id = 
     .(strpos($join_rooms,'abs_huts')   === False ? "" : ",hut_id,hut_name,hut_name,hut_code")
     .(strpos($join_rooms,'abs_leases') === False ? "" : ",lease_id,lease_start,lease_end,lease_option,lease_aid ")
     .(strpos($join_rooms,'abs_offices')=== False ? "" : ",o_id,o_name,o_capacity,o_phone ")
-    .(strpos($join_rooms,'abs_expenses')=== False ? "" : ",exp_closed,exp_currency,exp_id,exp_living,exp_other,exp_owner_avid,exp_perdiem,exp_travel,exp_vid")
+    .(strpos($join_rooms,'abs_expenses')===False ? "" : ",exp_closed,exp_currency,exp_id,exp_living,exp_other,exp_owner_avid,exp_perdiem,exp_travel,exp_vid")
     ." FROM abs_visits "
     ." LEFT JOIN abs_events  ON v_eid = e_id "
     ." LEFT JOIN zzz_avatars ON v_avid = av_id "
@@ -34,7 +34,7 @@ function VM_query($where=array(1),$join_rooms=(' LEFT JOIN abs_leases ON v_id = 
   }
 
   // check validity of ORDER BY  
-  $orderBy = explode(',',str_ireplace(array('concat','(',')'),'',@$_GET['sBy']));
+  $was = $orderBy = explode(',',str_ireplace(array('concat','(',')'),'',@$_GET['sBy']));
   foreach($orderBy as $f){
     $ok = False;
     $f = trim($f); 
@@ -47,13 +47,12 @@ function VM_query($where=array(1),$join_rooms=(' LEFT JOIN abs_leases ON v_id = 
     }
   }
   if (empty($orderBy)) $orderBy = array('av_lastname');
-  $_GET['sBy'] = 'CONCAT('.join(',',$orderBy).')';
+  // remove "concat", it does crazy things...
+  $_GET['sBy'] = join(',',$orderBy);
 
   // do the query
-  $query = $query." WHERE ".preg_replace("/=\s?is null/i",' IS NULL',join(' AND ',$where)).
-    " ORDER BY $_GET[sBy] ".@$_GET['sByDir'];
+  $query = $query." WHERE ".preg_replace("/=\s?is null/i",' IS NULL',join(' AND ',$where))." ORDER BY $_GET[sBy] ".@$_GET['sByDir'];
   $q = myPear_db()->qquery($query,cnf_dev);
-
   $GLOBALS['VM_query_num_rows'] = myPear_db()->num_rows($q);
   return $q; 
 }

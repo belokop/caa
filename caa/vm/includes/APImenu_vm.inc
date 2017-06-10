@@ -276,7 +276,8 @@ class APImenu_vm extends APImenu_ea{
       }
       
       $margin = 3 * 86400; // a few days margin before&after the event
-      if (VM::e_ID() > 0){
+      VM::e_ID();
+      if (is_object(VM::$e)){
 	// Event dates have precedence over vm_day1 / vm_day9
 	list($day1,$day9) = array(VM::$e->getValue('e_start')-$margin,
 				  VM::$e->getValue('e_end')  +$margin);
@@ -1208,7 +1209,7 @@ class APImenu_vm extends APImenu_ea{
 									      'vm_day9',vm_day9,
 									      True),
 							  array('<input type="hidden" name="vm_eventSelector" value="'.EVT_ANY.'"/>',
-								'<input type="submit" class="page-load-progress" value="Set new time range"/>',
+								'<input type="submit" class="form-submit" value="Set new time range"/>',
 								)))
 	    ));
       break;

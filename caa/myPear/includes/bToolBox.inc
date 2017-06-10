@@ -40,7 +40,7 @@ class bToolBox{
 	  if (isset($tools['condition']) && !$tools['condition']) continue;
 	  b_fmt::accordion($tools[$action]['t']);	  
 	  print $data['d'];
-	  print x("a class='page-load-progress' href='".b_url::same("?resetcache_once=1&tb_act_once=$action")."'",
+	  print x("a class='form-submit' href='".b_url::same("?resetcache_once=1&tb_act_once=$action")."'",
 		  x('em','Click to '.strToLower($tools[$action]['t'])));
 	}
 	b_fmt::accordion('close');

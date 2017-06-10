@@ -28,7 +28,7 @@ class b_checkBox{
   
   public static function create($ids=array(),$separator='<br/>',$onClick='default',$classes=''){
     static $createCounter = 0; 
-    if ($onClick === 'default') $onClick = "onclick='submit()' onchange='submit()' class='page-load-progress'";
+    if ($onClick === 'default') $onClick = "onclick='submit()' onchange='submit()' class='form-submit'";
 
     if (!empty($ids)){
       $boxes = array();

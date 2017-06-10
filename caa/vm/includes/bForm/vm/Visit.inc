@@ -188,14 +188,14 @@ class bForm_vm_Visit extends bForm_vm {
     $v_type = $buffer['v_type'];
     foreach($buffer['e_v_policy'] as $p){
       if (empty(VM::$v_policies[$p])){
-	if (cnf_dev) myPear::DEBUG(__method__."() - Get unknown policy '$p', ignore...");
+	b_debug::_debug("Got unknown policy '$p', ignore...");
       }else{
 	if (!cnf_dev) if ($p == VM_V_payPerdiem) continue;
 	if (!cnf_dev) if ($p == VM_V_payOther)   continue;
 	$policies[$p] = VM::$v_policies[$p];
       }
     }
-    // if (cnf_dev) myPear::DEBUG(__function__.'() - '.b_fmt::joinX(',',$policies));
+    // b_debug::_debug(b_fmt::joinX(',',$policies));
     return $policies;
   }
 
@@ -271,7 +271,7 @@ class bForm_vm_Visit extends bForm_vm {
       if (!empty($buffer['v_policy'])){
 	$reply = (bool)b_mask::get($buffer['v_policy'],$policy);
 	if(cnf_show_pv || ($onlyIfExpected === 'verbose')){
-	  myPear::DEBUG(@$buffer['id'].__function__."($buffer[av_lastname],$policy) ".x('i',VM::$v_policies[$policy]['d'].($reply?' YES ':' NO  ')));
+	  b_debug::_debug(VM::$v_policies[$policy]['d'].($reply?' YES ':' NO  '));
 	}
       }
     }
@@ -1881,7 +1881,7 @@ class bForm_vm_Visit extends bForm_vm {
 
     // return the list of clashing visit IDs
     $reply = $clashes[$v_id]['ids'];
-    if ($reply) myPear::DEBUG(__method__."($v_id): ".join(', ',$reply)); 
+    if ($reply) b_debug::_debug(join(', ',$reply)); 
     return $reply;
   }
   
