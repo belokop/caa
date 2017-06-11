@@ -1572,7 +1572,10 @@ class bForm_vm_Lease extends bForm_vm{
     if (!bForm_vm_Room::_mightBeSharable($rec) || self::_room_is_full($rec)) return '';
     
     $cotenants = VM_cotenants()->get_cotenants($rec);
-    if (!empty($cotenants) && ($too_late = (VM_cotenants()->lease_dates[1] < time()))){
+    $too_late = $rec['v_end'] < time() + 24*3600;
+    if (!$too_late) $too_late = !empty($cotenants) && (VM_cotenants()->lease_dates[1] < time());
+
+    if ($too_late){
       $RW = False;
     }elseif (!is_object($recP) && (!empty($cotenants) || self::get_lease_options($rec,VM_no_cotenants))){
       // The cotenant can't be changed in the "applicants list", this would be too messy
@@ -1635,7 +1638,7 @@ class bForm_vm_Lease extends bForm_vm{
 	  $names[] = $r['lease_name'];
 	}
       }
-      if (empty($names) && !self::get_lease_options($rec,VM_no_cotenants)) $names = array(b_fmt::redText('to be selected'));
+      if (!$too_late) if (empty($names) && !self::get_lease_options($rec,VM_no_cotenants)) $names = array(b_fmt::redText('to be selected'));
       $reply = join(',',$names);
       if (!empty($reply)) b_debug::_debug($reply);
     }
