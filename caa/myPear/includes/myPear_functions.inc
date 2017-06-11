@@ -7,9 +7,11 @@ set_error_handler('myPear_exceptions_error_handler');
  *
  */
 function myPear_exceptions_error_handler($severity, $message, $filename, $lineno) {
-  if (error_reporting() == 0) {
-    return;
-  }
+
+  if ((error_reporting() == 0) || 
+      (defined('cnf_dev') && !cnf_dev) ||
+      (class_exists('b_cnf',0) && !b_cnf::get('warnings'))) return;
+  
   if (error_reporting() & $severity) {
     throw new ErrorException($message, 0, $severity, $filename, $lineno);
   }
