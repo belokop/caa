@@ -1528,6 +1528,7 @@ class bForm_vm_Lease extends bForm_vm{
     }
     
     $_virt_pay = self::get_lease_options($rec,'get_pay',$MODE,cnf_dev);
+    $options = array();
     // b_debug::_debug("get_pay = ".var_export($_virt_pay,True)); 
     if (is_object($recP) || empty($_virt_pay)){
       VM::$formDummy->MODE = $MODE;
@@ -1568,25 +1569,22 @@ class bForm_vm_Lease extends bForm_vm{
 	    ? $recP->formDB
 	    : $recP);
     if ($rec['v_status'] !== STATUS_YES) return '';
-
-    // the name must be unique
-    $lease_id = $rec['lease_id'];
-    $name_for_select = $name . $lease_id;
-
-    if ((!cnf_dev && ($rec['lease_end'] < time()+30*24*3600)) || // a month later
-	!bForm_vm_Room::_mightBeSharable($rec) || self::_room_is_full($rec)) return '';
+    if (!bForm_vm_Room::_mightBeSharable($rec) || self::_room_is_full($rec)) return '';
     
     $cotenants = VM_cotenants()->get_cotenants($rec);
-    
-    if (!is_object($recP) && (!empty($cotenants) || self::get_lease_options($rec,VM_no_cotenants))){
+    if (!empty($cotenants) && ($too_late = (VM_cotenants()->lease_dates[1] < time()))){
+      $RW = False;
+    }elseif (!is_object($recP) && (!empty($cotenants) || self::get_lease_options($rec,VM_no_cotenants))){
       // The cotenant can't be changed in the "applicants list", this would be too messy
       $RW = False;
     }elseif ($RW === 'if_empty' && empty($cotenants)){
       $RW = True;
     }
-
     b_debug::_debug("RW = ".var_export($RW,True));
-    
+
+    $lease_id = $rec['lease_id'];
+    $name_for_select = $name . $lease_id;
+	    
     if ($RW){ //======================================================================================
       
       // Look for the candidates for co-tenants

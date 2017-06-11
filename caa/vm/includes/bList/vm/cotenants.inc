@@ -184,6 +184,7 @@ class bList_vm_cotenants extends bList_vm{
    */
   private static $cache_get_cotenants = array();
   private static $count_get_cotenants = array();
+  public $lease_dates = array();
   function get_cotenants($rec,$include_myself=False,$period=array()){
     
     bTiming()->cpu(__function__);
@@ -223,6 +224,16 @@ class bList_vm_cotenants extends bList_vm{
     }
 
     // Extract reply from the cache
+    $this->lease_dates = array();
+    foreach(self::$cache_get_cotenants[$cache_id]['periods'] as $l_id=>$p){
+      $this->lease_dates[0] = empty($this->lease_dates[0] 
+				    ? $p[0]
+				    : min($this->lease_dates[0],$p[0]));
+      $this->lease_dates[1] = empty($this->lease_dates[1] 
+				    ? $p[1]
+				    : max($this->lease_dates[1],$p[1]));
+    }
+
     if (!empty($period)){
       $names = self::$cache_get_cotenants[$cache_id]['names']; 
       foreach(self::$cache_get_cotenants[$cache_id]['periods'] as $l_id=>$p){

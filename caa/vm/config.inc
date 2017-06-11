@@ -3,9 +3,9 @@
 /**
  * Visitors Manager (VM) configuration file
  */
-$releaseDate = '2017-06-10';
+$releaseDate = '2017-06-11';
 define('VM_MODULE'   , 'vm');
-define('VM_VERSION','5.13.23');
+define('VM_VERSION','5.13.24');
 
 //
 // transition problems...
