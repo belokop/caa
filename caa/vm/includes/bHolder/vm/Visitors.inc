@@ -1350,7 +1350,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
 	if (!($img = $av->getPhoto())) $img = "<img src='".myPear_images."avatar.png'>"; 
 	$this->labels[] = array($img,
 				x('strong',bForm_Avatar::_fmtName('sfXL',$this->rec)),
-				x('em',b_cc::getName($this->rec['av_residentship'])),
+				x('em',b_cc::getName(@$this->rec['av_residentship'])),
 				'<br/>'
 				);
       }
@@ -1365,7 +1365,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
 			      '&nbsp;',
 			      $this->rec['av_institute'],
 			      $this->rec['av_city'],
-			      b_cc::getName($this->rec['av_residentship']),
+			      b_cc::getName(@$this->rec['av_residentship']),
 			      );
       $this->rec = array();
       break;

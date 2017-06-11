@@ -1638,7 +1638,7 @@ class bForm_vm_Lease extends bForm_vm{
 	  $names[] = $r['lease_name'];
 	}
       }
-      if (!$too_late) if (empty($names) && !self::get_lease_options($rec,VM_no_cotenants)) $names = array(b_fmt::redText('to be selected'));
+      if (!$too_late && empty($names) && !self::get_lease_options($rec,VM_no_cotenants)) $names = array(b_fmt::redText('to be selected'));
       $reply = join(',',$names);
       if (!empty($reply)) b_debug::_debug($reply);
     }
