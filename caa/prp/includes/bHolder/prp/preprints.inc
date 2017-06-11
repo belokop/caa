@@ -161,13 +161,14 @@ class bHolder_prp_preprints extends bHolder{
    /*
     *
     */
-   private $t_classes = array();
+   private $t_classes = array('_serial' => array('prp_serial'),
+			      );
    function drawHeader(){
      static $dejaVu = 0;
      parent::drawHeader();
      if (is_object($this->t) && !$dejaVu++){
        $this->t->autoBreakLine = True;
-       $this->t_classes['_serial'] = 'prp_serial';
+       foreach($this->header() as $k=>$v) if (empty($this->t_classes[$k])) $this->t_classes[$k] = array();
        print x('tr',x('td',''));
      }
    }
@@ -197,7 +198,9 @@ class bHolder_prp_preprints extends bHolder{
 		 ? x("a href='$l'",$title)
 		 : $title);
      }elseif ($url=$this->rec['prp_archive']){
-       $reply = bJS()->modal_iframe($url,$title,'',True);
+       $reply = ($this->rec["prp_status"] == PRP_CANCELED
+		 ? $title
+		 : bJS()->modal_iframe($url,$title,'',True));
      }elseif($this->rec['prp_local']){
        $p = new bForm_prp($this->rec['prp_id']);
        $l = $p->url_local();
@@ -222,22 +225,27 @@ class bHolder_prp_preprints extends bHolder{
     *
     */
    function format() {
-     print x('tr',x('td')); // spacer... to be done by CSS
+     print x('tr',x('td')); // spacer... better to be done by CSS
      foreach($this->t_classes as $k=>$v) $this->t->class[$k] = $v;
-     $t = b_fmt::escape($this->rec['prp_title'],'<');
-     $a = b_fmt::escape($this->rec['prp_authors'],'<');
-     $preprint[] = $this->href(x('span class="prp_title"',$t));
-     if (!empty($a)) $preprint[] = x('span class="prp_authors"',$a);
-     b_debug::xxx($t);
-     
-     $this->rec['_serial'] = bForm_prp::_serial($this->rec,False);
-     $this->rec['_preprint'] = join('<br>',$preprint);
-     $this->rec['prp_publisher'] = str_replace(',','&#44;',$this->rec['prp_publisher']);
-     if ($doi=$this->rec['prp_doi'])  $this->rec['prp_publisher'] = bJS()->modal_iframe("http://dx.doi.org/doi:$doi",x('strong',$this->rec['prp_publisher']));
-     
-     if ($this->rec["prp_status"] == PRP_CANCELED) $this->rec['_preprint'] = strip_tags($this->rec['_preprint']);
-     
+
      $this->rec['prp_avid'] = bForm_Avatar::_fmtName('fl',$this->rec);
+
+     // Title & authors
+     $preprint[] = $this->href(x('span class="prp_title"',b_fmt::escape($this->rec['prp_title'],'<')));
+     if (($a = b_fmt::escape($this->rec['prp_authors'],'<'))) $preprint[] = x('span class="prp_authors"',$a);
+     $this->rec['_preprint'] = join('<br>',$preprint);
+
+     // Publisher
+     if (($this->rec["prp_status"] !== PRP_CANCELED) && ($doi=$this->rec['prp_doi'])){
+       $this->rec['prp_publisher'] = bJS()->modal_iframe("http://dx.doi.org/doi:$doi",$this->rec['prp_publisher']);
+     }
+
+     //    
+     // if ($this->rec["prp_status"] == PRP_CANCELED) foreach(array('_preprint','prp_publisher') as $f) $this->rec[$f] = strip_tags($this->rec[$f]);
+
+     $this->rec['_serial'] = bForm_prp::_serial($this->rec,False);
+     //     $this->rec['prp_publisher'] = str_replace(',','&#44;',$this->rec['prp_publisher']);
+     //     $this->rec['prp_publisher'] = b_fmt::escape($this->rec['prp_publisher']);
      
      if ($this->doing == 'managing'){
        $p = new bForm_prp($this->rec['prp_id']);
@@ -248,8 +256,7 @@ class bHolder_prp_preprints extends bHolder{
      
      switch ($this->rec["prp_status"]) {
      case PRP_RESERVED:
-       $this->rec['_preprint'] = $this->href(x('strong class="redText"',$t)).'<br/>'.x('em class="redText"',$a);
-       foreach($this->header() as $k=>$v) $this->t->class[$k][] = 'redText';
+       foreach($this->header() as $k=>$v) $this->t->class[$k][] = 'prp_reserved';
        $this->rec['prp_avid'] .= '<br/>'.date(' Y-m-d',(empty($this->rec['prp_tm'])
 							? $this->rec['prp_day0']
 							: $this->rec['prp_tm']));
@@ -265,12 +272,12 @@ class bHolder_prp_preprints extends bHolder{
        break;
        
      case PRP_CANCELED:
-       foreach($this->header() as $k=>$v) $this->t->class[$k][] = 'overstrike greyText';
+       foreach($this->header() as $k=>$v) $this->t->class[$k][] = 'prp_canceled';
        $this->t->extraTD[] = bIcons()->get(array('d'=>'canceled','i'=>'i-drop2'));
        break;
        
      case PRP_OK:
-       if (is_object($this->t)) $this->t->class = $this->t_classes;
+       $this->t->class = $this->t_classes;
      }
    }
    

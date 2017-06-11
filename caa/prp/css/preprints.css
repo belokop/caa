@@ -1,7 +1,12 @@
+.prp_serial,
+.prp_publisher,
+.prp_title{
+   font-weight: bold;
+}
+
 .prp_serial{
    background: transparent;
    text-align: left !important; 
-   font-weight: bold;
    white-space: nowrap !important; 
 }
 
@@ -9,6 +14,11 @@
    font-style: italic;
 }
 
-.prp_title{
-   font-weight: bold;
+.prp_reserved{
+   color: crimson !important;
+}
+
+.prp_canceled{
+   color: darkgrey !important;
+   text-decoration: line-through ! important;
 }

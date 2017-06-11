@@ -88,7 +88,7 @@ class bIcons{
 	}elseif ($l = @self::$iconsPool[$icon]['la']){
 	  $reply = bJS()->modal_ajax($l,$this->get($button['i']));
 	}elseif ($l = @self::$iconsPool[$icon]['l']){
-	  if ($d=@self::$iconsPool[$icon]['d']) $l = b_url::repack($l,array('action_once'=>$d));
+	  if ($d=@self::$iconsPool[$icon]['d']) $l = b_url::repack($l,array('action_once'=>b_fmt::escape($d)));
 	  $c = (isset($button['class']) ? $button['class'] : '');
 	  $a = "a class='mypear_a blackText only_online $c' href='$l'";
 	  

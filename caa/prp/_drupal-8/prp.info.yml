@@ -4,5 +4,5 @@ package: myPear
 core: 8.x
 dependencies:
   - myPear
-version: 8.x-5.2.11
+version: 8.x-5.2.12
 type: module

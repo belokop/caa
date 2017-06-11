@@ -1,8 +1,8 @@
 <?php
 
-$releaseDate = '2017-06-10';
+$releaseDate = '2017-06-11';
 define('PRP_MODULE'   , 'prp');
-define('PRP_VERSION','5.2.11');
+define('PRP_VERSION','5.2.12');
 
 define('PRP_OK'          , 'ok');
 define('PRP_CANCELED'    , 'canceled');

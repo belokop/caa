@@ -543,7 +543,8 @@ class bUnit_ea_members extends bUnit_ea {
    *
    */
   function format(){
-    if(0)    if (EA_administrator_here){
+    $this->dbg(bForm_Avatar::_fmtName('Lf',$this->rec));
+    if(0)if (EA_administrator_here){
       array_unshift($this->t->extraTD,bIcons()->getButton(array('i' =>'i-mail-send',
 								'm' =>'forced',
 								'li'=>"?tab_force=ea_remind_password&av_id=".$this->rec['um_avid'],

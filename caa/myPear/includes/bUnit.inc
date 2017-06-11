@@ -312,11 +312,7 @@ class bUnit extends bList{
   protected function format(){}
   
   protected function all_members_tidy_name(){
-    //    if ($object=myPear::getClassFromID($this->parent_ID,'class'))
-    //      $p = $object->name();
-    //    else   
-    $p = '';
-    return "$p ".$this->unitMemberTitle().'s';
+    return $this->unitMemberTitle().'s';
   }
 
 
@@ -546,7 +542,7 @@ class bUnit extends bList{
 							       'clean_once'=> 'act_code,act_id',
 							       ),
 							 array()),			
-					'd'=>"modify $name's membership"),
+					'd'=>"update $name"),
 				  'i-edit') 
 	    : '');
   }
