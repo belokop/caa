@@ -1243,7 +1243,7 @@ class bForm_vm_Lease extends bForm_vm{
 	  VM_accommodationOptions(VM::$e)->set_a_value($n_rooms,$a_id,$hut_id,'a_quantity');
 	  myPear::WARNING("Number of available <em>$room_name</em> is set $a_quantity ==> $n_rooms");
 	}else{
-	  myPear::ERROR("Number of available <em>$room_name</em> is too small - used/available = $n_rooms/$a_quantity.<br>".
+	  myPear::ERROR("Number of available <em>$room_name</em> is too small - used/available = $n_rooms/".max(0,$a_quantity).".<br>".
 			"Please update the accommodation options");
 	}
       }
