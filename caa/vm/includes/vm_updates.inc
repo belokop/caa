@@ -113,7 +113,7 @@ function vm_updates(){
       vm_compat_update_48();
     }
 
-    if (True){ // Fixes for the version "Easter 2017"
+    if (False){ // Fixes for the version "Easter 2017"
       vm_compat_update_49();
       vm_compat_update_50();
     }
@@ -149,7 +149,6 @@ function vm_compat_update_ad_hocks(){
 
 // Set the "room is full flag" if there are <a_capacity> cotenants
 // Set the "room is full flag" if there are there are accompaning persons
-vm_compat_update_50();
 function vm_compat_update_50(){
   if (!VM::$isReady || !myPear_db()->columnExists('lease_option','abs_leases')) return;
   //  if (@$_SESSION[__function__]++) return;

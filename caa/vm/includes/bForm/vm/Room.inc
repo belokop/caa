@@ -213,7 +213,7 @@ class bForm_vm_Room extends bForm_vm {
       if (!empty($rec['av_lastname'])) $id = $rec['av_lastname'];
       if (!empty($rec['a_name'])) $id .= " $rec[a_name]"; 
       if (empty($id)) $id = '???';
-      b_debug::_debug(var_export($reply,True));
+      b_debug::_debug(var_export($reply,True),cnf_dev);
     }
     return $reply;
   }
@@ -278,7 +278,7 @@ class bForm_vm_Room extends bForm_vm {
     default:
       // Who pays?
       $who_pays = bForm_vm_Lease::get_lease_options($rec,'get_pay',array(),True);
-      b_debug::_debug("Nordita pays $who_pays");
+      b_debug::_debug("Nordita pays $who_pays",cnf_dev);
       
       if (empty($who_pays)) $who_pays = VM_default_lease_pay;
       if ($who_pays == VM_everything){
@@ -299,10 +299,13 @@ class bForm_vm_Room extends bForm_vm {
 	$reply = self::_daily_a_price_basic($rec,$e_class);
       }
     }
-    b_debug::_debug($reply);
+    b_debug::_debug($reply,cnf_dev);
     return $reply;
   }
 
+  /*
+   *
+   */
   private static function _daily_a_price_basic($rec,$e_class){
     if (!$rec['a_id'] || !$rec['hut_id']) return Null;
 
@@ -311,10 +314,7 @@ class bForm_vm_Room extends bForm_vm {
 		    : VM_accommodationOptions($e_class)->get_a_value($rec['a_id'],$rec['hut_id'],'a_price'));
 
     $ndays = b_time::diff($rec['lease_end'],$rec['lease_start']);
-    if (empty($ndays)){
-      b_debug::print_r($rec,'??? empty ndays');
-      b_debug::traceBack('???');
-    }
+    if (empty($ndays)) b_debug::internalError('??? empty ndays',$rec);
     
     if (strpos($price_basic,'=') === False){
       $reply = (int)($price_basic * 12 / 365); // convert monthly -> daily price
@@ -324,7 +324,7 @@ class bForm_vm_Room extends bForm_vm {
 	if ($ndays <= $limit) break;
       }
     }
-    b_debug::_debug("ndays=$ndays, daily price: $price_basic --> $reply");
+    b_debug::_debug("ndays=$ndays, daily price: $price_basic --> $reply",cnf_dev);
     return $reply;
   }
   
@@ -428,8 +428,13 @@ class bForm_vm_Room extends bForm_vm {
   }
 
   /*
-   * Room name
+   * Room identification
    */
+  public static function room_id($r){
+    $id = $r['a_id'] .'#'. self::_a_name($r,True);
+    return $id;
+  }
+
   public function name(){
     $this->hookHut();
     return (myPear::is_int($this->ID)
@@ -443,23 +448,28 @@ class bForm_vm_Room extends bForm_vm {
   }
 
   public static function _a_name($rec,$includeHut=False,$includePay=False,$includeCapacity=True,$includeAname=True){
-    if (empty($rec['hut_code'])) b_debug::internalError("no hut_code",$rec);
-    if ($rec['hut_code'] === HUT_BI){
-      $includeCapacity = False;
-      $includeAname = False;
-      $includeHut = True;
-      $rec['hut_name'] = $rec['a_name'];
-    }elseif (empty($rec['hut_name'])){
-      $includeHut = False;
-    }
-    $reply = sprintf('%s%s%s',
-		     ($includeCapacity ? '&#91;'.$rec['a_capacity'].'&#93; ' : ''),
-		     ($includeHut ? $rec['hut_name'].($includeAname?'.':'') : ''), 
-		     ($includeAname&&!$includePay ? $rec['a_name'] : '')
-		     );
-    if ($includePay){
-      if (empty($rec['lease_id'])) b_debug::internalError("includePay requested, but no lease_id",$rec);
-      $reply .= x('em',bForm_vm_Lease::get_lease_options($rec,'pay_room',array(),True));
+    if ((@$rec['lease_id'] && empty($rec['lease_aid'])) || 
+	(@$rec['v_status'] && ($rec['v_status'] != STATUS_YES))){
+      $reply = '';
+    }else{
+      if (empty($rec['hut_code'])) b_debug::internalError("no hut_code",$rec);
+      if ($rec['hut_code'] === HUT_BI){
+	$includeCapacity = False;
+	$includeAname = False;
+	$includeHut = True;
+	$rec['hut_name'] = $rec['a_name'];
+      }elseif (empty($rec['hut_name'])){
+	$includeHut = False;
+      }
+      $reply = sprintf('%s%s%s',
+		       ($includeCapacity ? '&#91;'.$rec['a_capacity'].'&#93; ' : ''),
+		       ($includeHut ? $rec['hut_name'].($includeAname?'.':'') : ''), 
+		       ($includeAname&&!$includePay ? $rec['a_name'] : '')
+		       );
+      if ($includePay){
+	if (empty($rec['lease_id'])) b_debug::internalError("includePay requested, but no lease_id",$rec);
+	$reply .= x('em',bForm_vm_Lease::get_lease_options($rec,'pay_room',array(),True));
+      }
     }
     return $reply;
   }

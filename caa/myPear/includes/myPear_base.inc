@@ -35,20 +35,39 @@ class myPear_base{
     //    b_debug::watchDog($this->errorsInTheForm, $this);
     //    $x=b_cnf::get('from_bForm');  if (class_exists('b_debug',0)) b_debug::watchDog($x,'from_bForm');
     //    $x=@$this->rec['lease_option'];  if (class_exists('b_debug',0)) b_debug::watchDog($x,'lease_option');
-    
-    switch(func_num_args()){
-    case 0: 
-      return b_debug::xxx(' ',  array(3,$this, (bool)($this->debug||self::$_debug), $this->dbg_color));
-    case 1:
-      $_arg1 = False;
-    case 2:  
-      $_arg1 = (is_array($arg1)
-		? $arg1
-		: array(3, $this, (bool)$arg1, $this->dbg_color));
-      foreach($_arg1 as $k=>$v) if (is_bool($v)) $_arg1[$k] = (bool)($v || $this->debug || self::$_debug);
-      return b_debug::xxx($arg0,$_arg1);
-    default: 
-      return b_debug::xxx($arg1,array(3+$arg3, $this, (bool)($arg2 || $this->debug || self::$_debug), $this->dbg_color));
+    if(1){
+      switch(func_num_args()){
+      case 0: 
+	return b_debug::_debug(' ', array(2, $this, (bool)($this->debug||self::$_debug), $this->dbg_color));
+      case 1:
+	$_arg1 = False;
+      case 2:  
+	$_arg1 = (is_array($arg1)
+		  ? $arg1
+		  : array(2, $this, (bool)$arg1, (string)$this->dbg_color));
+	foreach($_arg1 as $k=>$v) if (is_bool($v)) $_arg1[$k] = (bool)($v || $this->debug || self::$_debug);
+	return b_debug::_debug($arg0,$_arg1);
+      default: 
+	return b_debug::_debug($arg1,array(2+$arg3, 
+					   $this, 
+					   (bool)($arg2 || $this->debug || self::$_debug), 
+					   (string)$this->dbg_color));
+      }
+    }else{
+      switch(func_num_args()){
+      case 0: 
+	return b_debug::xxx(' ', array(3, $this, (bool)($this->debug||self::$_debug), $this->dbg_color));
+      case 1:
+	$_arg1 = False;
+      case 2:  
+	$_arg1 = (is_array($arg1)
+		  ? $arg1
+		  : array(3, $this, (bool)$arg1, (string)$this->dbg_color));
+	foreach($_arg1 as $k=>$v) if (is_bool($v)) $_arg1[$k] = (bool)($v || $this->debug || self::$_debug);
+	return b_debug::xxx($arg0,$_arg1);
+      default: 
+	  return b_debug::xxx($arg1,array(3+$arg3, $this, (bool)($arg2 || $this->debug || self::$_debug), $this->dbg_color));
+      }
     }
   }
 }

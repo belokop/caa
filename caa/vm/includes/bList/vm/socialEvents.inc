@@ -93,7 +93,6 @@ class bList_vm_socialEvents extends bList_vm{
 	$this->dbg($this->e->__toString());
 	foreach(VM_socialEventRates($this->e)->getCompulsoryServices($lm_id) as $ser_array){
 	  list($lm_id_comp,$ser_name,$ser_price,$x) = $ser_array;
-	  var_dump($ser_array);
 	  for($date =$this->e->getValue('e_start')+($includeDay1 ? 0 : 24*3600); 
 	      $date<=$this->e->getValue('e_end');
 	      $date+=24*3600){

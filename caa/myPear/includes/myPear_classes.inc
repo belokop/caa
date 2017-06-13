@@ -1677,42 +1677,64 @@ class b_debug{
   
   /*
    * Another debug facility
+   *   $max_a_m = 3; // number of array elements to parse
+   *   $max_s_l = 30;// maximal string length 
+   */
+  private static function parse_line_arg($arg,$max_a_m=3,$max_s_l=30){
+
+    if (is_object($arg)){
+      $arg = $arg->__toString();
+    }elseif(is_array($arg)){
+      if (empty($arg)) $arg = '[]';
+      else{
+	$a=array();
+	$ids = preg_grep('/_id$/',array_keys($arg)); 
+	foreach($ids as $i) if (count($a)<$max_a_m) $a[$i]=self::parse_line_arg($arg[$i]);
+	if (empty($a)) foreach($arg as $k=>$v){if(count($a)<$max_a_m){
+	      if (is_array($v)) $a[$k] = self::parse_line_arg($v);
+	      elseif(b_fmt::isArrayAssociative($arg)){$a[$k]=$v;}else{$a[]=$v;}}
+	  }
+	if (count($a) < count($arg)) $a[''] = '...';
+	$arg = sprintf('&#91;%s&#93;',b_fmt::joinX(',',$a));
+      }
+    }elseif(is_numeric($arg)){
+      // keep as is
+    }elseif(is_bool($arg) || ($arg === Null)){
+      $arg = var_export($arg,True);
+    }elseif(is_string($arg)){
+      $arg = var_export((strlen($arg)>$max_s_l?substr($arg,0,$max_s_l).' ...' : $arg),True);
+    }else{
+      //      var_dump($arg);
+      $arg = var_export($arg,True);
+    }
+    return $arg;
+  }
+
+  /*
+   * Parse "debug_backtrace()" output
    */
   private static function parse_line($call,$class=Null){
-    $max_a_m = 3; // number of array elements to parse
-    $max_s_l = 30;// maximal string length 
     
     // Parse arguments
     $args = array();
-    foreach($call['args'] as $arg){
-      if (is_object($arg)){
-	$arg = $arg->__toString();
-      }elseif(is_array($arg)){
-	if (empty($arg)){
-	  $arg = '[]';
-	}else{
-	  $ids = preg_grep('/_id$/',array_keys($arg)); 
-	  $a=array();
-	  foreach($ids as $x_id) if (count($a)<$max_a_m) $a[$x_id]=$arg[$x_id];
-	  if (empty($a)) foreach($arg as $k=>$v){ if(count($a)>$max_a_m)break; if (b_fmt::isArrayAssociative($arg)){ $a[$k] = $v;}else{$a[] = $v;}}
-	  if (count($a) < count($arg)) $a[''] = '...';
-	  $arg = sprintf('&#91;%s&#93;',b_fmt::joinX(',',$a));
-	}
-      }elseif(is_numeric($arg)){
-	// keep as is
-      }elseif(is_string($arg) || is_bool($arg) || is_numeric($arg)){
-	$arg = var_export(mb_strcut($arg,0,$max_s_l),True);
-      }else{
-	var_dump($arg);
-	$arg = var_export($arg,True);
-      }
-      $args[] = $arg;
+    foreach($call['args'] as $arg) $args[] = self::parse_line_arg($arg);
+    foreach(array('class','type') as $f) if (empty($call[$f])) $call[$f] = '';
+
+    // Parce the parent class    
+    $classArgs = array();
+    if (is_object($class) && ($call['type']==='->')){
+      if    ($class instanceof bUnit) {$classArgs[] = $class->parent_ID; $classArgs[] = $class->rank; }
+      elseif($class instanceof bList)  $classArgs[] = $class->parent_ID; 
+      elseif ($id=@$class->ID)         $classArgs[] = $id;
+      elseif ($id=@$class->id)         $classArgs[] = $id;
+      elseif ($id=@$class->parent_ID)  $classArgs[] = $id;
+      if($class instanceof bForm)      $classArgs[] = $class->MODE;
     }
-    
+
     $reply = sprintf("%s%s%s%s(%s)",
-		     (($c=@$call['class']) ? str_replace(array('bList_','bUnit_','bForm_'),'',$c) : ''),
-		     (is_object($class) ? x('(',@$class->ID) : ''),
-		     (($t=@$call['type']) ? $t : ''),
+		     $call['class'], //(($c=@$call['class']) ? str_replace(array('bList_','bUnit_','bForm_'),'',$c) : ''),
+		     ($call['type'] === '->' ? x('(',join(',',$classArgs)) : ''),
+		     $call['type'],
 		     $call['function'],
 		     join(', ',$args));
     return $reply;
@@ -1724,18 +1746,42 @@ class b_debug{
   public static function _debug($txt='',$mode=1){
 
     if (!cnf_dev) return;
+
+    // Defaults
+    list($level,$color,$class,$debug) = array(1,'redText',Null,False);
     
-    // extract the parameters
+    // Extract the arguments
     if (!is_array($mode)) $mode = array($mode);
-    list($level,$color,$class) = array(1,'blueText',Null);
     foreach($mode as $m){
       if    (is_numeric($m)) $level = $m;
       elseif(is_string($m))  $color = $m;
       elseif(is_object($m))  $class = $m;
+      elseif(is_bool($m))    $debug = $m;
+    }
+
+    // Start / End a block
+    if (self::$starting_exiting = is_string($txt)){
+      $s_e_s = (strpos($txt,starting) !== False);
+      $s_e_e = (strpos($txt,exiting)  !== False);
+      if (self::$starting_exiting = ($s_e_s || $s_e_e)){
+	if ($s_e_e) self::$s_e_depth--;
+	list($debug,$color) = array(True,'orangeText');
+      }
     }
     
-    $calls = debug_backtrace(False,$level+1);
-    myPear::DEBUG(b_fmt::redText(self::parse_line($calls[$level],$class).': '.x('em',$txt),$color));
+    if ($debug){    
+      $calls = debug_backtrace(False,$level+1);
+      $msg = sprintf("<span class='%s'>%s%s - <em>%s</em></span>\n",
+		   $color,
+		   self::s_e_depth(),
+		   self::parse_line($calls[$level],$class),
+		   (is_string($txt) ? $txt : self::parse_line_arg($txt,10,60)) // var_export($txt,True)
+		   );
+      drupal_set_message($msg,'debug');
+      //            if (strpos($msg,'names')!==False) 
+      //var_dump($msg);
+    }
+    if (self::$starting_exiting && $s_e_s) self::$s_e_depth++;
   }
 
   /*
@@ -1745,7 +1791,7 @@ class b_debug{
     $tb = array(x('strong',(empty($id) ? 'TraceBack:' : $id)));
     ob_start();
     $calls = debug_backtrace(False);
-    $t = new b_table_zebra(array('n'=>'','b'=>'','l'=>''));
+    $t = new b_table_zebra(array('n'=>' ','b'=>' ','l'=>' '));
     $t->showLineCounter = False;
     foreach($calls as $k=>$call) $t->prt(array('n'=>x('code class=smallerText',"$k"),
 					       'b'=>x('code class=smallerText',self::parse_line($call)),
@@ -1786,6 +1832,7 @@ class b_debug{
 	}
       }
     }
+    return;
     die("INTERNAL ERROR: $txt\n");
   }
   
@@ -1939,6 +1986,9 @@ class b_debug{
     }
   }
 
+  /*
+   *
+   */
   static function var_dump($var,$id='',$return=False){
     static $c = 0;
     ob_start();

@@ -3,8 +3,8 @@ ini_set("allow_url_fopen", true);
 //var_dump(file_get_contents('php://input'));
 
 // myPear module 
-$releaseDate = '2017-06-11';
-define('myPear_VERSION','5.3.198');
+$releaseDate = '2017-06-13';
+define('myPear_VERSION','5.3.199');
 define('myPear_MODULE', 'myPear');
 define('myPear_DATE',    $releaseDate);
 
@@ -139,8 +139,8 @@ define('b_crypt_no' ,'nocrypt_once');
 //
 // Developer debugging
 //
-define('starting','Тронули, барин...');   // Means "Let's go..."
-define('exiting', 'Приехали, барин...');  // Means "Ready, Sir..."
+define('starting','Тронули, барин...');   // Means "Let's go, sir..."
+define('exiting', 'Приехали, барин...');  // Means "Have arrived, sir..."
 define('missing_value', 'missing value');
 
 if (!isset($_GET['showe'])) { $_REQUEST['showe'] = $_GET['showe'] = 1; define('cnf_show_e',True); }

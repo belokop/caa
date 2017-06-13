@@ -3,9 +3,9 @@
 /**
  * Visitors Manager (VM) configuration file
  */
-$releaseDate = '2017-06-11';
+$releaseDate = '2017-06-13';
 define('VM_MODULE'   , 'vm');
-define('VM_VERSION','5.13.27');
+define('VM_VERSION','5.13.28');
 
 //
 // transition problems...
@@ -24,7 +24,7 @@ define('VM_office_regexp','\b(\w*:\w*)\b');
 define('send_infoMail_to_applicants',(cnf_dev||cnf_demo));
 define('send_welcomeMail_to_applicants',(cnf_dev||cnf_demo));
 define('send_denialMail_to_applicants',cnf_dev||cnf_demo); 
-define('include_personalPage_in_welcomeMail', (cnf_dev||cnf_demo));
+define('include_personalPage_in_welcomeMail', False);                // (cnf_dev||cnf_demo));
 define('include_accommodation_in_welcomeMail',(cnf_dev||cnf_demo));
 define('include_office_in_welcomeMail',(cnf_dev||cnf_demo));
 define('include_payForms_in_welcomeMail', True);
@@ -658,6 +658,7 @@ class VM extends myPear{
 
     }
   }
+
   
   /*
    * Instantiate the Build-in accommodation objects

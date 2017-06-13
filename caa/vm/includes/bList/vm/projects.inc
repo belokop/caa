@@ -230,7 +230,6 @@ class bList_vm_projects extends bList_vm{
 	  if (is_object($e = myPear::getInstance_new('bForm_vm_Event',$id,'strict'))) $events[] = $e; 
 	}elseif(cnf_dev){
 	  // Should not happend...
-	  //	  var_dump($r);
 	}
       }
     }

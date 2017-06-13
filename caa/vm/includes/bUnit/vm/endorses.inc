@@ -177,7 +177,7 @@ class bUnit_vm_endorses extends bUnit_vm{
 			  ),' ');
       while($r = myPear_db()->next_record($q))      $reply[b_time::period($r['v_start'],$r['v_end']).": ".bForm_Avatar::_fmtName('Lf',$r)] = $r;
     }
-    $this->dbg(join(',&nbsp;',array_keys($reply)),$this->debug||cnf_dev);
+    $this->dbg(join(',&nbsp;',array_keys($reply)),cnf_dev);
     return array_values($reply);
   }
 

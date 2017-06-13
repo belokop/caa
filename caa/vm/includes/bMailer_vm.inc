@@ -103,11 +103,6 @@ class bMailer_vm extends bMailer{
     }
   }
 
-  /*
-  function dbg($txt='?',$forced=False) {
-    myPear::WARNING($txt,$this);
-  }
-  *
 
   /*
    *

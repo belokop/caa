@@ -8,7 +8,7 @@ class bHolder_vm extends bHolder_ea{
   
   function isWritable(){
     $reply = VM_administrator_here;
-    $this->dbg($reply,$this->debug || cnf_show_w);
+    $this->dbg($reply,cnf_show_w);
     return $reply;
   }
 

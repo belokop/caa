@@ -519,39 +519,6 @@ class bForm_vm_Lease extends bForm_vm{
     return $lease_id;
   } 
 
-  /*
-   * Return leases sharing (or possibly sharing) the given apartment
-   */
-  public static function getTenants($l_start,$l_end,$a_id){
-    static $cache = array(),$count=array();
-    $cache_id = serialize(array($l_start,$l_end,$a_id));
-    b_debug::_debug('call #'.(int)@$count[$cache_id]++,($count[$cache_id]>1?'redText':'grayText'));
-    
-    if (empty($cache[$cache_id]) && is_numeric($a_id)){
-      $reply = array();
-      $w = array("a_id = '$a_id'",
-		 '('.join(' OR ',array("(lease_start BETWEEN $l_start AND $l_end)",
-				       "(lease_end   BETWEEN $l_start AND $l_end)",
-				       "(lease_start <= $l_start AND lease_end >= $l_start)",
-				       "(lease_start <= $l_end   AND lease_end >= $l_end)",
-				       )).')');
-      $w = array("a_id = '$a_id'",
-		 "lease_start <= $l_end",
-		 "lease_end >= $l_start");
-				      
-      $q = myPear_db()->query("SELECT lease_id,av_firstname,av_lastname FROM abs_leases ".
-			      " LEFT JOIN abs_rooms ON lease_aid = a_id ". 
-			      " LEFT JOIN abs_visits     ON lease_vid = v_id ". 
-			      " LEFT JOIN zzz_avatars    ON v_avid = av_id ". 
-			      " WHERE ".join(' AND ',$w));
-      while($r = myPear_db()->next_record($q)) $reply[$r['lease_id']] = bForm_Avatar::_fmtName('Lf',$r);
-      asort($reply);
-      $cache[$cache_id] = $reply;
-    }
-    $reply = $cache[$cache_id];
-    return $reply;
-  }
-
 
   /*
    * Return the lease name without instantiating the Lease class
@@ -1230,7 +1197,7 @@ class bForm_vm_Lease extends bForm_vm{
   /*
    * Room usage by a program
    */
-  public static function _room_usage($a_id){
+  public static function _room_usage($a_id,$update_counters=False){
     bTiming()->cpu(__function__);
     list($start,$end) = array(b_time::check_in (VM::$e->getValue('e_start')),
 			      b_time::check_out(VM::$e->getValue('e_end')));
@@ -1272,13 +1239,18 @@ class bForm_vm_Lease extends bForm_vm{
       if ($n_rooms == $a_quantity){
 	myPear::WARNING("The last <em>$room_name</em> is booked");
       }elseif ($n_rooms > $a_quantity){
-	VM_accommodationOptions(VM::$e)->set_a_value($n_rooms,$a_id,$hut_id,'a_quantity');
-	myPear::WARNING("Number of available <em>$room_name</em> is set $a_quantity ==> $n_rooms");
+	if ($update_counters){
+	  VM_accommodationOptions(VM::$e)->set_a_value($n_rooms,$a_id,$hut_id,'a_quantity');
+	  myPear::WARNING("Number of available <em>$room_name</em> is set $a_quantity ==> $n_rooms");
+	}else{
+	  myPear::ERROR("Number of available <em>$room_name</em> is too small - used/available = $n_rooms/$a_quantity.<br>".
+			"Please update the accommodation options");
+	}
       }
     }
 
     // Return the reply
-    b_debug::xxx("$n_tenants tenants in $n_rooms for the event");
+    b_debug::xxx("$n_tenants tenants in $n_rooms");
     bTiming()->cpu();
     return array($n_tenants,$n_rooms);
   }
@@ -1300,7 +1272,7 @@ class bForm_vm_Lease extends bForm_vm{
     $huts = array();
     if (!empty($hut_code)){
       $where[] = empty($accommodationOptions)
-	? '1'
+ 	? '1'
 	: ' hut_id != '.join(' AND hut_id !=  ',$accommodationOptions); // excludes
       $where[] = (is_numeric($hut_code)
 		  ? "hut_code = '$hut_code'"
@@ -1325,6 +1297,13 @@ class bForm_vm_Lease extends bForm_vm{
 	foreach(bList_vm_accommodationOptions::get_allHuts() as $hut_id=>$hut_name) $huts[] = $hut_id;
       }
     }
+    // Sanity
+    foreach($huts as $k=>$v){
+      if (empty($v)){
+	if (cnf_dev) b_debug::internalError("??? empty hut element",$huts);
+	else unset($huts[$k]);
+      }
+    }
     $huts_list = join(', ',array_values($huts));
     
     b_debug::_debug(b_fmt::redText("context ".($event_context ? 'event '.$accommodationOptions->e->name() : 'org')));
@@ -1343,16 +1322,17 @@ class bForm_vm_Lease extends bForm_vm{
 			     " LEFT JOIN abs_huts ON a_hutid = hut_id ".
 			     " WHERE ".join(' AND ',$where).
 			     " ORDER BY CONCAT(hut_name,a_capacity)",cnf_dev);
-    $all_rooms = $booked_rooms = array();
+    $all_rooms = $booked_rooms = $booked_beds = array();
     while ($r = myPear_db()->next_record($q)){
       if (!in_array($r['hut_id'],array_values($huts))) continue;
-      $id = $r['a_id'] .'#'. bForm_vm_Room::_a_name($r,True);
+      $id = bForm_vm_Room::room_id($r);
       // How many rooms of this type have we for the event?
       $all_rooms[$id] = ($event_context
 			 ? $accommodationOptions->get_a_value($r['a_id'],$r['hut_id'],'a_quantity')
 			 : $r['a_quantity']);
       $booked_rooms[$id] = array();
-      $shares_available[$id] = 0;
+      $booked_beds[$id] = 0;
+      $room_capacities[$id] = 0;
     }      
     //    b_debug::print_r($all_rooms,'all rooms','nosort');
 
@@ -1381,20 +1361,25 @@ class bForm_vm_Lease extends bForm_vm{
 		       'prd'  => b_time::period($r['lease_start'],$r['lease_end']),
 		       'code' => $r['hut_code']
 		       );
-	$id = $r['a_id'] .'#'. bForm_vm_Room::_a_name($r,True);
+	$id = bForm_vm_Room::room_id($r);
 	if ($cotenants) $cover[$id][join(',',$cotenants)] = $entry;
 	else            $cover[$id][] = $entry;  
 	if (($r['a_capacity']>1) && 
 	    (count($cotenants)+@$r['v_accompaning']<$r['a_capacity']) &&
-	    !self::_room_is_full($r)) $shares_available[$id]++;
+	    !self::_room_is_full($r)) $booked_beds[$id]++;
+	$room_capacities[$id] = $r['a_capacity'];
       }
+      arsort($booked_beds);
+      if (!empty($booked_beds)) b_debug::print_r($booked_beds,'booked_beds','nosort');
 
       // Calculate the optimal leases distribution
       locateAndInclude('bCover');
       foreach($cover as $id=>$leases){
 	$solver = new bCover($leases,'n','day1','day9');
 	//$solver->debug = True;
-	foreach($solver->solve() as $n=>$solution) $booked_rooms[$id][] = $solution;
+	foreach($solver->solve() as $n=>$solution){
+	  $booked_rooms[$id][] = $solution;
+	}
       }
     }
     
@@ -1410,35 +1395,31 @@ class bForm_vm_Lease extends bForm_vm{
     $n_populated = 0;
     foreach($all_rooms as $id=>$a_quantity){
       list($a_id,$room_name) = explode('#',$id,2);
-      if ($a_quantity < count($booked_rooms[$id])){
-	continue;
-      }elseif ($a_quantity == count($booked_rooms[$id])){
-	if (@$rec['lease_aid']){
-	  $n_populated++;
-	  $reply[$rec['lease_aid']] = bForm_vm_Room::_a_name($rec,True);
-	}elseif(@$shares_available[$id]){
+      $n_booked_rooms = count($booked_rooms[$id]);
+      if ($a_quantity < $n_booked_rooms){
+	// Disaster, something is wrong
+	if ($n_booked_rooms) b_debug::_debug(sprintf("$id overbooked %s/%s !!!",$n_booked_rooms,$a_quantity),array('redText',cnf_dev));
+      }elseif($a_quantity > $n_booked_rooms){
+	b_debug::_debug($id,array('greenText',cnf_dev));
+	$n_populated++;
+	$reply[$a_id] = $room_name;
+      }elseif(0){
+	// All rooms have tenants, check may be there is a free bed...
+	if($room_capacities[$id] > @$booked_beds[$id]){
+	  b_debug::_debug("$id a_capacity=".$room_capacities[$id].", booked_beds=".$booked_beds[$id],cnf_dev);
 	  $n_populated++;
 	  $reply[$a_id] = $room_name.as_cotenant;
 	}
-      }else{
-	$n_populated++;
-	$reply[$a_id] = $room_name;
       }
     }
-
-    // If the reference lease has a room attached, include it in the reply
-    if (($a_id = @$rec['lease_aid']) && empty($reply[$a_id])){
-      $reply[$a_id] = bForm_vm_Room::_a_name($rec,True);
-      b_debug::_debug(b_fmt::redText("FORCED ACCEPT (lease exists) ".$reply[$a_id]));
-      $n_populated++;
-    }
-
+    
     // However, use the available shares if there is no other chance...
     if (empty($n_populated)){
       $msg_overbooking = "WARNING, all the available room are booked.<br/>".
 	"You may continue with shared accommodation";
-      foreach($shares_available as $id=>$count){
+      foreach($booked_beds as $id=>$count){
 	if (!$count) continue;
+	b_debug::_debug("$id a_capacity=".$room_capacities[$id].", booked_beds=".$booked_beds[$id],cnf_dev);
 	$n_populated++;
 	list($a_id,$room_name) = explode('#',$id,2);
 	$reply[$a_id] = $room_name.as_cotenant;
@@ -1450,6 +1431,13 @@ class bForm_vm_Lease extends bForm_vm{
     
     if (!empty($reply)) $reply['<select_name>'] = 'accommodation';
 
+    // If the reference lease has a room attached, include it in the reply
+    if (@$rec['lease_aid'] && empty($reply[$rec['lease_aid']])){
+      b_debug::_debug("$id auto-added",array('greenText',cnf_dev));
+      $n_populated++;
+      $reply[$rec['lease_aid']] = bForm_vm_Room::_a_name($rec,True);
+    }
+    
     b_debug::_debug("reply=".join(',&nbsp;',array_values($reply)),__function__,array($accommodationOptions,$hut_code));
     bTiming()->cpu();
     return $reply;
@@ -1572,9 +1560,11 @@ class bForm_vm_Lease extends bForm_vm{
     if (!bForm_vm_Room::_mightBeSharable($rec) || self::_room_is_full($rec)) return '';
     
     $cotenants = VM_cotenants()->get_cotenants($rec);
-    $too_late = $rec['v_end'] < time() + 24*3600;
-    if (!$too_late) $too_late = !empty($cotenants) && (VM_cotenants()->lease_dates[1] < time());
-
+    $lease_dates = bList_vm_cotenants::$lease_dates;
+    $too_late = ((VM::isEventEndorsed() || VM::isArchived()) ||  
+		 ($rec['v_end'] < time() + 24*3600) ||
+		 (!empty($cotenants) && ($lease_dates[1] < time())));
+    
     if ($too_late){
       $RW = False;
     }elseif (!is_object($recP) && (!empty($cotenants) || self::get_lease_options($rec,VM_no_cotenants))){
@@ -1590,11 +1580,10 @@ class bForm_vm_Lease extends bForm_vm{
 	    
     if ($RW){ //======================================================================================
       
+      if (is_object($recP)) VM::$formDummy->MODE = $recP->MODE;
+
       // Look for the candidates for co-tenants
       $candidates = VM_cotenants()->get_candidate($rec);
-      
-      // Add the current cotenant to the candidates list 
-      if (is_object($recP)) VM::$formDummy->MODE = $recP->MODE;
 
       // Set the current value (shown in RO mode and as selected in RW)
       if (self::get_lease_options($rec,VM_no_cotenants)){
@@ -1630,14 +1619,11 @@ class bForm_vm_Lease extends bForm_vm{
 	      "<noscript><input type='submit' value='go'/></noscript>"),
 	    'POST');
       if (!empty($reply)) b_debug::_debug("reply=array(".join(', ',$candidates).")");
+
     }else{    //======================================================================================	
-      $names = array();
-      foreach($cotenants as $lm_id=>$leases){
-	foreach($leases as $l_id){
-	  $r = self::_leaseInfo($l_id);
-	  $names[] = $r['lease_name'];
-	}
-      }
+      
+      // In RO mode just print the cotenant names
+      $names = VM_cotenants()->get_cotenants($rec,False,'names');
       if (!$too_late && empty($names) && !self::get_lease_options($rec,VM_no_cotenants)) $names = array(b_fmt::redText('to be selected'));
       $reply = join(',',$names);
       if (!empty($reply)) b_debug::_debug($reply);

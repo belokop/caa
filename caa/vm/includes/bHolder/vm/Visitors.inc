@@ -704,7 +704,9 @@ class bHolder_vm_Visitors extends bHolder_vm{
 	// 'budget', 'lists'... What else gets here?
 	$this->dbg("Unexpected(?) '".$this->doing."', perform a default action");
       case 'show_mails_exchange':
+	$this->dbg(starting);
 	parent::listEntries();
+	$this->dbg(exiting);
       }
     }
     
@@ -1536,7 +1538,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
 				   ? x('em',join(',',VM_cotenants()->get_cotenants($this->rec['lease_id'],False,'names')))
 				   : x('em',bForm_vm_Lease::select_cotenant('_c_id:',
 									    $this->rec,
-									    (VM::hasRightTo('book_ah')&&time()<$this->rec['e_end']?'if_empty':False),
+									    (VM::hasRightTo('book_ah')&&!VM::isEventEndorsed()?'if_empty':False),
 									    $this->anchor(True))))
 				: '');
       $this->rec['cotenant'] .= bForm_vm_Lease::select_who_pays('_p_id:',
@@ -2156,7 +2158,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
     bTiming()->cpu(__function__);
     locateAndInclude('bForm_vm_Expenses');    
     
-    $notTooLate = (!VM::isEventEndorsed() || $this->rec['v_end'] < time() || 
+    $notTooLate = (!VM::isEventEndorsed() || ($this->rec['e_end'] >= time()) || 
 		   (VM::isEventEndorsed() && bForm_vm_Visit::_getStatus($this->rec) == STATUS_PENDING));
     
     $exp_arePaid= (bForm_vm_Expenses::_exp_arePaid($this->rec)
