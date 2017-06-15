@@ -18,6 +18,7 @@ class bUnit extends bList{
   protected $orderBy    = 'av_lastname';
   protected $orderByDir = 'ASC';
   protected $b_tabs = Null;
+  protected $dbg_color = 'deepskyblueText';
 
   /*
    * See bList

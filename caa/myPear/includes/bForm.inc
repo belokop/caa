@@ -61,6 +61,7 @@ class bForm extends myPear_getValue{
   protected $normalLine = 66;
   protected $bForm_isJustCreated = False;
   protected $arrayToCheck = array();
+  protected $dbg_color = 'dorchidText';
 
   // List of all RW fields for the current form. Used to decide about printing "update it" button
   private $all_RWfields = array(); 
@@ -90,6 +91,9 @@ class bForm extends myPear_getValue{
    */  
   private static $class_globalCount = 0;
   function __construct($id, $mode='RO', $SQL_backend=True) {
+
+    self::$_dbg_color = $this->dbg_color;
+
     locateAndInclude('bText');
     static $dejavu = array(), $MAX_FILE_SIZE = 0;
 

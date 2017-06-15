@@ -842,7 +842,6 @@ class bHolder_vm_Visitors extends bHolder_vm{
     if (is_object(VM::$e) && !is_object($this->av)){
       if     (VM::$e->isArchived())      $t->extraTD[] = bIcons()->get('b-archive');
       elseif (VM::$e->isEventEndorsed()) $t->extraTD[] = bIcons()->get('b-approved');
-      //      $t->prt(array('space0'=>' '));
     }
     $t->close();
     $table = ob_get_contents();
@@ -901,7 +900,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
     if ($this->doing == 'myguests') $something_printed++;
     if (is_object(VM::$e) && !is_object($this->av) && !$something_printed++){
       if    (VM::$e->isArchived())      $this->t->pendingObject[] = bIcons()->get('b-archive');
-      elseif(VM::$e->isEventEndorsed()) $this->t->pendingObject[] = bIcons()->get('b-approved-vert');
+    //elseif(VM::$e->isEventEndorsed()) $this->t->pendingObject[] = bIcons()->get('b-approved-vert');
     }
   }
     
@@ -1076,6 +1075,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
 
     // Show button "Release lock"
     if (VM::$e->isEventEndorsed()){ 
+      $to_show[] = bIcons()->get('b-approved-hor');
       if (!empty($fnc_message)) myPear::WARNING($fnc_message);
       if (VM::hasRightTo('endorse_event')||VM_unlocker_here) $to_show[] = b_btn::big_button('Unlock the budget & allow changes',array('e_endorse_once'=>0,
 																      'resetcache_once'=>1),'red');
@@ -1094,7 +1094,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
     }
     if (!empty($to_show)){
       $t = new b_table("style='width:100%'");
-      $t->tr($to_show);
+      $t->tr($to_show,"style='vertical-align:bottom'");
       $t->close();
     }
   }
@@ -1803,10 +1803,13 @@ class bHolder_vm_Visitors extends bHolder_vm{
     if (VM_administrator_here){
       $reply = bForm_vm_Visit::_getGSF($what,$this->rec,'li');
       if ($include_accommodation_wish && !empty($this->rec['v_acc_wish']))    $reply[] = x('li',$this->rec['v_acc_wish']);
-      if (empty($reply)) $reply = '';
-      else $reply = x('ul class="smallerText"',join(' ',$reply));
+      if (empty($reply)){
+	$reply = '';
+      }else{
+	$this->dbg($reply);
+	$reply = x('ul class="smallerText"',join(' ',$reply));
+      }
     }
-    $this->dbg($reply,cnf_dev);
     return $reply;
   }
 

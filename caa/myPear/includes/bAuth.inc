@@ -769,7 +769,7 @@ The request came from the web interface from computer '".gethostbyaddr($_SERVER[
  *
  */
   private static function dbg($text='',$force=False){
-    if (self::$debugIsOn||$force) b_debug::xxx($text,array(True,'redText',3));
+    if (self::$debugIsOn||$force) b_debug::_debug($text,array(True,'redText',2));
   }
   
   /*

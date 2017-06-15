@@ -238,6 +238,7 @@ class bList extends myPear_getValue{
   // those items are packed into the lm_option field
   protected $packed_items= array();
   protected $serialized  = 'lm_option';
+  protected $dbg_color = 'blueText';
 
   public    $sortArgs    = '';
   protected $orderBy     = 'lm_key';

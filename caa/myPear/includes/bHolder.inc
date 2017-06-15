@@ -3,7 +3,7 @@
  * a holder class to keep & manage the forms
  */
 
-class bHolder {
+class bHolder extends myPear_base{
 
   protected $css = array();
   var $strLength = 30; // number of characters in the item, cut if longer
@@ -232,10 +232,4 @@ class bHolder {
   function rejectRecord(){ return False; }
 
   function format(){}
-
-  function __toString()  { return get_class($this); }
-
-  function dbg($txt='',$force=False){
-    b_debug::xxx($txt,array(3,'greyText',$this,$force||$this->debug));
-  }
 }

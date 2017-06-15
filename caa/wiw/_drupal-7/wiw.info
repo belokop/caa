@@ -4,4 +4,4 @@ package = myPear
 core = 7.x
 dependencies[] = myPear
 dependencies[] = ea
-version = 7.x-5.2.2
+version = 7.x-5.2.3

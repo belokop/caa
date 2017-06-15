@@ -135,15 +135,15 @@ class bForm_wiw_trip extends bForm{
     // Check ACL, ok if the trip is public
     $t_acl  = (($a = $formDB['t_acl']) ? $a : wiw_acl_default);
     if ($reply=($t_acl == wiw_acl_public)){
-      b_debug::xxx("OK, trip is ".wiw_acl_public);
+      b_debug::_debug("OK, trip is ".wiw_acl_public,cnf_dev);
     }elseif($reply=is_object(bAuth::$av)){
-      b_debug::xxx('OK, authenticated');
+      b_debug::_debug('OK, authenticated',cnf_dev);
     }else{
       // Check the client address, ok if it is from trusted domain
       $reply = myOrg()->isHostTrusted($_SERVER['REMOTE_ADDR']);
-      if ($reply) b_debug::xxx('OK, host is trusted');
+      b_debug::_debug('OK, host is trusted',(bool)$reply);
     }
-    b_debug::xxx($reply,array(True));
+    b_debug::_debug($reply,cnf_dev);
     return $reply;
   }
   

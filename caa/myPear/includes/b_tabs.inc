@@ -46,7 +46,7 @@ if (cnf_b_tabs_JQ) {
 /*
  * myPear tabs
  */
-class b_tabs_myPear {
+class b_tabs_myPear extends myPear_base{
 
   public $debug = False;
   public $current_tabTitle = '?';
@@ -259,17 +259,13 @@ class b_tabs_myPear {
     // Finally set back the current tab
     b_cnf::set($this->cnf_bTabs,($_GET[$this->cnf_bTabs]=$this->_GET_b_tab)); 
   }
-
-  private function dbg($txt=' ',$force=False){
-    b_debug::xxx($txt,array(3,(bool)$this->debug||$force,$this,'orangeText'));
-  }
 }
 
 /*
  * jQuery "tabs div"
  *
  */
-class b_tabs_JQ{
+class b_tabs_JQ extends myPear_base{
   public $ID = 0;
   public $current_tabTitle = '?';
   public  static $inside = False;
@@ -277,12 +273,12 @@ class b_tabs_JQ{
   private static $div_counter=0;
   private $tab_counter=0;
   private $div_id;
-  private $debug = False;
   private $tab_names=array();
  
   private $selected = 0;
   private $depth = 0;
   public  $body = array();
+  public  $debug = False;
 
   function __construct($tabs=array(),$selected=0){
     $this->ID = ++self::$div_counter * 100 + ($this->depth = ++self::$jQueryTabs_depth);
@@ -368,9 +364,5 @@ class b_tabs_JQ{
       print "\n</div> <!-- close tab '$tab' -->\n";
       $this->dbg($tab);
     }
-  }
-
-  private function dbg($txt=''){
-    b_debug::xxx($txt,array(3,(bool)$this->debug,$this,'orangeText'));
   }
 }

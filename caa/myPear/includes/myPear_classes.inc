@@ -1397,7 +1397,7 @@ class b_pdf{
 /*
  * Set of debug helpers
  */
-class b_debug{
+class b_debug extends myPear_base{
 
   public static $backtraceData = '';
 
@@ -1545,6 +1545,14 @@ class b_debug{
   private static $s_e_depth = 0;
   public  static $starting_exiting = False;
   static function xxx($text=' ',$flags=array()){
+
+    if (!is_array($flags)) $flags = array($flags);
+    foreach($flags as $k=>$v) if (is_numeric($v)){ $levelOK = True; $flags[$k]=$v-1;}elseif(is_bool($v)){$debugOK=True;}
+    if (empty($levelOK)) $flags[] = 2;
+    if (empty($debugOK)) $flags[] = True;
+
+    return self::_debug($text,$flags);
+
     static $default_flags = array('fuchsiaText',2);
     
     if (!defined('cnf_dev') || !defined('YBhere') || (!cnf_dev && !YBhere)) return;
@@ -1674,13 +1682,27 @@ class b_debug{
   public static function s_e_depth($extra_shift=0){
     return (self::$s_e_depth > 0 ? str_repeat('&nbsp;',5*(self::$s_e_depth+$extra_shift)) : ''); 
   } 
+
+  /*
+   *
+   */
+  public static $parse_line_arg_defaults = Null;
+  public function parse_line_arg_defaults(){
+    static $max_a_m=3, $max_s_l=30;
+    if (self::$parse_line_arg_defaults === Null) self::$parse_line_arg_defaults = array($max_a_m,$max_s_l);
+    $reply = self::$parse_line_arg_defaults;
+    self::$parse_line_arg_defaults = Null;
+    return $reply;
+  }
   
   /*
    * Another debug facility
    *   $max_a_m = 3; // number of array elements to parse
    *   $max_s_l = 30;// maximal string length 
    */
-  private static function parse_line_arg($arg,$max_a_m=3,$max_s_l=30){
+  private static function parse_line_arg($arg,$max_a_m=Null,$max_s_l=Null){
+
+    //   if (!empty($max_a_m) && !empty($max_s_l))  self::parse_line_arg_defaults = array($max_a_m,$max_s_l);
 
     if (is_object($arg)){
       $arg = $arg->__toString();
@@ -1743,43 +1765,52 @@ class b_debug{
   /*
    *
    */
-  public static function _debug($txt='',$mode=1){
+  public static function _debug($txt='',$flags=1,$message_class='debug'){
+    
+    if (($message_class == 'debug') && !cnf_dev) return;
 
-    if (!cnf_dev) return;
-
+    static $color_codes = array('I' => 'maroonText',
+				'L' => 'blueText',
+				'M' => 'fuchsiaText',
+				'A' => 'redText',
+				'AA'=> 'redText',
+				'DB'=>'greenText');
+    
     // Defaults
-    list($level,$color,$class,$debug) = array(1,'redText',Null,False);
+    list($level,$color,$class,$toPrint) = array(1,(string)self::$_dbg_color,Null,False);
     
     // Extract the arguments
-    if (!is_array($mode)) $mode = array($mode);
-    foreach($mode as $m){
+    if (!is_array($flags)) $flags = array($flags);
+    foreach($flags as $m){
       if    (is_numeric($m)) $level = $m;
       elseif(is_string($m))  $color = $m;
       elseif(is_object($m))  $class = $m;
-      elseif(is_bool($m))    $debug = $m;
+      elseif(is_bool($m))    $toPrint = $m;
     }
-
-    // Start / End a block
-    if (self::$starting_exiting = is_string($txt)){
+    if (isset($color_codes[$color])) $color = $color_codes[$color];
+    
+    // Start & End of a logical block
+    if (($message_class=='debug') && (self::$starting_exiting = is_string($txt))){
       $s_e_s = (strpos($txt,starting) !== False);
       $s_e_e = (strpos($txt,exiting)  !== False);
       if (self::$starting_exiting = ($s_e_s || $s_e_e)){
 	if ($s_e_e) self::$s_e_depth--;
-	list($debug,$color) = array(True,'orangeText');
+	list($toPrint,$color) = array(True,'orangeText');
       }
     }
     
-    if ($debug){    
-      $calls = debug_backtrace(False,$level+1);
+    if ($toPrint){    
+      $callStack = debug_backtrace(False,$level+1);
       $msg = sprintf("<span class='%s'>%s%s - <em>%s</em></span>\n",
 		   $color,
 		   self::s_e_depth(),
-		   self::parse_line($calls[$level],$class),
+		   self::parse_line($callStack[$level],$class),
 		   (is_string($txt) ? $txt : self::parse_line_arg($txt,10,60)) // var_export($txt,True)
 		   );
-      drupal_set_message($msg,'debug');
-      //            if (strpos($msg,'names')!==False) 
-      //var_dump($msg);
+      if (self::$starting_exiting || !@self::$xxx_cache[b_crypt::hash($msg)]++ || b_cnf::get('noCompactMessages')){
+	if (b_cnf::get('nodrupal')) print "<br>$msg\n";
+	else drupal_set_message($msg,$message_class);
+      }
     }
     if (self::$starting_exiting && $s_e_s) self::$s_e_depth++;
   }
@@ -1788,16 +1819,16 @@ class b_debug{
    *
    */
   static function traceBack($id='',$object=Null,$ignore_args=False){
-    $tb = array(x('strong',(empty($id) ? 'TraceBack:' : $id)));
     ob_start();
-    $calls = debug_backtrace(False);
+    $callStack = debug_backtrace(False);
     $t = new b_table_zebra(array('n'=>' ','b'=>' ','l'=>' '));
     $t->showLineCounter = False;
-    foreach($calls as $k=>$call) $t->prt(array('n'=>x('code class=smallerText',"$k"),
-					       'b'=>x('code class=smallerText',self::parse_line($call)),
-					       'l'=>x('code class=smallerText',preg_replace(';(.*/caa|'.trim(`pwd`).')/;','',@$calls[$k]['file'].'#'.@$calls[$k]['line']))));
+    foreach($callStack as $k=>$call) $t->prt(array('n'=>x('code class=smallerText',"$k"),
+						   'b'=>x('code class=smallerText',self::parse_line($call)),
+						   'l'=>x('code class=smallerText',preg_replace(';(.*/caa|'.trim(`pwd`).')/;','',@$call['file'].'#'.@$call['line']))));
     $t->close();
-    $tb[] = ob_get_contents();
+    $tb = array(x('strong',(empty($id) ? 'TraceBack:' : $id)),
+		ob_get_contents());
     ob_end_clean();
     myPear::DEBUG(join('<br>',$tb));
   }
@@ -4318,7 +4349,6 @@ class b_cnf{
     if (stripos($keyL,'_once') !== False) unset($_SESSION[CONST_cnfOptions][$keyL]); 
     $inside = 0;
 
-    //    if (defined('cnf_dev')) if (cnf_dev) if (($key == 'noCompactMessages') && @$reply) { var_dump($key,$reply);echo'<pre>';debug_print_backtrace();echo'</pre>';}
     if (isset($reply))      return $reply;
     else                    return Null;
   }

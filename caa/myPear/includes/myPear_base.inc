@@ -5,6 +5,7 @@ class myPear_base{
   public $debug        = False;
   public static $_debug= False;
   protected $dbg_color = 'blackText';
+  protected static $_dbg_color = 'blackText';
 
   public $errorsInTheForm = array();
 
@@ -35,6 +36,10 @@ class myPear_base{
     //    b_debug::watchDog($this->errorsInTheForm, $this);
     //    $x=b_cnf::get('from_bForm');  if (class_exists('b_debug',0)) b_debug::watchDog($x,'from_bForm');
     //    $x=@$this->rec['lease_option'];  if (class_exists('b_debug',0)) b_debug::watchDog($x,'lease_option');
+
+    // Will it work?
+    self::$_dbg_color = $this->dbg_color;
+
     if(1){
       switch(func_num_args()){
       case 0: 
@@ -70,4 +75,9 @@ class myPear_base{
       }
     }
   }
+
+  /*
+   *
+   */
+  function __toString() { return get_class($this); }
 }

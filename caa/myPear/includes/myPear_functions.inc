@@ -182,7 +182,7 @@ function myPear_setConstants(){
   
   // cnf_show_XXX options 
   if (isset($_GET['ii'])) $_GET['i'] = $_GET['ii'];
-  $debug_options = array('show' =>array('a','b','c','cd','d','dd','dupl','h','gv','l','m','i','ii','r','e','pe','pv','v','acl',
+  $debug_options = array('show' =>array('a','b','c','cd','cot','d','dd','dupl','h','gv','l','m','i','ii','r','e','pe','pv','v','acl',
 					's','t','w','z','hook','cache','ic','db','dp','st','er',
 					'sm','ms','en','exec','mrg','pdf','sem','auth','reg','out'),
 			 'debug'=>array('auth','form','db'));

@@ -112,9 +112,9 @@ tbody { border-top: 0 None; }
 .height_auto { height:auto ! important; }
 
 /*
-.width0      { width: 1px ! important; padding: 0 ! important; }
+.width0      { width: 2% ! important; padding: 0 ! important; }
 */
-.width0      { width:2%; /*width:auto*/  padding-left: 1px ! important; padding-right: 1px ! important; white-space:nowrap ! important; }
+.width0      { width:1px; padding-left: 1px ! important; padding-right: 1px ! important; white-space:nowrap ! important; }
 
 .width100    { width: 100% ! important; min-width: 400px; max-width: 800px; }
 
@@ -201,11 +201,22 @@ div.archived{
 
 .login_error{ color:red; text-align:center; }
 
+.blueText     { color: blue ! important; }
+.chocolateText{ color: chocolate ! important; }
+.coralText    { color: coral ! important; }
+.crimsonText  { color: crimson ! important; }
+.deeppinkText   { color: deeppink ! important; }
+.deepskyblueText{ color: deepskyblue ! important; }
+.dgreenText   { color: darkgreen ! important; }
+.dorchidText  { color: darkorchid ! important; }
+.dmagentaText { color: darkmagenta ! important; }
+.dorangeText  { color: darkorange ! important; }
+.goldenrodText{ color: goldenrod ! important; }
+
 .aquaText   { color: aqua ! important; }
 .blackText  { color: black ! important; }
-.blueText   { color: blue ! important; }
 .fuchsiaText{ color: fuchsia ! important; }
-.greyText   { color: gray ! important; }
+.grayText   { color: gray ! important; }
 .greyText   { color: gray ! important; }
 .greenText  { color: green ! important; }
 .lgreenText { color: #7fba00 ! important; }

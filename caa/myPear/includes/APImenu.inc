@@ -138,7 +138,9 @@ class APImenu extends myPear_base{
   private $access_callback= Null;
   private $hash_parent    = Null;
 
-  function __construct($defaultTab=Null){}
+  function __construct($defaultTab=Null){
+    self::$_dbg_color = $this->dbg_color;
+  }
   
   /*
    * Make sure that the proper Avatar class are used
@@ -803,12 +805,6 @@ class APImenu extends myPear_base{
 	      :(isset($this->tabWeight[(string)$dTab])? $this->tabWeight[(string)$dTab]
 		: 0));
     return $reply;
-  }
-
-  function __toString() { return get_class($this); }
-
-  protected function ZZZdbg($txt=' ',$force=False){
-    if ($this->debug||$force) b_debug::xxx($txt,array(3,'orangeText',$this));
   }
 }
 

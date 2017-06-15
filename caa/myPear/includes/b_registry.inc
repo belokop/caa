@@ -429,8 +429,7 @@ class b_reg{
   }
 
   private static function dbg($text=' ',$force=False){
-    // b_debug::xxx($text,array(3,'oliveText',(bool)(cnf_dev||cnf_show_reg)));
-    if (cnf_show_reg || $force) myPear::DEBUG($text);
+    b_debug::_debug($text,array(2,'oliveText',(bool)(cnf_show_reg||$force)));
   }
 }
 

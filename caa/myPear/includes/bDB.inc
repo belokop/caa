@@ -587,18 +587,9 @@ class bDB extends mysqli{
    *
    */
   protected function dbg($text,$debug_force=False,$color='lgreenText',$level=2){
-    if ($this->debug ||
-	$this->debug_qquery ||
-	$debug_force){
-
-      if (is_bool($text))     $text = ($text ? 'YES' : 'NO');
-      elseif ($text === Null) $text = 'NULL';
-      elseif(is_array($text)) $text = join(', ',$text);
-      b_debug::xxx($x=str_replace(array('bDB->dbg','bDB_myPear'),'db',$text),array($level,$color,True));
-      if (0) myPear::DEBUG(x("span class='$color align-left'",
-			     str_replace('bDB_myPear','db',
-					 str_replace('bDB',get_class($this),b_debug::__($level)).x("em",$text))));
-    }
+    //b_debug::xxx(str_replace(array('bDB->dbg','bDB_myPear'),'db',$text),array($level,$color,True));
+    b_debug::_debug(str_replace(array('bDB()','bDB->dbg','bDB_myPear'),'db',$text),
+		    array($level,$color,($this->debug || $this->debug_qquery || $debug_force)));
   }
 }
       

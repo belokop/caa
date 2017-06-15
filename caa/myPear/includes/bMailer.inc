@@ -21,18 +21,19 @@ if (locateAndInclude(array('Mail',
     
     // used during the initial/development stage
     var $bcc           = array(bMailer_dev_address);
+    var $cc            = array();
 
     var $template      = False;
     var $debug         = cnf_dev;
     var $signature     = '';
     var $from          = '';
-    var $cc            = '';
     var $object        = Null;
     var $isMailAutomatic = True;
     protected $mailID      = 'web application';
     private   $smtp_factory= array();
     protected $attachments = array();
     protected $no_preview  = False;
+    protected $dbg_color = 'crimsonText';
 
     private   $recipients        = array();
     private   $recipientsEscaped = array();
@@ -81,7 +82,7 @@ if (locateAndInclude(array('Mail',
       
       $this->subject = strip_tags($subject);
       if (!preg_match('/\w.*@/',$this->from)) $this->from = bMailer_noreply;
-      $this->_dbg("to=$to,from=".$this->from.",subject=".$this->subject);
+      $this->dbg("to=$to,from=".$this->from.",subject=".$this->subject);
       
       if ($n=@$GLOBALS['mailDejaVu'][$to][$this->from][$this->subject]++){
 	if ($this->debug||cnf_dev||cnf_demo)  myPear::DEBUG("SKIP dejavu".($n+1).": to=$to subject=".$this->subject);
@@ -134,7 +135,7 @@ if (locateAndInclude(array('Mail',
       // Finalize the headers, make it easy for debugging
       foreach ($headers as $k=>$v) $headersEscaped[$k] = b_fmt::escape($v); 
       if ($realTO !== $to) {
-	$this->_dbg("replace recipient: $to ==> $realTO");
+	$this->dbg("replace recipient: $to ==> $realTO");
 	$headersEscaped['To'] = b_fmt::escape("$realTO<$to>");
 	$headers_syslog['To'] = "$realTO(".$to.")";
       }   
@@ -145,7 +146,7 @@ if (locateAndInclude(array('Mail',
 	  $this->recipientsEscaped[] = $headersEscaped[$i];
 	}
       }
-
+      b_debug::print_r($this->headersEscaped);
       /*
        * Check that we are able to send mails, smtp server might apply restrictions on the number of mails sent
        */
@@ -155,6 +156,7 @@ if (locateAndInclude(array('Mail',
 	return Null;
       }
       
+
       // Do we want to send this mail?
       if (cnf_dontSendMails_Point || !empty($this->dontSendThisMail)){
 	$this->error_message(cnf_dontSendMails_Point
@@ -206,7 +208,7 @@ if (locateAndInclude(array('Mail',
 										$packPWD_args[1],
 										$packPWD_args[2]),$message));
 	
-	$autoSignature = "this ".($this->isMailAutomatic ? 'is an automatic e-mail' : 'e-mail is')." sent by the $this->mailID software"; 
+	$autoSignature = "this ".($this->isMailAutomatic ? 'is an automatic e-mail' : 'e-mail is')." sent by the ".myOrg_nameS." $this->mailID system"; 
 	$autoSignatureDelimeter = ''; $l=0;  while ($l++ < strlen($autoSignature)) $autoSignatureDelimeter .= '-';
 	$messageBody[] = $autoSignatureDelimeter;
 	$messageBody[] = $autoSignature;
@@ -215,7 +217,8 @@ if (locateAndInclude(array('Mail',
 
       // Either preview OR send OR imitate send
       $sendmail_once = @$_GET['sendmail_once'];
-      $this->_dbg("sendmail_once=".var_export($sendmail_once,True));
+      $this->dbg("sendmail_once=".var_export($sendmail_once,True));
+      b_debug::_debug("sendmail_once=".var_export($sendmail_once,True),$this);
       switch($sendmail_once){
       case 'send':  // ----------- sending the mail
 	$messageBody[] = '';
@@ -249,7 +252,7 @@ if (locateAndInclude(array('Mail',
 	  $this->error_message($mail_object->getMessage(),True);
 	  $output = ob_get_contents();
 	  ob_end_clean();
-	  $this->_dbg($output);
+	  $this->dbg($output);
 	  myPear_logs()->syslog('sendmail FAIL '.str_replace(array("\n","\r"),'; ',$output));
 	  return False;
 	}
@@ -264,7 +267,7 @@ if (locateAndInclude(array('Mail',
 
 	$output = ob_get_contents();
 	ob_end_clean();
-	if (!empty($output)) $this->_dbg(x('pre',str_replace("\n\n","\n",$output)));
+	if (!empty($output)) $this->dbg(x('pre',str_replace("\n\n","\n",$output)));
 	
 	if($pear->isError($send)) { 
 	  // Sending mail fails
@@ -282,7 +285,7 @@ if (locateAndInclude(array('Mail',
 	
 	myPear_logs()->syslog('sendmail OK '.b_fmt::joinX(' ',$headers_syslog,'"'));
 	if (cnf_dev || $syslog_thisMail) $listOfSentEmails[$headersEscaped['To']][] = $this->subject_prefix.$this->subject;
-	$this->_dbg("send OK");
+	$this->dbg("send OK");
 	
       case 'mimic_send': // ----------- do not send the mail, but set a flag as if it was sent
 
@@ -294,7 +297,7 @@ if (locateAndInclude(array('Mail',
 	  $args  = $callStack[1]['args'];
 	  $method= $callStack[1]['function'];
 	  $this->receipt = True;
-	  $this->_dbg("callAgainOnSuccess: $method(".join(', ',$args).")");
+	  $this->dbg("callAgainOnSuccess: $method(".join(', ',$args).")");
 	  switch(count($args)){
 	  case 0: $this->{$method}();                          break;
 	  case 1: $this->{$method}($args[0]);                  break;
@@ -307,7 +310,7 @@ if (locateAndInclude(array('Mail',
 
 	if (!$this->no_preview) print x("div class='width100 align_center'",
 					$this->getLink('continue',b_url::getReferrer(array('modal_once'=>0))));
-	static $debug_counter=0; $this->_dbg("---------------------------------------------------------$sendmail_once ".(++$debug_counter));
+	static $debug_counter=0; $this->dbg("---------------------------------------------------------$sendmail_once ".(++$debug_counter));
 	return True;
 	
       default:  // ------------------- preview
@@ -333,7 +336,7 @@ if (locateAndInclude(array('Mail',
 	// Edit email template 
 	// not yet fully debugged
 	if (False) if (cnf_dev && ($tpl=$this->template)){ 
-	    $this->_dbg('edit email...  TBD');
+	    $this->dbg('edit email...  TBD');
 	    $buttons[] = $this->getLink('edit email',b_url::same("?tab_force=".tab__templates."&tpl_title=$tpl"));
 	    $buttons[] = '';
 	  }
@@ -349,7 +352,7 @@ if (locateAndInclude(array('Mail',
 	if (empty($_GET['preview_once']))      print x('h3','The following E-mail is prepared, but is NOT yet sent:');
 	new b_table_simple(array(join('<br>',$buttons),
 				 x('strong',join('<br>',array(b_fmt::joinX('<br>',$headersEscaped,':'),'',''))).$this->tt($messageBody)));
-	static $debug_counter=0; $this->_dbg("---------------------------------------------------------$sendmail_once ".(++$debug_counter));
+	static $debug_counter=0; $this->dbg("---------------------------------------------------------$sendmail_once ".(++$debug_counter));
 	return Null;
       }
     }
@@ -519,21 +522,6 @@ Remember to save this mail or book-mark the URL to facilitate later access to th
     }
     
     /*
-     * Do not show the argument, it might be too long
-     */
-    function _dbg($txt=' ',$forced=False){
-      if ($forced || $this->debug || cnf_debug){
-	$callStack = debug_backtrace(false);
-	$method= (empty($callStack[3]['function'])
-		  ? $callStack[1]['function']
-		  : $callStack[3]['function']);
-	$txt = get_class($this)."->".$method."(): $txt";
-	if (cnf_CLI) printf("%s\n",$txt);
-	else myPear::DEBUG(x('span class="orangeText"',$txt));
-      }
-    }
-    
-    /*
      *
      */    
     function __toString(){
@@ -547,9 +535,11 @@ Remember to save this mail or book-mark the URL to facilitate later access to th
     private $isReady = False;
     private $subject_prefix  = '';
     function __construct($bMailer_host='',$bMailer_port='',$bMailer_user='',$bMailer_passwd='') {
+
+      self::$_dbg_color = $this->dbg_color;
       
       if (b_cnf::get('smtpdebug')) $this->debug = True;
-      $this->_dbg('------------------------------------- '.__FUNCTION__);
+      $this->dbg('------------------------------------- '.__FUNCTION__);
       
       $reg = b_reg::get();
       if ($id = @$reg['d'])     $this->mailID = $id;
@@ -578,7 +568,7 @@ Remember to save this mail or book-mark the URL to facilitate later access to th
  	ini_set("SMTP","ssl:/".$this->smtp_factory['host']);
 	ini_set("smtp_port",   $this->smtp_factory['port']);
       }
-      $this->_dbg(b_fmt::joinX(', ',$this->smtp_factory));
+      $this->dbg(b_fmt::joinX(', ',$this->smtp_factory));
       
       $this->isReady = (!empty($this->smtp_factory['host']) && ($this->smtp_factory['host'] !== 'localhost'));
     }

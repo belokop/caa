@@ -82,6 +82,7 @@ class bMailer_vm extends bMailer{
 
   var $isMailAutomatic = False;
   var $visit  = Null;
+  var $debug = True;
   
   private $rec    = array();
 
@@ -249,7 +250,7 @@ class bMailer_vm extends bMailer{
     
     // Is it already done?
     if (!empty($policy) && ($v->getPolicy($policy) || $v->getPolicy($policyQ))){
-      $this->_dbg("$mode already done... ");
+      $this->dbg("$mode already done... ");
       $this->dbg(exiting);
       return True;
     }
@@ -349,7 +350,7 @@ Remember to save this mail or book-mark the web page to facilitate later access 
 	  myPear_logs()->add('info',$av->ID,'event is endorsed',myPear_cronjob()->ID);
 	}
 	if (!empty($policy) && !empty($v)){
-	  $this->_dbg("setPolicy($policy,1,True,True)");
+	  $this->dbg("setPolicy($policy,1,True,True)");
 	  $v->setPolicy($policy,1);
 	  $v->setPolicy($policyQ,0);
 	}
@@ -627,10 +628,9 @@ Organizing committee for \"<event/>\".
   /*
    *
    */
-  public function m_applicant_deny($v_id=0,$no_preview=False,$v_status=Null){
+  public function m_applicant_deny($v_id=0,$no_preview=False,$v_status=Null,$bcc=Null){
     
-    $this->dbg();
-
+    $this->dbg('',True);
     $this->visit = myPear::getInstance_new('bForm_vm_Visit',$v_id,'fatal');
 
     //
@@ -654,7 +654,7 @@ Organizing committee for \"<event/>\".
       $reply = CONST_not_concerned;
       if (empty($name)) $name = 'visitor';
       $this->dbg("%s, %s, <em>%s</em>",var_export($reply,True),$case,$name);
-      return $reply;
+      return True;
     }
     
     // Is it just an enquary?
@@ -672,16 +672,23 @@ Organizing committee for \"<event/>\".
     // This mail has to be sent only once
     if ($no_preview && $VM_V_denialMailSent){
       $this->dbg("Mail to ".$this->visit->av->name()." was already sent",cnf_dev);
-      return;
+      return True;
     }
     
     // Put this mail into the execution queue, not waist time in the interactive session
-    if (!myPear_taskManager()->exec_request && $no_preview){
-      myPear_taskManager()->addTask(get_class($this),__function__,array($this->visit->ID,$no_preview));
-      $this->visit->setPolicy(VM_V_denialMailQueued,1);
-      return;
+    if ($no_preview){
+      if (!myPear_taskManager()->exec_request){
+	myPear_taskManager()->addTask(get_class($this),__function__,array($this->visit->ID,
+									  True,
+									  Null,
+									  (is_object(bAuth::$av)?bAuth::$av->getEmail():Null)));
+	$this->visit->setPolicy(VM_V_denialMailQueued,1);
+	return True;
+      }elseif (empty($bcc) && is_object(bAuth::$av)){
+	$bcc = bAuth::$av->getEmail();
+      }
     }
-
+    
     locateAndInclude('bTpl');
     $tpl = new bTpl(array('title' => __method__,
 			  'render'=> VM_mailer_render('SHOW_ID'),
@@ -697,6 +704,7 @@ Sincerely,
 Organizing committee for \"<event/>\"."));
       
     $this->template = __method__;
+    if (!empty($bcc)) $this->bcc[] = $bcc;
     if ($ok = $this->send(array(),
 			  $this->visit->av->getEmail(),
 			  "Application denied",
@@ -715,7 +723,7 @@ Organizing committee for \"<event/>\"."));
   /*
    * The visit confirmation mail
    */
-  public function welcome_applicant($v_id,$hut_id,$a_name='',$no_preview=False,$v_status=Null){
+  public function welcome_applicant($v_id,$hut_id,$a_name='',$no_preview=False,$v_status=Null,$bcc=Null){
 
     $this->visit = myPear::getInstance_new('bForm_vm_Visit',$v_id,'fatal');
     //
@@ -762,9 +770,14 @@ Organizing committee for \"<event/>\"."));
         
     // Put this mail into the execution queue, not waist time in the interactive session
     if (!myPear_taskManager()->exec_request && $no_preview){
-      myPear_taskManager()->addTask(get_class($this),__function__,array($this->visit->ID,$hut_id,$a_name,$no_preview));
+      myPear_taskManager()->addTask(get_class($this),__function__,array($this->visit->ID,
+									$hut_id,
+									$a_name,
+									True,
+									Null,	
+									(is_object(bAuth::$av)?bAuth::$av->getEmail():Null)));
       $this->visit->setPolicy(VM_V_welcomeMailQueued,1);
-      return;
+      return True;
     }
     
     /*
@@ -902,6 +915,7 @@ Organizing committee for "'.$this->visit->e->name(False).'".'
    :'');
     
     // Now send the mail
+    if (!empty($bcc)) $this->bcc[] = $bcc;
     if ($ok = $this->send(array($this->visit->av,
 				array('q'=>sprintf("%s/%s/",VM_MODULE,APImenu::tab_code(tab_vm_home))),
 				False),

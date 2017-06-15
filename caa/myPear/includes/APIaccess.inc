@@ -7,6 +7,9 @@ class APIaccess extends myPear_base{
   protected  $dbg_color  = 'redText';
 
   public function __construct(){
+
+    self::$_dbg_color = $this->dbg_color;
+
     //    locateAndInclude('b_cache');
     //    APIaccess::$cache = new b_cache_S(get_class($this));
     $this->who_is_here(array('EA_ORG_manager_here'  => array('rank'=> 'RANK__ea_org_manager',
@@ -92,10 +95,5 @@ class APIaccess extends myPear_base{
   public function show(){
     locateAndInclude('bUnit');
     myPear::WARNING_T("TBD");
-  }
-
-  public function ZZZdbg($id=Null,$YesNo='not set'){
-    if (func_num_args() == 1) b_debug::xxx($id,array(3,'AA',$this));
-    else                      b_debug::xxx(($YesNo==='not set'?'&nbsp;':(empty($YesNo) ? 'NO' : $YesNo)),array(3,'AA',$id));
   }
 }

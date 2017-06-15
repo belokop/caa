@@ -254,9 +254,9 @@ class bForm_vm_Room extends bForm_vm {
 	  : myPear::getInstance_new('bForm_vm_Event',$formDB['v_eid'],array('strict','fatal')));
     if ($a_id == VM::$OA->ID){
       self::$receiptFormula  = '('.LODGING_OA_TXT.')';
-      return self::_daily_a_price($formDB,$e);
+      return self::_daily_price($formDB,$e);
     }else{
-      $p = self::_daily_a_price($formDB,$e); 
+      $p = self::_daily_price($formDB,$e); 
       self::$receiptFormula = (($ip=(int)$p)?"($ip":'(???')."*$nDays".($extraApFee?"+$extraApFee)":')');
       return (int)($p * $nDays + $extraApFee);
     }
@@ -267,7 +267,7 @@ class bForm_vm_Room extends bForm_vm {
    * Get the daily rent to be paid by the Organization for acconmodating an Avatar 
    * (the members of family to be paid by the tenant)
    */
-  public static function _daily_a_price($rec,$e_class=Null){
+  public static function _daily_price($rec,$e_class=Null){
     locateAndInclude('bForm_vm_Lease');
     
     switch(bForm_vm_Lease::_hut_code($rec)){
@@ -283,7 +283,7 @@ class bForm_vm_Room extends bForm_vm {
       if (empty($who_pays)) $who_pays = VM_default_lease_pay;
       if ($who_pays == VM_everything){
 	$cotenants = VM_cotenants()->get_cotenants($rec['lease_id'],True,'names');
-	$reply = self::_daily_a_price_basic($rec,$e_class);
+	$reply = self::_daily_price_basic($rec,$e_class);
 	if ($cotenants) $reply = $reply / count($cotenants);
       }elseif ($who_pays == VM::$pay_options[0]){ // nothing
 	$reply = 0;
@@ -296,7 +296,7 @@ class bForm_vm_Room extends bForm_vm {
 	  $rec['a_id'] = $rec['lease_aid'] = $r['a_id'];
 	  $rec['a_price'] = $r['a_price'];
 	}
-	$reply = self::_daily_a_price_basic($rec,$e_class);
+	$reply = self::_daily_price_basic($rec,$e_class);
       }
     }
     b_debug::_debug($reply,cnf_dev);
@@ -306,7 +306,7 @@ class bForm_vm_Room extends bForm_vm {
   /*
    *
    */
-  private static function _daily_a_price_basic($rec,$e_class){
+  private static function _daily_price_basic($rec,$e_class){
     if (!$rec['a_id'] || !$rec['hut_id']) return Null;
 
     $price_basic = (empty($e_class)
@@ -324,7 +324,7 @@ class bForm_vm_Room extends bForm_vm {
 	if ($ndays <= $limit) break;
       }
     }
-    b_debug::_debug("ndays=$ndays, daily price: $price_basic --> $reply",cnf_dev);
+    b_debug::_debug("ndays=$ndays, daily price: $price_basic --> $reply");
     return $reply;
   }
   

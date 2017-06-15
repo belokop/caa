@@ -1264,7 +1264,8 @@ class APImenu_vm extends APImenu_ea{
 	  break;
 	  
 	default:
-	  myPear::WARNING_T("Unexpected $type");
+	  $this->dbg("Unexpected type $type",True);
+	  myPear::WARNING_T("Unexpected type $type");
 	}
       }
     }

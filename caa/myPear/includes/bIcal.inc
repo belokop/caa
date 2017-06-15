@@ -1,15 +1,10 @@
 <?php
-class bIcal {
+class bIcal extends myPear_base{
 
   public $debug = False;
 
   function __construct() {
     if (($d=b_cnf::get('formdebug','?')) && (stripos(get_class($this),$d) !== False)) $this->debug=True;
-  }
-
-  function dbg($text,$forced=False){
-    if (is_null($this->debug))  $this->debug = (bool)b_cnf::get('qdebug');
-    if ($this->debug || $forced) b_debug::xxx($text,array($this,3,'orangeText',True));
   }
 
   static public function dateColor($date,$default=array(),$alwaysHave=array()) {

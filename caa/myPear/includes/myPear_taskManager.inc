@@ -5,7 +5,7 @@
 define('taskManager_ID','taskManager_task');
 define('TM_clean_log_time',7); // in days
 
-class myPear_taskManager{
+class myPear_taskManager extends myPear_base{
 
   public $exec_request = False;
   public $debug = cnf_dev;
@@ -439,10 +439,6 @@ class myPear_taskManager{
     $this->info();
     //    $this->lock_release();
     //    $this->dbg(exiting);
-  }
-  
-  function dbg($text=' ',$forced=False){
-    if (True || $this->debug || $forced) b_debug::xxx($text,array(3,True,'redText',$this));
   }
 }
   

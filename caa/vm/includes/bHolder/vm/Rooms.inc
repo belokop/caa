@@ -224,7 +224,7 @@ class bHolder_vm_Rooms extends bHolder_vm{
     case 'usage':
       $day1 = max($this->rf,$this->a->getValue('a_start',1));
       $day9 = min($this->rt,$this->a->getValue('a_end',  1));
-      $rent = bForm_vm_Room::_daily_a_price($this->a->formDB,$this->e) * b_time::diff($day9,$day1);
+      $rent = bForm_vm_Room::_daily_price($this->a->formDB,$this->e) * b_time::diff($day9,$day1);
       $this->rec['rent_nosort'] = b_fmt::escape(b_fmt::money($rent));
       $this->rent += $rent;
 

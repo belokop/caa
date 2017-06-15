@@ -3,9 +3,9 @@
 /**
  * Visitors Manager (VM) configuration file
  */
-$releaseDate = '2017-06-13';
+$releaseDate = '2017-06-15';
 define('VM_MODULE'   , 'vm');
-define('VM_VERSION','5.13.29');
+define('VM_VERSION','5.13.30');
 
 //
 // transition problems...
@@ -27,7 +27,7 @@ define('send_denialMail_to_applicants',cnf_dev||cnf_demo);
 define('include_personalPage_in_welcomeMail', False);                // (cnf_dev||cnf_demo));
 define('include_accommodation_in_welcomeMail',(cnf_dev||cnf_demo));
 define('include_office_in_welcomeMail',(cnf_dev||cnf_demo));
-define('include_payForms_in_welcomeMail', True);
+define('include_payForms_in_welcomeMail',(cnf_dev||cnf_demo));
 define('see_mails_exchange_with_attenders',(send_infoMail_to_applicants ||
 					    send_welcomeMail_to_applicants ||
 					    send_denialMail_to_applicants));
