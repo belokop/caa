@@ -1248,20 +1248,20 @@ class bForm_vm_Lease extends bForm_vm{
 
     // Update the counters 
     $n_rooms = count(array_keys($matrix));
-    if (!empty($hut_id) && VM::_MENU()->context() == 'event'){
-      $a_quantity = VM_accommodationOptions(VM::$e)->get_a_value($a_id,$hut_id,'a_quantity');
-      if ($n_rooms == $a_quantity){
-	myPear::WARNING("The last <em>$room_name</em> is booked");
-      }elseif ($n_rooms > $a_quantity){
-	if ($update_counters){
-	  VM_accommodationOptions(VM::$e)->set_a_value($n_rooms,$a_id,$hut_id,'a_quantity');
-	  myPear::WARNING("Number of available <em>$room_name</em> is set $a_quantity ==> $n_rooms");
-	}else{
-	  myPear::ERROR("Number of available <em>$room_name</em> is too small - used/available = $n_rooms/".max(0,$a_quantity).".<br>".
-			"Please update the accommodation options");
+    if (0)    if (!empty($hut_id) && VM::_MENU()->context() == 'event'){
+	$a_quantity = VM_accommodationOptions(VM::$e)->get_a_value($a_id,$hut_id,'a_quantity');
+	if ($n_rooms == $a_quantity){
+	  myPear::WARNING("The last <em>$room_name</em> is booked");
+	}elseif ($n_rooms > $a_quantity){
+	  if ($update_counters){
+	    VM_accommodationOptions(VM::$e)->set_a_value($n_rooms,$a_id,$hut_id,'a_quantity');
+	    myPear::WARNING("Number of available <em>$room_name</em> is set $a_quantity ==> $n_rooms");
+	  }else{
+	    myPear::ERROR("Number of available <em>$room_name</em> is too small - used/available = $n_rooms/".max(0,$a_quantity).".<br>".
+			  "Please update the accommodation options");
+	  }
 	}
       }
-    }
 
     // Return the reply
     b_debug::_debug("$n_tenants tenants in $n_rooms");
@@ -1441,7 +1441,7 @@ class bForm_vm_Lease extends bForm_vm{
     }
     if (empty($n_populated)) $msg_overbooking = "WARNING, all the available rooms are booked, including those with shared accommodation.<br>".
 			       "You should contact the (hotels) administration in order to increase your quotas and/or reduce the number of participants.";
-    if (!empty($msg_overbooking)) myPear::ERROR($msg_overbooking);
+    if (0)    if (!empty($msg_overbooking)) myPear::ERROR($msg_overbooking);
     
     if (!empty($reply)) $reply['*select_name*'] = 'accommodation';
 
