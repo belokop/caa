@@ -118,6 +118,10 @@ function vm_updates(){
       vm_compat_update_50();
     }
 
+    if (True){ // Fixes June 2017
+      vm_compat_update_51();
+    }
+
     myPear_logs()->doNotLog = False;
     myPear_db()->noAutoCommit('end');
     bTiming()->cpu();
@@ -145,6 +149,17 @@ function vm_compat_update_ad_hocks(){
   // Another strange thing...
   vm_compat_update_47();
 
+}
+
+function vm_compat_update_51(){
+  foreach(VM::$known_hut_codes as $code=>$descr){
+    VM_hutCodes()->addMember(array('lm_key'   => $code,
+				   'lm_value' => $descr['prefix'].'s'));
+  }
+  foreach(array(397690,
+		397691) as $hut_id){
+    myPear_db()->query("UPDATE abs_huts SET hut_code='".HUT_HS."' WHERE hut_id = $hut_id",True);
+  }
 }
 
 // Set the "room is full flag" if there are <a_capacity> cotenants

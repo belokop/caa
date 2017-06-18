@@ -39,7 +39,7 @@ function _ea_getAV($av_id=Null){
  * See and edit the employment records
  */
 function ea_updateER($av_id=Null){
-  _ea_getAV($av_id)->hook_employment()->getForm();
+  if (_ea_getAV($av_id)->hook_employment())   _ea_getAV($av_id)->hook_employment()->getForm();
 }
 
 /*
@@ -75,7 +75,7 @@ function ea_myPage($av_id=Null){
           break;
           
         case 2: // Employment
-	  $av->hook_employment()->getForm();
+	  if ($av->hook_employment()) 	  $av->hook_employment()->getForm();
           break;
           
         case 3: // Contacts
@@ -107,7 +107,7 @@ function ea_myPage($av_id=Null){
 locateAndInclude('bForm_Avatar');
 class bForm_Avatar_ea extends bForm_Avatar{
 
-  private $eaRecords = Null;
+  private $eaEmpRecords = Null;
  
   /*
    * For the complete definition of the employee records see bList_eaEmpRecords class,
@@ -217,11 +217,11 @@ class bForm_Avatar_ea extends bForm_Avatar{
     
     foreach(array('av_office','av_institute','av_position','e_rate') as $what){
 
-      // Get the current employment from eaRecords
-      $currentItem = $this->hook_employment()->get_currentItem(self::$av2er[$what]['k'],
-							       array('e_org'=>myOrg_ID),
-							       ($what == 'av_position' ? 2 : 1),
-							       $this->getValue('av_ddate',True));
+      // Get the current employment from eaEmpRecords
+      if ($this->hook_employment()) $currentItem = $this->hook_employment()->get_currentItem(self::$av2er[$what]['k'],
+											     array('e_org'=>myOrg_ID),
+											     ($what == 'av_position' ? 2 : 1),
+											     $this->getValue('av_ddate',True));
       if (empty($currentItem)) continue;
       
       switch($what){
@@ -257,35 +257,38 @@ class bForm_Avatar_ea extends bForm_Avatar{
   function hook_employment($just_hook=False){
     
     locateAndInclude('bList_eaEmpRecords');
-    if (!is_object($this->eaRecords) && $this->isEA()){
-      $this->eaRecords = bList::getListInstance($this,'bList_eaEmpRecords');
-      $this->tips        = $this->eaRecords->tips;
-      $this->tips_byMode = $this->eaRecords->tips_byMode;
-      
-      // Update av_office in EArecords
-      if ($this->myPost_bForm() && ($av_office = @$_POST['av_office'])){
-	foreach($this->eaRecords->get_currentEmploymentRecords() as $r){
-	  $this->eaRecords->updateMember(array('e_off'=>$av_office),$r['lm_id']);
+    if (!is_object($this->eaEmpRecords) && $this->isEA()){
+      if ($this->eaEmpRecords = bList::getListInstance($this,'bList_eaEmpRecords')){
+	$this->tips        = $this->eaEmpRecords->tips;
+	$this->tips_byMode = $this->eaEmpRecords->tips_byMode;
+	
+	// Update av_office in EArecords
+	if ($this->myPost_bForm() && ($av_office = @$_POST['av_office'])){
+	  foreach($this->eaEmpRecords->get_currentEmploymentRecords() as $r){
+	    $this->eaEmpRecords->updateMember(array('e_off'=>$av_office),$r['lm_id']);
+	  }
 	}
-      }
-      
-      // Hook the bList_eaEmpRecords updates as if they come for the Avatar 
-      if ($this->eaRecords->myPost_bList() && !isset($_POST['_post_bForm_ID_once'])){
-	myPear::WARNING_T("Enforce _POST to be Avatar");
-	$_POST['_post_bForm_ID_once']    = $this->ID;
-	$_POST['_post_bForm_class_once'] = get_class($this);
+	
+	// Hook the bList_eaEmpRecords updates as if they come for the Avatar 
+	if ($this->eaEmpRecords->myPost_bList() && !isset($_POST['_post_bForm_ID_once'])){
+	  myPear::WARNING_T("Enforce _POST to be Avatar");
+	  $_POST['_post_bForm_ID_once']    = $this->ID;
+	  $_POST['_post_bForm_class_once'] = get_class($this);
+	}
+	
+	if (!$just_hook){      
+	  // Update avatar av_institute & av_position.
+	  // We do it on the fly since "myOrg" might change since the previous invication 
+	  $this->update_AVpos_AVinst();    
+	  
+	  // Optionally adjust statuses
+	  if ((@$_GET['av_id'] == $this->ID) || (@$_GET['id'] == $this->ID)) $this->adjust_status();
+	}
+      }else{
+	$this->dbg("No eaEmpRecords yet...",True);
       }
     }
-
-    if (!$just_hook){      
-      // Update avatar av_institute & av_position.
-      // We do it on the fly since "myOrg" might change since the previous invication 
-      $this->update_AVpos_AVinst();    
-      
-      // Optionally adjust statuses
-      if ((@$_GET['av_id'] == $this->ID) || (@$_GET['id'] == $this->ID)) $this->adjust_status();
-    }
-    return $this->eaRecords;
+    return $this->eaEmpRecords;
   }
 
   /*
@@ -416,9 +419,9 @@ class bForm_Avatar_ea extends bForm_Avatar{
 	      ? @$_POST['_virt_emp_record']
 	      :  $_POST['lm_id']);
     if (empty($lm_id)) return;
+    if (!$this->hook_employment()) return;
     
     $this->dbg(starting);
-    $this->hook_employment();
     
     $updates = array();
     if ((int)$lm_id) $updates['lm_id'] = $lm_id;
@@ -608,7 +611,7 @@ class bForm_Avatar_ea extends bForm_Avatar{
       //      $this->update_EA();
 
       //
-      // Show the employment records instead of Avatar form, if the referrer is bList_eaRecords and the form is complete
+      // Show the employment records instead of Avatar form, if the referrer is bList_eaEmpRecords and the form is complete
       //
       // $dbg=sprintf(__METHOD__.'(): from_bList=%s',var_export(b_cnf::get('from_bList'),True)); static $dbg_was='?'; if ($dbg != $dbg_was) var_dump($dbg); $dbg_was=$dbg;
 
@@ -617,14 +620,14 @@ class bForm_Avatar_ea extends bForm_Avatar{
       if (($block_once = @$_GET['block_once']) || b_cnf::get('from_bList')){
 	$this->formOK();
 	if ($this->MODE == 'RO'){
-	  $this->hook_employment()->getForm();
+	  if ($this->hook_employment()) $this->hook_employment()->getForm();
 	  return;
 	}
       }
 
       // An "inversed" case. We are called from the "Avatar dialog", but will query an EA record. 
       // The results will go both to the EA & Avatar records
-      if (($block_once === 'block_employment') && ($this->MODE == 'RW')){
+      if (($block_once === 'block_employment') && ($this->MODE == 'RW') && $this->hook_employment()){
 	$records = $this->hook_employment()->get_currentEmploymentRecords(($this->isE(True) 
 									   ? array('e_org'=>myOrg_ID)
 									   : array()),
@@ -634,7 +637,7 @@ class bForm_Avatar_ea extends bForm_Avatar{
 		      'from_bList' => 0,
 		      'act_parent' => $this->ID,
 		      'act_code'   => ($r_exists ? 'edit'     : 'add'),
-		      'act_id'     => ($r_exists ? $r['l_id'] : $this->eaRecords->ID),
+		      'act_id'     => ($r_exists ? $r['l_id'] : $this->eaEmpRecords->ID),
 		      'act_lmid'   => ($r_exists ? $r['lm_id']: 'new'), 
 		      'lm_id'      => ($r_exists ? $r['lm_id']: 'new'), 
 		      ) as $k=>$v) $_POST[$k] = $_GET[$k] = $_REQUEST[$k] = $v;
@@ -789,10 +792,11 @@ Seem to be useless....
     // Get the current employment from the database
     // and populate Avatar class
     //
+    if (!$this->hook_employment()) return;
     $records = $this->hook_employment()->get_currentEmploymentRecords(($this->isE(True) 
-							       ? array('e_org'=>myOrg_ID)
-							       : array()),
-							      $this->getValue('av_ddate',True));
+								       ? array('e_org'=>myOrg_ID)
+								       : array()),
+								      $this->getValue('av_ddate',True));
     if (($n = count($records)) > 1){
       myPear::WARNING_T("There are $n \"current employment\" records for ".
 			$this->name().". The result might be ambiguous...");

@@ -448,7 +448,11 @@ class bForm_vm_Room extends bForm_vm {
   }
 
   public static function _a_name($rec,$includeHut=False,$includePay=False,$includeCapacity=True,$includeAname=True){
-    if ((@$rec['lease_id'] && empty($rec['lease_aid'])) || 
+    
+    $for_applicant = ($includeHut === 'for_applicant');
+    
+    if (($for_applicant && ($rec['hut_code'] === HUT_BI)) ||
+	(@$rec['lease_id'] && empty($rec['lease_aid'])) || 
 	(@$rec['v_status'] && ($rec['v_status'] != STATUS_YES))){
       $reply = '';
     }else{
@@ -458,22 +462,44 @@ class bForm_vm_Room extends bForm_vm {
 	$includeAname = False;
 	$includeHut = True;
 	$rec['hut_name'] = $rec['a_name'];
+      }elseif ($for_applicant){
+	$includeHut = False;
       }elseif (empty($rec['hut_name'])){
 	$includeHut = False;
       }
       $reply = sprintf('%s%s%s',
-		       ($includeCapacity ? '&#91;'.$rec['a_capacity'].'&#93; ' : ''),
+		       ($includeCapacity 
+			? ($for_applicant 
+			   ? 'Room with '.$rec['a_capacity'].' bed'.($rec['a_capacity']>1?'s':'')
+			   : '&#91;'.$rec['a_capacity'].'&#93; ')
+			: ''),
 		       ($includeHut ? $rec['hut_name'].($includeAname?'.':'') : ''), 
-		       ($includeAname&&!$includePay ? $rec['a_name'] : '')
+		       ($includeAname&&!$includePay  
+			? ($for_applicant 
+			   ? ((strToLower($rec['a_name'])=='bed' ? '' : ' '.x('(',$rec['a_name'])).
+			      ', '.b_time::period($rec['lease_start'],$rec['lease_end']))
+			   : $rec['a_name'])
+			: '')
 		       );
-      if ($includePay){
+      if ($includePay || $for_applicant){
 	if (empty($rec['lease_id'])) b_debug::internalError("includePay requested, but no lease_id",$rec);
-	$reply .= x('em',bForm_vm_Lease::get_lease_options($rec,'pay_room',array(),True));
+	$pay = bForm_vm_Lease::get_lease_options($rec,
+						 ($for_applicant
+						  ? 'pay_room_for_applicant'
+						  : 'pay_room'),
+						 array(),
+						 True);
+	if (!empty($pay)) $reply .= ', '.x('em',$pay);
       }
     }
+
+    $reply = ($for_applicant
+	      ? b_fmt::unescape(strip_tags($reply))
+	      : $reply);
+    if ($for_applicant) b_debug::_debug($reply,True);
     return $reply;
   }
-
+  
   /*
    * get the hut for the apart
    */

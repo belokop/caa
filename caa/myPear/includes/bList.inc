@@ -973,8 +973,7 @@ class bList extends myPear_getValue{
       }
     }
 
-    if($this->debug || cnf_dev) $this->dbg(($reply ? 'YES ' : 'NO ').$this->TABLEID."=$l_id, member_ID=$member_ID",
-					   array(3,'blueText',$this,True));
+    $this->dbg(($reply ? 'YES ' : 'NO ').$this->TABLEID."=$l_id, member_ID=$member_ID",cnf_dev);
     return $reply;
   }
 

@@ -3,9 +3,9 @@
 /**
  * Visitors Manager (VM) configuration file
  */
-$releaseDate = '2017-06-15';
+$releaseDate = '2017-06-18';
 define('VM_MODULE'   , 'vm');
-define('VM_VERSION','5.13.30');
+define('VM_VERSION','5.13.31');
 
 //
 // transition problems...
@@ -24,7 +24,7 @@ define('VM_office_regexp','\b(\w*:\w*)\b');
 define('send_infoMail_to_applicants',(cnf_dev||cnf_demo));
 define('send_welcomeMail_to_applicants',(cnf_dev||cnf_demo));
 define('send_denialMail_to_applicants',cnf_dev||cnf_demo); 
-define('include_personalPage_in_welcomeMail', False);                // (cnf_dev||cnf_demo));
+define('include_personalPage_in_welcomeMail', cnf_dev);                // (cnf_dev||cnf_demo));
 define('include_accommodation_in_welcomeMail',(cnf_dev||cnf_demo));
 define('include_office_in_welcomeMail',(cnf_dev||cnf_demo));
 define('include_payForms_in_welcomeMail',(cnf_dev||cnf_demo));
@@ -183,6 +183,7 @@ define('EVT_ANY',	          -999999);
 define('HUT_BI', 'Built-in');   // Built-in hut, used internally
 define('HUT_A',  'A');   // apartments
 define('HUT_H',  'H');   // hotels
+define('HUT_HS', 'HS');  // hostels
 define('HUT_AH', 'AH');  // apartment hotels
 
 /*
@@ -384,11 +385,13 @@ class VM extends myPear{
    *
    */
   static $known_hut_codes = array(HUT_H => array('prefix' =>'Hotel',
-						   'position'=>'b'), // 'hotel' before the name
-				    HUT_A => array('prefix' =>'Apartment',
-						   'position'=>'a'), // 'Apartment' after the name
-				    HUT_AH=> array('prefix' =>'Apartment hotel',
-						   'position'=>''),  // Accommodation type is not printed
+						 'position'=>'b'), // 'Hotel' before the name
+				  HUT_HS=> array('prefix' =>'Hostel',
+						 'position'=>'b'), // 'Hostel' before the name
+				  HUT_A => array('prefix' =>'Apartment',
+						 'position'=>'a'), // 'Apartment' after the name
+				  HUT_AH=> array('prefix' =>'Apartment hotel',
+						 'position'=>''),  // Accommodation type is not printed
 				    ); 
   
   

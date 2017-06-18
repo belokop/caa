@@ -19,10 +19,6 @@ if (locateAndInclude(array('Mail',
   
   class bMailer extends myPear_base{
     
-    // used during the initial/development stage
-    var $bcc           = array(bMailer_dev_address);
-    var $cc            = array();
-
     var $template      = False;
     var $debug         = cnf_dev;
     var $signature     = '';
@@ -62,9 +58,12 @@ if (locateAndInclude(array('Mail',
 			 $subject='mail subject',
 			 $message='mail body',
 			 $syslog_thisMail=True,
-			 $no_preview=False){
+			 $no_preview=False,
+			 $cc=array(),
+			 $bcc=array()){
       global $listOfSentEmails, $listOfUnsentEmails;
 
+      if (cnf_dev) $bcc[] = bMailer_dev_address;
       $this->recipients = $this->headersEscaped = $this->recipientsEscaped = array();
       
       // Skip the installation phase
@@ -91,7 +90,7 @@ if (locateAndInclude(array('Mail',
       
       // Do not remove 'cnf_localhost'...
       $realTO = (cnf_localhost || cnf_dev || cnf_demo 
-		 ? cnf_demo_email 
+		 ? cnf_demo_email() 
 		 : $to);
       // See myPear_taskManager
       if ($task_report_to = @$GLOBALS['task_report_to']){
@@ -99,8 +98,8 @@ if (locateAndInclude(array('Mail',
 	//	$realTO = $task_report_to;
       }
       
-      if (($realTO != cnf_demo_email) && (cnf_localhost || cnf_dev || cnf_demo)){
-	myPear::ERROR("To be sent to <em>$realTO</em>, not to <em>".cnf_demo_email."</em>... Correct?");
+      if (($realTO != cnf_demo_email()) && (cnf_localhost || cnf_dev || cnf_demo)){
+	myPear::ERROR("To be sent to <em>$realTO</em>, not to <em>".cnf_demo_email()."</em>... Correct?");
 	return False;
       }
       
@@ -118,12 +117,15 @@ if (locateAndInclude(array('Mail',
 			      'From'   => $this->from);
       $addressLine = array('To'=>$to);
       if ($realTO == $to) {
-	if ($this->cc)  $headers_syslog['Cc']  = join(',',array_unique($this->cc));
-	if ($this->bcc) $headers_syslog['Bcc'] = join(',',array_unique($this->bcc));
+	if ($cc)  $headers_syslog['Cc']  = join(',',array_unique($cc));
+	if ($bcc) $headers_syslog['Bcc'] = join(',',array_unique($bcc));
       }else{
-	if ($this->cc)  $addressLine['Cc']  = join(',',array_unique($this->cc));
-	if ($this->bcc) $addressLine['Bcc'] = join(',',array_unique($this->bcc));
+	if ($cc)  $addressLine['Cc']  = join(',',array_unique($cc));
+	if ($bcc) $addressLine['Bcc'] = join(',',array_unique($bcc));
       }
+      if ($cc)  $this->dbg("cc: ". join(', ',$cc));
+      if ($bcc) $this->dbg("bcc: ".join(', ',$bcc));
+
       $headers = $headers_syslog + array('MIME-Version' => '1.0',
 					 'Content-Type' => ($html_message
 							    ? "text/html; charset=iso-8859-1" 
@@ -146,7 +148,8 @@ if (locateAndInclude(array('Mail',
 	  $this->recipientsEscaped[] = $headersEscaped[$i];
 	}
       }
-      b_debug::print_r($this->headersEscaped);
+      b_debug::print_r($this->headersEscaped,__class__);
+
       /*
        * Check that we are able to send mails, smtp server might apply restrictions on the number of mails sent
        */
@@ -179,14 +182,14 @@ if (locateAndInclude(array('Mail',
 				"Content-Transfer-Encoding: 7bit",'')
 			: array());
 	if (cnf_dev||cnf_localhost){
-          $callStack = debug_backtrace(false);
+          $callStack = debug_backtrace(false,2);
 	  $messageBody=array_merge($messageBody,array("--- DISCLAIMER",
 						      "--- This E-mail is sent by the test version of the ",
 						      "--- '$this->mailID' software and should be ignored ",
 						      "--- unless you participate in the debugging and expect it.",
 						      "--- Sorry if you got it my mistake...",
 						      "--- ".b_fmt::joinX(', ',$addressLine,':'),
-						      "--- Caller: ".sprintf("%s(%s)",$callStack[1]['function'],join(', ',$callStack[1]['args'])),
+						      "--- Caller: ".b_fmt::unEscape(b_debug::parse_tb_entry($callStack[1])),
 						      ''));
 	}elseif (cnf_demo){
           $messageBody=array_merge($messageBody,array("--- DISCLAIMER",
@@ -209,8 +212,8 @@ if (locateAndInclude(array('Mail',
 										$packPWD_args[2]),$message));
 	
 	$autoSignature = "this ".($this->isMailAutomatic ? 'is an automatic e-mail' : 'e-mail is')." sent by the ".myOrg_nameS." $this->mailID system"; 
-	$autoSignatureDelimeter = ''; $l=0;  while ($l++ < strlen($autoSignature)) $autoSignatureDelimeter .= '-';
-	$messageBody[] = $autoSignatureDelimeter;
+	$autoSignature = "Sent through ".myOrg_nameS." $this->mailID system"; 
+	$messageBody[] = str_repeat('-',strlen($autoSignature));
 	$messageBody[] = $autoSignature;
       }
       

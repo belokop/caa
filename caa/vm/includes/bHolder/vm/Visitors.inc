@@ -76,7 +76,9 @@ class bHolder_vm_Visitors extends bHolder_vm{
   private $doing='lists';
   private $ac2h = array(HUT_A  =>'livingA',
 			HUT_AH =>'livingB',
-			HUT_H  =>'livingH');
+			HUT_H  =>'livingH',
+			HUT_HS =>'livingH',
+			);
   private $biz  = array();
   private $organizers = array();
   private $tabs_toShow = array();
@@ -140,8 +142,8 @@ class bHolder_vm_Visitors extends bHolder_vm{
       while($rec = myPear_db()->next_record($q)){
 	if(VM_mailer()->m_applicant_deny($rec['v_id'],'status',$rec['v_status']) === False){
 	  VM_mailer()->m_applicant_deny($rec['v_id'],$no_preview=True);
-	}elseif(VM_mailer()->welcome_applicant($rec['v_id'],'status',0,0,$rec['v_status']) === False){
-	  VM_mailer()->welcome_applicant($rec['v_id'],$rec['hut_id'],$rec['a_name'],$no_preview=True);
+	}elseif(VM_mailer()->welcome_applicant($rec['v_id'],@$rec['lease_id'],'status',$rec['v_status']) === False){
+	  VM_mailer()->welcome_applicant($rec['v_id'],@$rec['lease_id'],$no_preview=True);
 	}
       }
       
@@ -152,7 +154,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
       $doing = 'send_accept_deny';
       switch($_GET['mail_once']){        
       case 'vm_mail_yes':
-	VM_mailer()->welcome_applicant($_GET['v_id'],$_GET['hut_id'],$_GET['a_name']);
+	VM_mailer()->welcome_applicant($_GET['v_id'],$_GET['lease_id']);
 	break;
 	
       case 'vm_mail_no':
@@ -228,7 +230,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
     }
 
     // 
-    // Complete the redirected "who payes"
+    // Complete the redirected "who pays"
     //
     if (($lease_id  = @$_POST['_post_bForm_ID_once']) &&
 	($pay_option= @$_POST['_virt_pay']) &&
@@ -1646,7 +1648,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
       switch(VM::isEventEndorsed()){
       case True:
 	if ((send_welcomeMail_to_applicants && ($vm_f=='m_yes')) ||
-	    (send_denialMail_to_applicants       && ($vm_f=='m_no'))) $rec["${vm_f}_2"] = $this->sendMail_btn($id,$title,!VM::hasRightTo('send_welcomeMail'),$already_sent);
+	    (send_denialMail_to_applicants  && ($vm_f=='m_no'))) $rec["${vm_f}_2"] = $this->sendMail_btn($id,$title,!VM::hasRightTo('send_welcomeMail'),$already_sent);
 	break;
       case False:
 	$rec["${vm_f}_2"] = $this->sendMail_btn($id,$title,($policy != VM_V_infoMailSent),$already_sent);
@@ -1666,16 +1668,19 @@ class bHolder_vm_Visitors extends bHolder_vm{
 
     if (is_string($already_sent)){
       $reply = '';
+      $this->dbg("skip: $already_sent",cnf_dev);
     }else{
       $text = (empty($title) 
 	       ? 'See the email' 
 	       : "Preview ".($preview_only?'':'/ Send')." the $title mail");
       $args = array('mail_once'      =>$id,
 		    'v_id'           =>$this->rec['v_id'],
-		    'hut_id'         =>$this->rec['hut_id'],
-		    'a_name'         =>bForm_vm_Room::_a_name($this->rec,False),
-		    'resetcache_once'=>1,
+		    'lease_id'       =>@$this->rec['lease_id'],
 		    'preview_once'   =>$preview_only,
+		    'resetcache_once'=>1,
+		    //'a_id'           =>$this->rec['a_id'],
+		    //'hut_id'         =>$this->rec['hut_id'],
+		    //'a_name'         =>b_fmt::escape(bForm_vm_Room::_a_name($this->rec,'for_applicant'),'url'),
 		    );
       $reply = (modal_sendmail_dialog
 		? bJS()->modal_iframe(b_url::same($args),
@@ -1685,6 +1690,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
 					    'i'=>($already_sent?'i-mail-open':'i-mail-send'),
 					    'l'=>b_url::same($args)))
 		);
+      $this->dbg($reply,cnf_dev);
     }
     return $reply;
   }
@@ -2677,7 +2683,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
 			'm_info_1'   => '',
 			'm_info_2'   => '',
 			);
-	if (!send_denialMail_to_applicants)           unset($header['m_no_1'],  $header['m_no_2'], $header['space4']);
+	if (!send_denialMail_to_applicants)      unset($header['m_no_1'],  $header['m_no_2'], $header['space4']);
 	if (!send_welcomeMail_to_applicants)     unset($header['m_yes_1'], $header['m_yes_2'],$header['space3']);
 	if (!send_infoMail_to_applicants)unset($header['m_info_1'],$header['m_info_2']);
 

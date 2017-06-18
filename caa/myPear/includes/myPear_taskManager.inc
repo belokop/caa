@@ -8,7 +8,7 @@ define('TM_clean_log_time',7); // in days
 class myPear_taskManager extends myPear_base{
 
   public $exec_request = False;
-  public $debug = cnf_dev;
+  public $debug = True;
   public $removeAfterExecution = False;
 
   /*
@@ -83,7 +83,7 @@ class myPear_taskManager extends myPear_base{
 						  );
 
       // Print message if the lock is active
-      $this->lock_isActive($release_if_deadlock=False);
+      $this->lock_isActive($release_if_deadlock=(@$_REQUEST['tm_clean_lock_once']==='yes'));
       
       // Create the table
       $t = new b_table_zebra($header);
@@ -144,7 +144,7 @@ class myPear_taskManager extends myPear_base{
 	    myPear::WARNING($msg);
 	    b_vars::delete($task['var_name'],$module);
 	    continue;
-	  }elseif(0 && @$_REQUEST['tm_clean_lock_once']==='yes'){
+	  }elseif(@$_REQUEST['tm_clean_lock_once']==='yes'){
 	    myPear::WARNING('tm_clean_lock_once');
 	    continue;
 	  }else{
@@ -183,7 +183,7 @@ class myPear_taskManager extends myPear_base{
     $_function = array();
     if (!empty($task['class']))    $_function[] = $task['class'].'()->';
     if (!empty($task['function'])) $_function[] = $task['function'];
-    if (is_array(@$task['args']))  $_function[] = x('(',implode(',',$task['args']));
+    if (is_array(@$task['args']))  $_function[] = x('(',join(', ',b_debug::parce_tb_arguments($task['args'])));
     $reply = implode('',$_function);
     return ($strong
 	    ? x('strong',$reply)
@@ -310,7 +310,10 @@ class myPear_taskManager extends myPear_base{
   function doTasks($module2exec='all',$task2exec='all'){
     static $class_instance = array();
     static $sleep_time = 13; // seconds
-    if (empty($_REQUEST['tm_execute_once'])) return;
+    if (empty($_REQUEST['tm_execute_once'])){
+      $this->dbg("Spurious invocation, abort...");
+      return;
+    }
     
     //    $this->dbg(starting);
     //    $this->lock_acquire();
@@ -326,12 +329,14 @@ class myPear_taskManager extends myPear_base{
       $task2exec   = $task;
       $this->dbg("module2exec=$module2exec, task2exec=$task2exec");
     }
-
+ 
     // Execute the queue
     $info = array();
     foreach(b_vars::get(taskManager_ID,Null,True) as $module=>$tasks){
       if (($module != $module2exec) && ($module2exec != 'all')) continue;
-      
+
+      $this->dbg($tasks);
+     
       // Be sure that the module is loaded
       b_reg::load_module($module);
       

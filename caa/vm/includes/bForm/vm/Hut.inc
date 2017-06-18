@@ -74,6 +74,7 @@ class bForm_vm_Hut extends bForm_vm {
     foreach (self::$columns as $f=>$d){
       if ($f == 'hut_name'){
 	if     ($this->getValue('hut_code') == HUT_H) $d = 'Hotel name';
+	elseif ($this->getValue('hut_code') == HUT_HS)$d = 'Hostel name';
 	elseif ($this->getValue('hut_code') == HUT_A) $d = 'Name';
 	elseif ($this->getValue('hut_code') == HUT_AH)$d = 'Name';
 	else                                          $d = 'Name'; 
@@ -145,7 +146,7 @@ class bForm_vm_Hut extends bForm_vm {
   /*
    * Hut name, include optionally the hut code
    */
-  function name($includeCapacity=True){
+  function name(){
     if (!(int)$this->ID){
       $reply = 'Adding new hut';
     }else{

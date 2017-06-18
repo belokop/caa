@@ -784,15 +784,22 @@ class myPear{
   static public function TBD($text='.',$class=Null)  { self::MESSAGE($text, $class, 'TBD'); }
   
   static public function ERROR($text,$class=Null){
-    //    b_debug::traceBack();
     if (stripos($text,'missing value')!==False)  self::mail_diagnostics(Null,strip_tags($text));
-    self::MESSAGE($text, $class, 'error', 'ERROR'); 
+    b_debug::_debug($text,array(2,True,'boldText'),'error');
+  }
+  
+  static public function WARNING  ($text,$class=Null){
+    b_debug::_debug($text,array(2,True,'boldText'),'warning');
   }
 
-  static public function WARNING  ($text,$class=Null){ self::MESSAGE($text, $class, 'warning','WARNING'); }
+  static public function WARNING_T($text,$class=Null){
+    // WARNING
+    b_debug::_debug($text,array(2,True,'redText'),'SICK');
+    // debug line
+    if (is_object($class) && is_callable(array($class,'dbg')))  $class->dbg($text,array(3,True,'redText'));
+    else      b_debug::_debug($text,array(2,True,'redText'));
+  }
 
-  static public function WARNING_T($text,$class=Null){ if (cnf_localhost) self::MESSAGE($text, $class, 'SICK');  }
-  
   static public function MESSAGE2 ($text,$class=Null){ self::MESSAGE($text, $class, 'message_bottom'); }
 
   static public function MESSAGE_once($text,$class=Null,$id='status',$heading=''){ self::MESSAGE($text,$class,'status',$heading,True); }

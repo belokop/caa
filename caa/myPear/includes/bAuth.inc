@@ -209,7 +209,7 @@ class bAuth{ // extends myPear_base{
 		  'email_login_as',
 		  'email_to_autologged',
 		  ) as $e) if ($m = @$_SESSION['bAuth'][$e]) myPear::DEBUG(sprintf("%s: %s",$e,$m),YBhere);
-    myPear::DEBUG(sprintf("%s: %s",'cnf_demo_email',cnf_demo_email),YBhere);
+    b_debug::_debug(sprintf("%s: %s",'cnf_demo_email',cnf_demo_email()),YBhere);
   }
 
   private static function _authenticated($arg=array()){
@@ -233,7 +233,7 @@ class bAuth{ // extends myPear_base{
 	  if (empty(self::$av)) bAuth()->imposeAvatar(bForm_Avatar::hook($email,'basic'));
 	  break;
 	case 'email_to_autologged':
-	  self::set_cnf_demo_email($email);
+	  cnf_demo_email($email);
 	}
     }
     
@@ -243,33 +243,6 @@ class bAuth{ // extends myPear_base{
       myPear::WARNING_T('bAuth::$av is not an object'); 
     }
     return $av_email;
-  }
-  
-  /*
-   * set the developer email address, to which ALL the emails should be sent when running in the "cnf_dev/cnf_demo" mode                                                                             
-   */
-  public static function set_cnf_demo_email($forced=''){
-    if (!defined('cnf_demo_email')){
-
-      $cnf_demo_email = (empty($forced)
-			 ? (is_object(bAuth::$av_authenticated) && !cnf_localhost
-			    ? bAuth::$av_authenticated->getEmail()
-			    : cnf_dev_email)
-			 : $forced);
-      
-      if (cnf_demo || cnf_dev){
-	myPear::MESSAGE_forced('',$msg="All the Emails are redirected to '$cnf_demo_email'");
-	myPear::DEBUG($msg,True);
-      }
-      
-      //    if ($deep_bug=True) $cnf_demo_email = cnf_dev_email; // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      
-      define('cnf_demo_email',$cnf_demo_email);
-    }
-    if (cnf_demo || cnf_dev){
-      myPear::MESSAGE_forced('',$msg="All the Emails are redirected to '$cnf_demo_email'");
-      myPear::DEBUG($msg,True);
-    }
   }
   
   /*
@@ -948,7 +921,7 @@ The request came from the web interface from computer '".gethostbyaddr($_SERVER[
       b_crypt::$debug = self::$debugIsOn;
       list($login_pwd,$loginData) = b_crypt::decodeX($_GET['x']);
       if ($email = @$loginData['email_to_autologged']){
-	self::set_cnf_demo_email($email);
+	cnf_demo_email($email);
 	unset($loginData['email_to_autologged']);
       }
     }elseif ($s=@$_GET['z']){ // new "lightweight" encryption

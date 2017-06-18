@@ -9,10 +9,6 @@ class bIcal_matrix_abs extends bIcal_matrix{
   var $a_id           = array();
 
   public static function _show($start,$end,$imposedEntries=array(),$a_ids=array()){
- static $call=0; 
-    b_debug::traceBack($call);   
-    b_debug::xxx("$call");
-    //if (!$call++) return;
     $m = new bIcal_matrix_abs();
     $m->showLegend = False;
     $m->day1 = $start;

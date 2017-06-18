@@ -83,7 +83,7 @@ class bDB extends mysqli{
       return;
     }
 
-    $this->dbg('',cnf_dev,'greenText');
+    $this->dbg('',array(cnf_dev,'greenText'));
     switch($mode){
     case 'start':
       $this->in_autocommit = True;
@@ -102,7 +102,7 @@ class bDB extends mysqli{
    */
   public $in_transaction = 0;
   function transaction($mode='start',$msg=''){
-    $this->dbg('',cnf_dev,'greenText');
+    $this->dbg('',array(cnf_dev,'greenText'));
 
     $reply = Null;
     switch($mode){
@@ -542,7 +542,7 @@ class bDB extends mysqli{
   protected function dbg_query($query){
 
     if ($this->result === False){
-      $this->dbg(x('strong',' ??? query failed '.$this->error),cnf_dev,'redText',3);
+      b_debug::_debug(x('strong',' ??? query failed '.$this->error),array(cnf_dev,'redText',2));
       return;
     }
 
@@ -578,7 +578,7 @@ class bDB extends mysqli{
     }
     if ($n == 1) $cmt = preg_replace("/s$/","",$cmt);
     if ($this->debug || (($n > 0) && ($this->debug_qquery || $cnf_show_db))){
-      $this->dbg(x("strong",' '.str_replace(' ','&nbsp;',$cmt)),True,$c,3);
+      b_debug::_debug(x("strong",' '.str_replace(' ','&nbsp;',$cmt)),array($this,True,$c,2));
     }
     $this->debug_qquery = False;
   }
@@ -586,10 +586,17 @@ class bDB extends mysqli{
   /*
    *
    */
-  protected function dbg($text,$debug_force=False,$color='lgreenText',$level=2){
-    //b_debug::xxx(str_replace(array('bDB->dbg','bDB_myPear'),'db',$text),array($level,$color,True));
-    b_debug::_debug(str_replace(array('bDB()','bDB->dbg','bDB_myPear'),'db',$text),
-		    array($level,$color,($this->debug || $this->debug_qquery || $debug_force)));
+  protected function dbg($text,$flags=array()){
+    if (!is_array($flags)) $flags = array($flags);
+    foreach($flags as $f){
+      if    (is_bool($f)) $debug_force = $f;
+      elseif(is_numeric($f)) {}
+      elseif(is_string($f)) $color = $f;
+    }
+    if (!isset($debug_force)) $debug_force = False;
+    if (!isset($color)      ) $color = 'lgreenText';
+
+    b_debug::_debug($text,array($color,2,$this,($this->debug || $this->debug_qquery || $debug_force)));
   }
 }
       

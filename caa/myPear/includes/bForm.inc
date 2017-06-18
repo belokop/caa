@@ -101,9 +101,8 @@ class bForm extends myPear_getValue{
      * Set the unique class identifier $this->ID
      */
     if ((strpos($id,'=') !== False) || (stripos($id,'REGEXP')!==False)){
-      $q = myPear_db()->query("SELECT ".$this->TABLEID." FROM $this->TABLE WHERE $id");
-      if (($n=myPear_db()->num_rows($q)) > 1) myPear::WARNING_T("Found $n records <br>".
-								"SELECT ".$this->TABLEID." FROM $this->TABLE WHERE $id",$this);
+      $q = myPear_db()->query($sql="SELECT ".$this->TABLEID." FROM $this->TABLE WHERE $id");
+      if (($n=myPear_db()->num_rows($q)) > 1) $this->dbg("<strong>Found $n records</strong><br>$sql",array(True,'redText'));
       while ($r=myPear_db()->next_record($q)) $this->ID = $r[$this->TABLEID];
       if (empty($this->ID)) $this->ID = 'new';
     }else{
@@ -177,7 +176,7 @@ class bForm extends myPear_getValue{
 
     // First set the mode as declared by the input arguments 
     if ($mode != 'RW') $mode = 'RO';
-    $this->MODE = ((int)$this->ID ? $mode : 'RW');
+    $this->MODE = (is_numeric($this->ID) ? $mode : 'RW');
     $this->dbg("----------------------------------------------- ".($mode === $this->MODE ? '' : "'$mode' => '$this->MODE'"));
     
     // Check the _GET    
@@ -188,13 +187,13 @@ class bForm extends myPear_getValue{
 	((int)$i == (int)$this->ID)){
       if ($m != $this->MODE){
 	$this->MODE = $m;
-	$this->dbg("Set MODE = $this->MODE from _GET");
+	$this->dbg("Set MODE = $this->MODE from _GET",cnf_dev);
       }
     }
 
     // the mode from the _POST takes precedence over _GET
     if ($this->myPost_bForm() && !empty($_POST['_post_bForm_RW_once'])){
-      if ($this->MODE != 'RW')      $this->dbg("Force RW mode by '_post_bForm_RW_once'");
+      if ($this->MODE != 'RW')      $this->dbg("Force RW mode by '_post_bForm_RW_once'",cnfdev);
       $this->MODE = $_GET['mode'] = 'RW';
     }
     $this->dbg('MODE = '.$this->MODE);
@@ -304,7 +303,7 @@ class bForm extends myPear_getValue{
       foreach ($this->isMBE as $k=>$v) $this->parentForm->isMBE[$k] = $v;
       $this->parentForm->defineVariable($this->vars,True);
       $this->MODE = 'RO';
-      $this->dbg("set MODE = $this->MODE");
+      $this->dbg("set MODE = ".$this->MODE,cnf_dev);
     }
     $this->dbg($this->embedded);
     return $this->embedded;
@@ -669,12 +668,7 @@ class bForm extends myPear_getValue{
 	  break;
 
 	default:
-	  if (bForm::$formOpened != $this->ID){
-	    // This should never happen (two or more bForms have MODE == 'RW'), 
-	    // may be the MODE of the "secondary bForm's" must then be set to RO ??
-	    myPear::WARNING_T("?????????????????????????? form is already open with ID=".bForm::$formOpened,$this);
-	    $this->MODE = 'RO'; 	  //  to be tested, but look OK 
-	  }
+	  $this->forceROmode();
 	}
       }
       break;
@@ -731,6 +725,19 @@ class bForm extends myPear_getValue{
     }
   }
 
+  /*
+   * Helper to "closeForm"
+   */
+  function forceROmode(){
+    if (bForm::$formOpened != $this->ID){
+      // This should never happen (two or more bForms have MODE == 'RW'), 
+      // may be the MODE of the "secondary bForm's" must then be set to RO ??
+      $this->MODE = 'RO'; 	  //  to be tested, but look OK 
+      myPear::WARNING_T("?????????????????????????? form is already open with ID=".bForm::$formOpened,$this);
+      $this->dbg("?? form is already open with ID=".bForm::$formOpened.", set MODE=RO",True);
+    }
+  }
+  
   /*
    * Helper to "closeForm"
    */
@@ -1060,10 +1067,10 @@ class bForm extends myPear_getValue{
     if (empty($values)) $values = array();
     $selected = $this->getValue($name,True);
     if (!$selected) $selected = @$values['default'];
-    $select_what = (empty($values['<select_name>'])
+    $select_what = (empty($values['*select_name*'])
 		    ? ''
-		    : $values['<select_name>'].' ');
-    unset($values['<select_name>'],$values['<default>']);
+		    : $values['*select_name*'].' ');
+    unset($values['*select_name*'],$values['*default*']);
     if (!$this->isRO($name,$onlyRW)){
       $s = array();
       if (!empty($values)){

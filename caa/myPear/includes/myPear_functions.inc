@@ -89,8 +89,8 @@ function bAuth(){
     if (!bAuth::authenticated())    $bAuth->autoLogin();
     $bAuth->authenticate();
       
-    bAuth::set_cnf_demo_email();
-    bAuth::debug_auth();
+    // cnf_demo_email();
+    // debug_auth();
     
     // Create the first Avatar for the empty database
     switch(HOSTED_BY_CMS){
@@ -133,7 +133,29 @@ function bAuth(){
   return $bAuth;
 }
 
-      // Get the superuser email
+/*
+ * set the developer email address, to which ALL the emails should be sent when running in the "cnf_dev/cnf_demo" mode
+ */
+function cnf_demo_email($forced=''){
+  if (!defined('cnf_demo_email')){
+    
+    $cnf_demo_email = (empty($forced)
+		       ? (is_object(bAuth::$av_authenticated) && !cnf_localhost
+			  ? bAuth::$av_authenticated->getEmail()
+			  : cnf_dev_email)
+		       : $forced);
+    
+    define('cnf_demo_email',$cnf_demo_email);
+    
+    if (cnf_demo || cnf_dev){
+      myPear::MESSAGE_forced('',($msg=sprintf("All the Emails are redirected to '%s'",cnf_demo_email)));
+      myPear::DEBUG($msg,True);
+    }
+  }
+  return cnf_demo_email;
+}
+
+// Get the superuser email
 function cnf_superUser_email(){
   if (!defined('cnf_superUser_email')){
     foreach(myPear::_UNIT(RANK__superuser)->getMembers() as $k=>$v){
@@ -141,7 +163,7 @@ function cnf_superUser_email(){
       $su_emails[] = $av->getEmail();
     }
     define('cnf_superUser_email',(empty($su_emails)
-				  ? cnf_demo_email
+				  ? cnf_demo_email()
 				  : join(',',$su_emails)));
   }
   return cnf_superUser_email;
@@ -182,7 +204,7 @@ function myPear_setConstants(){
   
   // cnf_show_XXX options 
   if (isset($_GET['ii'])) $_GET['i'] = $_GET['ii'];
-  $debug_options = array('show' =>array('a','b','c','cd','cot','d','dd','dupl','h','gv','l','m','i','ii','r','e','pe','pv','v','acl',
+  $debug_options = array('show' =>array('a','b','c','cd','cot','d','dd','dupl','fnc','h','gv','l','m','i','ii','r','e','pe','pv','v','acl',
 					's','t','w','z','hook','cache','ic','db','dp','st','er',
 					'sm','ms','en','exec','mrg','pdf','sem','auth','reg','out'),
 			 'debug'=>array('auth','form','db'));
@@ -336,13 +358,13 @@ function myPear_register_config_parser($config_files,&$path){
  * Database access class
  */
 function myPear_db(){
-    static $db = Null;
-    if ($db === Null){      
-        // Locate the source file and create the class instance
-        locateAndInclude('bDB_myPear');
-        $db = new bDB_myPear();
-    }
-    return $db;
+  static $db = Null;
+  if ($db === Null){      
+    // Locate the source file and create the class instance
+    locateAndInclude('bDB_myPear');
+    $db = new bDB_myPear();
+  }
+  return $db;
 } 
 
 /*

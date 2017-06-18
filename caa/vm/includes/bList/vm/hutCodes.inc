@@ -26,6 +26,7 @@ class bList_vm_hutCodes extends bList_vm{
     if (!$this->getMembers()){
       // Populate the list with the default codes
       foreach(VM::$known_hut_codes as $code=>$descr){
+	var_dump($code,$descr);
 	$this->addMember(array('lm_key'   => $code,
 			       'lm_value' => $descr['prefix'].'s'));
       }

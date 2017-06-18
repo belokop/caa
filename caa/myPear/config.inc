@@ -3,8 +3,8 @@ ini_set("allow_url_fopen", true);
 //var_dump(file_get_contents('php://input'));
 
 // myPear module 
-$releaseDate = '2017-06-15';
-define('myPear_VERSION','5.3.200');
+$releaseDate = '2017-06-18';
+define('myPear_VERSION','5.3.201');
 define('myPear_MODULE', 'myPear');
 define('myPear_DATE',    $releaseDate);
 

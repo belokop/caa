@@ -793,19 +793,21 @@ class b_fmt{
     $escapes = array(' ' =>'&nbsp;',
 		     '"' =>array('&quot;', '&#34;', '&#034;'),
 		     "'" =>array('&apos;', '&#39;', '&#039;'),
+		     '[' =>array(          '&#91;', '&#091;'),  
+		     ']' =>array(          '&#93;', '&#093;'),  
 		     ',' =>array(          '&#44;', '&#044;'),  
 		     '.' =>array(          '&#46;', '&#046;'),
 		     '<' =>array('&lt;',   '&#60;', '&#060;'),
 		     '>' =>array('&gt;',   '&#62;', '&#062;'),
 		     );
     
-    if (empty($mode)){
-      return $escapes;
-    }elseif($mode == 'url'){
+    if($mode == 'url'){
       return $escape_url;
     }else{
-      $mode = '';
-      foreach(array('<','>') as $i) unset($escapes[$i]);
+      if (!empty($mode)){
+	$mode = '';
+	foreach(array('<','>') as $i) unset($escapes[$i]);
+      }
       return $escapes;
     }
   }
@@ -829,7 +831,8 @@ class b_fmt{
   static function unEscape($line,$mode=''){
     foreach (self::escape_init($mode) as $symbol=>$codes){
       if (!is_array($codes)) $codes = array($codes);
-      foreach($codes as $f)  $line = str_replace($f,$symbol,$line);
+      //      foreach($codes as $f)  $line = str_replace($f,$symbol,$line);
+      $line = str_ireplace($codes,$symbol,$line);
     }
     return $line;
   }
@@ -1684,26 +1687,13 @@ class b_debug extends myPear_base{
   } 
 
   /*
-   *
-   */
-  public static $parse_line_arg_defaults = Null;
-  public function parse_line_arg_defaults(){
-    static $max_a_m=3, $max_s_l=30;
-    if (self::$parse_line_arg_defaults === Null) self::$parse_line_arg_defaults = array($max_a_m,$max_s_l);
-    $reply = self::$parse_line_arg_defaults;
-    self::$parse_line_arg_defaults = Null;
-    return $reply;
-  }
-  
-  /*
    * Another debug facility
    *   $max_a_m = 3; // number of array elements to parse
    *   $max_s_l = 30;// maximal string length 
    */
-  private static function parse_line_arg($arg,$max_a_m=Null,$max_s_l=Null){
-
-    //   if (!empty($max_a_m) && !empty($max_s_l))  self::parse_line_arg_defaults = array($max_a_m,$max_s_l);
-
+  private static $current_class = '';
+  public static function parse_value($arg,$max_a_m=3,$max_s_l=30){
+    if (strpos(self::$current_class,'bDB')!== False) $max_s_l = 999; // show the full DB query string
     if (is_object($arg)){
       $arg = $arg->__toString();
     }elseif(is_array($arg)){
@@ -1711,9 +1701,9 @@ class b_debug extends myPear_base{
       else{
 	$a=array();
 	$ids = preg_grep('/_id$/',array_keys($arg)); 
-	foreach($ids as $i) if (count($a)<$max_a_m) $a[$i]=self::parse_line_arg($arg[$i]);
+	foreach($ids as $i) if (count($a)<$max_a_m) $a[$i]=self::parse_value($arg[$i]);
 	if (empty($a)) foreach($arg as $k=>$v){if(count($a)<$max_a_m){
-	      if (is_array($v)) $a[$k] = self::parse_line_arg($v);
+	      if (is_array($v)) $a[$k] = self::parse_value($v);
 	      elseif(b_fmt::isArrayAssociative($arg)){$a[$k]=$v;}else{$a[]=$v;}}
 	  }
 	if (count($a) < count($arg)) $a[''] = '...';
@@ -1733,15 +1723,19 @@ class b_debug extends myPear_base{
   }
 
   /*
+   *
+   */
+  public static function parce_tb_arguments($callStack_args){
+    $args = array();
+    foreach($callStack_args as $arg) $args[] = self::parse_value($arg);
+    return $args;
+  }
+
+  /*
    * Parse "debug_backtrace()" output
    */
-  private static function parse_line($call,$class=Null){
+  public static function parse_tb_entry($call,$class=Null){
     
-    // Parse arguments
-    $args = array();
-    foreach($call['args'] as $arg) $args[] = self::parse_line_arg($arg);
-    foreach(array('class','type') as $f) if (empty($call[$f])) $call[$f] = '';
-
     // Parce the parent class    
     $classArgs = array();
     if (is_object($class) && ($call['type']==='->')){
@@ -1753,22 +1747,24 @@ class b_debug extends myPear_base{
       if($class instanceof bForm)      $classArgs[] = $class->MODE;
     }
 
+    foreach(array('class','type') as $f) if (empty($call[$f])) $call[$f] = '';
     $reply = sprintf("%s%s%s%s(%s)",
-		     $call['class'], //(($c=@$call['class']) ? str_replace(array('bList_','bUnit_','bForm_'),'',$c) : ''),
+		     (empty($class) ? $call['class'] : get_class($class)), 
 		     ($call['type'] === '->' ? x('(',join(',',$classArgs)) : ''),
 		     $call['type'],
 		     $call['function'],
-		     join(', ',$args));
+		     join(', ',self::parce_tb_arguments($call['args'])));
     return $reply;
   }
 
   /*
-   *
+   * The main messager
    */
   public static function _debug($txt='',$flags=1,$message_class='debug'){
-    
-    if (($message_class == 'debug') && !cnf_dev) return;
 
+    if (!in_array($message_class,array('status','error','debug','warning','SICK')) && cnf_dev) b_debug::internalError('??? '.__method__);    
+    if ( in_array($message_class,array('debug','SICK')) && !cnf_dev) return;
+    
     static $color_codes = array('I' => 'maroonText',
 				'L' => 'blueText',
 				'M' => 'fuchsiaText',
@@ -1777,18 +1773,19 @@ class b_debug extends myPear_base{
 				'DB'=>'greenText');
     
     // Defaults
-    list($level,$color,$class,$toPrint) = array(1,(string)self::$_dbg_color,Null,False);
+    list($level,$color,$class,$toPrint) = array(1,self::$_dbg_color,Null,False);
     
     // Extract the arguments
     if (!is_array($flags)) $flags = array($flags);
     foreach($flags as $m){
       if    (is_numeric($m)) $level = $m;
-      elseif(is_string($m))  $color = $m;
       elseif(is_object($m))  $class = $m;
+      elseif(is_string($m))  $color = $m;
       elseif(is_bool($m))    $toPrint = $m;
     }
     if (isset($color_codes[$color])) $color = $color_codes[$color];
-    
+    self::$current_class = is_object($class) ? get_class($class) : '';
+   
     // Start & End of a logical block
     if (($message_class=='debug') && (self::$starting_exiting = is_string($txt))){
       $s_e_s = (strpos($txt,starting) !== False);
@@ -1800,13 +1797,18 @@ class b_debug extends myPear_base{
     }
     
     if ($toPrint){    
-      $callStack = debug_backtrace(False,$level+1);
-      $msg = sprintf("<span class='%s'>%s%s - <em>%s</em></span>\n",
-		   $color,
-		   self::s_e_depth(),
-		   self::parse_line($callStack[$level],$class),
-		   (is_string($txt) ? $txt : self::parse_line_arg($txt,10,60)) // var_export($txt,True)
-		   );
+      if (cnf_dev || in_array($message_class,array('debug','SICK'))){
+	if ($message_class === 'SICK') { $message_class = 'warning'; $color='redText boldText smallerText'; }
+	$callStack = debug_backtrace(False,$level+1);
+	$msg = sprintf("<span class='%s'>%s%s:%s <em>%s</em></span>\n",
+		       $color,
+		       self::s_e_depth(),
+		       self::parse_tb_entry($callStack[$level],$class),
+		       (cnf_dev && ($message_class !== 'debug') ? '<br>' : ''),
+		       (is_string($txt) ? $txt : self::parse_value($txt,10)));
+      }else{
+	$msg = (is_string($txt) ? $txt : self::parse_value($txt,10));
+      }
       if (self::$starting_exiting || !@self::$xxx_cache[b_crypt::hash($msg)]++ || b_cnf::get('noCompactMessages')){
 	if (b_cnf::get('nodrupal')) print "<br>$msg\n";
 	else drupal_set_message($msg,$message_class);
@@ -1824,7 +1826,7 @@ class b_debug extends myPear_base{
     $t = new b_table_zebra(array('n'=>' ','b'=>' ','l'=>' '));
     $t->showLineCounter = False;
     foreach($callStack as $k=>$call) $t->prt(array('n'=>x('code class=smallerText',"$k"),
-						   'b'=>x('code class=smallerText',self::parse_line($call)),
+						   'b'=>x('code class=smallerText',self::parse_tb_entry($call)),
 						   'l'=>x('code class=smallerText',preg_replace(';(.*/caa|'.trim(`pwd`).')/;','',@$call['file'].'#'.@$call['line']))));
     $t->close();
     $tb = array(x('strong',(empty($id) ? 'TraceBack:' : $id)),

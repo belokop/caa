@@ -1,8 +1,6 @@
 <?php
 locateAndInclude('bDB');
 
-// require_once (dirname(__FILE__).DIRECTORY_SEPARATOR.'b_lock.inc');
-
 class bDB_myPear extends bDB{
   
   /*

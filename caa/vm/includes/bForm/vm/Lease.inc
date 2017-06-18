@@ -1,7 +1,8 @@
 <?php
 locateAndInclude('bForm_vm');
 
-define('as_cotenant',' (as a co-tenant)');
+// define('as_cotenant',' (as a co-tenant)');
+define('as_cotenant','');
 
 class bForm_vm_Lease extends bForm_vm{
 
@@ -13,7 +14,7 @@ class bForm_vm_Lease extends bForm_vm{
   public static function print_lease_options(){
     if (!isset($_GET['_once'])) return;
 
-    vm_compat_update_50();
+    // vm_compat_update_50();
 
     $cotenants = array();
     foreach(VM_cotenants()->getMembers() as $lm_id=>$rec){
@@ -88,7 +89,7 @@ class bForm_vm_Lease extends bForm_vm{
   public static function get_lease_options($lease_id,$mode,$data=array(),$verbose=False){
 
     // Parse input arguments
-    if (is_array($lease_id)){
+    if ($is_array=is_array($lease_id)){
       $args = $lease_id;
       foreach($args as $k=>$v) {
 	switch ($k){
@@ -127,6 +128,7 @@ class bForm_vm_Lease extends bForm_vm{
 
     // Get sure that all the fields are read    
     if (!empty($select)){ //      && ($column=='lease_id')){
+      if ($is_array) b_debug::traceBack();
       b_debug::_debug('select='.join(',',$select),cnf_dev);
       $q = myPear_db()->qquery($sql="SELECT ".join(',',$select)." FROM abs_leases ".
 			       " LEFT JOIN abs_visits ON v_id=lease_vid ".
@@ -193,7 +195,7 @@ class bForm_vm_Lease extends bForm_vm{
       }
 
       // Set flag "No cotenants" if the organization pays only for X tenants
-      // (i.e. the remaing beds to be paid by the tenant, the room gets fully occupied)
+      // (i.e. the remaining beds to be paid by the tenant, the room gets fully occupied)
       if (in_array(@$data['pay'],VM::$pay_options)){
 	if (!function_exists('aid2leases')){
 	  // helper...
@@ -257,6 +259,7 @@ class bForm_vm_Lease extends bForm_vm{
       break;
 
     case 'pay_room':
+    case 'pay_room_for_applicant':
       $pay = bForm_vm_Lease::get_lease_options($args,'get_pay');
       $pays_for[empty($pay) ? VM_default_lease_pay : $pay] = 1;
       foreach(($cotenants=VM_cotenants()->get_cotenants($args['lease_id'],False)) as $lm_id=>$leases){
@@ -266,10 +269,14 @@ class bForm_vm_Lease extends bForm_vm{
 	}
       } 
       $reply = array();
-      if (!empty($cotenants)) $reply[] = '&#91;Shared&#93';
-      if    ($n=@$pays_for[VM_default_lease_pay]) {}
-      elseif($n=@$pays_for[VM::$pay_options[0]]) $reply[] = myOrg_nameS." pays ".VM::$pay_options[0];
-      elseif($n=@$pays_for[VM::$pay_options[1]]) $reply[] = myOrg_nameS." pays for $n";
+      if (!empty($cotenants)) $reply[] = '&#91;Shared&#93;';
+      if    ($n=@$pays_for[VM_default_lease_pay]) { if ($mode=='pay_room_for_applicant') $reply[] = 'the cost will be billed to '.myOrg_name; }
+      elseif($n=@$pays_for[VM::$pay_options[0]]) $reply[] = ($mode=='pay_room_for_applicant'
+							     ? 'the cost will be billed to you'
+							     : myOrg_nameS." pays ".VM::$pay_options[0]);
+      elseif($n=@$pays_for[VM::$pay_options[1]]) $reply[] = ($mode=='pay_room_for_applicant'
+							     ? myOrg_nameS." pays only for your accommodation, the cost for other tenants will be billed to you"
+							     : myOrg_nameS." pays for $n");
       $reply = join(' ',$reply);
       break;
 
@@ -287,10 +294,11 @@ class bForm_vm_Lease extends bForm_vm{
 	  : array();
 	$n_cotenants = count($cotenants);
 	b_debug::_debug(" n_cotenants = $n_cotenants a_capacity=".$args['a_capacity'],cnf_dev);
-	$reply = array('<select_name>'          => 'who pays',
+	$reply = array('*select_name*'     => 'who pays',
 		       VM::$pay_options[0] => b_fmt::redText(myOrg_nameS.' pays '.VM::$pay_options[0],$color));
 	switch($n_cotenants){
 	case 0:	
+	  if ($args['a_capacity'] > 1) $reply[VM::$pay_options[1]] = b_fmt::redText(myOrg_nameS.' pays only for '.bForm_Avatar::_fmtName('Lf',$args));
 	  break;
 	case 1:
 	case 2:
@@ -319,7 +327,8 @@ class bForm_vm_Lease extends bForm_vm{
     default:
       b_debug::internalError("Unexpected mode = \"$mode\"");
     }
-    b_debug::_debug("reply=".x('em',b_fmt::escape(var_export($reply,True))),($verbose && !empty($reply)));
+    //    b_debug::_debug("reply=".x('em',b_fmt::escape(var_export($reply,True))),($verbose && !empty($reply)));
+    b_debug::_debug($reply,($verbose && !empty($reply)));
     return $reply;
   }
 
@@ -328,7 +337,7 @@ class bForm_vm_Lease extends bForm_vm{
    */
   public static function shared_room_no_cotenants_wanted($args,$verbose=False){
     $reply = self::get_lease_options($args,VM_no_cotenants);
-    b_debug::_debug($reply,$verbose);
+    b_debug::_debug($reply,$verbose&&$reply);
     return $reply;
   }
 
@@ -339,7 +348,7 @@ class bForm_vm_Lease extends bForm_vm{
     $reply = (//($args['a_capacity'] == 1 && !empty($args['lease_aid'])) ||
 	      self::get_lease_options($args,VM_room_is_full) ||
 	      self::shared_room_no_cotenants_wanted($args,False));
-    b_debug::_debug($reply,$verbose);
+    b_debug::_debug($reply,$verbose&&$reply);
     return $reply;
   }
 
@@ -581,6 +590,7 @@ class bForm_vm_Lease extends bForm_vm{
    * Helper
    */
   public static function _set_who_pays($lease_id,$pay_option){
+    b_debug::_debug('',cnf_dev);
     if (in_array($pay_option,array(VM_default_lease_pay,VM::$pay_options[0]))){
       foreach(VM_cotenants()->get_cotenants($lease_id,True) as $lm_id=>$leases){
 	foreach($leases as $l_id){
@@ -589,11 +599,13 @@ class bForm_vm_Lease extends bForm_vm{
 	}
       }
     }elseif($pay_option == VM::$pay_options[1]){
+      self::set_lease_options($lease_id,array('pay'=>$pay_option));
       $cotenants=VM_cotenants()->get_cotenants($lease_id,False,'names');
       if ($cotenants) myPear::ERROR("Lease $lease_id is 'pay for one', but has cotenant(s) ".join(',',$cotenants));
+      /*
     }elseif($pay_option == 'two'){
       // Kept for the transition period
-      // Old convension, obsolete.
+      // Old convention, obsolete.
       // Now the both cotenants get 'paid for one person', then the pays are summarized
       $cot=VM_cotenants()->get_cotenants($lease_id);
       b_debug::print_r($cot,'cotenants');
@@ -603,6 +615,7 @@ class bForm_vm_Lease extends bForm_vm{
 	  self::set_lease_options($l_id,array('pay'=>VM::$pay_options[1]));
 	}
       }
+      */
     }else{
       $cotenants=VM_cotenants()->get_cotenants($lease_id,True,'names');
       b_debug::internalError("??? cotenants = ".join(',',$cotenants));
@@ -926,8 +939,10 @@ class bForm_vm_Lease extends bForm_vm{
 	}
 	
 	// Who pays for the accommodation?
+	$this->dbg('calling select_who_pays',cnf_dev);
 	$selector = self::select_who_pays('_virt_pay',$this);
 	if (!empty($selector)) $dialog[b_rawData.'2'] = array(' ',$selector);
+	$this->dbg('exit select_who_pays',cnf_dev);
 
 	// Visit period
 	if ($this->isRO('lease_start') && $this->isRO('lease_end')){
@@ -1390,14 +1405,14 @@ class bForm_vm_Lease extends bForm_vm{
       if (!empty($reply)) $reply['separator1'] = '';
     }
 
-    // Populate the reply with non-overbooked rooms
+    // Populate the reply with non-over-booked rooms
     $n_populated = 0;
     foreach($all_rooms as $id=>$a_quantity){
       list($a_id,$room_name) = explode('#',$id,2);
       $n_booked_rooms = count($booked_rooms[$id]);
       if ($a_quantity < $n_booked_rooms){
 	// Disaster, something is wrong
-	if ($n_booked_rooms) b_debug::_debug(sprintf("$id overbooked %s/%s !!!",$n_booked_rooms,$a_quantity),array('redText',cnf_dev));
+	if ($n_booked_rooms) b_debug::_debug(sprintf("$id over-booked %s/%s !!!",$n_booked_rooms,$a_quantity),array('redText',cnf_dev));
       }elseif($a_quantity > $n_booked_rooms){
 	b_debug::_debug($id,array('greenText',cnf_dev));
 	$n_populated++;
@@ -1425,10 +1440,10 @@ class bForm_vm_Lease extends bForm_vm{
       }
     }
     if (empty($n_populated)) $msg_overbooking = "WARNING, all the available rooms are booked, including those with shared accommodation.<br>".
-			       "You should contact the (hotels) administration in order to increase your quotas and/or reduce the number of participans.";
+			       "You should contact the (hotels) administration in order to increase your quotas and/or reduce the number of participants.";
     if (!empty($msg_overbooking)) myPear::ERROR($msg_overbooking);
     
-    if (!empty($reply)) $reply['<select_name>'] = 'accommodation';
+    if (!empty($reply)) $reply['*select_name*'] = 'accommodation';
 
     // If the reference lease has a room attached, include it in the reply
     if (@$rec['lease_aid'] && empty($reply[$rec['lease_aid']])){
@@ -1437,7 +1452,7 @@ class bForm_vm_Lease extends bForm_vm{
       $reply[$rec['lease_aid']] = bForm_vm_Room::_a_name($rec,True);
     }
     
-    b_debug::_debug("reply=".join(',&nbsp;',array_values($reply)),__function__,array($accommodationOptions,$hut_code));
+    b_debug::_debug("reply=".join(',&nbsp;',array_values($reply)),cnf_dev);
     bTiming()->cpu();
     return $reply;
   }
@@ -1497,6 +1512,7 @@ class bForm_vm_Lease extends bForm_vm{
     if (is_object($recP)){
       $rec = $recP->formDB;
       $name_for_select = $name;
+      $recP->forceROmode();
       $MODE = $recP->MODE;
     }else{
       $rec = $recP;
@@ -1504,7 +1520,7 @@ class bForm_vm_Lease extends bForm_vm{
       $MODE = 'RO';
     }
 
-    // This is not supposed to be shown in the bHolder contaext.
+    // This is not supposed to be shown in the bHolder context.
     // Possible, but looks too messy..
     if (!is_object($recP)) return '';    
     if ($rec['lease_aid'] == VM::$OA->ID) return '';
@@ -1525,7 +1541,7 @@ class bForm_vm_Lease extends bForm_vm{
       VM::$formDummy->getValue_reset($name_for_select,(empty($_virt_pay) ? VM_default_lease_pay : $_virt_pay));
       // b_debug::_debug("getValue(name_for_select) = ".var_export(VM::$formDummy->getValue($name_for_select),True)); 
 
-      $options = self::get_lease_options($rec['lease_id'],'pay_menu',$MODE,cnf_dev);
+      $options = self::get_lease_options($rec,'pay_menu',$MODE,cnf_dev);
       $reply = empty($options) || ($_virt_pay === cnf_emptyString)
 	? ''
 	: x("span class='only_online'",
@@ -1601,7 +1617,7 @@ class bForm_vm_Lease extends bForm_vm{
 	}
       }
 
-      if (!empty($candidates)) $candidates['<select_name>'] = 'cotenant';
+      if (!empty($candidates)) $candidates['*select_name*'] = 'cotenant';
       $reply = empty($candidates)
 	? ''
 	: x("span class='only_online'",

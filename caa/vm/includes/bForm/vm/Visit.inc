@@ -178,7 +178,7 @@ class bForm_vm_Visit extends bForm_vm {
 				    'v_type'    => $v_type,
 				    'v_eid'     => $this->getValue('v_eid',True)));
   }
-
+  
   /*
    *
    */
@@ -1996,42 +1996,52 @@ class bForm_vm_Visit extends bForm_vm {
   }
 
   public static function _formalitiesNotCompleted(&$buffer){
-    if (self::_visitOutOfScope($buffer)) return False;
-
-    $policies = self::_getPolicies($buffer);
-
-    locateAndInclude('bForm_vm_Event');    
-    $VM_E_endorsed = bForm_vm_Event::_getPolicy(VM_E_endorsed,$buffer);
-    
-    $reply = False;
-    switch($status=self::_getStatus($buffer)){
-    case STATUS_YES:
-      if (send_welcomeMail_to_applicants && $VM_E_endorsed && !empty($policies[VM_V_welcomeMailSent])){
-	// The welcome letter should be, but has not been sent 
-	if (!self::_getPolicy(VM_V_welcomeMailSent,$buffer) && 
-	    !self::_getPolicy(VM_V_welcomeMailQueued,$buffer)) $reply = STATUS_YES;
-      }
-      break;
+    if (self::_visitOutOfScope($buffer)){
+      $reply = False;
+    }else{
+      $policies = self::_getPolicies($buffer);
       
-    case STATUS_NO:
-      if (send_denialMail_to_applicants && $VM_E_endorsed && !empty($policies[VM_V_denialMailSent])){
-	// The denial letter should be, but has not been sent 
-	if (!self::_getPolicy(VM_V_denialMailSent,$buffer) &&
-	    !self::_getPolicy(VM_V_denialMailQueued,$buffer))  $reply = STATUS_NO;
+      locateAndInclude('bForm_vm_Event');    
+      $VM_E_endorsed = bForm_vm_Event::_getPolicy(VM_E_endorsed,$buffer);
+      
+      $reply = False;
+      switch($status=self::_getStatus($buffer)){
+      case STATUS_YES:
+	if (send_welcomeMail_to_applicants && $VM_E_endorsed && !empty($policies[VM_V_welcomeMailSent]) &&
+	    !VM_mailer()->getStatus($buffer['v_id'],VM_V_welcomeMailSent) &&
+	    !VM_mailer()->getStatus($buffer['v_id'],VM_V_welcomeMailQueued)){
+	  //!self::_getPolicy(VM_V_welcomeMailSent,$buffer) && 
+	  //!self::_getPolicy(VM_V_welcomeMailQueued,$buffer)){
+	  // The welcome letter should be, but has not been sent 
+	  $reply = STATUS_YES;
+	  b_debug::_debug("!VM_V_welcomeMailSent && !VM_V_welcomeMailQueued", cnf_show_fnc);
+	}
+	break;
+	
+      case STATUS_NO:
+	if (send_denialMail_to_applicants && $VM_E_endorsed && !empty($policies[VM_V_denialMailSent]) &&
+	    !VM_mailer()->getStatus($buffer['v_id'],VM_V_denialMailSent) &&
+	    !VM_mailer()->getStatus($buffer['v_id'],VM_V_denialMailQueued)){
+	  //!self::_getPolicy(VM_V_denialMailSent,$buffer) &&
+	  //!self::_getPolicy(VM_V_denialMailQueued,$buffer)){
+	  // The denial letter should be, but has not been sent 
+	  $reply = STATUS_NO;
+	  b_debug::_debug("!VM_V_denialMailSent && !VM_V_denialMailQueued", cnf_show_fnc);
+	}
+	break;
+	
+      default:
+	b_debug::xxx($msg="??? unexpected status=".var_export($status,True));
+	b_debug::print_r($buffer,$msg);
+	//      b_debug::internalError("??? status=".var_export($status,True));
+      case STATUS_PENDING:
+	$reply = STATUS_PENDING;
+	b_debug::_debug("STATUS_PENDING",cnf_show_fnc);
+	break;
+	
       }
-      break;
-
-    default:
-      b_debug::xxx($msg="??? unexpected status=".var_export($status,True));
-      b_debug::print_r($buffer,$msg);
-      //      b_debug::internalError("??? status=".var_export($status,True));
-    case STATUS_PENDING:
-      $reply = STATUS_PENDING;
-      break;
-
     }
-
-    //    if (cnf_show_pv && !empty($reply))  myPear::DEBUG(__function__."($buffer[v_id]) <em>".(empty($reply) ? '&lt;OK&gt;' : $reply)."</em>");
+    b_debug::_debug((empty($reply) ? '&lt;OK&gt;' : $reply),cnf_show_fnc);
     return $reply;
   }
   

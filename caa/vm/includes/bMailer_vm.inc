@@ -119,7 +119,7 @@ class bMailer_vm extends bMailer{
 
     case VM_V_welcomeMailSent:   
       $this->m_applicant_info_mail($arg,'status');
-      return $this->welcome_applicant($arg,'status',0,0,$v_status);
+      return $this->welcome_applicant($arg,'status',0,$v_status);
 
     case VM_V_enMailSent:
       if (empty($policyQ)) $policyQ = VM_V_enMailQueued;
@@ -243,7 +243,7 @@ class bMailer_vm extends bMailer{
     else                      $policy = $policyQ = Null;
 
 
-    // Dont't send the reminder if it is too late
+    // Don't send the reminder if it is too late
     if (!empty($policy) && !$v->getPolicy($policyQ) && (time() > $e->getValue('e_start'))){
       $v->setPolicy($policy,1);
     }
@@ -317,7 +317,7 @@ You can see the event budget from your personal web page, which you can access d
 	if (!isset($subject))  $subject = "Please register for the event you organize";
 	$body .= "
 The deadline for the applications is now over and you can estimate now the event budget.
-However, in order to do this you have to be registered as the event participant, please register as soon as posible."; 
+However, in order to do this you have to be registered as the event participant, please register as soon as possible."; 
 	break;
 
       default:
@@ -525,7 +525,7 @@ Visit information:
 		    ? $v_id
 		    : myPear::getInstance_new('bForm_vm_Visit',$v_id,'fatal'));
     
-    // Not conserned
+    // Not concerned
     if($this->visit->getValue('v_type',1) !== VISIT_TYPE_PROGRAM){
       $case = 'not_VISIT_TYPE_PROGRAM';
 
@@ -628,7 +628,7 @@ Organizing committee for \"<event/>\".
   /*
    *
    */
-  public function m_applicant_deny($v_id=0,$no_preview=False,$v_status=Null,$bcc=Null){
+  public function m_applicant_deny($v_id,$no_preview=False,$v_status=Null,$bcc=array()){
     
     $this->dbg('',True);
     $this->visit = myPear::getInstance_new('bForm_vm_Visit',$v_id,'fatal');
@@ -657,7 +657,7 @@ Organizing committee for \"<event/>\".
       return True;
     }
     
-    // Is it just an enquary?
+    // Is it just an enquiry?
     if (empty($this->visit)) $this->visit = myPear::getInstance_new('bForm_vm_Visit',$v_id,'fatal');
     $VM_V_denialMailSent = (bool)$this->visit->getPolicy(VM_V_denialMailSent);
     if ($no_preview === 'status'){
@@ -676,19 +676,20 @@ Organizing committee for \"<event/>\".
     }
     
     // Put this mail into the execution queue, not waist time in the interactive session
-    if ($no_preview){
-      if (!myPear_taskManager()->exec_request){
-	myPear_taskManager()->addTask(get_class($this),__function__,array($this->visit->ID,
-									  True,
-									  Null,
-									  (is_object(bAuth::$av)?bAuth::$av->getEmail():Null)));
-	$this->visit->setPolicy(VM_V_denialMailQueued,1);
-	return True;
-      }elseif (empty($bcc) && is_object(bAuth::$av)){
-	$bcc = bAuth::$av->getEmail();
-      }
+    if ($no_preview && !myPear_taskManager()->exec_request){
+      myPear_taskManager()->addTask(get_class($this),__function__,array($this->visit->ID,
+									True,
+									Null,
+									(is_object(bAuth::$av)
+									 ? array(bAuth::$av->getEmail())
+									 : array())));
+      $this->visit->setPolicy(VM_V_denialMailQueued,1);
+      return True;
+    }elseif (empty($bcc) && is_object(bAuth::$av)){
+      $bcc[] = bAuth::$av->getEmail();
     }
     
+    $this->dbg("Sending mail",cnf_dev);
     locateAndInclude('bTpl');
     $tpl = new bTpl(array('title' => __method__,
 			  'render'=> VM_mailer_render('SHOW_ID'),
@@ -704,13 +705,14 @@ Sincerely,
 Organizing committee for \"<event/>\"."));
       
     $this->template = __method__;
-    if (!empty($bcc)) $this->bcc[] = $bcc;
     if ($ok = $this->send(array(),
 			  $this->visit->av->getEmail(),
 			  "Application denied",
 			  $tpl->render(array('v_id'=>$v_id)),
 			  $syslog_thisMail=True,
-			  $no_preview)){
+			  $no_preview,
+			  array(),
+			  $bcc)){
       $this->visit->setPolicy(VM_V_denialMailSent,1,True,True);
       $this->visit->setPolicy(VM_V_denialMailQueued,0);
       $this->m_applicant_info_mail($this->visit,'status',False);
@@ -723,9 +725,13 @@ Organizing committee for \"<event/>\"."));
   /*
    * The visit confirmation mail
    */
-  public function welcome_applicant($v_id,$hut_id,$a_name='',$no_preview=False,$v_status=Null,$bcc=Null){
+  public function welcome_applicant($v_id,$lease_id,$no_preview=False,$v_status=Null,$bcc=array()){
 
-    $this->visit = myPear::getInstance_new('bForm_vm_Visit',$v_id,'fatal');
+    if ($lease_id != 'status') $lease = myPear::getInstance_new('bForm_vm_Lease',$lease_id,array('strict'));
+    $this->visit = (empty($lease) || empty($lease->parentForm)
+		    ? myPear::getInstance_new('bForm_vm_Visit',$v_id,'fatal')
+		    : $lease->parentForm);
+
     //
     if (!send_welcomeMail_to_applicants){
       // Check is the visitor subject of getting the "welcome Email" 
@@ -754,7 +760,7 @@ Organizing committee for \"<event/>\"."));
     }
     
     // Is it the status request?
-    if ($hut_id === 'status'){
+    if ($lease_id === 'status'){
       $this->m_applicant_info_mail($this->visit,'status',False);
       $reply = ($this->visit->getPolicy(VM_V_welcomeMailQueued)
 		? in_queue
@@ -771,61 +777,56 @@ Organizing committee for \"<event/>\"."));
     // Put this mail into the execution queue, not waist time in the interactive session
     if (!myPear_taskManager()->exec_request && $no_preview){
       myPear_taskManager()->addTask(get_class($this),__function__,array($this->visit->ID,
-									$hut_id,
-									$a_name,
+									$lease_id,
 									True,
 									Null,	
-									(is_object(bAuth::$av)?bAuth::$av->getEmail():Null)));
+									(is_object(bAuth::$av)
+									 ? array(bAuth::$av->getEmail())
+									 : array())));
       $this->visit->setPolicy(VM_V_welcomeMailQueued,1);
       return True;
+    }elseif (empty($bcc) && is_object(bAuth::$av)){
+      $bcc[] = bAuth::$av->getEmail();
     }
     
     /*
      * Accommodation block (not for the local people)
      */
     $blabla = array();
-    $include_accommodation_in_welcomeMail = (include_accommodation_in_welcomeMail && !empty($hut_id) && $this->visit->hut_codes($without_BI=True));
+    $include_accommodation_in_welcomeMail = (include_accommodation_in_welcomeMail && !empty($lease_id) && $this->visit->hut_codes($without_BI=True));
     $this->dbg("include_accommodation_in_welcomeMail=".var_export($include_accommodation_in_welcomeMail,True),cnf_dev);
     if ($include_accommodation_in_welcomeMail){
-      $hut = myPear::getInstance_new('bForm_vm_Hut',$hut_id,array('strict','fatal'));
-      if (!($hut instanceof bForm_vm_Hut)){
-	// Sanity... 
-	myPear::WARNING_T("Can't get myPear::getInstance_new('bForm_vm_Hut',$hut_id)");
-	$hut = new bForm_vm_Hut($hut_id);
-      }
-      if (($hut instanceof bForm_vm_Hut) && ($hut->ID == $hut_id)){
-	$hut->defineVariables();
-	
-	// Who pays the accommodation (TBD)?
-	if (!empty($a_name)){
-	  if (strpos($a_name,';')===False) $a_name .= ';the cost will be billed to '.myOrg_name;
-	  list($n,$condition) = explode(';',str_replace(array('[',']'),'',$a_name),2);
-	  if (myPear::is_int($n)) $n .= ' inhabitant'.($n>1?'s':'');
-	  $billedTo = array($n,$condition.'.');
-	}else{
-	  $billedTo = array();
-	}
 
-	// Get cotenants
-	if ($ct = $this->visit->cotenants()) $cotenant = array('','You will share the room with ' . join(', ',$ct),'');
-	else                                 $cotenant = array();
-	
-	// Get the paying conditions
-	$accommodation_cost = 'The cost will be billed to '.myOrg_name;
-	$blabla[] = '
+      $a = myPear::getInstance_new('bForm_vm_Room',$lease->getValue('lease_aid'),array('strict'));
+      $a_name = bForm_vm_Room::_a_name($lease->formDB,'for_applicant');      
+      if (strpos($a_name,'[Shared] ')) $a_name = str_replace('[Shared] ','',str_replace('Room ','Shared room ',$a_name));
+      $billedTo = (empty($a_name)
+		   ? array()
+		   : array($a_name.'.'));
+
+      // Get aaccompaning persons 
+      var_dump($this->visit->getValue('v_accompaning',True));
+      $v_accompaning = (($n = $this->visit->getValue('v_accompaning',True))
+			? array('',"You are expected to be accompanied by $n person".($n>1?'s':'').'.','')
+			: array());
+
+      // Get cotenants
+      $cotenant = (($ct = $this->visit->cotenants())
+		   ? array('','You will share the room with ' . join(', ',$ct).'.','')
+		   : array());
+      if (!empty($cotenant)) $v_accompaning = array();
+      
+      $blabla[] = '
 ACCOMMODATION
 -------------
-Your accommodation will be at '.$hut->name().' in '.$hut->getValue('hut_city',1).'. '.join(", ",$billedTo).'
-'.join("\n",$cotenant).'
-You will receive separate confirmation of the room reservation from '.$hut->name().'. '.
-'Any changes in dates are subject to availability and should be taken up directly with '.$hut->name().', 
-(see '.$hut->getValue('hut_url').' for contact information).
+Your accommodation will be at '.$a->hut->name().' in '.$a->hut->getValue('hut_city',1).'. '.join(", ",$billedTo).'
+'.join("\n",$cotenant).join("\n",$v_accompaning).'
+You will receive a separate confirmation of the room reservation from '.$a->hut->name().'. '.
+'Any changes in dates are subject to availability and should be taken up directly with '.$a->hut->name(). // ', '.myOrg_nameS.' can\'t help with that '. 
+' (see '.$a->hut->getValue('hut_url').' for contact information).
 
 Please read carefully the cancellation policy. The violation of the cancellation policy will be on Your charge.
 ';
-      }else{
-	myPear::WARNING_T("Can't find hut($hut_id) for ".$this->visit->av->name());
-      }
     }
     
     
@@ -839,8 +840,9 @@ Please read carefully the cancellation policy. The violation of the cancellation
     $include_payForms_in_welcomeMail = (include_payForms_in_welcomeMail && ($VM_V_payTrip || $VM_V_payPerdiem));
     $this->dbg("include_payForms_in_welcomeMail=".var_export($include_payForms_in_welcomeMail,True),cnf_dev);
     $this->attachments = array();
+    $cc = array();
     if ($include_payForms_in_welcomeMail){
-      $this->cc[] = reimbursement_email;
+      $cc[] = reimbursement_email;
       foreach(VM::$forms2send as $pdf_tpl){
 	$this->attachments[] = $exp->pdfReceipt($pdf_tpl,sys_get_temp_dir() . "/${pdf_tpl}_" . $this->visit->ID . '.pdf');
       }
@@ -904,7 +906,7 @@ Note, that the forms for the reimbursement get your personal information, like t
     $messageBody = 'Dear '.$this->visit->av->fmtName('sfl',0).',
  
 '.(is_object($this->visit->e)
-   ?'This is to confirm that your application for the upcoming '.myOrg_name.' Event "'.$this->visit->e->name(False).'" which takes place '.b_time::period($this->visit->getValue('v_start',1),$this->visit->getValue('v_end',1),'h').' has been accepted.
+   ?'This is to confirm that your application for the upcoming '.myOrg_name.' Event "'.$this->visit->e->name(False).'" which takes place '.b_time::period($this->visit->e->getValue('e_start',1),$this->visit->getValue('e_end',1),'h').' has been accepted.
 
 We look forward '.($this->visit->av->isE(True) ? '' : 'to seeing you at '.myOrg_name).' and hope you will have a pleasant and productive meeting.
 '.($this->visit->av->isE(True) ? '' : 'For directions to '.myOrg_name.", see http://www.nordita.org/map\n")
@@ -915,7 +917,6 @@ Organizing committee for "'.$this->visit->e->name(False).'".'
    :'');
     
     // Now send the mail
-    if (!empty($bcc)) $this->bcc[] = $bcc;
     if ($ok = $this->send(array($this->visit->av,
 				array('q'=>sprintf("%s/%s/",VM_MODULE,APImenu::tab_code(tab_vm_home))),
 				False),
@@ -923,7 +924,9 @@ Organizing committee for "'.$this->visit->e->name(False).'".'
 			  (is_object($this->visit->e)?$this->visit->e->name():'Your visit to '.myOrg_name),
 			  $messageBody,
 			  $syslog_thisMail=True,
-			  $no_preview)){
+			  $no_preview,
+			  $cc,
+			  $bcc)){
       $this->visit->setPolicy(VM_V_welcomeMailSent,1,True,True);
       $this->visit->setPolicy(VM_V_welcomeMailQueued,0);
       $this->m_applicant_info_mail($this->visit,'status',False);
