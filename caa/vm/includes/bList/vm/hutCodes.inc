@@ -56,8 +56,12 @@ class bList_vm_hutCodes extends bList_vm{
     return $this->getFormAdd_OK;
   }
   
-  function isWritable(){
-    return VM_rooms_updater_here || parent::isWritable();
+  function isWritable($hut_code=Null){
+    $reply = ($hut_code === HUT_A
+	      ? False
+	      : VM_rooms_updater_here || parent::isWritable());
+    $this->dbg($reply,True);
+    return $reply;
   }
 
   /*

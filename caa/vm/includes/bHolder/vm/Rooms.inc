@@ -14,6 +14,7 @@ class bHolder_vm_Rooms extends bHolder_vm{
 
   private $current_accOption = '';
   private $current_hutID = '';
+  private $current_hutCode = '';
   private $current_hut = Null;
 
   public static function list_hut($hut_id,$e_id=Null){
@@ -298,7 +299,7 @@ class bHolder_vm_Rooms extends bHolder_vm{
       
       // Optionally draw edit buttons at the bottom
       $edit_buttons = array();
-      if (!empty($this->current_hutID) && VM_hutCodes()->isWritable()){
+      if (!empty($this->current_hutID) && VM_hutCodes()->isWritable($this->current_hutCode)){
 	if (empty($this->current_hut)) $this->current_hut = new bForm_vm_Hut($this->current_hutID);
 	
 	if (empty($this->e))            $edit_buttons[] = b_btn::submit('add new room to '.$this->current_hut->name(),
@@ -334,6 +335,7 @@ class bHolder_vm_Rooms extends bHolder_vm{
     default:
       $reply = False;
     }
+    if (!$reply) $this->current_hutCode = $this->rec['hut_code'];
     $this->dbg($reply);
     return $reply;
   }

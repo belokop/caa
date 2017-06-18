@@ -5,7 +5,7 @@
  */
 $releaseDate = '2017-06-18';
 define('VM_MODULE'   , 'vm');
-define('VM_VERSION','5.13.31');
+define('VM_VERSION','5.13.32');
 
 //
 // transition problems...
@@ -181,10 +181,10 @@ define('EVT_ANY',	          -999999);
  * Might be extended, see bList_vm_hutCodes
  */
 define('HUT_BI', 'Built-in');   // Built-in hut, used internally
-define('HUT_A',  'A');   // apartments
-define('HUT_H',  'H');   // hotels
-define('HUT_HS', 'HS');  // hostels
-define('HUT_AH', 'AH');  // apartment hotels
+define('HUT_A',  'A');   // Nordita apartments, not used any more
+define('HUT_H',  'H');   // Hotels
+define('HUT_HS', 'HS');  // Hostels
+define('HUT_AH', 'AH');  // Apartment hotels
 
 /*
  * Accommodation codes

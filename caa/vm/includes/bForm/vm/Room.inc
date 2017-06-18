@@ -526,7 +526,9 @@ class bForm_vm_Room extends bForm_vm {
     if ($this->isWritable === Null){
       VM_access();
       locateAndInclude('bForm_vm_Lease');
-      $this->isWritable = (bool)(VM_rooms_updater_here || parent::isWritable()) && (bForm_vm_Lease::_hut_code($this->formDB) !== LODGING_OA);
+      $this->isWritable = ((VM_rooms_updater_here || parent::isWritable()) && 
+			   VM_hutCodes()->isWritable($this->hut->getValue('hut_code')) &&
+			   !in_array(bForm_vm_Lease::_hut_code($this->formDB),array(LODGING_OA)));
     }
     $this->dbg($this->isWritable,cnf_dev);
     return $this->isWritable;

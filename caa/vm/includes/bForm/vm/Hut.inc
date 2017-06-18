@@ -140,7 +140,7 @@ class bForm_vm_Hut extends bForm_vm {
   }
 
   function isWritable() { 
-    return parent::isWritable() || VM_rooms_updater_here; 
+    return (parent::isWritable() || VM_rooms_updater_here) && VM_hutCodes()->isWritable($this->getValue('hut_code')); 
   }
 
   /*
