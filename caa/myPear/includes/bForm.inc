@@ -1086,7 +1086,8 @@ class bForm extends myPear_getValue{
 	$class = trim($m[1]);
 	$extras = trim(str_replace("class='$class'","",$extras));
       }else{
-	$class = 'shadow-box form-submit';
+	$class = 'shadow-box form-submit'; // Firefox gets crasy...
+	$class = 'shadow-box';
       }
       $reply = x("select name='$name' $extras ".$this->submit_onchange($name,'change',$class),join("\n",$s));
     }elseif($selected){
