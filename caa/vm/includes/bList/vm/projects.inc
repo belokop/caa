@@ -119,13 +119,11 @@ class bList_vm_projects extends bList_vm{
 		       'project name'   =>'lm_key',
 		       $this->memberTitle()=>'lm_value'));
     $this->f->checkBox('lm_option');
-    $this->f->textField('lm_key');
+    $this->f->textHidden('lm_key','lm_key'.date('ms',time()));
     $this->f->textField('lm_value');
     $lm_value = @$this->formDB_member['lm_value'];
-    if ((int)$lm_value || strstr($lm_value,'VCB')){
-      $this->f->defineVariable('event','lm_status');
-      $this->f->selectMenu('lm_status',$this->get_events_selector());
-    }
+    $this->f->defineVariable('event','lm_status');
+    $this->f->selectMenu('lm_status',$this->get_events_selector());
     $this->f->closeForm();
   }
 
