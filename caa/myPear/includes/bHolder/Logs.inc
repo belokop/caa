@@ -172,9 +172,11 @@ class bHolder_Logs extends bHolder{
       
       if (!@$_SESSION["add_access.$user".b_reg::$current_module]++){
 	if ($handle = fopen ($logfile,'a')) {
-	  fwrite($handle, sprintf ("%s %-7s %-35s %-15s %-17s %-28s %s\n",
+	  $reg = b_reg::$modules[b_reg::$current_module];
+	  fwrite($handle, sprintf ("%s %5s %-10s %-35s %-15s %-17s %-28s %s\n",
 				   b_time::strftime("%Y-%m-%d %H:%M",time()),
-				   @b_reg::$current_module,
+				   $reg['m'],
+				   $reg['v'],
 				   $user,
 				   $_SERVER['REMOTE_ADDR'],
 				   "$OS",
