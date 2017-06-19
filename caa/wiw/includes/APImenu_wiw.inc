@@ -120,8 +120,8 @@ class APImenu_wiw extends APImenu{
       
     default:
       $reply = $this->access_callback($tab);
-      if (is_null($reply)){
-	myPear::WARNING_T("To be implemented...");
+      if ($reply === Null){
+	myPear::WARNING_T("'$tab' to be implemented...");
       }
       if (!bAuth::authenticated())	bAuth()->loginPrompt();
     }

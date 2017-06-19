@@ -794,7 +794,7 @@ class myPear{
 
   static public function WARNING_T($text,$class=Null){
     // WARNING
-    b_debug::_debug($text,array(2,True,'redText'),'SICK');
+    b_debug::_debug($text,array(2,True,'redText',$class),'SICK');
     // debug line
     if (is_object($class) && is_callable(array($class,'dbg')))  $class->dbg($text,array(3,True,'redText'));
     else      b_debug::_debug($text,array(2,True,'redText'));

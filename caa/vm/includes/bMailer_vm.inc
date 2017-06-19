@@ -755,7 +755,7 @@ Organizing committee for \"<event/>\"."));
     if (!empty($case)){
       $reply = CONST_not_concerned;
       if (empty($name)) $name = 'visitor';
-      $this->dbg("%s, %s, <em>%s</em>",var_export($reply,True),$case,$name);
+      $this->dbg(sprintf("%s, %s, <em>%s</em>",var_export($reply,True),$case,$name),True);
       return $reply;
     }
     
