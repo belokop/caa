@@ -31,7 +31,7 @@ class bHolder_vm_Events extends bHolder_vm{
   function query(){
     $sBy = 'e_start';
     $sByDir = 'DESC';
-    return myPear_db()->query("SELECT *,e_start AS name  FROM abs_events WHERE ".
+    return myPear_db()->query("SELECT e_id,e_code,e_start,e_end,e_start AS name  FROM abs_events WHERE ".
 			      ($this->onlyAgenda?'e_code>0':'1').
 			      " ORDER BY $sBy $sByDir");
   }
@@ -73,7 +73,7 @@ function axel($rec,$n){
     (int)((b_time::txt2unix($rec['e_end']) - b_time::txt2unix($rec['e_start']))/(24*3600)).' days';
   print "$line<br/>";
   system("echo $line>>/tmp/axel.txt");
-  $q = myPear_db()->query("SELECT * FROM registrants WHERE v_eid = $rec[e_id]");
+  $q = myPear_db()->query("SELECT v_acc_wish,v_start,v_end,  FROM registrants WHERE v_eid = $rec[e_id]");
   while ($r = myPear_db()->next_record($q)){
     if (preg_match("/(will arrange|my way|my own|other)/",$r['v_acc_wish']))
       $flag = 'local';

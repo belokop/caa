@@ -35,11 +35,12 @@ class bUnit_vm_organizers extends bUnit_vm{
     myPear::H1($this->getValue('l_name'),'reset');
     print @$this->subtitle;
 
-    $q = myPear_db()->qquery("SELECT * FROM $this->TABLE_member ".
-			     " LEFT JOIN $this->TABLE ON um_uid = u_id ".
-			     " LEFT JOIN abs_events ON e_id = u_parent ".
-			     " WHERE u_parent = '$this->parent_ID' AND u_rank = ".RANK_vm_organizer.
-			     " ORDER BY e_end DESC",$this->debug);
+    $q = myPear_db()->qquery(sprintf("SELECT e_id,e_name,u_id,u_parent,u_rank,um_avid FROM %s ".
+				     " LEFT JOIN %s ON um_uid = u_id ".
+				     " LEFT JOIN abs_events ON e_id = u_parent ".
+				     " WHERE u_parent = %s AND u_rank = ".RANK_vm_organizer.
+				     " ORDER BY e_end DESC",$this->TABLE_member,$this->TABLE,$this->parent_ID),
+			     cnf_dev);
     
     myPear::H1($this->getValue('l_name'));
 
@@ -53,15 +54,15 @@ class bUnit_vm_organizers extends bUnit_vm{
 	$t->showLineCounter = False;
       }
       $e_id = $r['e_id'];
-      if ($av = myPear::getInstance_new('bForm_Avatar_vm',$r['um_avid'],'strict')){
+      if ($av = myPear::getInstance_new('bForm_Avatar_vm',$r['um_avid'],array('fatal','strict'))){
 	$av->defineVariables();
 	$r['inst']  = x('i',b_fmt::strcut($av->getValue('av_institute',1),25));
 	$r['name']  = $av->fmtName('fl');
 	$r['name']  = bJS()->popup($r['name'],"?id=$av->ID&form=Avatar");
 	if (VM_administrator_here){
 	  $t->extraTD[] = bIcons()->getButton(array('d'=>'Send the password',
-							    'i'=>'i-mailBlue',
-							    'l'=>b_url::same("?av_id=$r[um_avid]&e_id=$e_id&mo_once=yes")));
+						    'i'=>'i-mailBlue',
+						    'l'=>b_url::same("?av_id=$r[um_avid]&e_id=$e_id&mo_once=yes")));
 	}
 	$t->prt($r);
       }
@@ -127,7 +128,7 @@ class bUnit_vm_organizers extends bUnit_vm{
     $where[] = "u_rank = '".RANK_vm_organizer."'";
     if (!empty($av_id)) $where[] = "um_avid = '$av_id'";
 
-    $q = myPear_db()->query("SELECT * FROM zzz_units ".
+    $q = myPear_db()->query("SELECT e_id,e_start FROM zzz_units ".
 			    " LEFT JOIN zzz_unit_members ON um_uid = u_id ".
 			    " LEFT JOIN abs_events ON e_id = u_parent ".
 			    " WHERE ".join(' AND ',$where).

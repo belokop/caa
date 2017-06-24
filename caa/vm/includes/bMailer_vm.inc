@@ -805,7 +805,6 @@ Organizing committee for \"<event/>\"."));
 		   : array($a_name.'.'));
 
       // Get aaccompaning persons 
-      var_dump($this->visit->getValue('v_accompaning',True));
       $v_accompaning = (($n = $this->visit->getValue('v_accompaning',True))
 			? array('',"You are expected to be accompanied by $n person".($n>1?'s':'').'.','')
 			: array());

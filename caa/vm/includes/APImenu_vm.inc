@@ -532,7 +532,7 @@ class APImenu_vm extends APImenu_ea{
 	
       case tab_vm_guests_budget:
 	if ($reply = VM::hasRightTo('request_visits')){
-	  $q = myPear_db()->qquery("SELECT * FROM abs_visits WHERE (v_eid = 0 OR v_eid IS NULL) AND v_host_avid = '".bAuth::$av->ID."'",cnf_dev);
+	  $q = myPear_db()->qquery("SELECT v_id FROM abs_visits WHERE (v_eid = 0 OR v_eid IS NULL) AND v_host_avid = '".bAuth::$av->ID."'",cnf_dev);
 	  $reply = (myPear_db()->num_rows($q) > 0);
 	}
 	break;
@@ -1009,12 +1009,12 @@ class APImenu_vm extends APImenu_ea{
       myPear::H1("Access Control List");
       VM_access()->show();
       if (b_cnf::get('merge')){ // checked, works... however lets wait a bit YB 2011-04-20 
-	$q = myPear_db()->query("SELECT *,CONCAT(av_firstname,av_lastname) AS fn  FROM zzz_avatars GROUP BY fn");
+	$q = myPear_db()->query("SELECT av_id,av_firstname,av_lastname,CONCAT(av_firstname,av_lastname) AS fn  FROM zzz_avatars GROUP BY fn");
 	while($r=myPear_db()->next_record($q)){
 	  $qq = myPear_db()->query("SELECT * FROM zzz_avatars WHERE ".
-				     " av_firstname = \"$r[av_firstname]\" AND ".
-				     " av_lastname  = \"$r[av_lastname]\" AND ".
-				     " av_id != '$r[av_id]'");
+				   " av_firstname = \"$r[av_firstname]\" AND ".
+				   " av_lastname  = \"$r[av_lastname]\" AND ".
+				   " av_id != '$r[av_id]'");
 	  $n = 0;
 	  while($rr=myPear_db()->next_record($qq)){
 	    if (!$n++)	  myPear::WARNING("$r[av_firstname] $r[av_lastname] $r[av_email] -----------------------------------------------------------------");
@@ -1253,7 +1253,7 @@ class APImenu_vm extends APImenu_ea{
 	  
 	case LODGING_OA:
 	  // assign visits without the project number to OA project
-	  $q = myPear_db()->query(sprintf("SELECT * FROM abs_leases LEFT JOIN abs_visits ON lease_vid=v_id WHERE v_projectid=0 AND lease_aid='%s'",VM::$OA->ID));
+	  $q = myPear_db()->query(sprintf("SELECT v_id FROM abs_leases LEFT JOIN abs_visits ON lease_vid=v_id WHERE v_projectid=0 AND lease_aid='%s'",VM::$OA->ID));
 	  while ($r = myPear_db()->next_record($q)){
 	    $visit = new bForm_vm_Visit($r['v_id']);
             $visit->defineVariables();
@@ -1291,7 +1291,7 @@ class APImenu_vm extends APImenu_ea{
       /*
        * Select the attender 
        */
-      $q = myPear_db()->query("SELECT * FROM abs_visits ".
+      $q = myPear_db()->query("SELECT v_id,av_lastname,av_firstname FROM abs_visits ".
 				" LEFT JOIN zzz_avatars on v_avid = av_id ".
 				" WHERE v_eid = ".VM::e_ID().myPear_db()->orderBy('av_lastname'));
       while ($r = myPear_db()->next_record($q)){

@@ -263,23 +263,6 @@ class bForm_vm_Lease extends bForm_vm{
       }
       break;
       
-    case 'get_pay_HR_int':      // Generate an "internal" (i.e. for organizers,admins,etc) human readable comment how to pay for the accommodation
-    case 'get_pay_HR_ext':      // Generate comment "how the accommodation is paid" readable by the hotel personnel 
-      
-      $r = self::get_lease_options($args,'get','lease_aid');
-      if ($r['pay'] == VM_default_lease_pay){
-	$reply = '';
-      }elseif ($r['pay'] == VM_pay_nothing){
-	$reply = ($mode=='get_pay_HR_ext'
-		  ? strToUpper('Paid by the tenant')
-		  : myOrg_nameS." pays nothing");
-      }else{
-	$reply = ($mode=='get_pay_HR_ext'
-		  ? strToUpper(myOrg_nameS." pays for $r[pay] tenant")
-		  : myOrg_nameS." pays for $r[pay]");
-      }
-      break;
-
     case 'pay_room':
     case 'pay_room_for_applicant':
       switch($get_pay = bForm_vm_Lease::get_lease_options($args,'get_pay')){
@@ -737,7 +720,13 @@ function __clean_cache(){}
    */
   function readDefRecord() {
     $this->formDB = array();
-    $q = myPear_db()->query("SELECT * FROM $this->TABLE ".
+    $q = myPear_db()->query("SELECT ".
+			    "lease_id,lease_start,lease_end,lease_vid,lease_aid,".
+			    "v_id,v_eid,".
+			    "a_id,a_name,a_capacity,a_quantity,".
+			    "hut_id,hut_code,".
+			    "av_id,av_lastname,av_firstname ".
+			    " FROM $this->TABLE ".
 			    " LEFT JOIN abs_visits ON v_id=lease_vid ".
 			    " LEFT JOIN abs_rooms  ON a_id=lease_aid ".
 			    " LEFT JOIN abs_huts   ON a_hutid=hut_id ".
@@ -939,10 +928,10 @@ function __clean_cache(){}
 	$this->parentForm->dialog_accompaning($dialog,$this);
 
 	// Cotenants
-	//   !self::shared_room_no_cotenants_wanted($this->ID,True)
 	if (bForm_vm_Room::_mightBeSharable($this->formDB)){
 	  // Force the dialog in the RO mode
 	  if (($this->MODE=='RO') && !VM_cotenants()->get_cotenants($this->ID) && !self::get_lease_options($this->formDB,VM_no_cotenants)) $this->MODE = 'RW';
+	  if (self::tooLate($this->formDB)) $this->MODE = 'RO';
 	  // Select a cotenant if there are candidates
 	  $cotenant = self::select_cotenant('_cotenant',$this,($this->MODE === 'RW'));
 	  if (!empty($cotenant)) $dialog[b_rawData.'1'] = array('Cotenant',$cotenant);
@@ -1286,6 +1275,18 @@ function __clean_cache(){}
    * Check the pool and get a list of available rooms in the hut for the given dates & event 
    */
   public static function _freeRooms($accommodationOptions,$rec,$hasAccommodation=False,$hut_code=Null){
+
+    // Shortcuts
+    if (isset($rec['v_status']) && ($rec['v_status'] !== STATUS_YES)){
+      b_debug::_debug("Skip, ".$rec['v_status'],True);
+      return array();
+    }
+
+    if (isset($rec['lease_aid']) && ($rec['lease_aid'] == VM::$OA->ID)){
+      b_debug::_debug("Skip, ".VM::$OA->name(),True);
+      $reply[VM::$OA->ID] = VM::$OA->name();
+      return $reply;
+    }
     
     bTiming()->cpu(__function__);
     list($start,$end) = array(b_time::check_in($rec['lease_start']),
@@ -1538,7 +1539,7 @@ function __clean_cache(){}
     if ($rec['lease_aid'] == VM::$OA->ID) return '';
 
     // Sanity
-    if (empty($rec['lease_aid']) || ($rec['v_status'] !== STATUS_YES)){
+    if (empty($rec['lease_aid']) || (@$rec['v_status'] !== STATUS_YES)){
       b_debug::_debug('empty reply');
       return '';
     }
@@ -1578,6 +1579,15 @@ function __clean_cache(){}
     return $reply;
   }
 
+  public static function tooLate($rec,$cotenants=Null){
+    if (empty($cotenants)) $cotenants = VM_cotenants()->get_cotenants($rec);
+    $lease_dates = bList_vm_cotenants::$lease_dates;
+    $too_late = ((VM::isEventEndorsed() || VM::isArchived()) ||  
+		 (@$rec['v_end'] < time() + 24*3600) ||
+		 (!empty($cotenants) && ($lease_dates[1] < time())));
+    b_debug::_debug("too_late = ".var_export($too_late,True),cnf_dev);
+    return $too_late;
+  }
     
   /*
    *
@@ -1588,17 +1598,13 @@ function __clean_cache(){}
     $rec = (is_object($recP)
 	    ? $recP->formDB
 	    : $recP);
-    if ($rec['v_status'] !== STATUS_YES)  return '';
+    if (isset($rec['v_status']) && ($rec['v_status'] !== STATUS_YES))  return '';
     if ($rec['lease_aid'] == VM::$OA->ID) return '';
     if (!bForm_vm_Room::_mightBeSharable($rec) || self::_room_is_full($rec)) return '';
     
     $cotenants = VM_cotenants()->get_cotenants($rec);
-    $lease_dates = bList_vm_cotenants::$lease_dates;
-    $too_late = ((VM::isEventEndorsed() || VM::isArchived()) ||  
-		 ($rec['v_end'] < time() + 24*3600) ||
-		 (!empty($cotenants) && ($lease_dates[1] < time())));
     
-    if ($too_late){
+    if (self::tooLate($rec,$cotenants)){
       $RW = False;
     }elseif (!is_object($recP) && (!empty($cotenants) || self::get_lease_options($rec,VM_no_cotenants))){
       // The cotenant can't be changed in the "applicants list", this would be too messy
@@ -1657,7 +1663,7 @@ function __clean_cache(){}
       
       // In RO mode just print the cotenant names
       $names = VM_cotenants()->get_cotenants($rec,False,'names');
-      if (!$too_late && empty($names) && !self::get_lease_options($rec,VM_no_cotenants)) $names = array(b_fmt::redText('to be selected'));
+      if (!self::tooLate($rec,$cotenants) && empty($names) && !self::get_lease_options($rec,VM_no_cotenants)) $names = array(b_fmt::redText('to be selected'));
       $reply = join(',',$names);
       if (!empty($reply)) b_debug::_debug($reply);
     }

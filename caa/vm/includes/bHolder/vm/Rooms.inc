@@ -114,7 +114,7 @@ class bHolder_vm_Rooms extends bHolder_vm{
       $w[] = "(a_status = '".ROOM_AUTO_ALLOCATABLE."' OR a_name REGEXP 'Nordita')";
       $w[] = "a_start <= $this->rt";
       $w[] ="(a_end   >= $this->rf OR a_end = 0)";
-      $q = myPear_db()->query("SELECT * FROM abs_rooms WHERE ".join(' AND ',$w).
+      $q = myPear_db()->query("SELECT hut_name,hut_id,a_id,a_start,a_end,a_name,a_comment,a_quantity,a_price FROM abs_rooms WHERE ".join(' AND ',$w).
 				" ORDER BY $_GET[sBy] ".@$_GET['sByDir']); 
       return $q;
       
@@ -126,7 +126,7 @@ class bHolder_vm_Rooms extends bHolder_vm{
       return self::_queryAps(" WHERE ".join(' AND ',$where));
       
     case 'list2':
-      return myPear_db()->query("SELECT * FROM abs_huts ORDER BY hut_name");
+      return myPear_db()->query("SELECT hut_name,hut_id,hut_code FROM abs_huts ORDER BY hut_name");
     }
   }
     
@@ -175,11 +175,17 @@ class bHolder_vm_Rooms extends bHolder_vm{
    *
    */  
   function format() {
+    static $ok = 0;
     foreach($this->header() as $k=>$v) if ($k!=='a_name') $this->t->css[$k]['align'] = 'align_right';
     foreach(array('a_comment') as $k) $this->t->class[$k] = array('opaqueText');
 
-    $this->a = myPear::getInstance_new('bForm_vm_Room', @$this->rec['a_id'],'strict');
-    $this->dbg($this->a->__toString());
+    $this->a = myPear::getInstance_new('bForm_vm_Room', @$this->rec['a_id'],array('strict'));
+    if (empty($this->a)){
+      if (empty($ok)) myPear::ERROR("There is no rooms yet in \"".$this->rec['hut_name']."\", please add the first one");
+      $this->rec = array();
+      return;
+    }
+    $ok++;
 
     $this->rec['a_name'] = bForm_vm_Room::_a_name($this->rec,False);
     if ($this->rec['a_comment']) $this->rec['a_name'] .= '<br/>'.x('em class="smallerText"',$this->rec['a_comment']);
@@ -230,9 +236,8 @@ class bHolder_vm_Rooms extends bHolder_vm{
       $this->rent += $rent;
 
       if ($this->a->getValue('a_end',1) >= $this->rt) unset($this->rec['a_end']);
-      //if (!$this->rec['a_end']) $this->rec['a_end'] = date('Y-m-d',$day9);
 
-      $q = myPear_db()->query("SELECT * FROM abs_leases WHERE lease_start <= $this->rt AND lease_end >= $this->rf AND lease_aid="
+      $q = myPear_db()->query("SELECT lease_end,lease_start FROM abs_leases WHERE lease_start <= $this->rt AND lease_end >= $this->rf AND lease_aid="
 			      .$this->a->ID." ORDER BY lease_start");
       while($r=myPear_db()->next_record($q)){
 	$this->rec['n_nosort']++;
@@ -251,7 +256,6 @@ class bHolder_vm_Rooms extends bHolder_vm{
       break;
       
     case 'list2':
-      $q = self::_queryAps(" WHERE hut_id = ".$this->rec['hut_id']);
       $this->t->tr();
       
       $button = bIcons()->get('i-edit');
@@ -259,6 +263,7 @@ class bHolder_vm_Rooms extends bHolder_vm{
 		   array('colspan='.(1+count($this->header()))));
       
       $this->t->counter = 0;
+      $q = self::_queryAps(" WHERE hut_id = ".$this->rec['hut_id']);
       while($r = myPear_db()->next_record($q)) {
 	$this->t->extraTD = array();
 	$this->a = myPear::getInstance_new('bForm_vm_Room',$r['a_id'],'fatal');
@@ -350,7 +355,7 @@ class bHolder_vm_Rooms extends bHolder_vm{
   public static function _queryAps($where='',$sBy=''){
     if (!myPear_db()->columnExists(@$_GET['sBy'],'abs_rooms')) {$_GET['sBy'] = 'a_capacity'; $_GET['sByDir'] = 'ASC';}
     $_GET['sBy'] = 'a_capacity';
-    $q = myPear_db()->qquery("SELECT * FROM abs_huts ".
+    $q = myPear_db()->qquery("SELECT hut_name,hut_id,hut_code,a_id,a_start,a_end,a_name,a_comment,a_quantity,a_price,a_capacity FROM abs_huts ".
 			     " LEFT JOIN abs_rooms ON hut_id = a_hutid ".
 			     $where.
 			     " ORDER BY CONCAT(hut_name,$_GET[sBy]) ".@$_GET['sByDir'],cnf_dev);
