@@ -27,7 +27,8 @@ function APItabs_init(){
 			     'tab__fixes'    =>'Fix database',
 			     'tab__mergeAV'  =>'Merge avatars',
 			     'tab__fixes_bList'=> 'bList(s)',
-			     ));
+			     ),
+		       True);
 }
 APItabs_init();
 
@@ -48,29 +49,31 @@ class APItabs{
   public  static $_ = '';
   public  static $q = array();
   
-  public static function define_tabs($tabs){
+  public static function define_tabs($tabs,$ignoreQ=False){
+
     foreach($tabs as $code=>$text) APItabs::define_tab($code,$text);
 
-    // Convert url tab codes to human readable values
-    $ok = True;
-    self::$q = array();
-    foreach(explode('/',$_GET['q']) as $k=>$v){
-      $hr = ($k > 0
-	     ? @$GLOBALS["code2tab"][$v]
-	     : $v);
-      if (empty($hr)){
-	$ok = False;
-	break;
-      }else{
-	// Keep the decoded tab for future use
-	self::$_ = $hr;
-	self::$q[] = $hr;
+    if (!$ignoreQ){
+      // Convert url tab codes to human readable values
+      self::$q = array();
+      foreach(explode('/',$_GET['q']) as $k=>$v){
+	$hr = ($k > 0
+	       ? @$GLOBALS["code2tab"][$v]
+	       : $v);
+	if (empty($hr)){
+	  //	  if (self::$q[0] == b_reg::$current_module) myPear::WARNING_T("??? tab '$v' does not exist");
+	  break;
+	}else{
+	  // Keep the decoded tab for future use
+	  self::$_ = $hr;
+	  self::$q[] = $hr;
+	}
       }
+      if (self::$q[0] == b_reg::$current_module) b_debug::_debug('q = '.join('/',self::$q),cnf_dev);
     }
-    myPear::DEBUG(__CLASS__."::q = ".join('/',self::$q));
   }
 
-  public static function define_tab($tab,$text){
+  private static function define_tab($tab,$text){
     if (!defined($tab)){
       define($tab,$tab);
       $code = (int)APImenu::tab_code($tab);
@@ -164,7 +167,7 @@ class APImenu extends myPear_base{
 	      in_array('-'.myOrg_code,call_user_func($f)))) $reply = False;
       }
     }
-    if (!$reply) b_debug::xxx($reply);
+    b_debug::_debug($reply,!$reply);
     return $reply;
   }
 

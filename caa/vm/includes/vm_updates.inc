@@ -118,8 +118,12 @@ function vm_updates(){
       vm_compat_update_50();
     }
 
-    if (True){ // Fixes June 2017
+    if (False){ // Fixes June 2017
       vm_compat_update_51();
+    }
+
+    if (True){ // Fixes end June 2017
+      vm_compat_update_52();
     }
 
     myPear_logs()->doNotLog = False;
@@ -127,6 +131,7 @@ function vm_updates(){
     bTiming()->cpu();
   }
 }
+      vm_compat_update_52();
 
 /*
  * Temporary(?) measure... Until i will find time to fix the Templates class
@@ -149,6 +154,34 @@ function vm_compat_update_ad_hocks(){
   // Another strange thing...
   vm_compat_update_47();
 
+}
+
+function vm_compat_update_52(){
+  // There might be many projects for 1 event now...
+  $q = myPear_db()->qquery("ALTER TABLE `abs_visits` CHANGE `v_projectid` `v_projectid` CHAR(32) CHARACTER SET utf8 COLLATE utf8_unicode_ci NULL DEFAULT NULL",cnf_dev);
+ 
+  // Add "cotenant extra charge" to the room prices
+  locateAndInclude('bList_vm_accommodationOptions');
+  $q = myPear_db()->qquery("UPDATE abs_huts SET hut_name='BizApartment Gärdet' WHERE hut_id=247638",True);
+  $q = myPear_db()->qquery("SELECT a_id,a_price,a_name FROM abs_rooms WHERE a_hutid = 247638 AND a_capacity > 1",True);
+  while($r = myPear_db()->next_record($q)){
+    $price = explode(',',$r['a_price']);
+    if ((strpos($r['a_price'],'cot') == False) && (strpos($r['a_price'],'=') !== False)){
+      $price = explode(',',$r['a_price']);
+      $price[] = 'cot=100';
+      myPear_db()->qquery(sprintf("UPDATE abs_rooms SET a_price='%s' WHERE a_id = %s",join(',',$price),$r['a_id']),True);
+    }
+
+    $id2xs= bList_vm_accommodationOptions::id2x($r['a_id']);
+    $qq = myPear_db()->qquery(sprintf('SELECT lm_id,lm_option FROM zzz_list_members WHERE lm_option REGEXP "[[:<:]]%s[[:>:]]"',$id2xs),True);
+    while($rr = myPear_db()->next_record($qq)){
+      $lm_option = unserialize($rr['lm_option']);
+      if ((strpos($lm_option[$id2xs],'cot') == False) && (strpos($lm_option[$id2xs],'=') !== False)){
+	$lm_option[$id2xs] .= ',cot=100';
+      }
+      myPear_db()->qquery(sprintf("UPDATE zzz_list_members SET lm_option='%s' WHERE lm_id=%s",serialize($lm_option),$rr['lm_id']),True);
+    }
+  }
 }
 
 function vm_compat_update_51(){

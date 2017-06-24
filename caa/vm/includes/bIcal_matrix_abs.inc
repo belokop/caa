@@ -48,7 +48,7 @@ class bIcal_matrix_abs extends bIcal_matrix{
      */    
     if ($this->seeAgenda){  
       $this->dbg('Checking agenda entries',cnf_dev);
-      $q = myPear_db()->qquery("SELECT *,e_start AS name  FROM abs_events WHERE ".
+      $q = myPear_db()->qquery("SELECT e_start,e_end,e_name FROM abs_events WHERE ".
 				 join(' AND ',array("e_code > 0", 
 						    "e_end  >=$this->day1",
 						    "e_start<=$this->day9")).

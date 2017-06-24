@@ -480,7 +480,10 @@ class bList_vm_accommodationOptions extends bList_vm{
     sort($packed_items_was);
     
     if ($packed_items !== $packed_items_was){
-      b_debug::xxx("was/now<br>".join(',',$packed_items_was).'<br>',join($packed_items));
+      b_debug::_debug(join('<br>',array('was/now',
+					b_debug::parse_value($packed_items_was,10),
+					b_debug::parse_value($packed_items,10))),
+		      cnf_dev);
       $this->packed_items = $packed_items;
     }
   }
@@ -536,12 +539,11 @@ class bList_vm_accommodationOptions extends bList_vm{
    */
   function get_BI($return_a_code=False){
     $reply = array();
-    $q = myPear_db()->query("SELECT * FROM abs_huts LEFT JOIN abs_rooms ON a_hutid = hut_id WHERE hut_code = '".HUT_BI."'");
+    $q = myPear_db()->query("SELECT a_id,a_name,hut_code FROM abs_huts LEFT JOIN abs_rooms ON a_hutid = hut_id WHERE hut_code = '".HUT_BI."'");
     while($r = myPear_db()->next_record($q)){
       if ($return_a_code){
 	locateAndInclude('bForm_vm_Lease');
 	$reply[$r['a_id']] = bForm_vm_Lease::_hut_code($r);
-      //$reply[$r['a_id']] = $r['a_code'];
       }else{
 	$reply[$r['a_id']] = $r['a_name'];
       }

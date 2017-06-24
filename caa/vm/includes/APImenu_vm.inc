@@ -131,6 +131,7 @@ class APImenu_vm extends APImenu_ea{
 			     tab_vm_vis       => array(tab_vm_vis_list, 
 						       tab_vm_vis_budget, 
 						       tab_vm_vis_amatrix,
+						       tab_vm_vis_vmatrix,
 						       tab_vm_ogz_vmatrix,
 						       tab_vm_ogz_omatrix,
 						       tab_vm_ogz_amatrix,
@@ -1319,7 +1320,6 @@ function _vm_title_callback($tab, $dTab=Null,$returnText=False){
 	switch($tab){
 	case tab_vm_vis:         $text = 'Event attenders';            break;
 	case tab_vm_home:        $text = 'My contact information';     break;
-	case tab_vm_vis_vmatrix: $text = 'Who arrives when';           break;
 	case tab_vm_vis_photos:  $text = 'Photos';                     break;
 	default:
 	}

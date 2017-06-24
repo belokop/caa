@@ -2,14 +2,14 @@
 
 if (function_exists('locateAndInclude')) locateAndInclude('APImenu');
 
-foreach(array('tab_wiw'        => 'Who Is Where?',
-              'tab_wiw_adm'    => 'Administer WIW',
-              'tab_wiw_admTT'  => 'Edit Trip Colors',
-              'tab_wiw_myTrips'=> 'My Trips',
-              'tab_wiw_sok'    => 'Search Trips',
-              'tab_wiw_edit'   => 'Modify Trip',
-              'tab_wiw_reg'    => 'Register new trip',
-              ) as $name=>$descr) APItabs::define_tab($name,$descr);
+APItabs::define_tabs(array('tab_wiw'        => 'Who Is Where?',
+			   'tab_wiw_adm'    => 'Administer WIW',
+			   'tab_wiw_admTT'  => 'Edit Trip Colors',
+			   'tab_wiw_myTrips'=> 'My Trips',
+			   'tab_wiw_sok'    => 'Search Trips',
+			   'tab_wiw_edit'   => 'Modify Trip',
+			   'tab_wiw_reg'    => 'Register new trip',
+			   ));
 
 function _wiw_title_callback($tab, $dTab=Null,$returnText=False){
   if(isset(APItabs::$tab_definition[$tab]))  $tab = APItabs::$tab_definition[$tab];

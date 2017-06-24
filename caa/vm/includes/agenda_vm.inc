@@ -19,6 +19,7 @@ class agenda_vm extends agenda{
   private $e_start, $e_end, $r_start, $r_end;
 
   function __construct(){
+    $this->agenda_url = sprintf('http://%s/',VM_agenda_host);
     define('dummy_OA',$GLOBALS['LODGING_FINDER'][LODGING_OA]);
     parent::__construct();
   }
@@ -33,6 +34,15 @@ class agenda_vm extends agenda{
    /*
     *
     */
+   public function getCatInfoURL($categId){
+     $reply = $this->agenda_url."/tools/getConf.py?catinfo=".$categId;
+     $this->dbg($reply,True);
+     return $reply;
+   }
+
+   /*
+    *
+    */
    public function getEventURL($confId){
      return $this->agenda_url."/conferenceDisplay.py?confId=$confId";
    }
@@ -41,7 +51,7 @@ class agenda_vm extends agenda{
     *
     */
    public function getRegistrantURL($confId,$registrantId=Null){
-     if (empty($registrantId)) return $this->agenda_url."/conferenceDisplay.py?confId=$confId";
+     if (empty($registrantId)) return $this->getEventURL($confId);
      else return $this->agenda_url."/confModifRegistrants.py/modification?registrantId=$registrantId&confId=$confId";
    }
    

@@ -109,10 +109,6 @@ function myPear_updates(){
   }
 }
 
-// watch the bug...
-myPear_update34();
-myPear_update35();
-
 /*
  *    ALTER TABLE  `tableName` CHANGE  `Name`  `Name` VARCHAR( 255 ) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL
  */

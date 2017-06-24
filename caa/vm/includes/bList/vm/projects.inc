@@ -44,6 +44,21 @@ class bList_vm_projects extends bList_vm{
 					   b_url::same('?VM_show_old_projects='.($VM_show_old_projects?'0':'1')),
 					   $confirm=False);
   }
+
+  /*
+   *
+   */
+  public static function e2project_id($e_id){
+    $ids = array();
+    $q = myPear_db()->qquery("SELECT lm_id FROM zzz_list_members LEFT join zzz_lists ON l_id=lm_lid WHERE l_class = '".__class__."' AND lm_status = '$e_id'",cnf_dev);
+    while($r=myPear_db()->next_record($q)){
+      $ids[] = $r['lm_id'];
+    }
+    sort($ids);
+    $reply = join(',',$ids);
+    b_debug::_debug($reply,cnf_dev);
+    return $reply;
+  }
   
   protected function isMemberDeletable(){
     return False;
@@ -241,7 +256,7 @@ class bList_vm_projects extends bList_vm{
       // add it if it is not
       VM_agendaEvents()->addMember(array('lm_key'=>'conf','lm_value'=>$e->getValue('e_code',1)));
       // Provide click to the event
-      $event_urls[] = bJS()->modal_iframe("http://agenda.albanova.se/conferenceDisplay.py?confId=".$e->getValue('e_code',1),
+      $event_urls[] = bJS()->modal_iframe(VM_agenda()->getEventURL($e->getValue('e_code',1)),
 					  b_fmt::strcut($e->name(),60,'...'));
     }
     $this->r['event_name'] = join('<br/>',$event_urls);

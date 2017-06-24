@@ -247,8 +247,9 @@ class bForm_vm_Event extends bForm_vm {
    */
   static function _attenders($e_id,$only_approved=False){
     $where = array(myPear_db()->quote($e_id,1,'v_eid'));
-    if ($only_approved) $where[] = myPear_db()->quote(STATUS_YES,1,'v_status');
-    $q = myPear_db()->query("SELECT v_id FROM abs_visits WHERE ".join(' AND ',$where));
+    if ($only_approved==='rejected') $where[] = myPear_db()->quote(STATUS_NO, 1,'v_status');
+    elseif ($only_approved)          $where[] = myPear_db()->quote(STATUS_YES,1,'v_status');
+    $q = myPear_db()->qquery("SELECT v_id FROM abs_visits WHERE ".join(' AND ',$where),cnf_dev);
     if ($only_approved === 'v_id'){
       $reply = array();
       while ($r = myPear_db()->next_record($q)) $reply[] = $r['v_id'];
@@ -309,8 +310,8 @@ class bForm_vm_Event extends bForm_vm {
     $this->defineVariable(array('_virt_period'=>' ',
 				'_virt_url'   =>' '),True);
     $this->formDB['_virt_period'] = b_time::period($this->getValue('e_start'),$this->getValue('e_end'));
-    $this->formDB['_virt_url']    = "http://agenda.albanova.se/conferenceDisplay.py?cat=".$this->getValue('e_code');
-    if ($this->getValue('e_code')>0){ // The events from AGENDA are not edit-able
+    $this->formDB['_virt_url']    = VM_agenda()->getEventURL($this->getValue('e_code'));
+    if ($this->getValue('e_code')>0){ // The events from AGENDA are not editable
       foreach(array('e_name','e_start','e_end','e_code','_virt_period','_virt_url') as $i) $this->isRO[$i] = True;
     }    
     

@@ -323,11 +323,11 @@ class bList_vm_cotenants extends bList_vm{
       $_leaseInfo = bForm_vm_Lease::_leaseInfo($leases[1],array('v_accompaning','av_lastname','av_firstname',
 								'a_capacity','lease_aid','lease_option','lease_id','v_status','hut_code'));
       bForm_vm_Lease::set_lease_options($_leaseInfo,array(VM_no_cotenants=>1),True);
-      if (($n = @$_leaseInfo['v_accompaning']) && (bForm_vm_Lease::get_lease_options($_leaseInfo,'get_pay') != VM::$pay_options[1])){
-	bForm_vm_Lease::set_lease_options($_leaseInfo,array('pay'=>VM::$pay_options[1]),True);
-	myPear::MESSAGE(sprintf("Impose \"%s\" for %s",
-				bForm_vm_Lease::get_lease_options($_leaseInfo,'pay_room',array(),True),
-				bForm_Avatar::_fmtName('LF',$_leaseInfo))); 
+      if (($n = @$_leaseInfo['v_accompaning']) && !is_array(bForm_vm_Lease::get_lease_options($_leaseInfo,'get_pay'))){
+	bForm_vm_Lease::set_lease_options($_leaseInfo,array('pay'=>VM_pay_something),True);
+	myPear::WARNING_T(sprintf("Impose \"%s\" for %s",
+				  bForm_vm_Lease::get_lease_options($_leaseInfo,'pay_room',array(),True),
+				  bForm_Avatar::_fmtName('LF',$_leaseInfo))); 
       }
       $leases = array();
     }

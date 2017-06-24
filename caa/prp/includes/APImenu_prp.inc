@@ -3,13 +3,12 @@
 if    (function_exists('locateAndInclude'))    locateAndInclude('APImenu','APImenu_ea');
 elseif(function_exists('drupal_get_path'))  require_once drupal_get_path('module','ea') . '/includes/APImenu_ea.inc';
 
-foreach(array('tab_prp_see'         => (defined('myOrg_nameS') ? myOrg_nameS.' ' : '').'Preprints',
-              'tab_prp_pending'     => 'Manage pending preprints',
-              'tab_prp_update'      => 'Update preprints',
-              'tab_prp_new'         => 'Reserve new preprint number',
-              'tab_prp_adm'         => 'Preprints censors',
-              ) as $name=>$descr) APItabs::define_tab($name,$descr);
-
+APItabs::define_tabs(array('tab_prp_see'         => (defined('myOrg_nameS') ? myOrg_nameS.' ' : '').'Preprints',
+			   'tab_prp_pending'     => 'Manage pending preprints',
+			   'tab_prp_update'      => 'Update preprints',
+			   'tab_prp_new'         => 'Reserve new preprint number',
+			   'tab_prp_adm'         => 'Preprints censors',
+			   ));
 /*
  *
  */

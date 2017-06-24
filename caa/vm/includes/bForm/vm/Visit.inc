@@ -592,8 +592,12 @@ class bForm_vm_Visit extends bForm_vm {
 	 $reply = False;
        }elseif(!$this->getValue('v_projectid',True)){
 	 // Force the project selection
-	 $this->MODE = 'RW';
-	 $reply = True;
+	 if (0){ // KTH rules
+	   $this->MODE = 'RW';
+	   $reply = True;
+	 }else{ // SU rules
+	   $this->hookEvent();
+	 }
        }else{
 	 $reply = parent::formBlock_isVisible($block_ID,$fields);
        }
@@ -656,6 +660,13 @@ class bForm_vm_Visit extends bForm_vm {
 	 ($v_eid = $this->getValue('v_eid', True)) &&
 	 !($this->e instanceof bForm_vm_Event)){
        $this->e = myPear::getInstance_new('bForm_vm_Event',$v_eid,'fatal');
+
+       // Force the project id if known       
+       locateAndInclude('bList_vm_projects');
+       $v_projectid = bList_vm_projects::e2project_id($this->e->ID);
+       if ($this->getValue('v_projectid') != $v_projectid){
+	 myPear_db()->qquery("UPDATE abs_visits SET v_projectid = '$v_projectid' WHERE v_eid = ".$this->e->ID,cnf_dev);
+       }
      }
      $reply = (is_object($this->e)
 	       ? $this->e
@@ -1060,7 +1071,7 @@ class bForm_vm_Visit extends bForm_vm {
   /*
    *
    */
-  public function getValue($name, $asIs=False, $d_MBE=True){
+  public function getValue($name, $asIs=True, $d_MBE=True){
     $value_p = parent::getValue($name, $asIs, True);
     switch($name){
     case 'v_avid':
@@ -1249,9 +1260,16 @@ class bForm_vm_Visit extends bForm_vm {
       if ($this->e) $where[] = "(lm_status = ".$this->e->ID." OR lm_status = 'RO')";
       else          $where[] = "(lm_status = '' OR lm_status = 0 OR lm_status = 'RO')";
       
+      if ($this->isVisitType_program()){
+	$this->defineVariable('Project(s) to pay from ','_v_projectid');
+	$this->isRO['_v_projectid'] = True;
+	$this->getValue_reset('_v_projectid',sprintf("%s - %s",$this->getValue('v_projectid'),$this->e->name()));
+      }
       $this->formBlock(VM_visit_project,
 		       'Budget source',
-		       array('v_projectid'=>array('selectMenu_bList',VM_projects(),$where,'project')),
+		       ($this->isVisitType_program()
+			? array('_v_projectid' => array('textField'))
+			: array( 'v_projectid' => array('selectMenu_bList',VM_projects(),$where,'project'))),
 		       array('d'=>btn_edit_project,
 			     'i'=>'i-wallet',
 			     'l'=>$this->sameURL_but(array('block'=>'project','mode'=>'RW'))));

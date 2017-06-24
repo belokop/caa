@@ -293,7 +293,7 @@ class bCover_vm extends bCover {
   private function getVisit($v_id){
     if (!empty($v_id)){
       switch($this->whatToAllocate){
-      case 'Offices':    return myPear::getInstance_new('bForm_vm_Visit',$v_id,array('nocache','fatal'));
+      case 'Offices':   return myPear::getInstance_new('bForm_vm_Visit',$v_id,array('nocache','fatal'));
       case 'Apartment': return bForm_vm_Lease::visit($v_id);
       case 'Cotenants': b_debug::internalError("should not come here");
       }

@@ -13,7 +13,7 @@ function VM_query($where=array(1),$join_rooms=(' LEFT JOIN abs_leases ON v_id = 
 					       // .'LEFT JOIN abs_offices  ON v_oid = o_id'
 					       )){
   b_debug::_debug();
-  $query = "SELECT av_id,av_lastname,av_firstname,av_city,av_institute "
+  $query = "SELECT av_id,av_lastname,av_firstname,av_city,av_institute,av_email,av_residentship "
     .",v_id,v_type,v_host_avid,v_start,v_end,v_avid,v_status,v_acc_wish,v_eid,v_projectid,v_accompaning,v_gsf "
     .",e_id,e_policy,e_name,e_start,e_end,e_v_policy "
     .(strpos($join_rooms,'abs_rooms')  === False ? "" : ",a_id,a_name,a_capacity ")
@@ -34,20 +34,25 @@ function VM_query($where=array(1),$join_rooms=(' LEFT JOIN abs_leases ON v_id = 
   }
 
   // check validity of ORDER BY  
-  $was = $orderBy = explode(',',str_ireplace(array('concat','(',')'),'',@$_GET['sBy']));
-  foreach($orderBy as $f){
-    $f = trim($f); 
-    $ok = False;
-    foreach($tables as $t){
-      if (myPear_db()->columnExists($f,$t)) { $ok = True; break; }
+  if (@$_GET['sBy'] === 'sBy_lists'){
+    $_GET['sBy'] = "v_status ASC, hut_code DESC, hut_name ASC, a_capacity ASC, av_lastname ASC";
+    $_GET['sByDir'] = " ";
+  }else{      
+    $was = $orderBy = explode(',',str_ireplace(array('concat','(',')'),'',@$_GET['sBy']));
+    foreach($orderBy as $f){
+      $f = trim($f); 
+      $ok = False;
+      foreach($tables as $t){
+	if (myPear_db()->columnExists($f,$t)) { $ok = True; break; }
+      }
+      if (!$ok){
+	b_debug::_debug("cancel sBy=$f");
+	unset($orderBy[$f]);
+      }
     }
-    if (!$ok){
-      b_debug::_debug("cancel sBy=$f");
-      unset($orderBy[$f]);
-    }
-  }
-  // remove "concat", it does crazy things...
-  $_GET['sBy'] = join(',',$orderBy);
+    // remove "concat", it does crazy things...
+    $_GET['sBy'] = join(',',$orderBy);
+  }    
 
   // do the query
   $query = $query." WHERE ".preg_replace("/=\s?is null/i",' IS NULL',join(' AND ',$where)).(($sBy=trim($_GET['sBy'])) ? " ORDER BY $sBy ".@$_GET['sByDir'] : "");;

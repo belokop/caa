@@ -217,6 +217,9 @@ class bForm_wiw_trip extends bForm{
    */
   function getForm() {
 
+    // Protection against robots
+    if (!is_object(bAuth::$av)) return;
+
     // Open the dialog
     $this->getFormOpen();
 

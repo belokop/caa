@@ -779,6 +779,7 @@ class bForm extends myPear_getValue{
    *
    * This function is called right BEFORE processing the form, hence ONLY in the interactive context.
    */
+  protected $formOK = False;
   protected function formOK(){
     $this->dbg(starting);
     if ($this->myPost_bForm()){
@@ -829,6 +830,7 @@ class bForm extends myPear_getValue{
     }else{
       $reply = !$this->vitalFieldMissing();
     }
+    $this->formOK = $reply;
     $this->dbg($reply,cnf_dev);
     $this->dbg(exiting);
     return $reply;

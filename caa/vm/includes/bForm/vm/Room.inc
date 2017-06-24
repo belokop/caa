@@ -277,28 +277,35 @@ class bForm_vm_Room extends bForm_vm {
       
     default:
       // Who pays?
-      $who_pays = bForm_vm_Lease::get_lease_options($rec,'get_pay',array(),True);
-      b_debug::_debug("Nordita pays $who_pays",cnf_dev);
-      
-      if (empty($who_pays)) $who_pays = VM_default_lease_pay;
-      if ($who_pays == VM_everything){
-	$cotenants = VM_cotenants()->get_cotenants($rec['lease_id'],True,'names');
-	$reply = self::_daily_price_basic($rec,$e_class);
-	if ($cotenants) $reply = $reply / count($cotenants);
-      }elseif ($who_pays == VM::$pay_options[0]){ // nothing
+      $get_pay = bForm_vm_Lease::get_lease_options($rec,'get_pay',array(),True);
+      $cotenants = VM_cotenants()->get_cotenants($rec['lease_id'],True,'info');
+      b_debug::_debug(array('cotenants'=>$cotenants,
+			    'get_pay'  =>$get_pay),cnf_dev);
+      if ($get_pay === VM_pay_everything){
+	$reply = self::_parse_room_price($rec,$e_class,$cotenants);
+      }elseif ($get_pay === VM_pay_nothing){ // nothing
 	$reply = 0;
       }else{
-	// If "nordita pays for 1/2/..." find the price of the studio of this size
-	foreach(VM::$pay_options as $k=>$v) if ($v === $who_pays) $pay_for = $k;
-	if (empty($pay_for)) b_debug::internalError("Can't match pay_for=\"$who_pays\"");
-	$q = myPear_db()->qquery("SELECT a_id,a_price FROM abs_rooms WHERE a_hutid=$rec[hut_id] AND a_capacity = $pay_for",cnf_dev);
+	// If "nordita pays for 1/2/3/..." find the price of the studio of this size
+	$pay_for = (empty($get_pay)
+		    ? count($cotenants)
+		    : count($get_pay));
+	if (empty($pay_for)) {
+	  //	  b_debug::internalError("No cotenants,but pay_for=".var_export($get_pay));
+	  myPear::WARNING_T("No cotenants,but get_pay=".var_export($get_pay,True));
+	}
+	b_debug::_debug("We pay for $pay_for, look for the appropriate room",cnf_dev);
+	$q = myPear_db()->qquery("SELECT a_id,a_name,a_price,a_capacity FROM abs_rooms WHERE a_hutid=$rec[hut_id] AND a_capacity = $pay_for",cnf_dev);
 	while ($r=myPear_db()->next_record($q)) {
 	  $rec['a_id'] = $rec['lease_aid'] = $r['a_id'];
 	  $rec['a_price'] = $r['a_price'];
+	  $r['hut_code'] = $rec['hut_code'];
+	  b_debug::_debug("Reference room - ".bForm_vm_Room::_a_name($r),cnf_dev);
 	}
-	$reply = self::_daily_price_basic($rec,$e_class);
+	$reply = self::_parse_room_price($rec,$e_class,$cotenants);
       }
     }
+    if (!empty($cotenants)) $reply = $reply / count($cotenants);
     b_debug::_debug($reply,cnf_dev);
     return $reply;
   }
@@ -306,7 +313,7 @@ class bForm_vm_Room extends bForm_vm {
   /*
    *
    */
-  private static function _daily_price_basic($rec,$e_class){
+  private static function _parse_room_price($rec,$e_class,$cotenants=array()){
     if (!$rec['a_id'] || !$rec['hut_id']) return Null;
 
     $price_basic = (empty($e_class)
@@ -319,12 +326,21 @@ class bForm_vm_Room extends bForm_vm {
     if (strpos($price_basic,'=') === False){
       $reply = (int)($price_basic * 12 / 365); // convert monthly -> daily price
     }else{
+      $extra_charge_for_second_tenant = 0;
+      $reply = 999999;
       foreach(explode(',',$price_basic) as $item){
-	list($limit,$reply) = explode('=',$item);
-	if ($ndays <= $limit) break;
+	list($limit,$value) = explode('=',$item);
+	if (is_numeric($limit)) { 
+	  if ($ndays <= $limit) $reply = min($reply,$value); 
+	}elseif ($limit == 'cot'){
+	  $extra_charge_for_second_tenant = $value;
+	}else{
+	  b_debug::internalError("Unpredicted price option '$item'",$rec);
+	}
       }
+      if (count($cotenants) >= 2)  $reply += $extra_charge_for_second_tenant;
     }
-    b_debug::_debug("ndays=$ndays, daily price: $price_basic --> $reply");
+    b_debug::_debug("ndays=$ndays, room daily price: $price_basic --> $reply",True);
     return $reply;
   }
   
@@ -435,7 +451,7 @@ class bForm_vm_Room extends bForm_vm {
     return $id;
   }
 
-  public function name(){
+  public function name($includeHut=False){
     $this->hookHut();
     return (myPear::is_int($this->ID)
 	    ? self::_a_name(array('a_name'    =>$this->getValue('a_name'),
@@ -443,7 +459,7 @@ class bForm_vm_Room extends bForm_vm {
 				  'hut_code'  =>$this->hut->getValue('hut_code'),
 				  'hut_name'  =>$this->hut->getValue('hut_name'),
 				  ),
-			    False)
+			    $includeHut)
 	    : 'Adding new room');
   }
 

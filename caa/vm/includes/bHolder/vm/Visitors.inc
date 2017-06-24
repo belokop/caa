@@ -258,6 +258,13 @@ class bHolder_vm_Visitors extends bHolder_vm{
     }
 
     //
+    // Reject all the pending candidates (yap...)
+    //
+    if (isset($_GET['e_reject_all_once'])){
+      myPear_db()->qquery(sprintf("UPDATE abs_visits SET v_status='%s' WHERE v_eid = '%s' AND v_status = '%s'",STATUS_NO,VM::$e->ID,STATUS_PENDING),cnf_dev);
+    }
+    
+    //
     // Complete sending mails
     //
     $this->process_emails($doing);
@@ -587,6 +594,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
     if (!$reply && empty($this->av)) switch ($this->doing){
 	
       case '2excel':
+	if (bForm_vm_Visit::_getStatus($this->rec) != STATUS_YES) return True;
       case 'photos':
 	if (bForm_vm_Visit::_getStatus($this->rec) == STATUS_NO) return True;
       case 'budget':
@@ -1008,6 +1016,9 @@ class bHolder_vm_Visitors extends bHolder_vm{
     switch ($this->doing){
       
     case 'lists':
+      // Let the administrator to reject ALL
+      if (VM::$e) $this->boss_button_rejectAll();
+
     case 'budget':
       if (VM::$e->mightBeEndorced()){
 	// Build the FNC message if something goes wrong
@@ -1070,6 +1081,36 @@ class bHolder_vm_Visitors extends bHolder_vm{
   /*
    *
    */
+  private function boss_button_rejectAll($fnc_message=''){
+    static $dejaVu = 0;
+    if ($dejaVu++ || VM::$e->isArchived()) return;
+
+    if (($n_pending = @$this->fatal_fnc[$this->highlights['fnc'][STATUS_PENDING]['z']]) > 1){  
+      if (VM::hasRightTo('endorse_event')||VM_unlocker_here) $to_show[] = b_btn::big_button(sprintf('Reject %s pending candidate%s',
+												    ($n_pending == 1 ? "the" : "all $n_pending"),
+												    ($n_pending == 1 ? "" : "s")),
+											    array('e_reject_all_once'=>1,
+												  'resetcache_once'=>1),
+											    'red');
+    }    
+    if (($n = VM::$e->attenders('rejected')) > 1){
+      if (b_cnf::get('e_hide_rejected')){
+	$to_show[] = b_btn::big_button("Show $n rejected candidates",array('e_hide_rejected'=>0,
+									   'resetcache_once'=>1),
+				       'green');
+      }else{
+	$to_show[] = b_btn::big_button("Hide $n rejected candidates",array('e_hide_rejected'=>1,
+									   'resetcache_once'=>1),
+				       'blue');
+      }
+    }
+    if (!empty($to_show)){
+      $t = new b_table("style='width:100%'");
+      $t->tr($to_show,"style='vertical-align:bottom'");
+      $t->close();
+    }
+  }
+
   private function boss_button_endorse($fnc_message=''){
 
     static $dejaVu = 0;
@@ -1183,15 +1224,16 @@ class bHolder_vm_Visitors extends bHolder_vm{
 	return VM_query($where,"LEFT JOIN abs_offices ON o_id = v_oid");
 	
       case 'lists':
+	$_GET['sByDir']= ' ';
 	$_GET['sBy']   = (split_by_huts
-			  ? 'CONCAT(v_status,hut_name,a_capacity,av_lastname,av_id)'
+			  ? 'sBy_lists'
 			  : 'av_lastname,lease_start');
-	$_GET['sByDir']= 'ASC';
+	if (b_cnf::get('e_hide_rejected')) $where[] = "v_status != '".STATUS_NO."'";
 	return VM_query($where);
 	
       case '2excel':
-	$_GET['sBy']   = 'CONCAT(hut_code,hut_name,a_name,av_lastname,av_id)';
-	$_GET['sBy']   = 'CONCAT(hut_name,hut_name,av_lastname)';
+	$where[] = "v_status = '".STATUS_YES."'";
+	$_GET['sBy']   = 'CONCAT(hut_code,hut_name,av_lastname)';
 	$_GET['sByDir']= 'ASC';
 	return VM_query($where);
 	
@@ -1217,6 +1259,8 @@ class bHolder_vm_Visitors extends bHolder_vm{
 	$where[] = "v_start <= ".b_time::txt2unix($_GET['d_once']);
 	
       case 'budget':
+	$where[] = "v_status = '".STATUS_YES."'";
+
       case 'show_mails_exchange':
       default:    
 	$_GET['sBy']   = 'av_lastname';
@@ -1304,46 +1348,46 @@ class bHolder_vm_Visitors extends bHolder_vm{
       $this->t->showLineCounter = False;
 
       if ($v_projectid = $this->rec['v_projectid']){
-	if ($this->rec['hut_code'] == HUT_BI){
+	if (($this->rec['hut_code'] == HUT_BI) || ($this->rec['v_status'] != STATUS_YES) || empty($this->rec['lease_aid'])){
 	  $this->rec['v_projectid'] = '';
 	}else{
-	  $project = VM_projects()->getMember($v_projectid);
-	  $this->rec['v_projectid'] = $project['lm_value'];
+	  $project_codes = array();
+	  foreach(explode(',',$v_projectid) as $id){
+	    $project = VM_projects()->getMember($id);
+	    $project_codes[] = $project['lm_value'];
+	  }
+	  sort($project_codes);
+	  $this->rec['v_projectid'] = join(', ',$project_codes);
 	}
       }
 
-      $v_id = $this->rec['v_id'];
       $this->rec['lease_start'] = date('Y-m-d',$this->rec['lease_start']);
       $this->rec['lease_end']   = date('Y-m-d',$this->rec['lease_end']);
-      $this->rec['av_lastname'] = mb_strToUpper($this->rec['av_lastname']);
-      $this->rec['av_firstname']= b_fmt::ucWords($this->rec['av_firstname']);
-      $this->rec['a_comment'] = $this->t->extraTD[] = bForm_vm_Lease::get_lease_options($this->rec,'get_pay_HR_int');
+      $this->rec['av_lastname'] = b_crypt::encode_utf8(mb_strToUpper($this->rec['av_lastname']));
+      $this->rec['av_firstname']= b_crypt::encode_utf8(b_fmt::ucWords($this->rec['av_firstname']));
+      $this->rec['a_name'] = b_fmt::unEscape(bForm_vm_Room::_a_name($this->rec,False));
 
-      // Split the list by huts for better readability
-      $hut_name = $this->split_by_huts($this->rec);
-
-      if ($cotenants = VM_cotenants()->get_cotenants($this->rec['lease_id'])){
-	$names = array();
-	foreach($cotenants as $lm_id=>$leases){
-	  foreach($leases as $lease_id){
-	    $l = new bForm_vm_Lease($lease_id);
-	    if (!$l->getValue('lease_vid',1)){
-	      if (cnf_dev) b_debug::xxx("parentForm=$l->parentForm lease=$l ");
-	      if (cnf_dev) b_debug::print_r($l->formDB,"??? no lease_vid for ".$l->__toString());
-	      if (cnf_dev) b_debug::print_r($this->rec,"??? no lease_vid for ".$l->__toString());
-	      continue;
-	    }
-	    $l->hookVisit();
-	    $names[] = $l->name();
-	  }
-	}
-	$this->rec['cotenant'] = b_crypt::encode_utf8(b_fmt::unEscape(join(', ',$names)));
+      // Who pays
+      $get_pay = bForm_vm_Lease::get_lease_options($this->rec,'get_pay');
+      if (is_array($get_pay)){
+	$names = array_values($get_pay);
+	sort($names);
+	$this->rec['a_comment'] = $this->t->extraTD[] = b_fmt::unEscape(b_crypt::encode_utf8(myOrg_nameS.' pays for '.join(' + ',$names)));
+      }
+	
+      // Show cotenants
+      if ($cotenants = VM_cotenants()->get_cotenants($this->rec['lease_id'],False,'info')){
+	$names = array_values($cotenants);
+	sort($names);
+	$this->rec['cotenant'] = b_fmt::unEscape(b_crypt::encode_utf8(join(' + ',$names)));
       }
       
-      //      if ($this->rec['hut_code'] != HUT_BI) 
+      // Split the list by huts for better readability
+      $hut_name = $this->split_by_huts($this->rec);
+      // Fill excel record
       $this->fill_excel($hut_name);
       break;
-
+      
     case 'photos':
       /*
        * --------------------------------------------------------------------------------- Collect photos
@@ -1608,13 +1652,13 @@ class bHolder_vm_Visitors extends bHolder_vm{
       $unsets = array('v_projectid','cotenant','a_name','a_area','a_comment');
     }else{
       $unsets = array('a_area');
-      $a_comment = bForm_vm_Lease::get_lease_options($this->rec,'get_pay_HR_ext');
+      $this->rec['av_city'] = $this->rec['av_residentship'].', '.$this->rec['av_city'];
     }
     foreach($unsets as $i) unset($export_data[$i]);
     
     $data = $header = array();
     foreach($export_data as $k=>$v){
-      $data[] = ($k == 'a_comment' ? $a_comment : @$this->rec[$k]);
+      $data[] = @$this->rec[$k];
       $header[] = $v;
     }
     if (empty($this->excel_input[$hut_name])) $this->excel_input[$hut_name][] = $header;

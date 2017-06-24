@@ -1580,7 +1580,7 @@ class bForm_Avatar extends bForm {
   /*
    * Avatar specific fields
    */
-  function getValue($name,$asIs=False,$description_MBE=True){
+  function getValue($name,$asIs=True,$description_MBE=True){
     
     switch($name){
     // The following columns are treated here

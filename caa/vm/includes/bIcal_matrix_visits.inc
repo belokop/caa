@@ -44,7 +44,7 @@ class bIcal_matrix_visits extends bIcal_matrix{
      * First line of the "matrix" is reserved for the "big events", like programs/conferences.
      * Those have 'e_code' > 0 and come from the Agenda system
      */
-    $q = myPear_db()->query(" SELECT e_start,e_end,e_name,e_id,count(v_id) AS n  FROM abs_events "
+    $q = myPear_db()->query("SELECT e_start,e_end,e_name,e_id,count(v_id) AS n  FROM abs_events "
 			    ." LEFT JOIN abs_visits ON v_eid = e_id WHERE "
 			    .join(' AND ',array("e_code > 0",
 						"e_end  >= $this->day1", 
@@ -94,11 +94,12 @@ class bIcal_matrix_visits extends bIcal_matrix{
       $orderBy = (show_guests_by_budget
                   ? 'lm_key'
                   : 'v_group');
-      $q = myPear_db()->query("SELECT * FROM abs_visits ".
+      $q = myPear_db()->query("SELECT v_id,v_start,v_end,v_group,v_comment,e_name,lm_key,lm_value,".
+			      "av_lastname,av_firstname,av_institute FROM abs_visits ".
 			      "    LEFT JOIN abs_events   ON v_eid = e_id ".
 			      "    LEFT JOIN abs_expenses ON exp_vid = v_id ".
 			      "    LEFT JOIN zzz_avatars  ON v_avid = av_id ".
-			      (show_guests_by_budget ? "    LEFT JOIN zzz_list_members ON v_projectid = lm_id " : "").
+			      "    LEFT JOIN zzz_list_members ON v_projectid = lm_id ".
 			      " WHERE ".join(' AND ',
 					     array_merge(array('('.join(' OR ',$where).')'),$v_where)).
 			      " ORDER BY e_start,v_start,$orderBy,av_lastname ASC ");

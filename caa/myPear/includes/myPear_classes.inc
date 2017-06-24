@@ -470,9 +470,10 @@ class b_fmt{
    */
   static function redText($text,$color='redText') { 
     if (empty($text))  return '';
-    if     (is_object($text)) $text = $text->__toString();
-    elseif (is_array($text))  $text = 'array('.join(',',$text).')';
-    return '<span class='.$color.'>'.trim($text).'</span>'; 
+    if  (!is_string($text)) $text = debug::parse_value($text,10,90);
+    $reply = '<span class="'.$color.'">'.trim($text).'</span>'; 
+    //b_debug::_debug(b_fmt::escape($reply),cnf_dev);
+    return $reply;
   }
   
 
@@ -1700,7 +1701,7 @@ class b_debug extends myPear_base{
       if (empty($arg)) $arg = '[]';
       else{
 	$a=array();
-	$ids = preg_grep('/_id$/',array_keys($arg)); 
+	$ids = preg_grep('/(_id|_aid)$/',array_keys($arg)); 
 	foreach($ids as $i) if (count($a)<$max_a_m) $a[$i]=self::parse_value($arg[$i]);
 	if (empty($a)) foreach($arg as $k=>$v){if(count($a)<$max_a_m){
 	      if (is_array($v)) $a[$k] = self::parse_value($v);
@@ -1765,12 +1766,20 @@ class b_debug extends myPear_base{
     if (!in_array($message_class,array('status','error','debug','warning','SICK')) && cnf_dev) b_debug::internalError('??? '.__method__);    
     if ( in_array($message_class,array('debug','SICK')) && !cnf_dev) return;
     
-    static $color_codes = array('I' => 'maroonText',
-				'L' => 'blueText',
-				'M' => 'fuchsiaText',
-				'A' => 'redText',
-				'AA'=> 'redText',
-				'DB'=>'greenText');
+    static $color_codes = array('I' => array('c'=>'maroonText', // instance
+					     'p'=>cnf_show_i),
+				'L' => array('c'=>'blueText',   // load & require
+					     'p'=>cnf_show_l),
+				'C' => array('c'=>'maroonText', // configuration option
+					     'p'=>cnf_show_c),
+				'M' => array('c'=>'fuchsiaText',// menu
+					     'p'=>cnf_show_m),
+				'A' => array('c'=>'redText',    // menu access
+					     'p'=>cnf_show_m),
+				'AA'=> array('c'=>'redText',    // APIaccess access
+					     'p'=>cnf_show_m),
+				'DB'=> array('c'=>'greenText',  // DB
+					     'p'=>cnf_show_db));
     
     // Defaults
     list($level,$color,$class,$toPrint) = array(1,self::$_dbg_color,Null,False);
@@ -1783,8 +1792,14 @@ class b_debug extends myPear_base{
       elseif(is_string($m))  $color = $m;
       elseif(is_bool($m))    $toPrint = $m;
     }
-    if (isset($color_codes[$color])) $color = $color_codes[$color];
     self::$current_class = is_object($class) ? get_class($class) : '';
+
+    // Special formats... May be not important any more...
+    if ($c = @$color_codes[$color]){
+      $stringFormat = $color;
+      $color   = $c['c'];
+      $toPrint = $c['p'];
+    }
    
     // Start & End of a logical block
     if (($message_class=='debug') && (self::$starting_exiting = is_string($txt))){

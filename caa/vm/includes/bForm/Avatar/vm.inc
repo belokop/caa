@@ -160,7 +160,7 @@ class bForm_Avatar_vm extends bForm_Avatar_ea{
     if (!$av_id)              $av_id = $this->ID;
     if ($um_status) $reply = (VM_unit($rank)->getUnitMemberStatus($av_id) === $um_status);
     else            $reply =  VM_unit($rank)->isMember($av_id);
-    b_debug::xxx($reply,array('AA',3,$this));
+    b_debug::xxx($reply,array('AA',$this));
     return $reply;
   }
 

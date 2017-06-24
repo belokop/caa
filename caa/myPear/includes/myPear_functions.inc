@@ -74,7 +74,7 @@ function bAuth(){
     myPear_startup_queue(__function__,array(),True);
   }elseif (($bAuth === Null) && !$inside_bAuth++){
     if (($bTiming=!bAuth::$isReady && function_exists('bTiming'))) bTiming()->cpu(__FUNCTION__);
-    b_debug::xxx(starting,array(2,'fuchsiaText',cnf_dev));
+    b_debug::_debug(starting);
     
     // Load the class file
     locateAndInclude('bAuth');
@@ -128,7 +128,7 @@ function bAuth(){
     $inside_bAuth = 0;
     if ($bTiming) bTiming()->cpu();
     if (is_object(bAuth::$av)) b_debug::xxx(bAuth::$av->fmtName());
-    b_debug::xxx(exiting,array(2,'fuchsiaText',cnf_dev));
+    b_debug::_debug(exiting);
   }
   return $bAuth;
 }
@@ -617,7 +617,7 @@ function set_cb_expected(&$data,$name='',$value_to_set='off'){
 function start_myPear(){
 
   bTiming()->cpu(__FUNCTION__);
-  b_debug::xxx(starting,array(2,'fuchsiaText',cnf_dev));
+  b_debug::_debug(starting);
 
   // Decode $_SERVER["QUERY_STRING"];
   b_crypt::decodeURL();
@@ -743,5 +743,5 @@ function start_myPear(){
   locateAndInclude('bMailer');
   myPear_taskManager_queue();
   */
-  b_debug::xxx(exiting,array(2,'fuchsiaText',cnf_dev));
+  b_debug::_debug(exiting);
 }

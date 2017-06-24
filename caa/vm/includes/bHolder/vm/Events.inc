@@ -57,7 +57,9 @@ class bHolder_vm_Events extends bHolder_vm{
       if ($e->isWritable())       $this->t->extraTD[] = b_btn::link('',
 								    $e->sameURL_but(),
 								    bIcons()->get('i-edit')); 
-      if ($this->rec['e_code']>0) $this->t->extraTD[] = b_btn::link('',"http://agenda.albanova.se/conferenceDisplay.py?confId=".$this->rec['e_code'],bIcons()->get('nordita')); 
+      if ($this->rec['e_code']>0) $this->t->extraTD[] = b_btn::link('',
+								    VM_agenda()->getEventURL($this->rec['e_code']),
+								    bIcons()->get('nordita')); 
     }
     //    axel($this->rec,$e->name());
   }

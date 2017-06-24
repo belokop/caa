@@ -3,9 +3,14 @@
 /**
  * Visitors Manager (VM) configuration file
  */
-$releaseDate = '2017-06-19';
+$releaseDate = '2017-06-24';
 define('VM_MODULE'   , 'vm');
-define('VM_VERSION','5.13.35');
+define('VM_VERSION','5.13.36');
+
+//
+// The Indico (agenda) host name
+//
+define('VM_agenda_host','agenda.albanova.se');
 
 //
 // transition problems...
@@ -113,7 +118,14 @@ define('VM_V_rdlMailQueued',262144);    // Flag '"Event is endorsed" mail to org
 define('auto_maintained', 'auto'); 
 define('when_approved',   'w_a'); 
 define('in_queue',        'queued');
-define('VM_everything',   'everything');
+
+/*
+ * Accommodation pay options
+ */
+define('VM_pay_everything',   'everything');
+define('VM_pay_nothing',      'nothing');
+define('VM_pay_something',    'one');
+define('VM_default_lease_pay',VM_pay_everything);
 
 /*
  * Define per-diem in the default currency
@@ -144,7 +156,6 @@ define('VM_reminding_period', 3); // in days
 define('VM_quantity2request',-999);
 define('VM_quantity2request_text','Contact hotel for availability');
 define('VM_quantity_total','total');
-define('VM_default_lease_pay',VM_everything);
 define('VM_default_a_quantity',VM_quantity2request);
 
 /*
@@ -358,12 +369,6 @@ b_reg::add_module(VM_MODULE,
 class VM extends myPear{
 
   public static $isReady = False;
-
-  /*
-   * Lease options, see bForm_vm_Lease::get_lease_options()
-   */
-  static $pay_options = array('nothing','one');
-
   /*
    * Which forms (blankets) to send to the Visitors in the welcome mail
    * The forms are kept in the /templates directory
@@ -668,6 +673,7 @@ class VM extends myPear{
    */
   static function start_HUT_BI(){
     if (!is_object(self::$hut_bi)){
+      b_debug::_debug(starting);
       foreach(array(
 		    // "the build-in hut" 
 		    self::$hut_bi  =>array('class' =>'bForm_vm_Hut'),
@@ -678,9 +684,6 @@ class VM extends myPear{
 		    // gap in the visit
 		    self::$BR      =>array('class' =>'bForm_vm_Room',
 					   'a_name'=> LODGING_BR_TXT),
-		    // remove accommodation
-		    //		    self::$RM      =>array('class' =>'bForm_vm_Room',
-		    //					   'a_name'=> LODGING_RM_TXT),
 		    ) as $instance=>$args){
 	
 	$class_name = $args['class'];
@@ -694,29 +697,27 @@ class VM extends myPear{
 	}else{
 	  // Hook the "build-in rooms" to the "build-in hut"
 	  $args['keys']  = array('a_hutid'    => self::$hut_bi->ID,
-				 // 'a_code'     => $args['a_code'],
-				 );
+				 'a_name'     => $args['a_name']);
 	  $args['fields']= array_merge($args['keys'],
-				       array('a_price'    => 0.000001,
+				       array('a_price'    => '9999=0',
 					     'a_area'     => 1,
 					     'a_capacity' => 999,
-					     'a_name'     => $args['a_name'],
 					     ));
 	}
 	
 	// Instantiate the build-in class
 	self::$$instance = new $class_name(b_fmt::joinX(' AND ',$args['keys'],"'"));
-	//	self::$$instance->defineVariables();
 	self::$$instance->updateDB($args['fields']);
 	
-	if (False && cnf_dev){
-	  b_debug::xxx(self::$$instance->__toString());
-	  self::$$instance->show_gv = True;
-	  foreach($args['fields'] as $k=>$v) self::$$instance->getValue($k);
-	  self::$$instance->show_gv = False;
-	}
+	self::$$instance->dbg(self::$$instance->getValue($class_name == 'bForm_vm_Hut' ? 'hut_name' : 'a_name'),cnf_dev);
+	if (False) if (cnf_dev){
+	    self::$$instance->show_gv = True;
+	    foreach($args['fields'] as $k=>$v) self::$$instance->getValue($k);
+	    self::$$instance->show_gv = False;
+	  }
       }
-    }	      
+      b_debug::_debug(exiting);
+    }
   }
   
   
@@ -934,7 +935,7 @@ if (file_exists($f='../myPear/config.inc'))  require_once $f;
 function start_VM(){
   static $dejaVu = 0;
   if (!VM::$isReady && !$dejaVu++){
-    b_debug::xxx(starting,array(2,'redText',cnf_dev));
+    b_debug::_debug(starting);
     bTiming()->cpu(__function__);
 
     locateAndInclude('APImenu_vm');
@@ -963,7 +964,7 @@ function start_VM(){
     }
     VM::$isReady = True;
     bTiming()->cpu();
-    b_debug::xxx(exiting,array(2,'redText',cnf_dev));
+    b_debug::_debug(exiting);
   }
 }
 

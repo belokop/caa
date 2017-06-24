@@ -24,9 +24,11 @@ class APImenu_lic extends APImenu{
     $this->static_menu = array('ALL'=>array());
     foreach (lic_getCategories() as $tab)       $this->static_menu[$tab] = array();
     $this->tabWeight['ALL'] = -999;
-    APItabs::define_tab('tab_lic','Licences usage');
-    APItabs::define_tab('ALL',    'ALL');
-    foreach(lic_getCategories() as $lic) APItabs::define_tab($lic,$lic);
+    // Tabs
+    $tabs = array('tab_lic'=>'Licences usage',
+		  'ALL'    =>'ALL');
+    foreach(lic_getCategories() as $lic) $tabs[$lic] = $lic;
+    APItabs::define_tabs($tabs);
   }
 
   public function access($arg1=Null,$arg2=Null){

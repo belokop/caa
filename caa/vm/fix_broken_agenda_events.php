@@ -14,7 +14,7 @@ error_reporting(E_ALL);
 
 $fmt = "%s %10s %6d %s\n";
 
-$url = 'http://agenda.albanova.se/';
+$url = sprintf('http://%s/',VM_agenda_host);
 print "\n===================================================================================================== $url\n\n";
 $agenda = new agenda($url);
 
@@ -30,10 +30,10 @@ while($r = myPear_db()->next_record($q)){
     show_avatars($r['e_id'],'Organizers');
 
     // Send a reporting email and remove the orfelan records
-    if (stripos($url,'agenda.albanova.se') !== False){
+    if (stripos($url,VM_agenda_host) !== False){
       $qq = CLI_query("SELECT * FROM abs_events  LEFT JOIN zzz_list_members ON e_code = lm_value WHERE e_code = ".$r['e_code'],False);
       while($rr = myPear_db()->next_record($qq)){
-	if (stripos($url,'agenda.albanova.se') !== False){
+	if (stripos($url,VM_agenda_host) !== False){
 	  myPear_mailer()->send('yb@nordita.org',
 				"Removing non-accesible agenda event $r[e_id]",
 				"

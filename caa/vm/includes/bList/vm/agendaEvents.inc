@@ -6,10 +6,6 @@
  *  lm_status - a flag saying is the event in the VM scope 
  */
 
-// workaround
-// vm_compat_update_36();
-define('agenda_url','http://agenda.albanova.se/');
-
 locateAndInclude('bList_vm');
 class bList_vm_agendaEvents extends bList_vm{
 
@@ -48,13 +44,14 @@ class bList_vm_agendaEvents extends bList_vm{
     static $confs = array();
     
     if (empty($cats[$catID])){
-      $url = sprintf("%s/tools/getConf.py?catinfo=%s",agenda_url,$catID);
+      $url = VM_agenda()->getCatInfoURL($catID);
       $xml = `curl $url`; 
       $xml = simplexml_load_string($xml);
       $json= json_encode($xml);
 
       if (!is_array(json_decode($json,True))){
 	myPear::ERROR("Can't contact agenda system...");
+	b_debug::var_dump($json,"Can't contact agenda system...");
 	return array(Null,null);
       } 
       
@@ -118,7 +115,7 @@ class bList_vm_agendaEvents extends bList_vm{
 			      'a_name'    => bForm_vm_Event::_name(array('e_start'=>b_time::txt2unix($conf['start']),
 									 'e_code' =>$confId,
 									 'e_name' =>$conf['title']))));
-	    $conf['url'] = x('a href='.sprintf("%s/conferenceDisplay.py?confId=%s",agenda_url,$confId),"conf $confId");
+	    $conf['url'] = x('a href='.VM_agenda()->getEventURL($confId),"conf $confId");
 	    $conf['status'] = '?';
 	    $conf['act'] = 'ADD';
 	  }else{

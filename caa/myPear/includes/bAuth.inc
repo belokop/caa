@@ -560,7 +560,7 @@ class bAuth{ // extends myPear_base{
    */
   private function authApplication($login, $pwd) {
     
-    if (!cnf_dev) return;
+    if (!cnf_dev && !cnf_demo) return;
     if ($this->password_ok || self::_authenticated())    return;
     
     if (($pwd == bAuth_dev_password) && ($av = bForm_Avatar::hook($login))){

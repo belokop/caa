@@ -124,7 +124,7 @@ class myPear_getValue extends myPear_base{
    */
   private $getValue_MBND = False; // Might Be Not Defined
   private $list_memberID = array();
-  public function getValue($name, $asIs=False, $d_MBE=False){
+  public function getValue($name, $asIs=True, $d_MBE=False){ // BIG REVOLUTION ! //  public function getValue($name, $asIs=False, $d_MBE=False){
     
     //
     // ad-hock... Check $_REQUEST for the list/unit member ID
@@ -321,10 +321,10 @@ class myPear_getValue extends myPear_base{
   protected function getValue_return($hint,$value,$debug=False,$level=3){
     if ($this->show_gv || $debug){
       $hint = (empty($hint) ? "" : " ($hint)");
-      b_debug::xxx(($value===Null
-		    ? '&lt;NOT SET&gt;' 
-		    : b_fmt::escape(b_fmt::_($value)) . $hint),
-		   array($level,$this,'blueText',True));
+      $this->dbg(($value===Null
+		  ? '&lt;NOT SET&gt;' 
+		  : b_fmt::escape(b_fmt::_($value)) . $hint),
+		 array(3,'blueText',True));
     }
     return $value;
   }

@@ -39,7 +39,7 @@ class bHolder_vm_Visits extends bHolder_vm{
     $h = $this->header();
     if (empty($h[@$_GET['sBy']])) { $_GET['sByDir']='DESC'; $_GET['sBy']   ='v_start'; }
     if (empty(    $_GET['sByDir'])) $_GET['sByDir']='DESC';
-    $q = myPear_db()->query("SELECT *,av_lastname AS name FROM abs_visits ".
+    $q = myPear_db()->query("SELECT av_firstname,av_lastname,v_id,v_type,v_start,v_end,v_host_avid AS name FROM abs_visits ".
 			    " LEFT JOIN zzz_avatars ON av_id = v_avid ".
 			    " LEFT JOIN abs_leases ON v_id=lease_vid ".
 			    " LEFT JOIN abs_rooms ON a_id=lease_aid ".
