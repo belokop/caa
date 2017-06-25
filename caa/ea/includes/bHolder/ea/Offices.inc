@@ -58,7 +58,7 @@ class bHolder_ea_Offices extends bHolder_ea{
   }
 
   public static function queryOffices($where=1){
-    return myPear_db()->query("SELECT * FROM abs_offices WHERE $where ORDER BY o_name ASC");
+    return myPear_db()->query("SELECT o_id,o_name,o_status,o_capacity FROM abs_offices WHERE $where ORDER BY o_name ASC");
   }
 
   function header(){

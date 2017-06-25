@@ -7,7 +7,7 @@ class bHolder_vm_Offices extends bHolder_ea_Offices{
   }
 
   function query($where=1){
-    return myPear_db()->qquery("SELECT * FROM abs_offices ORDER BY o_name ASC");
+    return myPear_db()->qquery("SELECT o_id,o_name,o_status,o_capacity FROM abs_offices ORDER BY o_name ASC");
   }
 
   function init() {}

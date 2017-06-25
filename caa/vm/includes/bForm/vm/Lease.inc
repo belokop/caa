@@ -900,8 +900,8 @@ function __clean_cache(){}
 	}
 	if ($nLeases > 1){
 	  $block_header[] = b_btn::submit_icon('i-drop',
-					       btn_deleteLease,
-					       b_url::same("?action_once=".btn_deleteLease.
+					       btn_deleteBooking,
+					       b_url::same("?action_once=".btn_deleteBooking.
 							 "&function=vm_edit_accommodation&resetcache_once=1&lease_id=$this->ID&v_id=".
 							   $this->parentForm->ID),
 					       $confirm=True,

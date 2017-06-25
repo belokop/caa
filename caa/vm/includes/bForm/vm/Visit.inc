@@ -71,15 +71,18 @@ class bForm_vm_Visit extends bForm_vm {
     parent::__construct($id, $mode);
 
     // Force status update. This should be done as early as possible, so do it now...
-    if (empty($_GET['a_once']) && (($w=(string)@$this->formDB['v_status']) !== ($n=(string)$this->getValue('v_status',True,True)))){
-      $_GET['a_once'] = $this->getValue('v_status',True,True);
+    if ($this->myPost_bForm() && empty($_GET['a_once']) && 
+	(($w=(string)@$this->formDB['v_status']) !==
+	 ($n=(string)$this->getValue('v_status',True,True)))){
+      $_GET['a_once'] = $n;
+      $force_status = True;
       $this->dbg("Force v_status update $w --> $n",cnf_dev);
     }
 
     // Follow the endorser will
     if (isset($_GET['a_once'])){
       $this->dbg("Accepted? ".$_GET['a_once'],cnf_dev);
-      $this->setStatus($_GET['a_once']);
+      $this->setStatus($_GET['a_once'],@$force_status);
       if ($_GET['a_once'] == STATUS_PENDING) $_SESSION[get_class($this).$this->ID] = '...';
     }
 
@@ -353,12 +356,12 @@ class bForm_vm_Visit extends bForm_vm {
   /*
    * Set the status
    */
-  public function setStatus($v_status=Null){
+  public function setStatus($v_status=Null,$forced=False){
     if (!myPear::is_int($this->ID)) return;
     
     $was = $this->getValue('v_status');
-    if ($was === $v_status){
-      $this->dbg("Status is not changed... $v_status",cnf_show_pv);
+    if (!$forced && ($was === $v_status)){
+      $this->dbg("Status is not changed... $v_status",cnf_dev);
       return;
     }
     
@@ -368,11 +371,10 @@ class bForm_vm_Visit extends bForm_vm {
 
     switch($v_status){
     case STATUS_NO:
-      unset($_POST['lease_id']);
-      $this->deleteLease(Null,$verbose=True);
-      
-    case STATUS_YES:
     case STATUS_PENDING:
+      unset($_POST['lease_id']);
+      $this->deleteBooking(Null,$verbose=True);
+    case STATUS_YES:
       // cancel/set policies of "when_approved" type
       foreach(VM_visit_policies($this->getValue('v_type')) as $p){
 	if (@VM::$v_policies[$p]['t'] === when_approved) $this->setPolicy($p,($v_status==STATUS_YES?1:0),True);
@@ -1133,7 +1135,7 @@ class bForm_vm_Visit extends bForm_vm {
 
     if ($this->endorses === Null){
       $this->endorses = array();
-      if (($e_id=$this->getValue('v_eid',1)) > 0){
+      if (($e_id=$this->getValue('v_eid')) > 0){
 	// Visit for a regular event (program), to be approved by the event organizers
 	$this->endorses[] = 'Event organizers:';
 	foreach(VM_organizers($e_id)->getMembers() as $um_id=>$rec){
@@ -1141,7 +1143,7 @@ class bForm_vm_Visit extends bForm_vm {
 	}
       }else{
 	// another type of a visit
-	foreach(VM_endorsers()->getEndorsers($this->getValue('v_group',1)) as $av_id){
+	foreach(VM_endorsers()->getEndorsers($this->getValue('v_group')) as $av_id){
 	  $av = new bForm_Avatar_vm($av_id);
 	  $this->endorses[$av->ID] = '&nbsp;'.bForm_Avatar::_fmtName('Lf',$av->formDB);
 	}
@@ -1159,10 +1161,10 @@ class bForm_vm_Visit extends bForm_vm {
   }
 
   private function GSFblock(){
-    if ($v_gsf = $this->getValue('v_gsf',True)){    
+    if ($v_gsf = $this->getValue('v_gsf')){    
       $dialog = array();
       $v_gsf = unserialize($v_gsf);
-      $accommodation = (($v_acc_wish = $this->getValue('v_acc_wish',True)) 
+      $accommodation = (($v_acc_wish = $this->getValue('v_acc_wish')) 
 			? array('Accommodation' => $v_acc_wish)
 			: array());
       foreach(array_merge($accommodation,$v_gsf) as $q=>$a){
@@ -1283,7 +1285,7 @@ class bForm_vm_Visit extends bForm_vm {
     if (!empty($this->e) && 
 	$this->getPolicy(   VM_V_provideOffice) &&
 	$this->e->getPolicy(VM_E_provideOffice)){
-      if (($s = @$this->getValue('v_start',1)) && ($e = @$this->getValue('v_end',1))){
+      if (($s = @$this->getValue('v_start')) && ($e = @$this->getValue('v_end'))){
 	locateAndInclude('bForm_vm_Office');
 	$v_oid = $this->getValue('v_oid');
 	$this->isRO['_o_name'] = $this->av->isE(True) && !empty($v_oid);
@@ -1310,8 +1312,8 @@ class bForm_vm_Visit extends bForm_vm {
       $this->mergeDefinitions($this->exp);
       $this->exp->getForm();
       if(!$this->auto_accept_guest_invitations() && 
-	 !$this->getValue('v_projectid',True) && 
-	 ($this->getValue('v_end',True) > time()-AUTO_EXPIRATION*86400) &&
+	 !$this->getValue('v_projectid') && 
+	 ($this->getValue('v_end') > time()-AUTO_EXPIRATION*86400) &&
 	 ($this->isWritable())){
 	if(is_object($this->e) && !VM_projects()->getProjectID($this->e->ID)){
 	  myPear::WARNING("<br/><em>\"".$this->e->name(False)."\"</em> has NO budget code assigned. ".
@@ -1347,10 +1349,10 @@ class bForm_vm_Visit extends bForm_vm {
     
     // Prepare a list of valid hosts - the group members + the owner + the endorsers
     $valid_hosts = (array(bAuth::$av->ID => bAuth::$av->fmtName()) +
-		    myOrg()->orgGroups()->get_groupMembers($this->getValue('v_group',1)));
+		    myOrg()->orgGroups()->get_groupMembers($this->getValue('v_group')));
     if (!auto_accept_guest_invitations) $valid_hosts += VM_endorsers()->getEndorsers(Null,'full');
 
-    if (($v_host_avid = $this->getValue('v_host_avid',1)) && empty($valid_hosts[$v_host_avid])){
+    if (($v_host_avid = $this->getValue('v_host_avid')) && empty($valid_hosts[$v_host_avid])){
       if ((int)$v_host_avid){
 	$av = myPear::getInstance_new('bForm_Avatar',$v_host_avid,array('nocache','strict'));
 	if (is_object($av)) $valid_hosts[$av->ID] = $av->fmtName();
@@ -1447,7 +1449,7 @@ class bForm_vm_Visit extends bForm_vm {
      * This dialog starts after the visit type is selected,
      * otherwise prompt for the visit type
      */
-    if ($v_type = $this->getValue('v_type',True)){
+    if ($v_type = $this->getValue('v_type')){
       $this->dbg("v_type=$v_type",True);
       $this->periodBlock();
       $this->policyBlock();
@@ -1556,9 +1558,9 @@ class bForm_vm_Visit extends bForm_vm {
     $list = array();
     $considerOfficeOccupancy = False; // seem not to be necessary
     if ($considerOfficeOccupancy){
-      $q = myPear_db()->query("SELECT * FROM abs_offices WHERE o_id>0 AND o_status='".OFFICE_AUTO_ALLOCATABLE."' ORDER BY o_name");
+      $q = myPear_db()->query("SELECT o_id,o_capacity,o_name FROM abs_offices WHERE o_id>0 AND o_status='".OFFICE_AUTO_ALLOCATABLE."' ORDER BY o_name");
       while($r=myPear_db()->next_record($q)){
-	$qq = myPear_db()->query("SELECT * FROM abs_visits WHERE ".
+	$qq = myPear_db()->query("SELECT v_id FROM abs_visits WHERE ".
 				    join(' AND ', array("v_oid = ".$r['o_id'],
 							"v_start <= $end",
 							"v_end   >= $start")));
@@ -1566,7 +1568,7 @@ class bForm_vm_Visit extends bForm_vm {
 	    ($r['o_id'] == $this->formDB['v_oid']))$list[$r['o_id']] = $r['o_name'];
       }
     }else{
-      $q = myPear_db()->query("SELECT * FROM abs_offices WHERE o_id>0 ORDER BY o_name");
+      $q = myPear_db()->query("SELECT o_id,o_name,o_status FROM abs_offices WHERE o_id>0 ORDER BY o_name");
       while($r=myPear_db()->next_record($q)){
 	$list[$r['o_id']] = $r['o_name'];
 	if ($r['o_status'] != OFFICE_AUTO_ALLOCATABLE) $list[$r['o_id']] .= ' - staff';
@@ -1654,7 +1656,7 @@ class bForm_vm_Visit extends bForm_vm {
   function delete(){
     $this->dbg($this->av->name(),cnf_dev);
     myPear::MESSAGE_add(b_fmt::redText("Delete visit ".$this->_periodToString()));    
-    $this->deleteLease();
+    $this->deleteBooking();
     myPear_db()->query("DELETE FROM $this->TABLE WHERE $this->TABLEID = '$this->ID'");
     unset($this->formDB);
     unset($this->ID);
@@ -1665,7 +1667,7 @@ class bForm_vm_Visit extends bForm_vm {
    * If no leases left, then create an empty one for the whole period of the visit
    */
   public $deletingBooking = False;
-  function deleteLease($lease_id=Null,$verbose=True){
+  function deleteBooking($lease_id=Null,$verbose=True){
     $this->deletingBooking = True;
     $this->dbg(' ');
     if (!empty($lease_id)){
@@ -1703,12 +1705,12 @@ class bForm_vm_Visit extends bForm_vm {
       //
       $leases = $this->get_allLeases();
       if (empty($leases)){
-	$this->dbg('No leases to delete...');
+	$this->dbg('No leases to delete...',cnf_dev);
       }else{
 	foreach($leases as $l) {
 	  $l->debug = $this->debug;
 	  $msg = $l->_periodToString();
-	  $this->dbg($l->__toString().' '.$msg);
+	  $this->dbg($l->__toString().' '.$msg,cnf_dev);
 	  if ($verbose && $msg) myPear::MESSAGE_add(b_fmt::redText("Delete lease $msg"));
 	  $l->delete();
 	}
@@ -1847,11 +1849,8 @@ class bForm_vm_Visit extends bForm_vm {
 		     myPear_db()->quote($buffer['v_avid'],1,'v_avid'),
 		     );
       
-      $q = myPear_db()->qquery("SELECT * FROM abs_visits ".
-			       "    LEFT JOIN zzz_avatars  ON v_avid = av_id ".
-			       // "    LEFT JOIN abs_events   ON v_eid = e_id ".
-			       // "    LEFT JOIN abs_expenses ON exp_vid = v_id ".
-			       // "    LEFT JOIN zzz_list_members ON v_projectid = lm_id ".
+      $q = myPear_db()->qquery("SELECT av_lastname,av_firstname,av_institute,v_id,v_start,v_end FROM abs_visits ".
+			       " LEFT JOIN zzz_avatars  ON v_avid = av_id ".
 			       " WHERE ".join(' AND ',$where),cnf_dev);
       while ($r=myPear_db()->next_record($q)){
 	if (empty($clashes[$v_id]['msg'])){

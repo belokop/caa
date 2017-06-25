@@ -138,7 +138,7 @@ class bForm_Avatar_vm extends bForm_Avatar_ea{
     if(is_object($v_host_avid))  $v_host_avid = $v_host_avid->ID;
     if   ( empty($v_host_avid) && is_object(bAuth::$av)) $v_host_avid = bAuth::$av->ID;
     if   (!empty($v_host_avid) && (int)$this->ID){
-      $q = myPear_db()->query("SELECT * FROM abs_visits LEFT JOIN zzz_avatars ON av_id = v_avid WHERE v_host_avid=$v_host_avid AND av_id = ".$this->ID);
+      $q = myPear_db()->query("SELECT v_id FROM abs_visits LEFT JOIN zzz_avatars ON av_id = v_avid WHERE v_host_avid=$v_host_avid AND av_id = ".$this->ID);
       $reply = (myPear_db()->num_rows($q) > 0);
     }
     return $reply;
@@ -213,7 +213,7 @@ class bForm_Avatar_vm extends bForm_Avatar_ea{
     $reply = array();
     $where = array("v_avid = '$this->ID'", "v_code > 0");
     if ($e_id) $where[] = "v_eid = '$e_id'";
-    $q = myPear_db()->query("SELECT * FROM abs_visits WHERE ".join(' AND ',$where));
+    $q = myPear_db()->query("SELECT v_eid FROM abs_visits WHERE ".join(' AND ',$where));
     while($r = myPear_db()->next_record($q)) $reply[] = $r['v_eid'];
     if (!empty($reply)) $this->dbg($reply,(bool)($this->debug || cnf_show_a));
     return $reply;
@@ -228,12 +228,11 @@ class bForm_Avatar_vm extends bForm_Avatar_ea{
     locateAndInclude('bForm_vm_Event');
 
     $reply = array();
-    $q = myPear_db()->query("SELECT * FROM abs_events WHERE ".
+    $q = myPear_db()->query("SELECT e_id,e_name,e_policy,e_start,e_end,e_code FROM abs_events WHERE ".
 			    " e_start   > ".time() ." AND ".
 			    " e_reg_end < ".time().
 			    " ORDER BY e_start ASC");
     while($r = myPear_db()->next_record($q)){
-      // b_debug::xxx(date('Y-m-d , ',$r['e_reg_end']).bForm_vm_Event::_name($r));
       if ($only_ifApplicantsExist && !bForm_vm_Event::_attenders($r['e_id'])) continue;
       // Skip if the event is already endorsed
       if (bForm_vm_Event::_getPolicy(VM_E_endorsed,$r,True)) continue;
@@ -264,7 +263,7 @@ class bForm_Avatar_vm extends bForm_Avatar_ea{
     $where[] = "v_avid = '$this->ID'";
     $reply = array();
 
-    $q = myPear_db()->query("SELECT * FROM abs_visits LEFT JOIN abs_events ON v_eid=e_id WHERE ".
+    $q = myPear_db()->query("SELECT v_id,v_policy,v_start,v_end,e_name FROM abs_visits LEFT JOIN abs_events ON v_eid=e_id WHERE ".
 			      join(' AND ',$where)." GROUP BY v_id ORDER BY v_start DESC");
     while($r = myPear_db()->next_record($q)){
       if (!($include_it = empty($check_policy))){

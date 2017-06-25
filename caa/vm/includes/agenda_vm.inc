@@ -300,7 +300,7 @@ class agenda_vm extends agenda{
 	    if (empty($accommodation_wish)){
 	      if($accommodation_now === array(LODGING_OA)){
 		$this->printInfo('');
-		$this->v->deleteLease(Null,$verbose);
+		$this->v->deleteBooking(Null,$verbose);
 	      }
 	    }else{
 	      foreach($accommodation_wish as $wish){
@@ -308,7 +308,7 @@ class agenda_vm extends agenda{
 		case LODGING_OA:
 		  if (!in_array($wish,$accommodation_now)){
 		    $this->printInfo('');
-		    if (!empty($accommodation_now)) $this->v->deleteLease(Null,$verbose);
+		    if (!empty($accommodation_now)) $this->v->deleteBooking(Null,$verbose);
 		    $this->v->setBooking(VM::$OA->ID,$verbose);
 		  }
 		  break;
@@ -327,7 +327,7 @@ class agenda_vm extends agenda{
 	    case LODGING_OA:
 	      if (0) if (!in_array($wish,$accommodation_now)){
 		  $this->printInfo('');
-		  if (!empty($accommodation_now)) $this->v->deleteLease(Null,$verbose);
+		  if (!empty($accommodation_now)) $this->v->deleteBooking(Null,$verbose);
 		  $this->v->setBooking(VM::$OA->ID,$verbose);
 		}
 	      if (empty($accommodation_now)){
@@ -350,7 +350,7 @@ class agenda_vm extends agenda{
 	}
 	
 	/* remove from the database the registrants who are not any more in agenda */
-	$q = myPear_db()->query("SELECT * FROM abs_visits WHERE v_eid=".$this->e->ID);
+	$q = myPear_db()->query("SELECT v_id,v_code FROM abs_visits WHERE v_eid=".$this->e->ID);
 	while ($r = myPear_db()->next_record($q)){
 	  if (!in_array($r['v_code'],$allRegistrants)) {
 	    $this->nUpdates++;
@@ -365,12 +365,11 @@ class agenda_vm extends agenda{
 	}
 
 	/* remove from the database the organizers who are not any more in agenda */
-	$q = myPear_db()->query("SELECT * FROM zzz_unit_members LEFT JOIN zzz_units ON u_id=um_uid WHERE u_parent=".$this->e->ID);
+	$q = myPear_db()->query("SELECT um_id,um_avid FROM zzz_unit_members LEFT JOIN zzz_units ON u_id=um_uid WHERE u_parent=".$this->e->ID);
 	while ($r = myPear_db()->next_record($q)){
 	  if (!in_array($r['um_avid'],$allOrganizers)) {
 	    $this->av = new bForm_Avatar_vm($r['um_avid']);
 	    $this->printInfo(b_fmt::redText("Removed from organizers"));
-	    //myPear_db()->qquery("DELETE FROM zzz_unit_members WHERE um_id = $r[um_id]",cnf_dev);
 	    VM_organizers($this->e->ID)->deleteMember($r['um_id'],cnf_dev);
 	  }
 	}

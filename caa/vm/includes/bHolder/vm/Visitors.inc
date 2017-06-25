@@ -937,7 +937,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
     }
     
     if (empty($c) || empty($d)){
-      // strange... TBU
+      myPear::WARNING_T("Strange, c='$c' d='$d'...",$this);
     }else{
       if ($this->highlight = @$this->highlights[$c][$d]['h']){
 	@$this->collected_highlights[$this->highlights[$c][$d]['z']][$this->highlight]++;
@@ -993,7 +993,8 @@ class bHolder_vm_Visitors extends bHolder_vm{
     foreach($this->no_accommodation as $action_message=>$list){
       $list = array_unique($list);
       sort($list);
-      $title = ($n=count($list)) . ' approved visitor'.($n>1?'s':'').' without accommodation';
+      $title = ($n=count($list)) . ' approved visitor'.($n>1?'s':'').' without accommodation.';
+      if (VM::hasRightTo('book_ah') && VM::$e->getValue('e_end') > time()) $title .= " The budget can't be approved unless this problem is solved.";
       if ($n > 1){
 	$summary = "$action_message:" . x('ul',b_fmt::joinMap('li',$list));
       }else{
@@ -1124,7 +1125,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
 																      'resetcache_once'=>1),'red');
       // Show button "Endorse the event and lock changes" 
       // for the events where the applications deadline is over
-    }elseif(empty($this->fatal_fnc) && VM::hasRightTo('endorse_event')){
+    }elseif(empty($this->fatal_fnc) && empty($this->no_accommodation) && VM::hasRightTo('endorse_event')){
       $message = (VM::$e->getValue('e_start',1) > time()
 		  ? '&nbsp;&nbsp;&nbsp;'.b_time::delta(time(),VM::$e->getValue('e_start',1)) . ' until the event starts'
 		  : 'By some reason the event is not endorsed');
@@ -1147,13 +1148,13 @@ class bHolder_vm_Visitors extends bHolder_vm{
    */
   private function help_text(){
 
-    $reply = array();
+    $reply_message = $reply_error = array();
     if (VM_administrator_here && 
 	!VM::outOfScope() && 
 	!VM::isArchived() && !is_object($this->av))  switch($this->doing){
 	
       case 'show_mails_exchange':
-	$reply['How to see/preview/send mails to the attenders'] =
+	$reply_message['How to see/preview/send mails to the attenders'] =
 	  join('<br/>',array('This page shows status of the mail exchange with the applicants.',
 			     '',
 			     'All the applicants get 2 Emails from the system:'.
@@ -1180,17 +1181,19 @@ class bHolder_vm_Visitors extends bHolder_vm{
 	    $text .= join('<br/>',
 			  array('',
 				'Note, you can "approve" and/or "reject" any applicant as many times as you need in order to adjust the budget. ',
-				'The main parts of the budget are accommodation and travel costs. Please select the accommodation with a "pop-menu" and eventually the travel reimbursement with button'.
+				'The main parts of the budget are accommodation and travel costs. '.
+				'Please select the accommodation with a "pop-menu" and eventually the travel reimbursement with button'.
 				bIcons()->get(array('i'=>'trip_on','d'=>'toggle the trip reimbursement')).'.',
 				'',
 				'Only when you are happy with the selection AND the event budget is approved by the '.myOrg_name.' administration, '.
 				'the applicants will be informed about the decision.'));
-	  $reply["ATTENTION: $key"] = $text;
+	  $reply_error[x('span class="boldText redText"',"ATTENTION: $key")] = $text;
 	}
       default:
       }
-    $this->dbg(count(array_keys($reply)).' lines');
-    return $reply;
+    $this->dbg(array_keys($reply_message),cnf_dev);
+    $this->dbg(array_keys($reply_error),cnf_dev);
+    return array('message'=>$reply_message,'error'=>$reply_error);
   }
   
 
@@ -1998,18 +2001,18 @@ class bHolder_vm_Visitors extends bHolder_vm{
 
     // The event is endorsed (i.e. changes are locked), show only pending applicants and return
     if(0)    if (VM::isEventEndorsed() || ($this->rec['v_end'] < time())){
-      if (False){ // ? Strange... To be changed?
-	$reply = array('');
-	if ($this->fnc_beslut) $reply[] = $this->highlights['fnc'][$this->fnc_beslut]['i'];
-	else                   $reply[] = '';
-	if (stripos(serialize($reply),'send mail') !== False) b_debug::var_dump('fnc_beslut',$this->fnc_beslut,date('Y-m-d',$this->rec['v_end']),$reply);
-	if (stripos(serialize($reply),'send mail') !== False) b_debug::internalError();
-      }else{   
-	$reply = array('','');
+	if (False){ // ? Strange... To be changed?
+	  $reply = array('');
+	  if ($this->fnc_beslut) $reply[] = $this->highlights['fnc'][$this->fnc_beslut]['i'];
+	  else                   $reply[] = '';
+	  if (stripos(serialize($reply),'send mail') !== False) b_debug::var_dump('fnc_beslut',$this->fnc_beslut,date('Y-m-d',$this->rec['v_end']),$reply);
+	  if (stripos(serialize($reply),'send mail') !== False) b_debug::internalError();
+	}else{   
+	  $reply = array('','');
+	}
+	//      $t = $reply; array_unshift($t,2,$this->rec['v_id']); $this->dbg($t,True);
+	return $reply;
       }
-      //      $t = $reply; array_unshift($t,2,$this->rec['v_id']); $this->dbg($t,True);
-      return $reply;
-    }
 
     bTiming()->cpu(__function__);
 
@@ -2336,7 +2339,8 @@ class bHolder_vm_Visitors extends bHolder_vm{
     //
     // Show the "help pages" on the top of the listing
     //
-    if ($helpPages = $this->help_text()){
+
+    foreach($this->help_text() as $type=>$helpPages){
       // "Open" the accordion when first viewed, then start with the "closed" accordion
       ob_start();
       $select = 99*((int)@$_SESSION[__CLASS__][b_crypt::hash($this->doing.b_fmt::joinX(',',$helpPages))]++);
@@ -2347,10 +2351,11 @@ class bHolder_vm_Visitors extends bHolder_vm{
 	print $body;
       }
       b_fmt::accordion('close');              
-      myPear::MESSAGE(ob_get_contents());
+      if ($type == 'message') myPear::MESSAGE(ob_get_contents());
+      else                    myPear::ERROR(ob_get_contents());
       ob_end_clean();
     }
-
+    
     // Show "big button"
     $this->boss_button();
 

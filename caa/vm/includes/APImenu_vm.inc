@@ -1009,9 +1009,9 @@ class APImenu_vm extends APImenu_ea{
       myPear::H1("Access Control List");
       VM_access()->show();
       if (b_cnf::get('merge')){ // checked, works... however lets wait a bit YB 2011-04-20 
-	$q = myPear_db()->query("SELECT av_id,av_firstname,av_lastname,CONCAT(av_firstname,av_lastname) AS fn  FROM zzz_avatars GROUP BY fn");
+	$q = myPear_db()->query("SELECT av_id,av_firstname,av_lastname,av_email,CONCAT(av_firstname,av_lastname) AS fn  FROM zzz_avatars GROUP BY fn");
 	while($r=myPear_db()->next_record($q)){
-	  $qq = myPear_db()->query("SELECT * FROM zzz_avatars WHERE ".
+	  $qq = myPear_db()->query("SELECT av_id,av_firstname,av_lastname,av_email FROM zzz_avatars WHERE ".
 				   " av_firstname = \"$r[av_firstname]\" AND ".
 				   " av_lastname  = \"$r[av_lastname]\" AND ".
 				   " av_id != '$r[av_id]'");

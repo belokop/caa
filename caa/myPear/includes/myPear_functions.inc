@@ -595,6 +595,7 @@ function nbsp($text) {
 
 /*
  * Workaround (may be there is a better one...)
+ * Remove checkbox flag from _POST
  */
 function set_cb_expected(&$data,$name='',$value_to_set='off'){
   if (empty($name))         $names = array_keys($data);
@@ -606,7 +607,7 @@ function set_cb_expected(&$data,$name='',$value_to_set='off'){
     if (!isset($data[$f]) && isset($data["${f}_cb_expected"])){
       $data[$f] = $value_to_set;
       unset($data["${f}_cb_expected"]);
-      if (cnf_dev) b_debug::xxx(sprintf("impose %s = '%s'",$f,$data[$f]),array(3,'redText',True));
+      if (cnf_dev) b_debug::_debug(sprintf("impose %s = '%s'",$f,$data[$f]),True);
     }
   }
 }

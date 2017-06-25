@@ -34,8 +34,8 @@ if (!(int)$v->ID){
       $v->delete();	   
       break;
       
-    case btn_deleteLease:	
-      $v->deleteLease($lease_id);	
+    case btn_deleteBooking:	
+      $v->deleteBooking($lease_id);	
       $v->getForm();
       break;
 

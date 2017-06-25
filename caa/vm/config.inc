@@ -3,9 +3,9 @@
 /**
  * Visitors Manager (VM) configuration file
  */
-$releaseDate = '2017-06-24';
+$releaseDate = '2017-06-25';
 define('VM_MODULE'   , 'vm');
-define('VM_VERSION','5.13.37');
+define('VM_VERSION','5.13.38');
 
 //
 // The Indico (agenda) host name
@@ -246,7 +246,7 @@ define('btn_edit_policy'        , 'modify policy');
 define('btn_edit_project', 'update payment source');
 define('btn_edit_ap',      'update information');
 define('btn_deleteAp',     'delete unused room');
-define('btn_deleteLease',  'delete this accommodation');   
+define('btn_deleteBooking',  'delete this accommodation');   
 define('txt_deleteVisit',  'delete this visit');
 
 define('VM_visit_info'    , 'vInfo');
