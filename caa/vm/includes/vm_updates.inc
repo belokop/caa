@@ -120,10 +120,11 @@ function vm_updates(){
 
     if (False){ // Fixes June 2017
       vm_compat_update_51();
+      vm_compat_update_52();
     }
 
     if (True){ // Fixes end June 2017
-      vm_compat_update_52();
+      vm_compat_update_53();
     }
 
     myPear_logs()->doNotLog = False;
@@ -131,7 +132,6 @@ function vm_updates(){
     bTiming()->cpu();
   }
 }
-      vm_compat_update_52();
 
 /*
  * Temporary(?) measure... Until i will find time to fix the Templates class
@@ -154,6 +154,43 @@ function vm_compat_update_ad_hocks(){
   // Another strange thing...
   vm_compat_update_47();
 
+}
+
+/*
+ * This is EX private function set_buildInObjects(){}
+ */
+function vm_compat_update_53(){
+
+  locateAndInclude('bForm_vm_Visit');
+  foreach(VM_projects()->get_projects($buildInOnly=True) as $id=>$type){
+    switch($type){
+    case VISIT_TYPE_RENT:
+      myPear_db()->query("UPDATE abs_visits SET v_projectid=$id WHERE v_type = '".VISIT_TYPE_RENT."'");
+      break;
+      
+    case LODGING_OA:
+      /*
+      // assign visits without the project number to OA project                                                                                                                
+      $q = myPear_db()->query(sprintf("SELECT v_id FROM abs_leases LEFT JOIN abs_visits ON lease_vid=v_id WHERE v_projectid=0 AND lease_aid='%s'",VM::$OA->ID));
+      while ($r = myPear_db()->next_record($q)){
+	$visit = new bForm_vm_Visit($r['v_id']);
+	$visit->defineVariables();
+	$visit->updateDB(array('v_projectid' => $id));
+	}
+      */
+      break;
+      
+    case LODGING_BR:
+      break;
+
+    default:
+      // assign the unknown project to OA 
+      b_debug::_debug($msg="Unexpected project type='$type' id=$id",True);
+      myPear::WARNING_T($msg);
+      myPear_db()->query("UPDATE abs_leases SET v_projectid = 31026 WHERE v_projectid=$id",True);
+      myPear_db()->query("DELETE FROM zzz_list_members WHERE lm_id=$id",True);
+    }
+  }
 }
 
 function vm_compat_update_52(){

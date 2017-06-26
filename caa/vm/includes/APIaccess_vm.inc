@@ -15,19 +15,17 @@ class APIaccess_vm extends APIaccess{
     
     bForm_Avatar::set_context(bAuth::$av);
     $authenticated = bAuth::authenticated();
-    $this->who_is_here(array('VM_manager_here'      => array('rank'=> 'RANK_vm_manager',
-							     'def' => 'superUser_here'),
+    $this->who_is_here(array('VM_manager_here'        => array('rank'=> 'RANK_vm_manager',
+							       'def' => 'superUser_here'),
 			     'VM_prg_coordinator_here'=> array('rank'=> 'RANK_vm_prg_coordinator',
-							     'def' => 'VM_manager_here'),
-			   //'VM_observer_here'     => array('rank'=> 'RANK_vm_observer',
-			   //			             'def' => 'VM_prg_coordinator_here'),
-			     'VM_visitor_here'      => array('rank'=> 'RANK_vm_visitor'),
-			     'VM_registrant_here'   => array('rank'=> 'RANK_vm_registrant'),
-			     'VM_stranger_here'=> array('rank'=> 'RANK__authenticated'),
-			     'VM_organizer_here'    => array('IF'  => ((VM::e_ID() && VM::$e->isOrganizer()) || VM::isOrganizer())),
-			     'VM_endorser_here'     => array('IF'  => ($authenticated && method_exists(bAuth::$av,'isEndorser') && bAuth::$av->isEndorser())),
-			     'VM_employee_here'     => array('IF'  => ($authenticated && method_exists(bAuth::$av,'isE')        && bAuth::$av->isE())),
-			     'VM_lt_visitor_here'   => array('IF'  => ($authenticated && method_exists(bAuth::$av,'isV')        && bAuth::$av->isV())),
+							       'def' => 'VM_manager_here'),
+			     'VM_visitor_here'        => array('rank'=> 'RANK_vm_visitor'),
+			     'VM_registrant_here'     => array('rank'=> 'RANK_vm_registrant'),
+			     'VM_stranger_here'       => array('rank'=> 'RANK__authenticated'),
+			     'VM_organizer_here'      => array('IF'  => ((VM::e_ID() && VM::$e->isOrganizer()) || VM::isOrganizer())),
+			     'VM_endorser_here'       => array('IF'  => ($authenticated && method_exists(bAuth::$av,'isEndorser') && bAuth::$av->isEndorser())),
+			     'VM_employee_here'       => array('IF'  => ($authenticated && method_exists(bAuth::$av,'isE')        && bAuth::$av->isE())),
+			     'VM_lt_visitor_here'     => array('IF'  => ($authenticated && method_exists(bAuth::$av,'isV')        && bAuth::$av->isV())),
 			     ));
 
     $this->who_is_here(array('VM_guests_handlare_here'    =>array('IF'=> ($authenticated && VM_administrators()->isHandlingDuty(DUTY_guests))),
@@ -35,7 +33,7 @@ class APIaccess_vm extends APIaccess{
 			     'VM_reimberser_here'         =>array('IF'=> ($authenticated && VM_administrators()->isHandlingDuty(DUTY_reimbursement))),
 			     'VM_unlocker_here'           =>array('IF'=> ($authenticated &&(VM_administrators()->isHandlingDuty(DUTY_unlock_events)||VM_manager_here))),
 			     'VM_external_registrant_here'=>array('IF'=>VM_registrant_here && !VM_lt_visitor_here && !VM_employee_here),
-			     'VM_administrator_here'      =>array('IF'=>VM_endorser_here || VM_organizer_here || superUser_here), // || VM_observer_here
+			     'VM_administrator_here'      =>array('IF'=>VM_endorser_here || VM_organizer_here || VM_prg_coordinator_here), 
 			     ));
 
     $this->who_is_here(array('VM_member_here'             =>array('IF'=>EA_member_here() || VM_external_registrant_here || VM_organizer_here),

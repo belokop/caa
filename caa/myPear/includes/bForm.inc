@@ -733,8 +733,9 @@ class bForm extends myPear_getValue{
       // This should never happen (two or more bForms have MODE == 'RW'), 
       // may be the MODE of the "secondary bForm's" must then be set to RO ??
       $this->MODE = 'RO'; 	  //  to be tested, but look OK 
-      myPear::WARNING_T("?????????????????????????? form is already open with ID=".bForm::$formOpened,$this);
-      $this->dbg("?? form is already open with ID=".bForm::$formOpened.", set MODE=RO",True);
+      myPear::WARNING_T($msg="??? form is already open with ID=".bForm::$formOpened.", set MODE=RO",$this);
+    }else{
+      $this->dbg("MODE = ".$this->MODE);
     }
   }
   

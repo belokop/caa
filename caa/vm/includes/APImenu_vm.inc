@@ -371,7 +371,7 @@ class APImenu_vm extends APImenu_ea{
       case tab_vm_adm_projects:
       case tab_vm_adm_unitOrganizers:
       case tab_vm_vis_welcome:
-	$reply = !VM::outOfScope() && VM_administrator_here; // VM_observer_here;
+	$reply = !VM::outOfScope() && VM_administrator_here;
 	break;
 
       case tab_vm_vis_sync:
@@ -593,7 +593,6 @@ class APImenu_vm extends APImenu_ea{
     $this->dbg();
     
     $this->start();
-    $this->set_buildInObjects();
 
     // Process updates of the rates, if any
     locateAndInclude('bList_vm_reimbursementRates');
@@ -1236,42 +1235,6 @@ class APImenu_vm extends APImenu_ea{
     }
   }
 
-  /*
-   * Check the built-in projects,
-   * eventually fix the project numbers in the visit/lease objects 
-   */
-  private function set_buildInObjects(){
-    // this should be called only once
-    if (!@$_SESSION[__function__]++){
-      
-      locateAndInclude('bForm_vm_Visit');
-      foreach(VM_projects()->get_projects($buildInOnly=True) as $id=>$type){
-	switch($type){
-	case VISIT_TYPE_RENT:
-	  myPear_db()->query("UPDATE abs_visits SET v_projectid=$id WHERE v_type = '".VISIT_TYPE_RENT."'");
-	  break;
-	  
-	case LODGING_OA:
-	  // assign visits without the project number to OA project
-	  $q = myPear_db()->query(sprintf("SELECT v_id FROM abs_leases LEFT JOIN abs_visits ON lease_vid=v_id WHERE v_projectid=0 AND lease_aid='%s'",VM::$OA->ID));
-	  while ($r = myPear_db()->next_record($q)){
-	    $visit = new bForm_vm_Visit($r['v_id']);
-            $visit->defineVariables();
-	    $visit->updateDB(array('v_projectid' => $id));
-	  }
-	  break;
-	  
-	case LODGING_BR:
-	  break;
-	  
-	default:
-	  $this->dbg("Unexpected type $type",True);
-	  myPear::WARNING_T("Unexpected type $type");
-	}
-      }
-    }
-  }
-    
   private function selectVisitAndVisitor($selectOnlyEvent=False){
     static $allAvatars = array();
     

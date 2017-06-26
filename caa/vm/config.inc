@@ -5,7 +5,7 @@
  */
 $releaseDate = '2017-06-26';
 define('VM_MODULE'   , 'vm');
-define('VM_VERSION','5.13.39');
+define('VM_VERSION','5.13.40');
 
 //
 // The Indico (agenda) host name
@@ -1034,7 +1034,7 @@ function VM_visit_policies($visit_type,$new_value=Null,$e=Null){
     if (!is_object($e))        $e = $new_value;
     if (!is_object($e))        $e = VM::$e;
     if (!($e instanceof bForm_vm_Event))      b_debug::internalError("Empty event arg");
-    $e->set_e_v_policy($new_value);
+    if (!is_object($new_value) && ($new_value !== Null)) $e->set_e_v_policy($new_value);
     $reply = $e->get_e_v_policy();
     
   }else{

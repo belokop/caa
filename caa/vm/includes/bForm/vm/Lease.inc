@@ -117,7 +117,8 @@ class bForm_vm_Lease extends bForm_vm{
       $cacheID = serialize(array($column,$lease_id,$mode,$data));
       $msg = "call #".(int)(@$cache_count[$cacheID]++);
       if (isset($cache[$cacheID])) {
-	if (!empty($cache[$cacheID])) b_debug::_debug("$msg, reply=".b_debug::parse_value($cache[$cacheID]),$verbose);
+	//	if (!empty($cache[$cacheID]))
+	b_debug::_debug("$msg, reply=".b_debug::parse_value($cache[$cacheID]),$verbose);
 	bTiming()->cpu();
 	return $cache[$cacheID];
       }
@@ -721,8 +722,8 @@ function __clean_cache(){}
   function readDefRecord() {
     $this->formDB = array();
     $q = myPear_db()->query("SELECT ".
-			    "lease_id,lease_start,lease_end,lease_vid,lease_aid,".
-			    "v_id,v_eid,".
+			    "lease_id,lease_start,lease_end,lease_vid,lease_aid,lease_option,".
+			    "v_id,v_eid,v_status,v_start,v_end,".
 			    "a_id,a_name,a_capacity,a_quantity,".
 			    "hut_id,hut_code,".
 			    "av_id,av_lastname,av_firstname ".
@@ -857,7 +858,7 @@ function __clean_cache(){}
     }
 
     if ($this->parentForm->isApproved()){
-      $this->dbg('------------start');
+      b_debug::_debug(starting);
       // check the start/end of the lease 
       if ($this->myPost_bForm()){
 	$this->hookVisit();
@@ -930,8 +931,14 @@ function __clean_cache(){}
 	// Cotenants
 	if (bForm_vm_Room::_mightBeSharable($this->formDB)){
 	  // Force the dialog in the RO mode
-	  if (($this->MODE=='RO') && !VM_cotenants()->get_cotenants($this->ID) && !self::get_lease_options($this->formDB,VM_no_cotenants)) $this->MODE = 'RW';
-	  if (self::tooLate($this->formDB)) $this->MODE = 'RO';
+	  if (($this->MODE=='RO') && !VM_cotenants()->get_cotenants($this->ID) && !self::get_lease_options($this->formDB,VM_no_cotenants)){
+	    $this->MODE = 'RW';
+	    $this->dbg("Force mode ".$this->MODE,cnf_dev);
+	  }
+	  if (self::_too_late($this->formDB)){
+	    $this->MODE = 'RO';
+	    $this->dbg("Too late, force mode ".$this->MODE,cnf_dev);
+	  }
 	  // Select a cotenant if there are candidates
 	  $cotenant = self::select_cotenant('_cotenant',$this,($this->MODE === 'RW'));
 	  if (!empty($cotenant)) $dialog[b_rawData.'1'] = array('Cotenant',$cotenant);
@@ -942,7 +949,7 @@ function __clean_cache(){}
 	$selector = self::select_who_pays('_virt_pay',$this);
 	if (!empty($selector)) $dialog[b_rawData.'2'] = array(' ',$selector);
 	$this->dbg('exit select_who_pays',cnf_dev);
-
+	
 	// Visit period
 	if ($this->isRO('lease_start') && $this->isRO('lease_end')){
 	  if (($lease_start=$this->getValue('lease_start')) && ($lease_end=$this->getValue('lease_end'))){
@@ -976,7 +983,7 @@ function __clean_cache(){}
 					      $this->parentForm->ID),
 			     'i'=>'i-hotel',
 			     'd'=>btn_edit_accommodation));
-      $this->dbg('------------end');
+      b_debug::_debug(exiting);
     }
   }
   
@@ -1109,12 +1116,13 @@ function __clean_cache(){}
    * Check the accompaning persons, optionally set the accommodation "full" 
    */
   public function v_accompaning(){
-    return self::_v_accompaning($this->formDB);
+    $this->hookVisit();
+    return self::_v_accompaning(array_merge($this->formDB,$this->parentForm->formDB));
   }
   public static function _v_accompaning($rec){
     if ($reply=(!empty($rec['lease_aid']) && ($n = $rec['v_accompaning']) && ($n+1 >= $rec['a_capacity']))){
       if (self::get_lease_options($rec,'get_pay')===VM_default_lease_pay){
-	myPear::WARNING(__function__."($rec[lease_id]): impose Nordita pays for one ".($n+1).'/'.$rec['a_capacity']);
+	myPear::WARNING_T("Impose Nordita pays for one ".($n+1).'/'.$rec['a_capacity']);
 	self::set_lease_options($rec,array('pay'=>VM_pay_something));
       }
       if (!self::get_lease_options($rec,VM_room_is_full)){
@@ -1540,6 +1548,7 @@ function __clean_cache(){}
       $name_for_select = $name . $rec['lease_id'];
       $MODE = 'RO';
     }
+    b_debug::_debug("MODE = $MODE",cnf_dev);
 
     // This is not supposed to be shown in the bHolder context.
     // Possible, but looks too messy..
@@ -1548,11 +1557,11 @@ function __clean_cache(){}
 
     // Sanity
     if (empty($rec['lease_aid']) || (@$rec['v_status'] !== STATUS_YES)){
-      b_debug::_debug('empty reply');
+      b_debug::_debug('v_status='.@$rec['v_status'],cnf_dev);
       return '';
     }
     
-    $get_pay = self::get_lease_options($rec,'get_pay',$MODE,cnf_dev);
+    $get_pay = self::get_lease_options($rec,'get_pay');
     $options = array();
     if (is_object($recP)){
       VM::$formDummy->MODE = $MODE;
@@ -1562,6 +1571,7 @@ function __clean_cache(){}
       b_debug::_debug("getValue(name_for_select) = ".var_export(VM::$formDummy->getValue($name_for_select),True),cnf_dev); 
 
       $options = self::get_lease_options($rec,'pay_menu',$MODE,cnf_dev);
+      b_debug::_debug($options,cnf_dev);
       $hidden_values = join("\n",array("<input type='hidden' name='lease_id' value='".$rec['lease_id']."'/>",
 				       "<input type='hidden' name='v_id'     value='".$rec['v_id']."'/>",
 				       "<input type='hidden' name='a_id'     value='".$rec['a_id']."'/>"));
@@ -1571,7 +1581,7 @@ function __clean_cache(){}
 	      VM::$formDummy->selectMenu_exec($name_for_select,
 					      $options,
 					      "onchange='submit()'",
-					      False).
+					      ($MODE=='RW')).
 	      $hidden_values.
 	      (is_object($recP)?"<input type='hidden' name='_post_bForm_ID_once' value='".$recP->ID."'/>":"").
 	      "<noscript><input type='submit' value='go'/></noscript>"),
@@ -1579,7 +1589,7 @@ function __clean_cache(){}
 	: (empty($options) 
 	   ? '' 
 	   : $options . $hidden_values);
-	   //	   : array($name_for_select =>array('textField'))); // .$hidden_values);
+      //	   : array($name_for_select =>array('textField'))); // .$hidden_values);
       b_debug::_debug("reply=".var_export($options,True));
     }else{
       $reply = '';
@@ -1587,11 +1597,14 @@ function __clean_cache(){}
     return $reply;
   }
 
-  public static function tooLate($rec,$cotenants=Null){
-    if (empty($cotenants)) $cotenants = VM_cotenants()->get_cotenants($rec);
+  /*
+   *
+   */
+  public static function _too_late($rec,$cotenants=Null){
+    if ($cotenants === Null) $cotenants = VM_cotenants()->get_cotenants($rec);
     $lease_dates = bList_vm_cotenants::$lease_dates;
     $too_late = ((VM::isEventEndorsed() || VM::isArchived()) ||  
-		 (@$rec['v_end'] < time() + 24*3600) ||
+		 ($rec['v_end'] < time() + 24*3600) ||
 		 (!empty($cotenants) && ($lease_dates[1] < time())));
     b_debug::_debug("too_late = ".var_export($too_late,True),cnf_dev);
     return $too_late;
@@ -1611,8 +1624,7 @@ function __clean_cache(){}
     if (!bForm_vm_Room::_mightBeSharable($rec) || self::_room_is_full($rec)) return '';
     
     $cotenants = VM_cotenants()->get_cotenants($rec);
-    
-    if (self::tooLate($rec,$cotenants)){
+    if (self::_too_late($rec,$cotenants)){
       $RW = False;
     }elseif (!is_object($recP) && (!empty($cotenants) || self::get_lease_options($rec,VM_no_cotenants))){
       // The cotenant can't be changed in the "applicants list", this would be too messy
@@ -1671,7 +1683,7 @@ function __clean_cache(){}
       
       // In RO mode just print the cotenant names
       $names = VM_cotenants()->get_cotenants($rec,False,'names');
-      if (!self::tooLate($rec,$cotenants) && empty($names) && !self::get_lease_options($rec,VM_no_cotenants)) $names = array(b_fmt::redText('to be selected'));
+      if (!self::_too_late($rec,$names) && empty($names) && !self::get_lease_options($rec,VM_no_cotenants)) $names = array(b_fmt::redText('to be selected'));
       $reply = join(',',$names);
       if (!empty($reply)) b_debug::_debug($reply);
     }

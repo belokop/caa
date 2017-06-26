@@ -177,7 +177,7 @@ class bForm_vm_Visit extends bForm_vm {
   function getPolicies(){
     $this->hookEvent();
     $v_type = $this->getValue('v_type',True);
-    return self::_getPolicies(array('e_v_policy'=> VM_visit_policies($v_type,$this->e),
+    return self::_getPolicies(array('e_v_policy'=> VM_visit_policies($v_type,Null,$this->e),
 				    'v_type'    => $v_type,
 				    'v_eid'     => $this->getValue('v_eid',True)));
   }
@@ -376,7 +376,8 @@ class bForm_vm_Visit extends bForm_vm {
       $this->deleteBooking(Null,$verbose=True);
     case STATUS_YES:
       // cancel/set policies of "when_approved" type
-      foreach(VM_visit_policies($this->getValue('v_type')) as $p){
+      $this->hookEvent();
+      foreach(VM_visit_policies($this->getValue('v_type'),Null,$this->e) as $p){
 	if (@VM::$v_policies[$p]['t'] === when_approved) $this->setPolicy($p,($v_status==STATUS_YES?1:0),True);
       }
 
@@ -1244,7 +1245,7 @@ class bForm_vm_Visit extends bForm_vm {
   private function accommodationBlock(){
     if (!$this->visitOutOfScope()){
       $all_leases = $this->get_allLeases();
-      if (empty($all_leases) && ($this->getValue('e_type')==VISIT_TYPE_COLLABORATION)){
+      if (empty($all_leases) && ($this->getValue('v_type')==VISIT_TYPE_COLLABORATION)){
 	$this->setBooking(VM::$OA->ID,$verbose);
       }else{
 	foreach($all_leases as $l) $l->getForm();
