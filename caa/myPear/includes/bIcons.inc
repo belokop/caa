@@ -8,7 +8,7 @@
    *   l  - url, i.e. the icon is a submit button 
    *   la - same as 'l', but the page to be shown as an modal overlay thru bJS()->modal_ajax 
    *   li - same as 'l', but the page to be shown as an modal overlay thru bJS()->modal_iframe
-   *   u  - the parced l-url
+   *   u  - the parsed l-url
    *   c  - css class to be added to the 'img' tag: <img class="<c>" .../>
    *   X  - the button description should not go to the summary (i.e. to the icons legend)
    *   r  - sub-folder where the icon is kept

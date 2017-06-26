@@ -1,5 +1,9 @@
 Changes log                                                                                                                                                             
                                                                                                                                                                                  
+2017-06-26, Version 5.3.208,
+A       myPear/includes/bCover_2010.inc
+A       myPear/includes/bCover_2017.inc
+                                                                                                                                                                                 
 2017-06-25, Version 5.3.207,
                                                                                                                                                                                  
 2017-06-24, Version 5.3.206,

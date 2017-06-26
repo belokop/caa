@@ -52,7 +52,7 @@ class b_table{
       $this->prt_tag(sprintf("%s\n<table id='b_table%d' %s> <!-- open table %d -->\n",
 			     ($this->b_table_div ? "\n<div id='b_table_div".$this->tNumber."'>" : ""),
 			     $this->tNumber,
-			     $this->_parceAttr($attr,'b_table'),
+			     $this->_parseAttr($attr,'b_table'),
 			     $this->tNumber)); 
     }
   }
@@ -62,7 +62,7 @@ class b_table{
   /*
    *
    */
-  protected function _parceAttr($attr,$imposedClass=array(),$droppedClass=array()){
+  protected function _parseAttr($attr,$imposedClass=array(),$droppedClass=array()){
     if (!is_string($attr)) $attr = '';
 
     // Parse the attributes, optinally impose a class
@@ -121,12 +121,12 @@ class b_table{
       $this->tbody_opened = True;
     }
 
-    $this->prt_tag("\n <tr" .$this->_parceAttr($attr).">"); 
+    $this->prt_tag("\n <tr" .$this->_parseAttr($attr).">"); 
     $this->tr++; 
     $this->nRows++; 
   }
-  function tdo($attr='')         { $this->prt_tag("\n  <td".$this->_parceAttr($attr).">"); $this->td++; }
-  function tho($attr='')         { $this->prt_tag("\n  <th".$this->_parceAttr($attr).">"); $this->th++; }
+  function tdo($attr='')         { $this->prt_tag("\n  <td".$this->_parseAttr($attr).">"); $this->td++; }
+  function tho($attr='')         { $this->prt_tag("\n  <th".$this->_parseAttr($attr).">"); $this->th++; }
   function tdc()                 { $this->prt_tag("</td>");      $this->td--; }
   function thc()                 { $this->prt_tag("</th>");      $this->th--; }
 
@@ -312,14 +312,14 @@ class b_table_zebra extends b_table {
   
   function tro($attr=''){
     $this->open();
-    $this->prt_tag("\n <tr".$this->_parceAttr($attr,'b_table-zebra').">");
+    $this->prt_tag("\n <tr".$this->_parseAttr($attr,'b_table-zebra').">");
     $this->tr++; 
     $this->nRows++; 
   }
 
   function tdo($attr=''){ 
     if ($this->autoBreakLine) $attr .= ' b_wrap';
-    $this->prt_tag("\n  <td ".$this->_parceAttr($attr).">"); 
+    $this->prt_tag("\n  <td ".$this->_parseAttr($attr).">"); 
     $this->td++; 
   }
   

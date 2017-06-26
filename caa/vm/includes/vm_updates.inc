@@ -358,7 +358,7 @@ function vm_compat_update_49(){
     }
     vm_compat_update49_pack_me($r['a_price']);
 
-    // parce...
+    // parse...
     list($a_name,$a_pay,$sharable,$a_comment,$pay_comment) = vm_compat_update_49_parser($r,$table);
     if (empty($a_pay)) $a_pay = VM_default_lease_pay;
     @$a_pays[$a_pay]++;

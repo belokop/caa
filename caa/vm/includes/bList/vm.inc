@@ -13,6 +13,7 @@ class bList_vm extends bList{
    *
    */
   public function __construct($parent_ID_p){
+    if ($this->debug) b_debug::_debug(starting);
     locateAndInclude('bForm_vm_Event');
     
     // We might be called before the "official start"
@@ -36,9 +37,8 @@ class bList_vm extends bList{
     }
     
     // Sanity
-    $this->dbg($parent_ID);
     if (($this->e !== Null) && ($this->e->ID != @VM::$e->ID)){
-      $this->dbg('Strange e_ID, VM::$e->ID="'.var_export(@VM::$e->ID,True).'" $this->e->ID="'.var_export($this->e->ID,True).'"');
+      $this->dbg('Strange e_ID, VM::$e->ID="'.var_export(@VM::$e->ID,True).'" $this->e->ID="'.var_export($this->e->ID,True).'"',True);
     }
     
     // Call the parent
@@ -49,6 +49,7 @@ class bList_vm extends bList{
                     ? myOrg_name. ' '. strToLower($this->getValue('l_name'))
 		    : $this->getValue('l_name') .' for ' . x('"',b_fmt::strcut($this->e->name(),33,'...')));
     $this->dbg($this->title);
+    if ($this->debug) b_debug::_debug(exiting);
   }
 
   function isManager(){

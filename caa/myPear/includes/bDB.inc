@@ -211,23 +211,21 @@ class bDB extends mysqli{
    *
    */
   function next_record($res,$method=MYSQLI_ASSOC){
-    if (!$this->isReady)   return Null;
-    if (empty($res)){
-      if (!is_bool($res)) if(cnf_dev) b_debug::internalError("Empty result object - ".$this->last_query);
-      return array();
+    if ($this->isReady){
+      if (empty($res)){
+	if (!is_bool($res)) if(cnf_dev) b_debug::internalError("Empty result object - ".$this->last_query);
+	return array();
+      }
+      if (function_exists('bTiming')) bTiming()->cpu('qNEXT');
+      $reply = (is_object($res)
+		? $res->fetch_array($method)
+		: (is_bool($res) 
+		   ? array() 
+		   : b_debug::internalError('result is not an object, but '.var_export($res,True))));
+      $this->unquote($reply);
+      if (function_exists('bTiming')) bTiming()->cpu();
     }
-    if (function_exists('bTiming')) bTiming()->cpu('qNEXT');
-    if (is_object($res)){
-      $reply = $res->fetch_array($method);
-    }elseif (is_bool($res)){
-      if (cnf_dev) b_debug::traceBack("res is boolean ".($res ? 'TRUE' : 'FALSE'));
-      $reply = array();
-    }else{
-      b_debug::internalError('result is not an object, but '.var_export($res,True));
-    }
-    $this->unquote($reply);
-    if (function_exists('bTiming')) bTiming()->cpu();
-    return $reply;
+    return @$reply;
   }
 
   /*
@@ -334,16 +332,15 @@ class bDB extends mysqli{
 			   "\\'"   => "'",
 			   '\\"'   => '"',
 			   '\\r\\n'=>"\n",
-			   '\\n'=>"\n",
+			   '\\n'   =>"\n",
 			   );
     if (is_array($text_array)){
       foreach(array_keys($text_array) as $k){
 	if (($text_was=$text_array[$k]) === Null) continue;
-	$text_array[$k] = b_crypt::encode_utf8($text_array[$k]);
-	if (False) if ($d=b_fmt::diffHTML($text_was,$text_array[$k])) myPear::DEBUG(x("span class='lgreenText align-left'",__METHOD__.'(encode_utf8): '.x('em',$d)));
-	foreach ($quotes as $f=>$t){
-	  if (strpos($text_array[$k],$f) !== False)  $text_array[$k] = str_replace($f,$t,$text_array[$k]);
-	}
+	$text_array[$k] = str_replace(array_keys($quotes),
+				      array_values($quotes),
+				      b_crypt::encode_utf8($text_array[$k]));
+	if (False) if ($d=b_fmt::diffHTML($text_was,$text_array[$k])) b_debug::_debug($d,array("lgreenText align-left",cnf_dev));
       }
     }
   }

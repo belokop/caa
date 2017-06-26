@@ -18,6 +18,7 @@ locateAndInclude('bList_vm');
  */
 class bList_vm_accommodationOptions extends bList_vm{
 
+  var $debug = True;
   var $list_quering = array('lm_key'  =>'Name',  // hut_id
 			    );
   var $list_showing = array('_hut_id' => '',
@@ -52,6 +53,7 @@ class bList_vm_accommodationOptions extends bList_vm{
    * Parent is either the Organization or an Event
    */
   function __construct($parent_ID=Null){
+    if ($this->debug) b_debug::_debug(starting);
 
     //    This class makes sense for the events only...
     //    Difficult to imaging how it might be used for the "out of events" visits...
@@ -84,6 +86,7 @@ class bList_vm_accommodationOptions extends bList_vm{
 
     // Build rent prices for the selected accommodations
     $this->build_dynamic_packables();
+    if ($this->debug) b_debug::_debug(exiting);
   }
 
   private static $id2x_prefix = 'r';
@@ -151,7 +154,7 @@ class bList_vm_accommodationOptions extends bList_vm{
    */
   function getFormAdd_OK(){
     if ($this->parent_ID != myOrg_ID){
-
+      
       $see_here = '';
       static $dejaVu=0; if (!$dejaVu++) myPear::INFO(["Select the accommodation option, click <em>\"continue ...\"</em>, after that select the desired hotel.",
 						      "Note, you can select only hotels defined by the ".myOrg_name." accommodation $see_here, ".
@@ -222,6 +225,7 @@ class bList_vm_accommodationOptions extends bList_vm{
    *
    */
   protected function getFormAdd(){
+    if ($this->debug) b_debug::_debug(starting);
 
     $this->bForm($this->list_quering,True);
     $this->f->tips = array();
@@ -235,7 +239,8 @@ class bList_vm_accommodationOptions extends bList_vm{
 	$hut_id = $this->getMemberValue($this->getValue('lm_id'),'lm_key');
 	if ($hut_id != $r['lm_key']) $excludes[] = $r['lm_key'];
       }
-      
+      $this->dbg("excludes=".join(', ',$excludes));      
+
       // Select those huts which are "valid" from today for another year (or during the event time period)
       list($from,$to) = (is_object($this->e)
 			 ? array($this->e->getValue('e_start'),
@@ -252,6 +257,7 @@ class bList_vm_accommodationOptions extends bList_vm{
       if (!$this->getValue('lm_id')) $this->f->textHidden('lm_id','new');
     }
     $this->f->closeForm();
+    if ($this->debug) b_debug::_debug(exiting);
   }
   
   /*

@@ -183,7 +183,7 @@ class myPear_taskManager extends myPear_base{
     $_function = array();
     if (!empty($task['class']))    $_function[] = $task['class'].'()->';
     if (!empty($task['function'])) $_function[] = $task['function'];
-    if (is_array(@$task['args']))  $_function[] = x('(',join(', ',b_debug::parce_tb_arguments($task['args'])));
+    if (is_array(@$task['args']))  $_function[] = x('(',join(', ',b_debug::parse_tb_arguments($task['args'])));
     $reply = implode('',$_function);
     return ($strong
 	    ? x('strong',$reply)

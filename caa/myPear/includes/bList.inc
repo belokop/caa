@@ -258,7 +258,7 @@ class bList extends myPear_getValue{
    *  The list name
    */
   public function __construct($parent_ID,$rank=Null){
-
+    if ($this->debug) b_debug::_debug(starting);
     $this->TABLEID   = $this->keys['id'];
     $this->parent_ID = $parent_ID;
 
@@ -289,6 +289,7 @@ class bList extends myPear_getValue{
       else                                                                                    $sBy = $this->TABLEID_member;     
     }
     $this->repetValuesCol1only = $sBy;
+    if ($this->debug) b_debug::_debug(exiting);
   }
 
   /*

@@ -117,7 +117,7 @@ class bForm_vm_Lease extends bForm_vm{
       $cacheID = serialize(array($column,$lease_id,$mode,$data));
       $msg = "call #".(int)(@$cache_count[$cacheID]++);
       if (isset($cache[$cacheID])) {
-	b_debug::_debug("$msg, reply=".b_debug::parse_value($cache[$cacheID]),cnf_dev);
+	if (!empty($cache[$cacheID])) b_debug::_debug("$msg, reply=".b_debug::parse_value($cache[$cacheID]),$verbose);
 	bTiming()->cpu();
 	return $cache[$cacheID];
       }
@@ -1242,7 +1242,7 @@ function __clean_cache(){}
 
     // Pack the leases by bCover    
     locateAndInclude('bCover');
-    $solver = new bCover($entries,'n','day1','day9');
+    $solver = new bCover($entries,'day1','day9','n');
     $solver->debug = True;
     foreach($solver->solve() as $n=>$solution) $matrix[] = $solution;
     //    b_debug::print_r($matrix,'solution','nosort');
@@ -1291,23 +1291,34 @@ function __clean_cache(){}
     bTiming()->cpu(__function__);
     list($start,$end) = array(b_time::check_in($rec['lease_start']),
 			      b_time::check_out($rec['lease_end']));
-
-    //    b_checkBox::set('seeAccodated','on');    locateAndInclude('bIcal_matrix_abs');    static $ggg=0; if ($ggg++ <3) bIcal_matrix_abs::_show($start,$end,array(),Null);
-
-    b_debug::_debug(b_time::period($start,$end));
+    b_debug::_debug(b_time::period($start,$end),cnf_dev);
     
     $huts = array();
     if (!empty($hut_code)){
+      //    b_debug::_debug($hut_code,True);
+      $where = array("a_end >= $start ",
+		     "( a_start <= $end OR a_start = 0 OR a_start IS NULL) ",
+		     );
       $where[] = empty($accommodationOptions)
  	? '1'
 	: ' hut_id != '.join(' AND hut_id !=  ',$accommodationOptions); // excludes
       $where[] = (is_numeric($hut_code)
-		  ? "hut_code = '$hut_code'"
-		  : "1");
-      $q = myPear_db()->qquery("SELECT hut_id,hut_name FROM abs_huts WHERE ".join(' AND ',$where),cnf_dev);
-      while ($r = myPear_db()->next_record($q)) $huts['hut_name'] = $r['hut_id'];
+		  ? "hut_code  = '$hut_code'"
+		  : "hut_code != '".HUT_BI."'");
+      //    b_debug::_debug($where,True);
+      $huts_select = array();
+      $q = myPear_db()->qquery("SELECT hut_id,hut_name FROM abs_huts LEFT JOIN abs_rooms ON a_hutid=hut_id WHERE ".join(' AND ',$where),cnf_dev);
+      while ($r = myPear_db()->next_record($q)){
+	$huts_select[$r['hut_id']] = $r['hut_name'];
+	$huts[$r['hut_name']] = $r['hut_id'];
+      }
       $event_context = False;
       $accommodationOptions = False;
+      if (!is_numeric($hut_code)){
+	bTiming()->cpu(__function__);
+	b_debug::_debug("reply=".join(',&nbsp;',array_values($huts_select)),cnf_dev);
+	return $huts_select;
+      }
     }else{
       // Chase for the associated event ID, since VM::_MENU()->context() 
       // might give a wrong answer for the search results.
@@ -1333,8 +1344,8 @@ function __clean_cache(){}
     }
     $huts_list = join(', ',array_values($huts));
     
-    b_debug::_debug(b_fmt::redText("context ".($event_context ? 'event '.$accommodationOptions->e->name() : 'org')));
-    b_debug::_debug('huts = '.$huts_list);
+    b_debug::_debug("context ".($event_context ? 'event '.$accommodationOptions->e->name() : 'org'),array('redText',cnf_dev));
+    b_debug::_debug('huts = '.$huts_list,cnf_dev);
 
     // General time limits
     $where = array("hut_id IN ($huts_list) ",
@@ -1380,33 +1391,30 @@ function __clean_cache(){}
 				       " GROUP BY lease_id ".
 				       " ORDER BY CONCAT(hut_code,hut_name,a_capacity) ASC"),
 			       cnf_dev);
-      $cover = array();    
+      $bCover_input = array();    
       while ($r = myPear_db()->next_record($q)){
 	$cotenants = VM_cotenants()->get_cotenants($r['lease_id'],True,'names');
 	$entry = array('day1' => b_time::check_in ($r['lease_start']),
 		       'day9' => b_time::check_out($r['lease_end']),
-		       'prd'  => b_time::period($r['lease_start'],$r['lease_end']),
-		       'code' => $r['hut_code']
 		       );
 	$id = bForm_vm_Room::room_id($r);
-	if ($cotenants) $cover[$id][join(',',$cotenants)] = $entry;
-	else            $cover[$id][] = $entry;  
+	if ($cotenants) $bCover_input[$id][join(',',$cotenants)] = $entry;
+	else            $bCover_input[$id][] = $entry;  
+	$room_capacities[$id] = $r['a_capacity'];
 	if (($r['a_capacity']>1) && 
 	    (count($cotenants)+@$r['v_accompaning']<$r['a_capacity']) &&
 	    !self::_room_is_full($r)) $booked_beds[$id]++;
-	$room_capacities[$id] = $r['a_capacity'];
       }
       arsort($booked_beds);
       if (!empty($booked_beds)) b_debug::print_r($booked_beds,'booked_beds','nosort');
 
       // Calculate the optimal leases distribution
       locateAndInclude('bCover');
-      foreach($cover as $id=>$leases){
-	$solver = new bCover($leases,'n','day1','day9');
-	//$solver->debug = True;
-	foreach($solver->solve() as $n=>$solution){
-	  $booked_rooms[$id][] = $solution;
-	}
+      foreach($bCover_input as $id=>$entries){
+	$solver = new bCover($entries,'day1','day9','n');
+	$solution_array = $solver->solve();
+	//	foreach($solution_array as $n=>$solution) $booked_rooms[$id][] = $solution;
+	$booked_rooms[$id] = array_values($solution_array);
       }
     }
     

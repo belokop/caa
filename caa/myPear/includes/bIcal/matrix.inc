@@ -174,7 +174,7 @@ class bIcal_matrix extends bIcal {
 	$line[$k][DAY1] = b_time::check_in($v[DAY1]);
 	$line[$k][DAY9] = b_time::check_out($v[DAY9]);
       }
-      $solver = new bCover($line,'n',DAY1,DAY9);
+      $solver = new bCover($line,DAY1,DAY9,'n');
       foreach($solver->solve() as $n=>$solution) $matrix[bIcal_formatName($name,$n)] = $solution;
     }
 
@@ -300,7 +300,19 @@ class bIcal_matrix extends bIcal {
     return nbsp(formatTime($time) .': '. strip_tags($text1).' / '.strip_tags($text2));
   }
 
-  function sort(&$line){
+  function sort($array){
+    if (!function_exists('cmp_2017')){
+      function cmp_2017($a, $b){
+	return ($a[DAY1] == $b[DAY1]
+		? 0
+		: ($a[DAY1] < $b[DAY1]) ? -1 : 1);
+      }
+    }
+    usort($array,'cmp_2017');
+    return $array;
+  }
+
+  function sort_old($line){
     $reply = $i = array();
     foreach ($line as $k=>$r) $i[$r[DAY1]] = $k;  
     ksort($i);  

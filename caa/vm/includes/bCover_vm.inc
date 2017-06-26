@@ -1,9 +1,9 @@
 <?php
-locateAndInclude('bCover');
+locateAndInclude('bCover_2010');
 locateAndInclude('bForm_vm_Lease');
 locateAndInclude('bHolder_vm_Rooms');
 locateAndInclude('bHolder_vm_Offices');
-class bCover_vm extends bCover {
+class bCover_vm extends bCover_2010 {
 
   var $id    = 'v_code';
   var $start = 'v_start';

@@ -684,12 +684,12 @@ class b_fmt{
     if (strpos($string,'-BR-') !== False)   return $string;
     if (preg_match(';^<[^<^>]*>$;',$string))return $string; 
     
-    $string_parced = array('o'=>'','b'=>'','c'=>'');
+    $string_parsed = array('o'=>'','b'=>'','c'=>'');
     
     $string = trim(b_fmt::unEscape($string));
     if (preg_match(';^(<.*>)(.*)(</.*>)$;',$string,$m)){
       if (strip_tags($m[2]) == strip_tags($string)){
-	$string_parced = array('o'=>$m[1],
+	$string_parsed = array('o'=>$m[1],
 			       'b'=>$m[2],
 			       'c'=>$m[3]);
       }else{
@@ -697,7 +697,7 @@ class b_fmt{
 	return $string;
       }
     }else{
-      $string_parced['b'] = strip_tags($string);
+      $string_parsed['b'] = strip_tags($string);
     }
     
     $formattedstring = array();
@@ -705,7 +705,7 @@ class b_fmt{
 			preg_replace("/ (..?.?.?).-ZZZZZZ-/",' \1. ',
 				     preg_replace("/\.\s+/",".-ZZZZZZ-",
 						  preg_replace("/\b(\w\w?\w?\w?)\./",'\1&#46;',
-							       str_replace("\n"," ",$string_parced['b']))))) as $line) {
+							       str_replace("\n"," ",$string_parsed['b']))))) as $line) {
       if (strlen($line) > $normalLine){
 	while (strlen($line) > (int)(1.5 * $normalLine)) {
 	  $n = strpos($line,' ',$normalLine);
@@ -717,9 +717,9 @@ class b_fmt{
     //if ($line=trim($line)) $formattedstring[] = nbsp($line);
     }    
     return
-      $string_parced['o'].
+      $string_parsed['o'].
       join(($brEncoded?'-BR-':'<br/>'),$formattedstring).
-      $string_parced['c'];
+      $string_parsed['c'];
   }
   
   /*
@@ -1096,8 +1096,6 @@ class b_fmt{
     if (is_object($array)){
       $reply = True;
     }elseif(is_array($array)){
-      //	$n = 0;
-      //	foreach(array_keys($array) as $key) if ($key != (string)$n++) $reply = True;
       $reply = !empty($array) && ($array !== array_values($array));
       //     var_dump($reply,$array);
     }else{
@@ -1726,7 +1724,7 @@ class b_debug extends myPear_base{
   /*
    *
    */
-  public static function parce_tb_arguments($callStack_args){
+  public static function parse_tb_arguments($callStack_args){
     $args = array();
     foreach($callStack_args as $arg) $args[] = self::parse_value($arg);
     return $args;
@@ -1737,7 +1735,7 @@ class b_debug extends myPear_base{
    */
   public static function parse_tb_entry($call,$class=Null){
     
-    // Parce the parent class    
+    // Parse the parent class    
     $classArgs = array();
     if (is_object($class) && ($call['type']==='->')){
       if    ($class instanceof bUnit) {$classArgs[] = $class->parent_ID; $classArgs[] = $class->rank; }
@@ -1754,7 +1752,7 @@ class b_debug extends myPear_base{
 		     ($call['type'] === '->' ? x('(',join(',',$classArgs)) : ''),
 		     $call['type'],
 		     $call['function'],
-		     join(', ',self::parce_tb_arguments($call['args'])));
+		     join(', ',self::parse_tb_arguments($call['args'])));
     return $reply;
   }
 
@@ -2666,6 +2664,7 @@ class b_time{
    *
    */
   public static function period($start,$end=0,$noDate=False){
+    if (is_array($start)) list($start,$end) = $start;
     if (self::is_valid($start) == 2) $start = self::txt2unix($start);
     if (self::is_valid($end)   == 2) $end   = self::txt2unix($end);
     if (empty($start) && empty($end)){

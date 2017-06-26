@@ -3,9 +3,9 @@
 /**
  * Visitors Manager (VM) configuration file
  */
-$releaseDate = '2017-06-25';
+$releaseDate = '2017-06-26';
 define('VM_MODULE'   , 'vm');
-define('VM_VERSION','5.13.38');
+define('VM_VERSION','5.13.39');
 
 //
 // The Indico (agenda) host name
