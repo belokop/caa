@@ -21,6 +21,7 @@ function page_load_progress_settings($form, &$form_state) {
       1000 => t('Show after a 1 second delay'),
       3000 => t('Show after a 3 seconds delay'),
       5000 => t('Show after a 5 seconds delay'),
+     30000 => t('Show after 30 seconds delay'),
     ),
     '#default_value' => variable_get('page_load_progress_time', 10),
   );
