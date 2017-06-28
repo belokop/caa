@@ -124,6 +124,14 @@ class bHolder_wiw_trip extends bHolder{
     $this->rec = array();
   }
   
+  /*
+   * drawHeader is dummy for WIW
+   */
+  function drawHeader(){}
+
+  /*
+   *
+   */
   function listEntries_closing(){
     static $max_per_page = 30;
 

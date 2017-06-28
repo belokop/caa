@@ -76,6 +76,8 @@ class b_tabs_myPear extends myPear_base{
   private $cnf_bTabs = 0;
   function __construct($tabs=array(),$selected=0){
 
+    print "\n<!-- ".__method__." start -->\n";
+
     // Load the styles
     bJS()->add_css_file('b_tabs.css');
     $this->ID = ++self::$NN;
@@ -139,6 +141,7 @@ class b_tabs_myPear extends myPear_base{
     }
     $this->current_tabTitle = @$this->tabs[$this->_GET_b_tab];
     $this->dbg($this->n_symbols);
+    print "<!-- ".__method__." end -->\n";
   }
 
   /*
@@ -165,6 +168,7 @@ class b_tabs_myPear extends myPear_base{
    *
    */
   private function body_close($closing=False){
+    print "<!-- ".__method__." start -->\n";
     if ($this->tab_counter > 0){
       $body_content = ob_get_contents();
       ob_end_clean();
@@ -174,6 +178,7 @@ class b_tabs_myPear extends myPear_base{
       ob_start();
       $this->tab_counter++;
     }
+    print "<!-- ".__method__." end -->\n";
   }
 
   /*

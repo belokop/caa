@@ -1070,6 +1070,13 @@ class bForm extends myPear_getValue{
     if (empty($values)) $values = array();
     $selected = $this->getValue($name,True);
     if (!$selected) $selected = @$values['default'];
+    //
+    // Cast to avoid problem with indeces like '333,444'                                        ********************
+    // Apparently var_dump(333=='333,444') IS TRUE !!!!                                         ********************
+    // i.e. cast before comparison is done in strange way - (int)'333,444', and not (string)111 ********************
+    //
+    if (!myPear::is_empty($selected) && is_numeric($selected)) $selected = (int)$selected;
+
     $select_what = (empty($values['*select_name*'])
 		    ? ''
 		    : $values['*select_name*'].' ');
@@ -1082,7 +1089,7 @@ class bForm extends myPear_getValue{
 	foreach ($values as $k=>$v){ 
 	  $v = strip_tags($v);
 	  if(strpos($k,'separator')!==False)$s[] = x("option value='' disabled='disabled' class='select_separator'",'');
-	  elseif($k != 'default')           $s[] = x("option value='$k'".($selected==$k?" selected='selected'":''), $v);
+	  elseif($k != 'default')           $s[] = x("option value='$k'".($selected===$k?" selected='selected'":''), $v);
 	}
       }
       if (preg_match("/class='(.*)'/",$extras,$m)){
@@ -2379,24 +2386,33 @@ class bForm extends myPear_getValue{
   protected $visibility = False;
   private $dejaVu_formBlock = array();
 
+  /*
+   * In most of the cases the selected block is supposed to be edited, hence force RW
+   */ 
+  protected function formBlock_setModeRW(){
+    if (@$_GET['block_once'] == $this->block_ID){
+      $this->MODE = 'RW';
+      $this->dbg("'block_once', set MODE=RW",True);
+    }
+  }
+
   function formBlock($block_ID,$blockTitle, $fields, $button=array(),$extraTD=''){
     $this->dbg();
     if (!empty($block_ID) && @$this->dejaVu_formBlock[$block_ID]++) return;
     
     // 
     // Check the block visibility, exit if it is not visible
-    if (@$_GET['block_once'] == $block_ID){
-      $this->MODE = 'RW';
-      $this->dbg("'block_once', set MODE=RW",True);
-    }
     $this->visibility = $this->formBlock_isVisible($block_ID,$fields);
     if(!$this->visibility){
       self::$ROskipedBlocks_counter++;
       return False;
     }
 
-    // The visibility is 'RO', don't let edit the data - mark all fields as RO 
+    // Apparently impose RW mode
     $this->block_ID = $block_ID;
+    $this->formBlock_setModeRW();
+
+    // The visibility is 'RO', don't let edit the data - mark all fields as RO 
     if  ($this->visibility === 'RO'){
       foreach($fields as $k=>$data){
         if (@$this->isRW_ifMissing[$k] && $this->MODE == 'RW'){

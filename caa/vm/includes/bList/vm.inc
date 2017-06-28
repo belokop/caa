@@ -75,11 +75,14 @@ class bList_vm extends bList{
       else                                 $e = @$this->e;
       $this->isWritable_vm = (bool)b_cnf::check_conditions(array(False=> array('fb'      => cnf_inside_fb,
 									       'archived'=> (is_object($e) ? $e->isArchived() : False),
+									       /*
                                                                                'too late'=> !VM_manager_here && (is_object($e) &&
                                                                                                                  ($e->getValue('e_end') < time() ||
                                                                                                                   $e->isArchived() ||
                                                                                                                   $e->isEventEndorsed()))),
-                                                                 True => array('mngr'    => VM_manager_here && !cnf_inside_fb,
+									       */
+                                                                               'too late'=> VM_tooLateForEmail($this,$e)),
+								 True => array('mngr'    => VM_manager_here && !cnf_inside_fb,
                                                                                'admin'   => VM_administrator_here && !cnf_inside_fb,
 									       'orgnzer' => (is_object($e)  && $e->isOrganizer())),
                                                                  'default'=> parent::isWritable()),

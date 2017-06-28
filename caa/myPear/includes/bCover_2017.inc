@@ -32,8 +32,8 @@ class bCover_2017 extends myPear_base{
     for($pivot=0; $pivot<$this->request_size; $pivot++){
       if (!isset($this->request[$pivot]))      continue;
       
-      $this->dbg("---------------------------- Treating $pivot - request ".b_time::period($this->request[$pivot]['day1'],
-											  $this->request[$pivot]['day9']));;
+      $this->dbg(x('code',"Pivot $pivot --- ".b_time::period($this->request[$pivot]['day1'],
+							     $this->request[$pivot]['day9'])),cnf_dev);
       
       // Check does the entry fit into any hole
       $fits_a_hole = False;
@@ -45,7 +45,7 @@ class bCover_2017 extends myPear_base{
 	      list($start_of_line,$end_of_line) = $this->addEntryToSolution($hole_pivot,$pivot);
 	      $fits_a_hole = True;
 	      myPear::WARNING_T("!!!!!!!! Fits a hole",$this);
-	      $this->debug_pivot($hole_pivot);
+	      if ($this->debug) $this->debug_pivot($hole_pivot);
 	    }
 	  }
 	}
@@ -65,7 +65,7 @@ class bCover_2017 extends myPear_base{
 	}
       }
       //      $this->show_solution(array($pivot=>$this->solution[$pivot]));
-      $this->debug_pivot($pivot);
+      if ($this->debug) $this->debug_pivot($pivot);
       unset($this->request[$pivot]);
     }
     bTiming()->cpu();

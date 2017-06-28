@@ -30,6 +30,7 @@ if (locateAndInclude(array('Mail',
     protected $attachments = array();
     protected $no_preview  = False;
     protected $dbg_color = 'crimsonText';
+    protected $tooLateForEmail = False;
 
     private   $recipients        = array();
     private   $recipientsEscaped = array();
@@ -320,7 +321,7 @@ if (locateAndInclude(array('Mail',
 	$sendmail_once = 'preview';
 	
 	$buttons = array();
-	if (empty($_GET['preview_once'])){ 
+	if (empty($_GET['preview_once']) && !$this->tooLateForEmail){ 
 	  // Button "send it"
 	  $buttons[]  =  $this->getLink('send this email',
 					b_url::same(array('modal_once'  =>bJS()->modal_once(@$_GET['modal_once']),
@@ -352,7 +353,8 @@ if (locateAndInclude(array('Mail',
 	
 	$id = 'PREVIEW';
 	foreach(array('MIME-Version','Content-Type','Cc','Bcc') as $i)   unset($headersEscaped[$i]);
-	if (empty($_GET['preview_once']))      print x('h3','The following E-mail is prepared, but is NOT yet sent:');
+	if (empty($_GET['preview_once']))      print x('h3','The following E-mail is prepared, but is NOT '.
+						       ($this->tooLateForEmail?'sent (too late):':'yet sent:'));
 	new b_table_simple(array(join('<br>',$buttons),
 				 x('strong',join('<br>',array(b_fmt::joinX('<br>',$headersEscaped,':'),'',''))).$this->tt($messageBody)));
 	static $debug_counter=0; $this->dbg("---------------------------------------------------------$sendmail_once ".(++$debug_counter));

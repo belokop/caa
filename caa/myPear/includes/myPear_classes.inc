@@ -1800,14 +1800,17 @@ class b_debug extends myPear_base{
     }
    
     // Start & End of a logical block
-    if (($message_class=='debug') && (self::$starting_exiting = is_string($txt))){
+    if ((self::$starting_exiting = is_string($txt)) && ($message_class=='debug')){
       $s_e_s = (strpos($txt,starting) !== False);
       $s_e_e = (strpos($txt,exiting)  !== False);
       if (self::$starting_exiting = ($s_e_s || $s_e_e)){
 	if ($s_e_e) self::$s_e_depth--;
 	list($toPrint,$color) = array(True,'orangeText');
       }
+    }else{
+      self::$starting_exiting = $s_e_s = $s_e_e = False;
     }
+
     
     if ($toPrint){    
       if (cnf_dev || in_array($message_class,array('debug','SICK'))){

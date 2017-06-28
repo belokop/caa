@@ -177,7 +177,7 @@ class bForm_vm_Room extends bForm_vm {
       }
       
       if (empty($rec['lease_id'])) b_debug::traceBack("???".__method__."() - empty lease_id !!!");
-      if (empty($rec['lease_id'])) b_debug::internalError("???".__method__."() - empty lease_id !!!");
+      if (empty($rec['lease_id'])) b_debug::internalError("???".__method__."() - empty lease_id !!!",$rec);
 
       if (!empty($rec['lease_id']) && 
 	  bForm_vm_Lease::_room_is_full($rec['lease_id'])){
@@ -276,7 +276,12 @@ class bForm_vm_Room extends bForm_vm {
       break;
       
     default:
+      // Workaround
+      if (empty($rec['lease_aid'])) return 0;
+
       // Who pays?
+      if (empty($rec['hut_id'])) b_debug::traceBack("??? empty hut_id");
+      if (empty($rec['hut_id'])) b_debug::internalError("??? empty hut_id",$rec);
       $get_pay = bForm_vm_Lease::get_lease_options($rec,'get_pay',array(),True);
       $cotenants = VM_cotenants()->get_cotenants($rec['lease_id'],True,'info');
       b_debug::_debug(array('cotenants'=>$cotenants,

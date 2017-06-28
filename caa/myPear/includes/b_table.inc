@@ -356,10 +356,7 @@ class b_table_zebra extends b_table {
 	// process "always first column"
 	foreach ($this->header as $k=>$v) if (stripos($k,'_afirst')!==False) { $h = array($k => $v); $this->afirst = $k; }
 	if ($this->afirst) {
-	  if ($this->showLineCounter) {
-	    myPear::WARNING_T("showLineCounter is set to 'False'");
-	    $this->showLineCounter = False;
-	  }
+	  if ($this->showLineCounter) $this->showLineCounter = False;
 	  foreach ($this->header as $k=>$v) if ($k != $this->afirst) $h[$k] = $v;
 	  $this->header = $h;
 	}

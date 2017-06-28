@@ -24,6 +24,7 @@ define('ICON_mail_sent_y',  bIcons()->get(array('d'=>'The mail was sent',
 						'c'=> 'opacity_off')));
 class bHolder_vm_Visitors extends bHolder_vm{
   
+  var $debug = False;
   var $autoOpenHeader = False;
   
   var $photosPerRow =   5;   // number of photos per printing row
@@ -134,19 +135,23 @@ class bHolder_vm_Visitors extends bHolder_vm{
    */
   private function process_emails(&$doing){
 
-    if (isset($_GET['mail2all_once'])){
-      //
-      // ----------------------- Send deny/Send welcome E-mails to all attenders of the event
-      //
+    if (isset($_GET['mail2all_deny_once'])){
+      // ----------------------- Send deny E-mails to all refused attenders of the event
       $q = $this->query();
       while($rec = myPear_db()->next_record($q)){
 	if(VM_mailer()->m_applicant_deny($rec['v_id'],'status',$rec['v_status']) === False){
-	  VM_mailer()->m_applicant_deny($rec['v_id'],$no_preview=True);
-	}elseif(VM_mailer()->welcome_applicant($rec['v_id'],@$rec['lease_id'],'status',$rec['v_status']) === False){
-	  VM_mailer()->welcome_applicant($rec['v_id'],@$rec['lease_id'],$no_preview=True);
+	   VM_mailer()->m_applicant_deny($rec['v_id'],$no_preview=True);
 	}
       }
-      
+    }
+    if(isset($_GET['mail2all_welcome_once'])){
+      // ----------------------- Send welcome E-mails to all accepted attenders of the event
+      $q = $this->query();
+      while($rec = myPear_db()->next_record($q)){
+	if(VM_mailer()->welcome_applicant($rec['v_id'],@$rec['lease_id'],'status',$rec['v_status']) === False){
+	   VM_mailer()->welcome_applicant($rec['v_id'],@$rec['lease_id'],$no_preview=True);
+	}
+      }
     }elseif (isset($_GET['mail_once'])){
       //
       // ----------------------- Preview e-mails 
@@ -1048,10 +1053,15 @@ class bHolder_vm_Visitors extends bHolder_vm{
       //
       // Big-Button "Send E-mails to all attenders"
       //
-      if ($this->mails_which_are_not_yet_sent
+      if (!empty($this->mails_which_are_not_yet_sent)
 	  &&  VM::hasRightTo('send_welcomeMail') 
 	  &&  VM::isEventEndorsed()){ 
-	$to_show[] = b_btn::big_button('Send welcome/denial Emails to the attenders',array('mail2all_once'=>1,'resetcache_once'=>1));
+	if (!empty($this->mails_which_are_not_yet_sent[STATUS_NO])){
+	  $to_show[] = b_btn::big_button('Send denial Emails to the attenders',array('mail2all_deny_once'=>1,'resetcache_once'=>1),'blue');
+	}
+	if (!empty($this->mails_which_are_not_yet_sent[STATUS_YES])){
+	  $to_show[] = b_btn::big_button('Send welcome Emails to the attenders',array('mail2all_welcome_once'=>1,'resetcache_once'=>1),'green');
+	}
       }
       break;
       
@@ -1098,7 +1108,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
       if (b_cnf::get('e_hide_rejected')){
 	$to_show[] = b_btn::big_button("Show $n rejected candidates",array('e_hide_rejected'=>0,
 									   'resetcache_once'=>1),
-				       'green');
+				       'blue');
       }else{
 	$to_show[] = b_btn::big_button("Hide $n rejected candidates",array('e_hide_rejected'=>1,
 									   'resetcache_once'=>1),
@@ -1671,7 +1681,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
   /*
    * Get the button
    */
-  private $mails_which_are_not_yet_sent = 0;
+  private $mails_which_are_not_yet_sent = array();
   private function get_sendMail_buttons($policy,$id,$title,$vm_f){
 
     // Get the mail status
@@ -1686,12 +1696,12 @@ class bHolder_vm_Visitors extends bHolder_vm{
       $rec["${vm_f}_1"] = ICON_mail_sent_y;
       $rec["${vm_f}_2"] = $this->sendMail_btn($id,'',True,$already_sent);
       
-    }elseif(($already_sent === False) && ($this->rec['v_end'] > time())){
+    }elseif($already_sent === False){
       //
       // The mail was NOT sent, print "send/preview email".
       // Note, there is no reason to send the "information" e-mail after the event is endorsed.
       //
-      $this->mails_which_are_not_yet_sent++;
+      if (!VM_tooLateForEmail($this->rec)) @$this->mails_which_are_not_yet_sent[$this->rec['v_status']]++;
       switch(VM::isEventEndorsed()){
       case True:
 	if ((send_welcomeMail_to_applicants && ($vm_f=='m_yes')) ||
@@ -1705,7 +1715,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
       $rec["${vm_f}_2"] = '';
     }
     if (!empty($rec)) $this->rec = array_merge($rec,$this->rec);
-    $this->dbg(sprintf('%s - %s, already_sent=%s',$this->rec['av_lastname'],join(', ',array_keys($rec)),$already_sent),cnf_dev);
+    $this->dbg(sprintf('%s - %s, already_sent=%s',$this->rec['av_lastname'],join(', ',array_keys($rec)),b_debug::parse_value($already_sent)),cnf_dev);
   }      
   
   /*
@@ -1752,22 +1762,25 @@ class bHolder_vm_Visitors extends bHolder_vm{
     if ($this->keep_thisRec) return;
 
     bTiming()->cpu(__function__);
+    
+    $this->visit_ID = $this->rec['v_id'];
     switch($this->doing){
-
+      
     case 'budget_byProjects':
       $this->rec_project[$this->rec['v_projectid']][] = $this->rec['v_id']; 
     case 'show_mails_exchange':
     case 'budget':
-      $this->visit_ID = $this->rec['v_id'];
+    case 'lists':
       break;
 
     case 'myguests':
     default:
-      if (empty($this->rec['lease_id'])) $this->visit_ID = $this->rec['v_id'];
-      else                               $this->visit_ID = $this->rec['lease_id'];
+      $this->visit_ID = (empty($this->rec['lease_id'])
+			 ? $this->rec['v_id']
+			 : $this->rec['lease_id']);
+      var_dump($this->doing,$this->visit_ID);
       if (@$dejaVu_visit[$this->rec['v_id']]++) $this->t->extraTD = array();
     }
-    if (empty($this->visit_ID))         $this->visit_ID = $this->rec['v_id'];
 
     // Combine all the leases into one record per visit
     if (empty($this->rec_visit[$this->visit_ID])){
@@ -1777,6 +1790,8 @@ class bHolder_vm_Visitors extends bHolder_vm{
       $this->rec_visit[$this->visit_ID]['all_buttons']  = $this->t->extraTD;
       $this->rec_visit[$this->visit_ID]['all_classes']  = $this->t->class;
       $this->rec_visit[$this->visit_ID]['all_highlight']= $this->highlight;
+    }else{
+      var_dump($this->rec_visit[$this->visit_ID]);
     }
     
     foreach ($this->rec as $k=>$v){
@@ -2214,14 +2229,16 @@ class bHolder_vm_Visitors extends bHolder_vm{
     bTiming()->cpu(__function__);
     locateAndInclude('bForm_vm_Expenses');    
     
-    $notTooLate = (!VM::isEventEndorsed() || ($this->rec['e_end'] >= time()) || 
-		   (VM::isEventEndorsed() && bForm_vm_Visit::_getStatus($this->rec) == STATUS_PENDING));
+    $notTooLate = (False
+		   ? (!VM::isEventEndorsed() || ($this->rec['e_end'] >= time()) || 
+		      (VM::isEventEndorsed() && bForm_vm_Visit::_getStatus($this->rec) == STATUS_PENDING))
+		   : !VM_tooLateForAccommodation($this->rec));
     
     $exp_arePaid= (bForm_vm_Expenses::_exp_arePaid($this->rec)
-		    ? bIcons()->get(array('d'=>'Paid up',
-					  'c'=>'only_online',
-					  'i'=>'i-bundle'))
-		    : '');
+		   ? bIcons()->get(array('d'=>'Paid up',
+					 'c'=>'only_online',
+					 'i'=>'i-bundle'))
+		   : '');
     
     $edit_visit  = ($notTooLate
 		    ? bIcons()->getButton(array('d'=>'see/update the visit information',
@@ -2341,19 +2358,21 @@ class bHolder_vm_Visitors extends bHolder_vm{
     //
 
     foreach($this->help_text() as $type=>$helpPages){
-      // "Open" the accordion when first viewed, then start with the "closed" accordion
-      ob_start();
-      $select = 99*((int)@$_SESSION[__CLASS__][b_crypt::hash($this->doing.b_fmt::joinX(',',$helpPages))]++);
-      if (VM::e_ID() > 0 && VM::$e->getValue('e_end',1)<time()) $select = 99;
-      b_fmt::accordion('open',$select," class='error'");       
-      foreach($helpPages as $title=>$body){
-	b_fmt::accordion($title,'h4-accordion');             
-	print $body;
+      if (!empty($helpPages)){
+	ob_start();
+	// "Open" the accordion when first viewed, then start with the "closed" accordion
+	$select = 99*((int)@$_SESSION[__CLASS__][b_crypt::hash($this->doing.b_fmt::joinX(',',$helpPages))]++);
+	if (VM::e_ID() > 0 && VM::$e->getValue('e_end',1)<time()) $select = 99;
+	b_fmt::accordion('open',$select," class='error'");       
+	foreach($helpPages as $title=>$body){
+	  b_fmt::accordion($title,'h4-accordion');             
+	  print $body;
+	}
+	b_fmt::accordion('close');              
+	if ($type == 'message') myPear::MESSAGE(ob_get_contents());
+	else                    myPear::ERROR(ob_get_contents());
+	ob_end_clean();
       }
-      b_fmt::accordion('close');              
-      if ($type == 'message') myPear::MESSAGE(ob_get_contents());
-      else                    myPear::ERROR(ob_get_contents());
-      ob_end_clean();
     }
     
     // Show "big button"

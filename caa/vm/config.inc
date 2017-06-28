@@ -3,9 +3,9 @@
 /**
  * Visitors Manager (VM) configuration file
  */
-$releaseDate = '2017-06-26';
+$releaseDate = '2017-06-28';
 define('VM_MODULE'   , 'vm');
-define('VM_VERSION','5.13.40');
+define('VM_VERSION','5.13.41');
 
 //
 // The Indico (agenda) host name
@@ -28,7 +28,7 @@ define('VM_office_regexp','\b(\w*:\w*)\b');
 //
 define('send_infoMail_to_applicants',(cnf_dev||cnf_demo));
 define('send_welcomeMail_to_applicants',(cnf_dev||cnf_demo));
-define('send_denialMail_to_applicants',cnf_dev||cnf_demo); 
+define('send_denialMail_to_applicants',True); 
 define('include_personalPage_in_welcomeMail', cnf_dev);                // (cnf_dev||cnf_demo));
 define('include_accommodation_in_welcomeMail',(cnf_dev||cnf_demo));
 define('include_office_in_welcomeMail',(cnf_dev||cnf_demo));
@@ -335,7 +335,7 @@ b_reg::add_module(VM_MODULE,
 									     'd'=>'All accommodation options',
 									     'dd'=>'Accommodation option'),
 					 'bList_vm_accommodationOptions'=>array('p'=>'bList',
-										'd'=>'Selected accommodation options',
+										'd'=>'Event accommodation options',
 										'dd'=>'Accommodation option'),
 					 ),
 			/*
@@ -1136,3 +1136,64 @@ function VM_unit($rank,$module=VM_MODULE,$org=myOrg_ID){
   default:  b_debug::internalError("Unexpected rank '$rank'");
   }
 }
+
+/*
+ *
+ */
+function VM_tooLateForEmail($recP,$e=Null,$verbose=False){
+  return VM_tooLate($recP,Null,$e,$verbose,'email');
+}
+  
+/*
+ *
+ */
+function VM_tooLateForAccommodation($recP,$cotenants=Null,$e=Null,$verbose=False){
+  return (VM_tooLateForEmail($recP,$e,$verbose) ||
+	  VM_tooLate($recP,$cotenants,$e,$verbose,'accommodation'));
+}
+
+/*
+ *
+ */
+function VM_tooLate($recP,$cotenants=Null,$e=Null,$verbose=False,$what='email'){
+  static $dejaVu = array();
+
+  // Parce arguments
+  if (is_object($recP)){
+    $rec = $recP->formDB;
+    $verbose = True;
+  }else{
+    $rec = $recP;
+  }
+  
+  // Build the conditions
+  if (empty($e)) $e = VM::$e;
+  $matrix = ($what == 'email'
+	     // Too late to send Emails
+	     ? array(array('t'=>'Event is archived',
+			   'c'=> VM::isArchived($e)),
+		     array('t'=>'Visit is over',
+			   'c'=>(@$rec['v_end'] && ($rec['v_end'] < time() + 24*3600))),
+		     array('t'=>'Event is over',
+			   'c'=>(is_object($e) && ($e->getValue('e_end') < time()))),
+		     array('t'=>'Visit is already started',
+			   'c'=>(@$rec['v_start'] && ($rec['v_start'] < time() + 24*3600))))
+	     // Too late for Accommodation
+	     : array(array('t'=>'Event is approved & locked',
+			   'c'=> VM::isEventEndorsed($e)),
+		     array('t'=>'Room is already in use',
+			   'c'=>((bool)($cotenants===Null?VM_cotenants()->get_cotenants($rec,False,'info'):$cotenants) &&
+				 (bool)(bList_vm_cotenants::$lease_dates[1] < time()))))
+	     );
+
+  $tooLate = False;  
+  foreach($matrix as $w){
+    if ($tooLate = $w['c']){
+      if ($verbose && !@$dejaVu[$w['t']]++) myPear::WARNING("Too late for $what - ".$w['t']);
+      b_debug::_debug($tooLate,$verbose||True);
+      break;
+    }
+  }
+  return $tooLate;
+}
+

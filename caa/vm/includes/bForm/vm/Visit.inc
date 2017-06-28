@@ -2014,7 +2014,8 @@ class bForm_vm_Visit extends bForm_vm {
   }
 
   public static function _formalitiesNotCompleted(&$buffer){
-    if (self::_visitOutOfScope($buffer)){
+    b_debug::_debug(starting);
+    if (self::_visitOutOfScope($buffer) || VM_tooLateForEmail($buffer)){
       $reply = False;
     }else{
       $policies = self::_getPolicies($buffer);
@@ -2060,6 +2061,7 @@ class bForm_vm_Visit extends bForm_vm {
       }
     }
     b_debug::_debug((empty($reply) ? '&lt;OK&gt;' : $reply),cnf_show_fnc);
+    b_debug::_debug(exiting);
     return $reply;
   }
   

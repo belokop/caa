@@ -146,15 +146,17 @@ class bHolder extends myPear_base{
       $this->t->css = $this->css;
     }
   }
+
   private $drawHeader_counter = 0;
   function drawHeader(){
     $this->new_t(True);
     if (!$this->drawHeader_counter++){
+      // Copy holder styles to the table 
       $this->t->getHeader($forced=True,$this->title3);
       if (empty($this_t)) $this_t = array();
       foreach($this_t as $k=>$v) $this->t->$k = $v;
     }
-    return  $this->t;
+    return $this->t;
   }
   
   public $custom_header=array();

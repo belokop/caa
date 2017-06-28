@@ -3,6 +3,17 @@
  *
  */
 locateAndInclude('bForm_Avatar_wiw');
+
+/*
+ * Cancelling the trip
+ */
+if (!empty($_REQUEST['d_once']) && in_array($_REQUEST['form'],array('wiw_trip','bForm_wiw_trip'))){
+  $trip = new bForm_wiw_trip($_REQUEST['id']);
+  myPear::WARNING('Trip '.$trip->name().' is cancelled');
+  myPear_db()->qquery("DELETE FROM wiw_trips WHERE t_id = '".$_REQUEST['id']."'",cnf_dev);
+  b_url::header(b_url::same('?q='.join('/',array(WIW_MODULE,APImenu::tab_code(tab_wiw_myTrips)))));
+}
+
 class bForm_wiw_trip extends bForm{
   
   public $show_gv = True;
@@ -70,7 +81,15 @@ class bForm_wiw_trip extends bForm{
   /*
    *
    */
-  public function getValue($name, $asIs=True, $d_MBE=False){
+  public function name(){
+    $reply = b_time::period($this->getValue('t_departure'),$this->getValue('t_arrival'));
+    return $reply;
+  }
+
+  /*
+   *
+   */
+  public function getValue($name, $asIs=True, $d_MBE=True){
     $value = parent::getValue($name,$asIs,$d_MBE);
     //    if (($name == 't_acl') && empty($value)) $value = wiw_acl_default;
     return $value;
@@ -292,7 +311,15 @@ class bForm_wiw_trip extends bForm{
     }			   
     
     $this->closeForm(($this->MODE=='RW'?'submit':''));
-    bIcons()->explain();
+    print b_btn::UL_buttons(array('&nbsp;',
+				  b_btn::big_button('Delete this trip',array('form'  => get_class($this),
+									     'id'    =>$this->ID,
+									     'd_once'=>'yes',
+									     'resetcache_once'=>1),
+						    'red',True),
+				  '&nbsp;',
+				  ));
+      bIcons()->explain();
   }
 
   /*

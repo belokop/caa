@@ -653,7 +653,7 @@ Organizing committee for \"<event/>\".
     if (!empty($case)){
       $reply = CONST_not_concerned;
       if (empty($name)) $name = 'visitor';
-      $this->dbg("%s, %s, <em>%s</em>",var_export($reply,True),$case,$name);
+      $this->dbg(sprintf("%s, %s, <em>%s</em>",var_export($reply,True),$case,$name),cnf_dev);
       return True;
     }
     
@@ -689,6 +689,9 @@ Organizing committee for \"<event/>\".
       $bcc[] = bAuth::$av->getEmail();
     }
     
+    // Show or not the button "send email" in the preview mode
+    $this->tooLateForEmail = VM_tooLateForEmail($this->visit,$this->visit->e);
+
     $this->dbg("Sending mail",cnf_dev);
     locateAndInclude('bTpl');
     $tpl = new bTpl(array('title' => __method__,
@@ -765,7 +768,7 @@ Organizing committee for \"<event/>\"."));
       $reply = ($this->visit->getPolicy(VM_V_welcomeMailQueued)
 		? in_queue
 		: $this->visit->getPolicy(VM_V_welcomeMailSent));
-      $this->dbg("$reply ".x('em',$this->visit->av->fmtName('fl')));
+      $this->dbg(var_export($reply,True)." ".x('em',$this->visit->av->fmtName('fl')));
       return $reply;
     }
 
@@ -820,7 +823,7 @@ ACCOMMODATION
 -------------
 Your accommodation will be at '.$a->hut->name().' in '.$a->hut->getValue('hut_city',1).'. '.join(", ",$billedTo).'
 '.join("\n",$cotenant).join("\n",$v_accompaning).'
-You will receive a separate confirmation of the room reservation from '.$a->hut->name().'. '.
+'.(stripos($a->hut->name(),'Biz')===False ? '' : 'You will receive a separate confirmation of the room reservation from '.$a->hut->name().'. ').
 'Any changes in dates are subject to availability and should be taken up directly with '.$a->hut->name(). // ', '.myOrg_nameS.' can\'t help with that '. 
 ' (see '.$a->hut->getValue('hut_url').' for contact information).
 
@@ -915,6 +918,9 @@ Sincerely,
 Organizing committee for "'.$this->visit->e->name(False).'".'
    :'');
     
+    // Show or not the button "send email" in the preview mode
+    $this->tooLateForEmail = VM_tooLateForEmail($this->visit,$this->visit->e);
+
     // Now send the mail
     if ($ok = $this->send(array($this->visit->av,
 				array('q'=>sprintf("%s/%s/",VM_MODULE,APImenu::tab_code(tab_vm_home))),

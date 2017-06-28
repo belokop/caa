@@ -69,9 +69,7 @@ if (!(int)$v->ID){
 
   $imposedEntries = $v->readCompleteDefRecord();
   foreach($v->get_allLeases(True) as $l){
-    foreach(VM_cotenants()->get_cotenants($l->ID) as $lm_id=>$co_leases){
-      foreach($co_leases as $co_lease_ID) $imposedEntries[] = bForm_vm_Lease::_leaseInfo($co_lease_ID);
-    }
+    foreach(VM_cotenants()->get_cotenants($l->ID,False,'info') as $co_lease_ID=>$fmtName) $imposedEntries[] = bForm_vm_Lease::_leaseInfo($co_lease_ID);
   }
   bIcal_matrix_abs::_show($v->getValue('v_start')-3*86400,
 			  $v->getValue('v_end')  +3*86400,

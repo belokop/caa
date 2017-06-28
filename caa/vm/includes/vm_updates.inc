@@ -162,6 +162,9 @@ function vm_compat_update_ad_hocks(){
 function vm_compat_update_53(){
 
   locateAndInclude('bForm_vm_Visit');
+
+  myPear_db()->qquery("UPDATE zzz_lists SET l_name='Event accommodation options' WHERE l_name='Selected accommodation options'",True);
+
   foreach(VM_projects()->get_projects($buildInOnly=True) as $id=>$type){
     switch($type){
     case VISIT_TYPE_RENT:
@@ -187,7 +190,7 @@ function vm_compat_update_53(){
       // assign the unknown project to OA 
       b_debug::_debug($msg="Unexpected project type='$type' id=$id",True);
       myPear::WARNING_T($msg);
-      myPear_db()->query("UPDATE abs_leases SET v_projectid = 31026 WHERE v_projectid=$id",True);
+      myPear_db()->query("UPDATE abs_visits SET v_projectid = 31026 WHERE v_projectid=$id",True);
       myPear_db()->query("DELETE FROM zzz_list_members WHERE lm_id=$id",True);
     }
   }

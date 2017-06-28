@@ -249,9 +249,9 @@ class bList_vm_cotenants extends bList_vm{
       }
       if (!empty($lm_id)) $reply[$lm_id] = $leases;
       $cache[$cache_id] = array('reply'=>$reply,
-						    'names'=>$names,
-						    'periods'=>$periods);
-
+				'names'=>$names,
+				'periods'=>$periods);
+      
     }
 
     // Extract reply from the cache
