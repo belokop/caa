@@ -258,7 +258,7 @@ class bForm_Avatar_ea extends bForm_Avatar{
     
     locateAndInclude('bList_eaEmpRecords');
     if (!is_object($this->eaEmpRecords) && $this->isEA()){
-      if ($this->eaEmpRecords = bList::getListInstance($this,'bList_eaEmpRecords')){
+      if ($this->eaEmpRecords = bList::getListInstance($this,'bList_eaEmpRecords',True)){
 	$this->tips        = $this->eaEmpRecords->tips;
 	$this->tips_byMode = $this->eaEmpRecords->tips_byMode;
 	

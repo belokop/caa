@@ -311,15 +311,15 @@ class bForm_wiw_trip extends bForm{
     }			   
     
     $this->closeForm(($this->MODE=='RW'?'submit':''));
-    print b_btn::UL_buttons(array('&nbsp;',
-				  b_btn::big_button('Delete this trip',array('form'  => get_class($this),
-									     'id'    =>$this->ID,
-									     'd_once'=>'yes',
-									     'resetcache_once'=>1),
-						    'red',True),
-				  '&nbsp;',
-				  ));
-      bIcons()->explain();
+    if ($this->getValue('t_departure') > time()) print b_btn::UL_buttons(array('&nbsp;',
+									       b_btn::big_button('Delete this trip',array('form'  => get_class($this),
+															  'id'    =>$this->ID,
+															  'd_once'=>'yes',
+															  'resetcache_once'=>1),
+												 'red',True),
+									       '&nbsp;',
+									       ));
+    bIcons()->explain();
   }
 
   /*

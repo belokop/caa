@@ -3,9 +3,9 @@
 /**
  * Visitors Manager (VM) configuration file
  */
-$releaseDate = '2017-06-28';
+$releaseDate = '2017-06-29';
 define('VM_MODULE'   , 'vm');
-define('VM_VERSION','5.13.41');
+define('VM_VERSION','5.13.42');
 
 //
 // The Indico (agenda) host name
@@ -29,8 +29,8 @@ define('VM_office_regexp','\b(\w*:\w*)\b');
 define('send_infoMail_to_applicants',(cnf_dev||cnf_demo));
 define('send_welcomeMail_to_applicants',(cnf_dev||cnf_demo));
 define('send_denialMail_to_applicants',True); 
-define('include_personalPage_in_welcomeMail', cnf_dev);                // (cnf_dev||cnf_demo));
-define('include_accommodation_in_welcomeMail',(cnf_dev||cnf_demo));
+define('include_personalPage_in_welcomeMail', cnf_dev||cnf_demo);                // (cnf_dev||cnf_demo));
+define('include_accommodation_in_welcomeMail',True);
 define('include_office_in_welcomeMail',(cnf_dev||cnf_demo));
 define('include_payForms_in_welcomeMail',(cnf_dev||cnf_demo));
 define('see_mails_exchange_with_attenders',(send_infoMail_to_applicants ||
