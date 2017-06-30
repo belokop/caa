@@ -24,7 +24,7 @@ class bCover_2017 extends myPear_base{
       $this->day1 = b_time::oa_start(min($this->day1,$this->request[$k]['day1']));
       $this->day9 = b_time::oa_end(  max($this->day9,$this->request[$k]['day9']));
     }
-    $this->dbg(date("Y-m-d H:i",$this->day1).' --> '.date("Y-m-d H:i",$this->day9),cnf_dev);
+    $this->dbg(date("Y-m-d H:i",$this->day1).' --> '.date("Y-m-d H:i",$this->day9));
   }
   
   function solve(){
@@ -33,7 +33,7 @@ class bCover_2017 extends myPear_base{
       if (!isset($this->request[$pivot]))      continue;
       
       $this->dbg(x('code',"Pivot $pivot --- ".b_time::period($this->request[$pivot]['day1'],
-							     $this->request[$pivot]['day9'])),cnf_dev);
+							     $this->request[$pivot]['day9'])));
       
       // Check does the entry fit into any hole
       $fits_a_hole = False;
@@ -69,6 +69,7 @@ class bCover_2017 extends myPear_base{
       unset($this->request[$pivot]);
     }
     bTiming()->cpu();
+    $this->show_solution();
     return $this->solution;
   }
 
@@ -125,13 +126,19 @@ class bCover_2017 extends myPear_base{
   function show_solution($solution=Null){
     if (empty($solution)) $solution = $this->solution;
     $quality = count(array_values($solution));
-    $this->dbg(sprintf("-------------- quality = %s/%s\n",$quality,$this->request_size));
     
-    foreach($solution as $k=>$data){
+    $hr_solution = array();
+    $ml = 0;
+    foreach(array_values($solution) as $line) foreach($line as $entry) $ml = max($ml,strlen(trim(@$entry['name'])));
+    foreach(array_values($solution) as $line){
       $x = array();
-      foreach($data as $entry) $x[] = sprintf("[%3d,%3d]",$entry['day1'],$entry['day9']);
-      $this->dbg(sprintf("%3d - %s\n",$k,join(', ',$x)));
+      foreach($line as $entry) $x[] = (empty($entry['name'])
+				       ? sprintf("<code>[%3d,%3d]</code>",$entry['day1'],$entry['day9'])
+				       : sprintf("<code>%s[%s]</code>",str_repeat('&nbsp;',max(0,$ml-strlen($entry['name']))),trim($entry['name'])));
+      $hr_solution[] = sprintf("%s %3d - %s\n",str_repeat('&nbsp;',5),(@++$k),join(', ',$x));
     }
+    $this->dbg(sprintf("-------------- quality = %s/%s<br>\n",$quality,$this->request_size).
+	       join('<br>',$hr_solution),cnf_dev);
   }
 
   /*

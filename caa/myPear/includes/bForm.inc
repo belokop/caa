@@ -1073,7 +1073,7 @@ class bForm extends myPear_getValue{
     //
     // Cast to avoid problem with indeces like '333,444'                                        ********************
     // Apparently var_dump(333=='333,444') IS TRUE !!!!                                         ********************
-    // i.e. cast before comparison is done in strange way - (int)'333,444', and not (string)111 ********************
+    // i.e. cast before comparison is done in a strange way - (int)'333,444', and not (string)111 ********************
     //
     if (!myPear::is_empty($selected) && is_numeric($selected)) $selected = (int)$selected;
 
@@ -1097,9 +1097,12 @@ class bForm extends myPear_getValue{
 	$extras = trim(str_replace("class='$class'","",$extras));
       }else{
 	$class = 'shadow-box form-submit'; // Firefox gets crasy...
-	$class = 'shadow-box';
       }
-      $reply = x("select name='$name' $extras ".$this->submit_onchange($name,'change',$class),join("\n",$s));
+      // The "spiining wait page" is very annoying in the pop-up selection. 
+      // Let's try to invent 30 seconds delay before the spiing starts.
+      // May be better to cancel it it all...
+      $reply = preg_replace('/(form-submit|page-load-progress)/','\\1'.'-30',x("select name='$name' $extras ".$this->submit_onchange($name,'change',$class),join("\n",$s)));
+      if (cnf_dev && strpos($reply,'-30')) myPear::WARNING_T("'$name' is (form-submit|page-load-progress)",$this);
     }elseif($selected){
       $reply = @$values[$selected] . $this->textHidden($name,$selected);
     }else{ 

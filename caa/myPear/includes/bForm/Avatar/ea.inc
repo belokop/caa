@@ -307,7 +307,9 @@ class bForm_Avatar_ea extends bForm_Avatar{
    * am I employee OR alumnus?
    */
   function isEA($av_id=Null){
-    return $this->is($av_id);
+    $reply = $this->is($av_id);
+    $this->dbg($reply,cnf_dev);
+    return $reply;
   }
   
   /*

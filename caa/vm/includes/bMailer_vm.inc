@@ -690,7 +690,7 @@ Organizing committee for \"<event/>\".
     }
     
     // Show or not the button "send email" in the preview mode
-    $this->tooLateForEmail = VM_tooLateForEmail($this->visit,$this->visit->e);
+    $this->tooLateForEmail = VM_tooLateForEmail($this->visit,$this->visit->e,True);
 
     $this->dbg("Sending mail",cnf_dev);
     locateAndInclude('bTpl');
@@ -919,7 +919,7 @@ Organizing committee for "'.$this->visit->e->name(False).'".'
    :'');
     
     // Show or not the button "send email" in the preview mode
-    $this->tooLateForEmail = VM_tooLateForEmail($this->visit,$this->visit->e);
+    $this->tooLateForEmail = VM_tooLateForEmail($this->visit,$this->visit->e,True);
 
     // Now send the mail
     if ($ok = $this->send(array($this->visit->av,

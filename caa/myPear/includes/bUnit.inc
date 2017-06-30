@@ -602,7 +602,7 @@ class bUnit extends bList{
   function isMember($av=Null){
     if(empty($av))         $av_id = @bAuth::$av->ID;
     elseif(is_object($av)) $av_id = $av->ID;
-    elseif((int)$av)       $av_id = $av; 
+    elseif(is_numeric($av))$av_id = (int)$av; 
     $reply = (empty($av_id)
 	      ? False
 	      : !myPear::is_empty($this->get_memberInfo($av_id))); // Check against the cache    

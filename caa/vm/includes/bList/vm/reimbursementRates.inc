@@ -274,6 +274,7 @@ class bList_vm_reimbursementRates extends bList_vm{
       $this->init();
       $members = $this->getMembers(array('lm_key'=>'travel'));
     }
+    if (empty($members)) myPear::WARNING_T("??? empty getMembers(array('lm_key'=>'travel'))",$this);
 
     $reply = $nowhere;
     if (!empty($cc)){
@@ -292,7 +293,7 @@ class bList_vm_reimbursementRates extends bList_vm{
 	  }
 	}
       }
-      if ($reply === $nowhere) myPear::WARNING_T("Unknown country name/code \"$cc\"");
+      if ($reply === $nowhere) myPear::WARNING_T("Unknown country name/code ".var_export($cc,True).var_export($members,True));
     }      
     return $reply;
   }

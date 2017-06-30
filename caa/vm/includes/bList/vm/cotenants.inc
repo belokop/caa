@@ -34,37 +34,46 @@ class bList_vm_cotenants extends bList_vm{
    * Fix eventual mistakes in the database
    */
   private function checkup(){
-    if (@$_SESSION[__method__]++) return;
+    //    if (@$_SESSION[__method__]++) return;
 
+    b_debug::_debug(starting);
     foreach($this->getMembers() as $lm_id=>$rec){
-      $rec['leases'] = $this->safe_explode(@$rec['leases']);
+      $leases = $this->safe_explode(@$rec['leases']);
       
-      if ($damaged_entry = (($n=count($rec['leases'])) < 2)){
+      if ($damaged_entry = (($n=count($leases)) < 2)){
 	$message = "$n cotenants";
-
       }else{
-	foreach ($rec['leases'] as $lease_id){
+	foreach ($leases as $lease_id){
+	  $q = myPear_db()->query("SELECT lease_id FROM abs_leases WHERE lease_id='$lease_id'");
+	  if (($n=myPear_db()->num_rows($q)) != 1){
+	    b_debug::internalError("lease $lease_id is not known...");
+	  }
+
 	  if (empty($lease_id)){
 	    $damaged_entry = True;
 	    $message = 'empty lease_id';
 	    break;
 	  }else{
 	    $n = count($this->getMembers(array('leases'=>$lease_id)));
-	    if ($damaged_entry = ($n != 1)) $message = "lease $lease_id is used $n times";
+	    if ($damaged_entry = ($n != 1)){
+	      $message = "lease $lease_id is used $n times";
+	      break;
+	    }
 	  }
 	}
       }
       
       if ($damaged_entry){
-	if (cnf_show_cot){
+	if (cnf_dev){
 	  $this->dump();
 	  $msg = b_fmt::redText("damaged entry $lm_id - $message");
-	  b_debug::xxx($msg);
+	  b_debug::_debug($msg,True);
 	  myPear::ERROR($msg);
 	}	
-	$this->deleteMember($lm_id);
+	//	$this->deleteMember($lm_id);
       }
     }
+    b_debug::_debug(exiting);
   }
 
 
@@ -139,10 +148,12 @@ class bList_vm_cotenants extends bList_vm{
   function get_candidate($rec){
 
     if ($rec['lease_aid'] == VM::$OA->ID) return '';
+    $this->dbg(b_time::period($rec['lease_start'],$rec['lease_end']).' '.bForm_Avatar::_fmtName('Lf',$rec)." $rec[lease_id] LOOKING FOR CANDIDATES ",cnf_dev);
     
     // Gather candidates in an array
     $a_quantity = 0;
-    $q = myPear_db()->query(sprintf("SELECT lease_id,lease_option,lease_start,lease_end,a_id,a_capacity,a_quantity,av_firstname,av_lastname,v_status,hut_id,hut_code,lease_aid".
+    $q = myPear_db()->query(sprintf("SELECT lease_id,lease_option,lease_start,lease_end,a_id,a_capacity,a_quantity,av_firstname,av_lastname,".
+				    "v_eid,v_status,hut_id,hut_code,lease_aid ".
 				    " FROM abs_leases ".
 				    " LEFT JOIN abs_rooms ON lease_aid = a_id ". 
 				    " LEFT JOIN abs_huts  ON a_hutid = hut_id ". 
@@ -152,6 +163,7 @@ class bList_vm_cotenants extends bList_vm{
 								 "lease_id != %s",					
 								 "lease_start <= %s",
 								 "lease_end >= %s",
+								 (accommodate_cotenants_from_different_events ? 1 : "v_eid = $rec[v_eid]"),
 								 // "lease_option NOT REGEXP '%s|%s'",
 								 )),
 				    $rec['a_id'],$rec['lease_id'],$rec['lease_end'],$rec['lease_start'] // ,VM_no_cotenants,VM_room_is_full
@@ -162,11 +174,15 @@ class bList_vm_cotenants extends bList_vm{
     while($r = myPear_db()->next_record($q)){
       if (preg_match(sprintf('/(%s|%s)/',VM_no_cotenants,VM_room_is_full),$r['lease_option'])){
 	$rooms_occupied++;
+	$this->dbg(b_time::period($r['lease_start'],$r['lease_end']).' '.bForm_Avatar::_fmtName('Lf',$r)." $r[lease_id] rooms_occupied ",cnf_dev);
       }else{
+	$this->dbg(bForm_Avatar::_fmtName('Lf',$r),True);
 	$candidates[] = $r;
+	$this->dbg($candidates,True);
 	if ($names = $this->get_cotenants($r,True,'info')){
 	  if (count($names) > count($current_cotenants)) $current_cotenants = $names;
 	}
+	  $this->dbg($names,True);
 	$beds_occupied++;
       }
     }
@@ -193,7 +209,7 @@ class bList_vm_cotenants extends bList_vm{
       if (!empty($names)) $names = $current_cotenants;
       if (!empty($names)){
 	asort($names);
-	$reply[join(',',array_keys($names))] = join(',',array_values($names));
+	if (count($names) < $rec['a_capacity']) $reply[join(',',array_keys($names))] = join(',',array_values($names));
       }elseif(!$last_room || empty($names)){
 	$reply[$r['lease_id']] = bForm_Avatar::_fmtName('Lf',$r);
       }
@@ -201,7 +217,7 @@ class bList_vm_cotenants extends bList_vm{
     if (count($reply) == 1) unset($reply[VM_no_cotenants]);
     asort($reply);
     
-    b_debug::_debug(join(', ',array_values($reply)));
+    b_debug::_debug(join(', ',array_values($reply)),True);
     return $reply;
   }
   
@@ -214,7 +230,7 @@ class bList_vm_cotenants extends bList_vm{
    * @return array(lm_id => array(leases))
    */
   public static $lease_dates = array();
-  function get_cotenants($rec,$include_myself=False,$period=array()){
+  function get_cotenants($rec,$include_myself=False,$period=array(),$name_format='Lf'){
     static $cache = array();
     static $count = array();
     
@@ -243,7 +259,7 @@ class bList_vm_cotenants extends bList_vm{
 	  $l = ($l_id == $rec['lease_id'] && !empty($rec['lease_start'])
 		? $rec
 		: bForm_vm_Lease::_leaseInfo($l_id,array('lease_start','lease_end','av_firstname','av_lastname')));
-	  $names[$l_id] = bForm_Avatar::_fmtName('Lf',$l);
+	  $names[$l_id] = bForm_Avatar::_fmtName($name_format,$l);
 	  $periods[$l_id] = array($l['lease_start'],$l['lease_end']);
 	}
       }
@@ -327,7 +343,7 @@ class bList_vm_cotenants extends bList_vm{
 	bForm_vm_Lease::set_lease_options($_leaseInfo,array('pay'=>VM_pay_something),True);
 	myPear::WARNING_T(sprintf("Impose \"%s\" for %s",
 				  bForm_vm_Lease::get_lease_options($_leaseInfo,'pay_room',array(),True),
-				  bForm_Avatar::_fmtName('LF',$_leaseInfo))); 
+				  bForm_Avatar::_fmtName('Lf',$_leaseInfo))); 
       }
       $leases = array();
     }

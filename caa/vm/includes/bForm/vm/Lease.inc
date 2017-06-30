@@ -1,8 +1,8 @@
 <?php
 locateAndInclude('bForm_vm');
 
-// define('as_cotenant',' (as a co-tenant)');
-define('as_cotenant','');
+define('as_cotenant',' (as a co-tenant)');
+//define('as_cotenant','');
 
 class bForm_vm_Lease extends bForm_vm{
 
@@ -279,7 +279,7 @@ class bForm_vm_Lease extends bForm_vm{
 	break;
       default:
 	$reply = ($mode=='pay_room_for_applicant'
-		  ? myOrg_nameS." pays only for ".join(' + ',array_values($get_pay)).", the cost for other tenant(s) will be billed to you"
+		  ? myOrg_nameS." pays only for ".join('+',array_values($get_pay)).", the cost for other tenant(s) will be billed to you"
 		  : myOrg_nameS." pays for ".count($get_pay));
       }
       break;
@@ -307,7 +307,7 @@ class bForm_vm_Lease extends bForm_vm{
 	    foreach($cotenants as $l_id=>$_fmtName) $leases[$l_id] = $_fmtName;
 	    while (!empty($leases)) {
 	      ksort($leases);
-	      $reply[join(',',array_keys($leases))] = myOrg_nameS.' pays for '.join(' + ',array_values($leases));
+	      if (count($leases) < $args['a_capacity']) $reply[join(',',array_keys($leases))] = myOrg_nameS.' pays for '.join(' + ',array_values($leases));
 	      array_pop($leases);
 	    }
 	  }
@@ -1076,14 +1076,20 @@ function __clean_cache(){}
     }
     return count($updates);
   }
-  
+
+  /*
+   *
+   */  
   function clean_cotenants(){
+    self::get_lease_options($this->ID,'reset');
     foreach(VM_cotenants()->get_cotenants($this->ID,True) as $lm_id=>$leases){
       $this->dbg("lm_id=$lm_id leases=".join(', ',$leases) ,cnf_dev);
-      VM_cotenants()->deleteMember($lm_id);
       foreach($leases as $lease_id){
-	self::get_lease_options($lease_id,'reset',array(VM_room_is_full,VM_no_cotenants));
+	$_leaseInfo = self::_leaseInfo($lease_id,array('lease_id','lease_option'));
+	myPear::MESSAGE("Removing cotenant ".bForm_Avatar::_fmtName('Lf',$_leaseInfo));
+	self::get_lease_options($lease_id,'reset');
       }
+      VM_cotenants()->deleteMember($lm_id);
     }
   }
 
@@ -1196,6 +1202,9 @@ function __clean_cache(){}
     return $lnew->ID;
   }
   
+  /*
+   * delete lease
+   */
   function delete(){
     $this->dbg("Lease ".$this->ID." ".$this->getValue('a_name'),(bool)($this->debug or cnf_dev));
     $this->clean_cotenants();
@@ -1238,11 +1247,15 @@ function __clean_cache(){}
 			      b_time::check_out(VM::$e->getValue('e_end')));
     
     $q = myPear_db()->qquery("SELECT lease_id,lease_start,lease_end,hut_id,a_name,a_capacity,hut_code,hut_name FROM abs_leases".
-			     " LEFT JOIN abs_rooms ON lease_aid = a_id ".
+			     " LEFT JOIN abs_rooms  ON lease_aid = a_id ".
+			     " LEFT JOIN abs_visits ON lease_vid = v_id ".
 			     " LEFT JOIN abs_huts ON hut_id = a_hutid ".
-			     " WHERE lease_aid = $a_id ".
-			     " AND lease_start <= $end ".
-			     " AND lease_end   >= $start",
+			     " WHERE ".
+			     join (' AND ',
+				   array("lease_aid = $a_id ",
+					 "lease_start <= $end ",
+					 "lease_end   >= $start",
+					 (accommodate_cotenants_from_different_events ? 1 : "v_eid = ".VM::$e->ID))),
 			     cnf_dev);
     $n_tenants = 0;
     $entries = $matrix = array();
@@ -1256,15 +1269,19 @@ function __clean_cache(){}
 		     );
 
       $cotenants = VM_cotenants()->get_cotenants($r['lease_id'],True,'names');
-      if ($cotenants) $entries[join(',',$cotenants)] = $entry;
-      else            $entries[] = $entry;
+      if ($cotenants){
+	$entry['name'] = join(' + ',$cotenants);
+	$entries[join(',',$cotenants)] = $entry;
+      }else{
+	$entries[] = $entry;
+      }
     }
 
     // Pack the leases by bCover    
     locateAndInclude('bCover');
     $solver = new bCover($entries,'day1','day9','n');
-    $solver->debug = True;
-    foreach($solver->solve() as $n=>$solution) $matrix[] = $solution;
+    $solution_array = $solver->solve();
+    foreach($solution_array as $n=>$solution) $matrix[] = $solution;
     //    b_debug::print_r($matrix,'solution','nosort');
 
     // Update the counters 
@@ -1287,7 +1304,7 @@ function __clean_cache(){}
     // Return the reply
     b_debug::_debug("$n_tenants tenants in $n_rooms");
     bTiming()->cpu();
-    return array($n_tenants,$n_rooms);
+    return array((int)$n_tenants,(int)$n_rooms);
   }
 
 
@@ -1323,7 +1340,6 @@ function __clean_cache(){}
 		     (empty($accommodationOptions)
 		      ? "1"
 		      : ' hut_id != '.join(' AND hut_id !=  ',$accommodationOptions))); // excludes
-      //    b_debug::_debug($where,True);
       $huts_select = array();
       $q = myPear_db()->qquery("SELECT hut_id,hut_name FROM abs_huts LEFT JOIN abs_rooms ON a_hutid=hut_id WHERE ".join(' AND ',$where),cnf_dev);
       while ($r = myPear_db()->next_record($q)){
@@ -1366,19 +1382,19 @@ function __clean_cache(){}
     b_debug::_debug('huts = '.$huts_list,cnf_dev);
 
     // General time limits
-    $where = array("hut_id IN ($huts_list) ",
-		   "a_end >= $start ",
-		   "( a_start <= $end OR a_start = 0 OR a_start IS NULL) ",
-		   "hut_code != '".HUT_BI."' "
+    $where = array((empty($huts_list) ? 1 : "hut_id IN ($huts_list)"),
+		   "a_end >= $start",
+		   "(a_start <= $end OR a_start=0 OR a_start IS NULL)",
+		   "hut_code != '".HUT_BI."'"
 		   );
-
+    
     // See all the rooms
     $q = myPear_db()->qquery("SELECT a_id,a_price,a_name,a_quantity,a_capacity,a_quantity,hut_id,hut_code,hut_name ".
 			     " FROM abs_rooms ".
 			     " LEFT JOIN abs_huts ON a_hutid = hut_id ".
 			     " WHERE ".join(' AND ',$where).
-			     " ORDER BY CONCAT(hut_name,a_capacity)",cnf_dev);
-    $all_rooms = $booked_rooms = $booked_beds = array();
+			     " ORDER BY hut_name ASC,a_capacity ASC",cnf_dev);
+    $all_rooms = $booked_rooms = $available_beds = array();
     while ($r = myPear_db()->next_record($q)){
       if (!in_array($r['hut_id'],array_values($huts))) continue;
       $id = bForm_vm_Room::room_id($r);
@@ -1387,44 +1403,51 @@ function __clean_cache(){}
 			 ? $accommodationOptions->get_a_value($r['a_id'],$r['hut_id'],'a_quantity')
 			 : $r['a_quantity']);
       $booked_rooms[$id] = array();
-      $booked_beds[$id] = 0;
       $room_capacities[$id] = 0;
     }      
+
     //    b_debug::print_r($all_rooms,'all rooms','nosort');
 
     // Check the booked rooms    
     if ($event_context){
       $q = myPear_db()->qquery(sprintf("SELECT lease_id,lease_start,lease_end,v_eid,v_status,lease_aid,lease_option,".
+				       " av_firstname,av_lastname,".
 				       " a_id,a_price,a_name,a_quantity,a_capacity,a_quantity,hut_code,hut_name,hut_id ".
 				       " FROM abs_leases ".
 				       " LEFT JOIN abs_rooms   ON lease_aid = a_id ".
 				       " LEFT JOIN abs_huts    ON a_hutid = hut_id ".
 				       " LEFT JOIN abs_visits  ON lease_vid = v_id ".
-				       //" LEFT JOIN zzz_avatars ON v_avid = av_id ". 
+				       " LEFT JOIN zzz_avatars ON v_avid = av_id ". 
 				       //" LEFT JOIN abs_events  ON v_eid = e_id ".
-				       " WHERE ".join(' AND ',$where).' AND '.
-				       join(' AND ',array("lease_start <= $end ",
-							  "lease_end   >= $start")).
-				       (ignore_external_leases_when_booking ? " AND v_eid = ".$accommodationOptions->e->ID : '').
-				       " GROUP BY lease_id ".
+				       " WHERE ".join(' AND ',
+						      array_merge($where,
+								  array("lease_start <= $end ",
+									"lease_end   >= $start",
+									(ignore_external_leases_when_booking ? "v_eid = ".$accommodationOptions->e->ID : '')))).
+				       // " GROUP BY lease_id ".
 				       " ORDER BY CONCAT(hut_code,hut_name,a_capacity) ASC"),
 			       cnf_dev);
       $bCover_input = array();    
       while ($r = myPear_db()->next_record($q)){
-	$cotenants = VM_cotenants()->get_cotenants($r['lease_id'],True,'names');
+	$id = bForm_vm_Room::room_id($r);
+	$cotenants = VM_cotenants()->get_cotenants($r['lease_id'],True,'info','L');
 	$entry = array('day1' => b_time::check_in ($r['lease_start']),
 		       'day9' => b_time::check_out($r['lease_end']),
+		       'name' => $r['lease_id'],
 		       );
-	$id = bForm_vm_Room::room_id($r);
-	if ($cotenants) $bCover_input[$id][join(',',$cotenants)] = $entry;
-	else            $bCover_input[$id][] = $entry;  
+	if ($cotenants){
+	  $entry['name'] = join('+',array_values($cotenants));
+	  $bCover_input[$id][join(',',array_keys($cotenants))] = $entry;
+	}else{ 
+	  $bCover_input[$id][] = $entry;  
+	}
 	$room_capacities[$id] = $r['a_capacity'];
 	if (($r['a_capacity']>1) && 
 	    (count($cotenants)+@$r['v_accompaning']<$r['a_capacity']) &&
-	    !self::_room_is_full($r)) $booked_beds[$id]++;
+	    !self::_room_is_full($r)) @$available_beds[$id]++;
       }
-      arsort($booked_beds);
-      // if (!empty($booked_beds)) b_debug::print_r($booked_beds,'booked_beds','nosort');
+      arsort($available_beds);
+      if (!empty($available_beds)) b_debug::print_r($available_beds,'available_beds','nosort');
 
       // Calculate the optimal leases distribution
       locateAndInclude('bCover');
@@ -1456,10 +1479,10 @@ function __clean_cache(){}
 	b_debug::_debug($id,array('greenText',cnf_dev));
 	$n_populated++;
 	$reply[$a_id] = $room_name;
-      }elseif(0){
+      }elseif($available_beds){
 	// All rooms have tenants, check may be there is a free bed...
-	if($room_capacities[$id] > @$booked_beds[$id]){
-	  b_debug::_debug("$id a_capacity=".$room_capacities[$id].", booked_beds=".$booked_beds[$id],cnf_dev);
+	if($room_capacities[$id] > @$available_beds[$id]){
+	  b_debug::_debug("$id a_capacity=".$room_capacities[$id].", available_beds=".(int)@$available_beds[$id],cnf_dev);
 	  $n_populated++;
 	  $reply[$a_id] = $room_name.as_cotenant;
 	}
@@ -1470,9 +1493,9 @@ function __clean_cache(){}
     if (empty($n_populated)){
       $msg_overbooking = "WARNING, all the available room are booked.<br/>".
 	"You may continue with shared accommodation";
-      foreach($booked_beds as $id=>$count){
+      foreach($available_beds as $id=>$count){
 	if (!$count) continue;
-	b_debug::_debug("$id a_capacity=".$room_capacities[$id].", booked_beds=".$booked_beds[$id],cnf_dev);
+	b_debug::_debug("$id a_capacity=".$room_capacities[$id].", available_beds=".$available_beds[$id],cnf_dev);
 	$n_populated++;
 	list($a_id,$room_name) = explode('#',$id,2);
 	$reply[$a_id] = $room_name.as_cotenant;
