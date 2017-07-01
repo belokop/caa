@@ -3,7 +3,7 @@ locateAndInclude("bHolder");
 locateAndInclude(bForm_Avatar::$bForm_Avatar);
 class bHolder_Avatar extends bHolder {
 
-  var $debug = False;
+  var $debug = True;
   
   var $sortBy_default = 'name';
   var $av = Null; // Avatar class
@@ -115,11 +115,13 @@ class bHolder_Avatar extends bHolder {
 	foreach($rrs as $r) $ranks[] = $r['u_rank'];
       }
       sort($ranks);   
+      $this->dbg($ranks);
       foreach($ranks as $rank){
 	$icon = '';
 	switch($rank){
 	case RANK__ea_member:
 	  $icon = myOrg()->eaMembers()->unitMemberIcon($this->rec['av_id']);
+	  $this->dbg($icon);
 	  break;
 	case RANK__ea_admin:
 	case RANK__ea_org_manager:

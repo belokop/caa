@@ -1713,6 +1713,7 @@ class b_debug extends myPear_base{
     }elseif(is_bool($arg) || ($arg === Null)){
       $arg = var_export($arg,True);
     }elseif(is_string($arg)){
+      if (strip_tags(trim($arg) != trim($arg))) $arg = b_fmt::escape($arg);
       $arg = var_export((strlen($arg)>$max_s_l?substr($arg,0,$max_s_l).' ...' : $arg),True);
     }else{
       //      var_dump($arg);

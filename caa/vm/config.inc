@@ -3,9 +3,9 @@
 /**
  * Visitors Manager (VM) configuration file
  */
-$releaseDate = '2017-06-30';
+$releaseDate = '2017-07-01';
 define('VM_MODULE'   , 'vm');
-define('VM_VERSION','5.13.43');
+define('VM_VERSION','5.13.44');
 
 //
 // The Indico (agenda) host name
@@ -1142,14 +1142,15 @@ function VM_unit($rank,$module=VM_MODULE,$org=myOrg_ID){
  *
  */
 function VM_tooLateForEmail($recP,$e=Null,$verbose=False){
-  return VM_tooLate($recP,Null,$e,$verbose,'email');
+  return (VM_tooLate($recP,Null,$e,$verbose,'email') &&
+	  VM_tooLate($recP,Null,$e,$verbose,'email_only'));
 }
-  
+
 /*
  *
  */
 function VM_tooLateForAccommodation($recP,$cotenants=Null,$e=Null,$verbose=False){
-  return (VM_tooLateForEmail($recP,$e,$verbose) ||
+  return (VM_tooLate($recP,Null,$e,$verbose,'email') ||
 	  VM_tooLate($recP,$cotenants,$e,$verbose,'accommodation'));
 }
 
@@ -1169,24 +1170,23 @@ function VM_tooLate($recP,$cotenants=Null,$e=Null,$verbose=False,$what='email'){
   
   // Build the conditions
   if (empty($e)) $e = VM::$e;
-  $matrix = ($what == 'email'
-	     // Too late to send Emails
-	     ? array(array('t'=>'Event is archived',
-			   'c'=> VM::isArchived($e)),
-		     array('t'=>'Visit is over',
-			   'c'=>(@$rec['v_end'] && ($rec['v_end'] < time() + 24*3600))),
-		     array('t'=>'Event is over',
-			   'c'=>(is_object($e) && ($e->getValue('e_end') < time()))),
-		     array('t'=>'Visit is already started',
-			   'c'=>(@$rec['v_start'] && ($rec['v_start'] < time() + 24*3600))))
-	     // Too late for Accommodation
-	     : array(array('t'=>'Event is approved & locked',
-			   'c'=> VM::isEventEndorsed($e)),
-		     array('t'=>'Room is already in use',
-			   'c'=>((bool)($cotenants===Null?VM_cotenants()->get_cotenants($rec,False,'info'):$cotenants) &&
-				 (bool)(bList_vm_cotenants::$lease_dates[1] < time()))))
-	     );
-
+  // Essential for accommodation && email
+  if ($what == 'email')            $matrix = array(array('t'=>'Event is archived',
+							 'c'=> VM::isArchived($e)),
+						   array('t'=>'Visit is over',
+							 'c'=>(@$rec['v_end'] && ($rec['v_end'] < time() - 24*3600))),
+						   array('t'=>'Event is over',
+							 'c'=>(is_object($e) && ($e->getValue('e_end') < time()))));
+  // Essential for accommodation 
+  elseif($what == 'accommodation') $matrix = array(array('t'=>'Event is approved & locked',
+							 'c'=> VM::isEventEndorsed($e)),
+						   array('t'=>'Room is already in use',
+							 'c'=>((bool)($cotenants===Null?VM_cotenants()->get_cotenants($rec,False,'info'):$cotenants) &&
+							       (bool)(bList_vm_cotenants::$lease_dates[1] < time()))));
+  // Essential for Emails only
+  else                             $matrix = array(array('t'=>'Visit is already started',
+							 'c'=>(@$rec['v_start'] && ($rec['v_start'] < time() - 24*3600) && (@$rec['v_status'] === STATUS_YES))));
+  
   $tooLate = False;  
   foreach($matrix as $w){
     if ($tooLate = $w['c']){

@@ -133,7 +133,8 @@ class bCover_2017 extends myPear_base{
     foreach(array_values($solution) as $line){
       $x = array();
       foreach($line as $entry) $x[] = (empty($entry['name'])
-				       ? sprintf("<code>[%3d,%3d]</code>",$entry['day1'],$entry['day9'])
+				       //? sprintf("<code>[%3d,%3d]</code>",$entry['day1'],$entry['day9'])
+				       ? sprintf("<code>[%s]</code>",b_time::period($entry['day1'],$entry['day9'],'short'))
 				       : sprintf("<code>%s[%s]</code>",str_repeat('&nbsp;',max(0,$ml-strlen($entry['name']))),trim($entry['name'])));
       $hr_solution[] = sprintf("%s %3d - %s\n",str_repeat('&nbsp;',5),(@++$k),join(', ',$x));
     }

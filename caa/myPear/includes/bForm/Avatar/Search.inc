@@ -288,7 +288,6 @@ class bForm_Avatar_Search extends bForm {
     // Do the search.
     // In principal the search is not needed since we already know the candidate.
     // However, there might be people with the similar names, let's show them all.
-    //??? why?    myPear_search()->global_search = True;
     myPear_search()->do_search();
   }
 
@@ -317,7 +316,7 @@ class bForm_Avatar_Search extends bForm {
 	if(locateAndInclude($holder)){
 	  $this->holder = new $holder;
 	  $this->dbg('module='.b_reg::$current_module.', holder='.$this->holder,cnf_dev);
-	  $this->holder->debug = $this->debug;
+	  if ($this->debug) $this->holder->debug = $this->debug;
 	  $this->holder->show_icons = bAuth::authenticated();
 	  $this->holder->report_emptySelection = False;
 	  $this->holder->noSort = True;

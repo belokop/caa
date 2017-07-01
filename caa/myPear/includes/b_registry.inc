@@ -66,7 +66,7 @@ class b_reg{
       }      
     }      
     self::$_recursion--;
-    b_debug::xxx(x('strong','current_module="'.self::$current_module.'"'));
+    b_debug::_debug(x('strong','current_module="'.self::$current_module.'"'));
     return self::$current_module;
   }
 
@@ -447,8 +447,8 @@ class b_reg_bList{
    */
   public static function register($module, $class, $identities){
 
-    if (cnf_show_reg) myPear::DEBUG(__METHOD__."($module, $class)");
     if (!empty($class)){
+      if (cnf_show_reg) b_debug::xxx(starting);
       // Store the SQL ids
       b_reg::_fill_SQL_ids($identities,$module,$class);
       
@@ -467,6 +467,7 @@ class b_reg_bList{
 	  b_debug::traceBack('??? no identities');
 	}
       }
+      if (cnf_show_reg) b_debug::xxx(exiting);
     }
   }
   
@@ -592,7 +593,7 @@ class b_reg_bUnit{
     if (empty($rank))   $rank   = myPear_access($module)->getRank();
     $d = self::get_description($rank,$module);
     $reply = @$d['d'];
-    b_debug::xxx("module=$module, reply=$reply",True);
+    b_debug::_debug("module=$module, reply=$reply",cnf_dev);
     return $reply;
   }
 
@@ -601,8 +602,10 @@ class b_reg_bUnit{
    */
   public static function get_icon($rank=Null,$module=Null){
     if (empty($module)) $module = b_reg::$current_module;
-    $d = self::get_description($rank,$module);
-    if ($d) return bIcons()->get($d);
-    else    return '';
+    $reply = (($d = self::get_description($rank,$module))
+	      ? ''
+	      : bIcons()->get($d));
+    b_debug::_debug($reply,cnf_dev);
+    return $reply;
   }
 }

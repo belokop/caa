@@ -167,9 +167,9 @@ class bUnit extends bList{
     if (!empty($where_parent)) $where[] = '('.join(' OR ',$where_parent).')';
     if ( empty($where))        $where[] = 0;
 
-    $q = myPear_db()->query("SELECT um_avid,u_rank,u_parent,u_class FROM zzz_unit_members ".
-			    " LEFT JOIN zzz_units ON um_uid = u_id ".
-			    " WHERE ".join(' AND ',$where)." GROUP BY u_id ORDER BY u_rank DESC");
+    $q = myPear_db()->qquery("SELECT um_avid,u_rank,u_parent,u_class FROM zzz_unit_members ".
+			     " LEFT JOIN zzz_units ON um_uid = u_id ".
+			     " WHERE ".join(' AND ',$where)." GROUP BY u_id ORDER BY u_rank DESC",cnf_dev);
     
     $reply = array();
     while($r=myPear_db()->next_record($q)){
@@ -177,6 +177,7 @@ class bUnit extends bList{
 				      'u_rank'  =>$r['u_rank'],
 				      'u_class' =>$r['u_class']);
     }
+    b_debug::print_r($reply);
     return $reply;
   }
 
