@@ -2650,15 +2650,11 @@ class bHolder_vm_Visitors extends bHolder_vm{
 	if ($fe=file_exists($af)){
 	  $rec['hotel_confirmation'] = bJS()->modal_image_file(bIcons()->get(array('d'=>'See the attachment',
 										   'i'=>'i-m_pdf',
-										   'c'=> 'opacity_on')),
+										   'c'=> 'opacity_off')),
 							       $af);
-	  
-	  if (0) $rec['hotel_confirmation'] = bIcons()->get(array('d'=>'See the attachment',
-								  'i'=>'i-m_pdf',
-								  'c'=> 'opacity_on'));
 	}
 	$this->t->extraTD[] = (($rec['v_status'] === STATUS_YES) && !VM_self_accommodated($rec) &&
-			       (VM_mailer()->welcome_applicant($rec['v_id'],'status',STATUS_YES) === False)
+			       ($fe || (VM_mailer()->welcome_applicant($rec['v_id'],'status',STATUS_YES) === False))
 			       ? bIcons()->getButton(array('d'=>($fe?'Replace':'Upload').' the welcome mail attachment',
 							   'i'=>('i-m_pdf'),
 							   'l'=>b_url::same(array('hotel_confirmation_once'=>$rec['v_id'],

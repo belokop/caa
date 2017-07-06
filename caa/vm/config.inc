@@ -5,7 +5,7 @@
  */
 $releaseDate = '2017-07-06';
 define('VM_MODULE'   , 'vm');
-define('VM_VERSION','5.13.46');
+define('VM_VERSION','5.13.47');
 
 //
 // The Indico (agenda) host name
