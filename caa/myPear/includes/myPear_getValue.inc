@@ -75,8 +75,6 @@ class myPear_getValue extends myPear_base{
        ((stripos(get_class($this),$formdebug) !== False) && (get_class($this)!='bForm'))){    
       $this->debug = True;
     }
-    
-    if (cnf_show_gv || $this->debug) $this->show_gv = True;
   }
 
   /*
@@ -324,7 +322,7 @@ class myPear_getValue extends myPear_base{
       $this->dbg(($value===Null
 		  ? '&lt;NOT SET&gt;' 
 		  : b_fmt::escape(b_fmt::_($value)) . $hint),
-		 array(3,'blueText',True));
+		 array(3,True));
     }
     return $value;
   }
@@ -368,7 +366,6 @@ class myPear_getValue extends myPear_base{
    * Same, but with the enforced DB update
    */
   public function getValue_reset_forced($name,$value=Null){
-    $this->dbg(starting);
     if ((int)$this->ID && method_exists($this,'updateDB')){
       $isVITAL = $this->isVITAL;
       $this->isVITAL = array();
@@ -376,7 +373,6 @@ class myPear_getValue extends myPear_base{
       $this->isVITAL = $isVITAL;
     }
     $this->getValue_reset($name,$value);
-    $this->dbg(exiting);
   }
 
   

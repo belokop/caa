@@ -42,6 +42,34 @@ class bForm_vm_Visit extends bForm_vm {
     return $reply;
   }
   
+  /*
+   * WM - Welcome Mail
+   */
+  public function upload_mailAttachment($id='WM'){
+    static $name = '_virt_att';
+
+    $c = VM::$formDummy;
+
+    self::$_debug = $c::$_debug = True;
+
+    VM::$formDummy->defineVariable('Please select the PDF file to be attached',$name);
+    VM::$formDummy->defineTypes(array('expected_ext'=>array($name=>'.pdf')));
+    VM::$formDummy->expected_ext[$name] = '.pdf';
+    VM::$formDummy->dbg(VM::$formDummy->expected_ext,cnf_dev);
+
+    ob_start();     
+    VM::$formDummy->uploadFile($name);
+    $dialog = ob_get_contents();
+    ob_end_clean();
+    var_dump($dialog);
+    
+    print x("span class='only_online'",
+	    x("form action='".b_url::same('?resetcache_once=1')."' method='post' enctype='multipart/form-data' name='upload_mailAttachment'",
+	      VM::$formDummy->uploadFile($name).//	      $dialog.
+	      "<input type='hidden' name='_post_bForm_ID_once' value='".$this->ID."'/>".
+	      "<input type='submit' value='submit'/>"));
+  }
+
   
   /*
    * Check does the avatar have visit with the active policy,
@@ -208,7 +236,7 @@ class bForm_vm_Visit extends bForm_vm {
   function getGSF($what='travel.*support',$li='<li>'){
     $gsf = self::_getGSF($what,array('v_gsf'=>$this->getValue('v_gsf',True)),$li);
     if (empty($gsf))$reply = '';
-    else  $reply = x('span class=smallerText',empty($li)
+    else  $reply = x('span class=smaller-text',empty($li)
 		     ? join('<br/>',$gsf)
 		     : x('ul',str_replace('<br/>',' ',join(' ',$gsf)))); 
     return $reply;

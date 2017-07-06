@@ -6,4 +6,4 @@ dependencies:
 project: YB
 type: module
 core: 8.x
-version: 8.x-5.5.12
+version: 8.x-5.5.13

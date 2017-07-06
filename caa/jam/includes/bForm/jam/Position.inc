@@ -13,7 +13,7 @@ class bForm_jam_Position extends bForm_jam {
   
   var $TABLE  = 'jam_positions';
   var $TABLEID= 'pos_id';
-  var $debug  = False;
+  public static $_debug  = False;
   var $sc     = NULL;    /* link to SC */
   private $_rf= array(); /*links to array of forRF */
 

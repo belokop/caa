@@ -254,7 +254,10 @@ class bForm_vm_Room extends bForm_vm {
 	  : myPear::getInstance_new('bForm_vm_Event',$formDB['v_eid'],array('strict','fatal')));
     if ($a_id == VM::$OA->ID){
       self::$receiptFormula  = '('.LODGING_OA_TXT.')';
-      return self::_daily_price($formDB,$e);
+      return 0;
+    }elseif($a_id == VM::$BR->ID){
+      self::$receiptFormula  = '('.LODGING_BR_TXT.')';
+      return 0;
     }else{
       $p = self::_daily_price($formDB,$e); 
       self::$receiptFormula = (($ip=(int)$p)?"($ip":'(???')."*$nDays".($extraApFee?"+$extraApFee)":')');

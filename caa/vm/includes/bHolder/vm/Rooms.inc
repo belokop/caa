@@ -177,7 +177,7 @@ class bHolder_vm_Rooms extends bHolder_vm{
   function format() {
     static $ok = 0;
     foreach($this->header() as $k=>$v) if ($k!=='a_name') $this->t->css[$k]['align'] = 'align_right';
-    foreach(array('a_comment') as $k) $this->t->class[$k] = array('opaqueText');
+    foreach(array('a_comment') as $k) $this->t->class[$k] = array('silverText');
 
     $this->a = myPear::getInstance_new('bForm_vm_Room', @$this->rec['a_id'],array('strict'));
     if (empty($this->a)){
@@ -188,14 +188,14 @@ class bHolder_vm_Rooms extends bHolder_vm{
     $ok++;
 
     $this->rec['a_name'] = bForm_vm_Room::_a_name($this->rec,False);
-    if ($this->rec['a_comment']) $this->rec['a_name'] .= '<br/>'.x('em class="smallerText"',$this->rec['a_comment']);
+    if ($this->rec['a_comment']) $this->rec['a_name'] .= '<br/>'.x('em class="smaller-text"',$this->rec['a_comment']);
 
     if (empty($this->rec['n_nosort'])) 	  $this->rec['n_nosort'] = 0;
     if (isset($this->rec['a_start'])) if ($this->rec['a_start'] <= myPear_day0) unset($this->rec['a_start']); 
 
     if (isset($this->rec['a_end'])){
       if ($this->rec['a_end'] < time()){
-	foreach(array_keys($this->header()) as $k) $this->t->class[$k] = array('overstrike','opaqueText');
+	foreach(array_keys($this->header()) as $k) $this->t->class[$k] = array('overstrike','silverText');
       }
       if ($this->rec['a_end']   >= myPear_day9) unset($this->rec['a_end']); 
     }
@@ -345,8 +345,8 @@ class bHolder_vm_Rooms extends bHolder_vm{
     return $reply;
   }
 
-  public static function rejectExtApp(){
-    return "a_id != ".VM::$OA->ID;
+  public static function reject_self_accommodated(){
+    return sprintf("a_id NOT IN (%s,%s)",VM::$OA->ID,VM::$BR->ID);
   }
   
   /*

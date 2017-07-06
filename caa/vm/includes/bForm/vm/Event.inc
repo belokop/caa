@@ -393,7 +393,7 @@ class bForm_vm_Event extends bForm_vm {
     return (bool)self::_getPolicy($policy,
 				  array('e_policy'=>$this->getValue('e_policy'),
 					'e_end'   =>$this->getValue('e_end')),
-				  (bool)$this->debug);
+				  (bool)self::$_debug);
   }
   
   /*

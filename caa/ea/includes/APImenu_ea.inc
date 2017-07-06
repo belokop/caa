@@ -155,7 +155,7 @@ class APImenu_ea extends APImenu{
 	$reply = $ea_members;
       }
     }
-    // if ($reply) b_debug::xxx($reply);
+    // if ($reply) $this->dbg($reply);
     return $reply;
   }
 

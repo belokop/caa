@@ -16,16 +16,15 @@ class bDB extends mysqli{
   protected $charset= '?';
 
   public static $_debug   = False; 
-  public        $debug   = False; 
-  protected     $debug_changes = False;
-  protected     $debug_qquery = False;
+  protected     $dbg_changes = False;
+  protected     $dbg_qquery = False;
   
   /*
    *
    */
   function __construct($host=Null,$user=Null,$passwd=Null,$dbname=Null){
 
-    $this->debug = self::$_debug || $this->debug || (class_exists('b_cnf',0) ? b_cnf::get('dbdebug') : False);
+    if (class_exists('b_cnf',0) && b_cnf::get('dbdebug')) self::$_debug = True;
 
     foreach(array('host','user','passwd','dbname') as $arg){
       if (empty($$arg) && isset($GLOBALS[get_class($this)."_$arg"])){
@@ -59,9 +58,9 @@ class bDB extends mysqli{
       while($r = $this->next_record($q))  $this->charset = $r['Value'];
       $this->dbg("character_set_database = '$this->charset'",True);
 
-      $this->debug_changes = (defined('cnf_show_db') && cnf_show_db);
+      $this->dbg_changes = (defined('cnf_show_db') && cnf_show_db);
       $this->dbg(sprintf("user = %s,  database = %s@%s", $user, $this->Database, $this->Host),
-		 $this->debug_changes || (defined('YBhere') && YBhere));
+		 $this->dbg_changes || (defined('YBhere') && YBhere));
     }
     $this->dbg("__construct done, isReady=".var_export($this->isReady,True));
   }
@@ -111,7 +110,7 @@ class bDB extends mysqli{
 	bTiming()->cpu(__function__);
 	$reply = $this->query('START TRANSACTION');
       }else{
-	$this->dbg(sprintf("Recursive transaction, depth %s, skip 'START TRANSACTION'",$this->in_transaction),cnf_dev||$this->debug);
+	$this->dbg(sprintf("Recursive transaction, depth %s, skip 'START TRANSACTION'",$this->in_transaction),cnf_dev);
 	// b_debug::internalError("Recursive transactions");
       }
       break;
@@ -147,7 +146,7 @@ class bDB extends mysqli{
     // Lock during the transaction
     if ($this->in_transaction && stripos($query,'select ') !== False){
       $query .= ' FOR UPDATE';
-      // $this->debug_qquery = cnf_dev;
+      // $this->dbg_qquery = cnf_dev;
     }
 
     // Timing...
@@ -164,17 +163,17 @@ class bDB extends mysqli{
     // Debugging (RnD if you want...)
     if (cnf_dev || YBhere){
       $actions = array('ALTER','UPDATE','DELETE','INSERT','DROP','CREATE','START','COMMIT','ROLLBACK');
-      if (empty($this->debug_qquery)){
-	$this->debug_qquery = $looking_for_performance;
+      if (empty($this->dbg_qquery)){
+	$this->dbg_qquery = $looking_for_performance;
       }elseif(cnf_dev){
 	if (in_array(strToUpper($queryType),$actions) 
 	    || (stripos($query,' join ') !== False) 
 	    || (stripos($query,'COMMIT') !== False)
-	    )    $this->debug_qquery = True;
+	    )    $this->dbg_qquery = True;
       }
       if ($looking_for_performance && in_array(strToUpper($queryType),$actions)){
 	static $tttuuuq = 0;
-	if ($tttuuuq++ < 6){$this->debug_qquery = True;  b_debug::traceBack($query);}
+	if ($tttuuuq++ < 6){$this->dbg_qquery = True;  b_debug::traceBack($query);}
       }
     }
     
@@ -202,7 +201,7 @@ class bDB extends mysqli{
    */
   function qquery($query,$debug=False){
     if (!$this->isReady)   return Null;
-    $this->debug_qquery = (bool)$debug;
+    $this->dbg_qquery = (bool)$debug;
     return $this->query($query);
   }
 
@@ -543,12 +542,9 @@ class bDB extends mysqli{
       return;
     }
 
-    // Drop the locks info
-    //    if (!$this->debug && (stripos($query,'zzz_semaphore') !== False)) return;
-
-    if (!$this->debug_qquery && 
-	!$this->debug &&
-	!$this->debug_changes) return;
+    if (!self::$_debug &&
+	!$this->dbg_qquery && 
+	!$this->dbg_changes) return;
 
     $cnf_show_db = False;
     $n = $this->num_rows();
@@ -565,7 +561,7 @@ class bDB extends mysqli{
 	$cmt = $this->num_rows()." rows";
       }
       $c = 'dgreenText';
-      $cnf_show_db = $this->debug_changes;
+      $cnf_show_db = $this->dbg_changes;
     }elseif(is_bool($this->result)){
       $n = 999;
       $cmt = '????????????????????????????????????????';
@@ -574,10 +570,10 @@ class bDB extends mysqli{
       $cmt = "$n rows";
     }
     if ($n == 1) $cmt = preg_replace("/s$/","",$cmt);
-    if ($this->debug || (($n > 0) && ($this->debug_qquery || $cnf_show_db))){
+    if (self::$_debug || (($n > 0) && ($this->dbg_qquery || $cnf_show_db))){
       b_debug::_debug(x("strong",' '.str_replace(' ','&nbsp;',$cmt)),array($this,True,$c,2));
     }
-    $this->debug_qquery = False;
+    $this->dbg_qquery = False;
   }
 
   /*
@@ -593,7 +589,7 @@ class bDB extends mysqli{
     if (!isset($debug_force)) $debug_force = False;
     if (!isset($color)      ) $color = 'lgreenText';
 
-    b_debug::_debug($text,array($color,2,$this,($this->debug || $this->debug_qquery || $debug_force)));
+    b_debug::_debug($text,array($color,2,$this,(self::$_debug || $this->dbg_qquery || $debug_force)));
   }
 }
       

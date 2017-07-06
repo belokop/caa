@@ -24,7 +24,8 @@ define('ICON_mail_sent_y',  bIcons()->get(array('d'=>'The mail was sent',
 						'c'=> 'opacity_off')));
 class bHolder_vm_Visitors extends bHolder_vm{
   
-  var $debug = False;
+  public static $_debug = False;
+  public static $_dbg_color = 'greyText';
   var $autoOpenHeader = False;
   
   var $photosPerRow =   5;   // number of photos per printing row
@@ -135,7 +136,22 @@ class bHolder_vm_Visitors extends bHolder_vm{
    */
   private function process_emails(&$doing){
 
-    if (isset($_GET['mail2all_deny_once'])){
+    if (isset($_GET['hotel_confirmation_once'])){
+      // ----------------------- Ask for the welcome mail attachment
+      print x("span class='only_online'",
+	      x("form action='".b_url::same('?resetcache_once=1')."' method='post' enctype='multipart/form-data' name='upload_mailAttachment'",
+		x('table',
+		  x('tr',
+		    x('td','Please select PDF file').
+		    x('td',"<input name='_virt_att' type='file' />").
+		    "<input name='v_id' value='".$_GET['hotel_confirmation_once']."' type='hidden' />".
+		    "<input name='lease_id' value='".$_GET['lease_once']."' type='hidden' />").
+		  x('tr',
+		    x('td colspan=2',x('center',"<input type='submit' value='submit'/>"))))));
+    }elseif (isset($_FILES['_virt_att'])){
+      // ----------------------- Save the welcome mail attachment
+      VM_mailer()->save_attachment($_REQUEST['v_id'],$_REQUEST['lease_id'],$_FILES['_virt_att'],'hotel_confirmation');
+    }elseif (isset($_GET['mail2all_deny_once'])){
       // ----------------------- Send deny E-mails to all refused attenders of the event
       $q = $this->query();
       while($rec = myPear_db()->next_record($q)){
@@ -148,7 +164,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
       // ----------------------- Send welcome E-mails to all accepted attenders of the event
       $q = $this->query();
       while($rec = myPear_db()->next_record($q)){
-	if(VM_mailer()->welcome_applicant($rec['v_id'],@$rec['lease_id'],'status',$rec['v_status']) === False){
+	if(VM_mailer()->welcome_applicant($rec['v_id'],'status',$rec['v_status']) === False){
 	   VM_mailer()->welcome_applicant($rec['v_id'],@$rec['lease_id'],$no_preview=True);
 	}
       }
@@ -554,7 +570,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
     }else{
       $reply = False;
     }
-    if ($this->debug) b_debug::xxx($reply); 
+    b_debug::_debug($reply); 
     return $reply;
   }
   
@@ -662,6 +678,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
   private $visit_ID = 0;
   function listEntries(){
     
+    if (isset($_GET['hotel_confirmation_once'])) return;
     if (!is_object(bAuth::$av)) return; // sanity
     
     if (is_object($this->av)){
@@ -902,7 +919,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
     if (isset($header['space2'])) $pre_header[] = "1:";
     if ($n_Other > 0)             $pre_header[] = "1:";
     if (isset($header['space3'])) $pre_header[] = "1:";
-    if ($n_Total > 0)             $pre_header[] = "$n_Total:<span class='biggerText'>Total</span>";
+    if ($n_Total > 0)             $pre_header[] = "$n_Total:<span class='bigger-text'>Total</span>";
 
     return array($pre_header);
   }
@@ -1197,7 +1214,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
 				'',
 				'Only when you are happy with the selection AND the event budget is approved by the '.myOrg_name.' administration, '.
 				'the applicants will be informed about the decision.'));
-	  $reply_error[x('span class="boldText redText"',"ATTENTION: $key")] = $text;
+	  $reply_error[x('span class="bold-text redText"',"ATTENTION: $key")] = $text;
 	}
       default:
       }
@@ -1336,7 +1353,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
       
       // Get to visit summary by clicking on the visitor name
       $this->rec['av_Lf'] = $name = bForm_Avatar::_fmtName('Lf',$this->rec);
-      if (in_array($this->rec['av_id'],$this->organizers)) $name = x("span class='boldText'","$name (org)");
+      if (in_array($this->rec['av_id'],$this->organizers)) $name = x("span class='bold-text'","$name (org)");
       if (1) $this->rec['name'] = bJS()->modal_iframe("?mode_once=RO&id=".$this->rec['v_id']."&form=vm_Visit",$name);
       else   $this->rec['name'] = $name;
       
@@ -1564,7 +1581,6 @@ class bHolder_vm_Visitors extends bHolder_vm{
 	
       default:
 	$this->rec['status'] = $this->say('Pi');
-	break;
       }
       
     case 'lists':
@@ -1661,7 +1677,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
 			 'a_name'      => 'Rum',
 			 'a_area'      => 'Rum (kvm)',
 			 'a_comment'   => '');
-    if ($this->rec['lease_aid'] == VM::$OA->ID){
+    if (VM_self_accommodated($this->rec)){
       $unsets = array('v_projectid','cotenant','a_name','a_area','a_comment');
     }else{
       $unsets = array('a_area');
@@ -1841,10 +1857,10 @@ class bHolder_vm_Visitors extends bHolder_vm{
     if (stripos($item,'space') === 0){
       $c[] = 'highlightShadow';
     }else{
-      if (in_array($item,$this->money_bold))  $c[] = 'boldText';
+      if (in_array($item,$this->money_bold))  $c[] = 'bold-text';
       if ($value < 0)                         $c[] = VM_color_budgetCredit;
       elseif(in_array($item,$this->money_est))$c[] = VM_color_budgetEstimate;
-      if (stripos($item,'total') !== False) $c[] = 'biggerText';
+      if (stripos($item,'total') !== False) $c[] = 'bigger-text';
     }
     if (!empty($c)) $value = x("span class='".join(' ',$c)."'",$value);
   }
@@ -1856,7 +1872,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
       }else{
 	$c = array('align_right');
 	if (in_array($k,$this->money_est))  $c[] = VM_color_budgetEstimate;
-	if (stripos($k,'total') !== False)  $c[] = 'biggerText';
+	if (stripos($k,'total') !== False)  $c[] = 'bigger-text';
       }
       $th[$k] = "class='".join(' ',$c)."'"; 
     }
@@ -1875,7 +1891,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
 	$reply = '';
       }else{
 	$this->dbg($reply);
-	$reply = x('ul class="smallerText"',join(' ',$reply));
+	$reply = x('ul class="smaller-text"',join(' ',$reply));
       }
     }
     return $reply;
@@ -2332,7 +2348,9 @@ class bHolder_vm_Visitors extends bHolder_vm{
   
   private $something_was_paid = False;
   function listEntries_summary(){
-    //     $this->dbg($this->b_tabs->active_tab_name(),True);
+
+    if (isset($_GET['hotel_confirmation_once'])) return;
+
     bTiming()->cpu(__function__);
 
     // Initialise the counters... TBD better...
@@ -2625,6 +2643,29 @@ class bHolder_vm_Visitors extends bHolder_vm{
 	$this->t->extraTD = array();
 	$rec['all_highlight'] = '';
       }
+
+      if (($this->doing == 'show_mails_exchange') && !VM_self_accommodated($rec)){
+	$af = VM_mailer()->attachmentFile($v_id,$rec['lease_id'],'hotel_confirmation');
+	// Say "upload mail attachment 'hotel_confirmation'"
+	if ($fe=file_exists($af)){
+	  $rec['hotel_confirmation'] = bJS()->modal_image_file(bIcons()->get(array('d'=>'See the attachment',
+										   'i'=>'i-m_pdf',
+										   'c'=> 'opacity_on')),
+							       $af);
+	  
+	  if (0) $rec['hotel_confirmation'] = bIcons()->get(array('d'=>'See the attachment',
+								  'i'=>'i-m_pdf',
+								  'c'=> 'opacity_on'));
+	}
+	$this->t->extraTD[] = (($rec['v_status'] === STATUS_YES) && !VM_self_accommodated($rec) &&
+			       (VM_mailer()->welcome_applicant($rec['v_id'],'status',STATUS_YES) === False)
+			       ? bIcons()->getButton(array('d'=>($fe?'Replace':'Upload').' the welcome mail attachment',
+							   'i'=>('i-m_pdf'),
+							   'l'=>b_url::same(array('hotel_confirmation_once'=>$rec['v_id'],
+										  'lease_once'=>$rec['lease_id']))))
+			       : '');
+      }
+      
       // Print the row
       $this->t->prt($rec,@$rec['all_highlight']);
       
@@ -2750,6 +2791,8 @@ class bHolder_vm_Visitors extends bHolder_vm{
 			'space4'     => '',
 			'm_info_1'   => '',
 			'm_info_2'   => '',
+			'space5'     => '',
+			'hotel_confirmation'=> '',
 			);
 	if (!send_denialMail_to_applicants)      unset($header['m_no_1'],  $header['m_no_2'], $header['space4']);
 	if (!send_welcomeMail_to_applicants)     unset($header['m_yes_1'], $header['m_yes_2'],$header['space3']);

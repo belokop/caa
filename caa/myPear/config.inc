@@ -3,8 +3,8 @@ ini_set("allow_url_fopen", true);
 //var_dump(file_get_contents('php://input'));
 
 // myPear module 
-$releaseDate = '2017-07-01';
-define('myPear_VERSION','5.3.213');
+$releaseDate = '2017-07-06';
+define('myPear_VERSION','5.3.214');
 define('myPear_MODULE', 'myPear');
 define('myPear_DATE',    $releaseDate);
 
@@ -366,6 +366,15 @@ require_once (dirname(__FILE__).DIRECTORY_SEPARATOR.'includes'.DIRECTORY_SEPARAT
  */
 myPear_sessionStart();
 myPear_setConstants();
+
+/*
+ * Mainly for tests...
+ */
+if (!HOSTED_BY_CMS){
+  print  "<style>\n";
+  require_once(dirname(__FILE__).'/css/myPear.css');
+  print "</style>\n";
+}
        
 /*
  * Define the myPear common roles.

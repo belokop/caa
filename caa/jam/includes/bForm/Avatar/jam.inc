@@ -7,7 +7,7 @@
 locateAndInclude('bForm_Avatar');
 class bForm_Avatar_jam extends bForm_Avatar{
 
-  var $debug = False;
+  public static $_debug = False;
 
   var $tips  = array('av_sex' => 'Used only for statistics',
 		     );

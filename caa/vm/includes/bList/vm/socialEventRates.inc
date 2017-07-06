@@ -16,7 +16,7 @@ locateAndInclude('bList_vm');
 
 class bList_vm_socialEventRates extends bList_vm{
 
-  var $debug = False;
+  public static $_debug = False;
   protected $p_models=array('ppp'    => 'per person',
 			    'ppd'    => 'per day',
 			    'pppd'   => 'per person/day',
@@ -193,7 +193,7 @@ class bList_vm_socialEventRates extends bList_vm{
 
   function isAddable(){
     $reply = $this->isWritable();
-    $this->dbg($reply);
+    $this->dbg($reply,cnf_dev);
     return $reply;
   }
   

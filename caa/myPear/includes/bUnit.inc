@@ -10,6 +10,7 @@ locateAndInclude('bList');
 locateAndInclude('bForm_Avatar');
 class bUnit extends bList{
 
+  public static $_debug = True;
   var $ID        = 0;
   var $query     = array(); 
   var $MODE      = 'RW';
@@ -18,7 +19,7 @@ class bUnit extends bList{
   protected $orderBy    = 'av_lastname';
   protected $orderByDir = 'ASC';
   protected $b_tabs = Null;
-  protected $dbg_color = 'deepskyblueText';
+  public static $_dbg_color = 'deepskyblueText';
 
   /*
    * See bList
@@ -201,6 +202,9 @@ class bUnit extends bList{
    * bUnit generic constructor
    */
   public function __construct($parent_ID, $rank){
+    static $dejaVu = array(); $id="$parent_ID.$rank"; if (@$dejaVu[$id]++) b_debug::traceBack("deja vu '$id' #".$dejaVu[$id]);
+    if ($this->debug) b_debug::_debug(starting);
+    
     // Say "I am bUnit, not bList";
     $this->rank = $rank;
 
@@ -209,6 +213,7 @@ class bUnit extends bList{
 
     // And go on
     parent::__construct($parent_ID,$rank);
+    if ($this->debug) b_debug::_debug(exiting);
   }
 
   /*
@@ -264,35 +269,32 @@ class bUnit extends bList{
     elseif ($av_id = @$_GET['edi_m_once']) $wait=$this->edit_unitMember($av_id);
     elseif ($av_id = @$_GET['add_m_once'])       $this->add_unitMember($av_id);
 
-    if (empty($av_id)) $memberTitle = 'member';
-    else               $memberTitle = $this->unitMemberTitle($av_id);
-    
     // Switch to the list unit members when add / delete / remove is done    
     if  (empty($wait)){
-      $url_on_success = join(',',array("add_m_once=AV_ID",
-				       "ed_bList=".get_class($this),
-				       (($t=@$_GET['b_tab']) ? ",b_tab=$t" : "").
-				       "arg1_once=$this->parent_ID",
-				       "arg2_once=$this->rank"));
-      
-      $create_url = b_url::same(array('id'             => 'new',
-				      'form'           => bForm_Avatar::$bForm_Avatar, 
-				      'resetcache_once'=> 1,
-				      '_button'        => "appoint as a $memberTitle",
-				      '_after_create'  => $url_on_success),
-				b_url::get_GET('^ed_bList()',True));
-      
-      $search_url = b_url::same(array('resetcache_once' => 1,
-				      'form'            => 'bForm_Avatar_Search', 
-				      '_button'         => "appoint as a $memberTitle",
-				      '_after_search'   => $url_on_success),
-				b_url::get_GET('^ed_bList()',True));
-      
-      
       $this->show();
       if($this->isWritable()){
-	$this->bUnit_buttons_row[] = b_btn::submit("add new $memberTitle from the database",$search_url);
-	$this->bUnit_buttons_row[] = b_btn::submit("\"create\" a new $memberTitle",         $create_url);
+	$memberTitle = (empty($av_id)
+			? 'member'
+			: $this->unitMemberTitle($av_id));
+      	$url_on_success = join(',',array("add_m_once=AV_ID",
+					 "ed_bList=".get_class($this),
+					 (($t=@$_GET['b_tab']) ? ",b_tab=$t" : "").
+					 "arg1_once=$this->parent_ID",
+					 "arg2_once=$this->rank"));
+      
+	$this->bUnit_buttons_row[] = b_btn::submit("add new $memberTitle from the database",
+						   b_url::same(array('resetcache_once'=> 1,
+								     'form'           => 'bForm_Avatar_Search', 
+								     '_button'        => "appoint as a $memberTitle",
+								     '_after_search'  => $url_on_success),
+							       b_url::get_GET('^ed_bList()',True)));
+	$this->bUnit_buttons_row[] = b_btn::submit("\"create\" a new $memberTitle",    
+						   b_url::same(array('id'             => 'new',
+								     'form'           => bForm_Avatar::$bForm_Avatar, 
+								     'resetcache_once'=> 1,
+								     '_button'        => "appoint as a $memberTitle",
+								     '_after_create'  => $url_on_success),
+							       b_url::get_GET('^ed_bList()',True)));
 	print b_btn::UL_buttons($this->bUnit_buttons_row);
       }
     }
@@ -444,6 +446,7 @@ class bUnit extends bList{
    */
   protected $b_table_styles = 'style=width:100%';
   function show($onlyNames=False){
+    if ($this->debug) b_debug::_debug(starting);
     locateAndInclude(bForm_Avatar::$bForm_Avatar);
 
     // Get the tabs by the start letters of surnames
@@ -487,6 +490,7 @@ class bUnit extends bList{
       $this->t->close(); 
     }
     $this->b_tabs->close();
+    if ($this->debug) b_debug::_debug(exiting);
   }
 
   /*
@@ -1047,6 +1051,11 @@ class bUnit extends bList{
   }
   
   function isUnitMemberWritable(){
+    if (empty($this->rec['um_avid']) && !empty($this->rec['av_id'])){
+    var_dump($this->rec);
+      b_debug::traceBack();
+      $this->rec['um_avid'] = $this->rec['av_id'];
+    }
     $member_rank = EA_access()->getRank($this->rec['um_avid']);
     $reply = ($member_rank == RANK__ea_org_manager
 	      ? superUser_here

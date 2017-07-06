@@ -3,9 +3,9 @@
 /**
  * Visitors Manager (VM) configuration file
  */
-$releaseDate = '2017-07-01';
+$releaseDate = '2017-07-06';
 define('VM_MODULE'   , 'vm');
-define('VM_VERSION','5.13.44');
+define('VM_VERSION','5.13.45');
 
 //
 // The Indico (agenda) host name
@@ -1136,6 +1136,18 @@ function VM_unit($rank,$module=VM_MODULE,$org=myOrg_ID){
   case RANK_vm_organizer:          return VM_organizers(VM::$e);
   default:  b_debug::internalError("Unexpected rank '$rank'");
   }
+}
+
+/*
+ * 
+ */
+function VM_self_accommodated($recP){
+  $rec = (is_object($recP)
+	  ? $recP->formDB
+	  : $recP);
+  $reply = (empty($rec['lease_aid']) || in_array($rec['lease_aid'],array(VM::$OA->ID, VM::$BR->ID)));
+  b_debug::_debug($reply);
+  return $reply;
 }
 
 /*

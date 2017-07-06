@@ -197,7 +197,7 @@ class bCover_vm extends bCover_2010 {
     while ($r = myPear_db()->next_record($q)) {
       switch($this->whatToAllocate){
       case 'Apartment': 
-	if ($r['lease_aid'] == VM::$OA->ID){
+	if (VM_self_accommodated($r)){
 	  $this->summary[LODGING_OA_TXT][] = $r['a_name'];
 	  break;
 	}
@@ -426,7 +426,7 @@ class bCover_vm extends bCover_2010 {
     $where = array();
     switch($this->whatToAllocate){
     case 'Apartment': 
-      $where[] = bHolder_vm_Rooms::rejectExtApp(); 
+      $where[] = bHolder_vm_Rooms::reject_self_accommodated(); 
     case 'Offices':  
       $where[] =  v_roomID." > 0";
       $where[] = "v_eid = ".$this->e->ID;

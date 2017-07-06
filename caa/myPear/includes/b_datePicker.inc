@@ -79,7 +79,6 @@ class b_datePicker{
     $opts = '';
     if (is_array($returnResult)){
       $min_max = $returnResult;
-      if (cnf_show_dp) b_debug::_array($min_max,__METHOD__." $fName $value",cnf_dev);
       $returnResult = False;
       if (!empty($min_max)){
 	list($mnY,$mnM,$mnD) = b_time::parse($min_max[0]); $mnM--;

@@ -785,11 +785,11 @@ class myPear{
   
   static public function ERROR($text,$class=Null){
     if (stripos($text,'missing value')!==False)  self::mail_diagnostics(Null,strip_tags($text));
-    b_debug::_debug($text,array(2,True,'boldText'),'error');
+    b_debug::_debug($text,array(2,True,'bold-text'),'error');
   }
   
   static public function WARNING  ($text,$class=Null){
-    b_debug::_debug($text,array(2,True,'boldText'),'warning');
+    b_debug::_debug($text,array(2,True,'bold-text'),'warning');
   }
 
   static public function WARNING_T($text,$class=Null){

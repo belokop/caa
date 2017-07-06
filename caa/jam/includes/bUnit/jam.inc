@@ -10,7 +10,7 @@ locateAndInclude('bForm_jam_Review');
 class bUnit_jam extends bUnit{
 
   var $pos   = Null;
-  var $debug = False;
+  public static $_debug = False;
 
   /* 
    * Get all JAM units for the given position

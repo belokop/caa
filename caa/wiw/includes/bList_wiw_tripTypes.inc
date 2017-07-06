@@ -32,7 +32,7 @@ class bList_wiw_tripTypes extends bList{
     $reply = b_cnf::check_conditions(array(False=>array('!empty'=>($nMembers > 0)),
 					   'default' => parent::isMemberDeletable()),
 				     $this,
-				     cnf_dev||$this->debug);
+				     cnf_dev);
     return $reply;
   }
 

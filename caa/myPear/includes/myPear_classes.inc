@@ -215,7 +215,7 @@ class b_btn{
       if (strpos($url,'?')===0) $url = b_url::repack($url);
       $url = str_replace('&amp;','&',$url);
       if($confirm)
-	$reply = "<input type='$type' value='$text' $style $img onclick='return submitConfirm(this);' title='$text' name='$url' />\n";
+	$reply = "<input type='$type' value='$text' $style $img onClick='return submitConfirm(this);' title='$text' name='$url' />\n";
       else
 	$reply = "<input type='$type' value='$text' $style $img onClick='document.location.href=\"$url\";return false;' title='$text'/>\n";
     }
@@ -235,10 +235,10 @@ class b_btn{
   /*
    * Really Big Button
    */
-  static function big_button($text,$args=array(),$bgColor='green',$smaller=False){
+  static function big_button($text,$args=array(),$bgColor='green',$smaller=False,$confirm=True){
     return self::submit($text,
 			b_url::same('?'.b_fmt::joinX('&',$args)),
-			$confirm=True,
+			$confirm,
 			$class=($smaller ? "mdl" : "big" )."_button bg_$bgColor");
   }
   
@@ -596,7 +596,7 @@ class b_fmt{
 	$ins = implode(' ',@$k['i']);
 
 	// consider the elements equal if they are synonyms
-	list($xd,$xi) = array("del class='highlightText'", "ins class='highlightText'");
+	list($xd,$xi) = array("del class='highlight-text'", "ins class='highlight-text'");
 	foreach($synonyms as $l=>$r){
 	  if (strstr($del,$l) && strstr($ins,$r)) list($xd,$xi) = array('','');
 	  if (strstr($del,$r) && strstr($ins,$l)) list($xd,$xi) = array('','');
@@ -1781,23 +1781,24 @@ class b_debug extends myPear_base{
 					     'p'=>cnf_show_db));
     
     // Defaults
-    list($level,$color,$class,$toPrint) = array(1,self::$_dbg_color,Null,False);
+    list($is_string,$level,$class,$toPrint) = array(False,1,Null,False);
     
     // Extract the arguments
     if (!is_array($flags)) $flags = array($flags);
     foreach($flags as $m){
-      if    (is_numeric($m)) $level = $m;
-      elseif(is_object($m))  $class = $m;
-      elseif(is_string($m))  $color = $m;
-      elseif(is_bool($m))    $toPrint = $m;
+      if    (is_numeric($m)) {$is_numeric= 1; $level = $m;}
+      elseif(is_object($m))  {$is_object = 1; $class = $m;}
+      elseif(is_string($m))  {$is_string = 1; $color = $m;}
+      elseif(is_bool($m))    {$is_bool   = 1; $toPrint = $m;}
     }
     self::$current_class = is_object($class) ? get_class($class) : '';
 
     // Special formats... May be not important any more...
-    if ($c = @$color_codes[$color]){
+    if ($is_string && ($c = @$color_codes[$color])){
       $stringFormat = $color;
       $color   = $c['c'];
       $toPrint = $c['p'];
+      $is_numeric = 1;
     }
    
     // Start & End of a logical block
@@ -1815,10 +1816,16 @@ class b_debug extends myPear_base{
     
     if ($toPrint){    
       if (cnf_dev || in_array($message_class,array('debug','SICK'))){
-	if ($message_class === 'SICK') { $message_class = 'warning'; $color='redText boldText smallerText'; }
+	if (empty($color)) $color = array();
+	if (!is_array($color)) $color = array($color);
+	if ($message_class === 'SICK') { $message_class = 'warning'; $color[] = 'bold-text smaller-text'; }
 	$callStack = debug_backtrace(False,$level+1);
+	// Get the color from a static class
+	if ((@$callStack[$level]['type'] === '::') && empty($is_string) && isset($callStack[$level]['class']::$_dbg_color)) $color[] = $callStack[$level]['class']::$_dbg_color;
+	if (!preg_grep('/Text$/',$color)) $color[] = self::$_dbg_color;
+	// Get the message
 	$msg = sprintf("<span class='%s'>%s%s:%s <em>%s</em></span>\n",
-		       $color,
+		       join(' ',$color),
 		       self::s_e_depth(),
 		       self::parse_tb_entry($callStack[$level],$class),
 		       (cnf_dev && ($message_class !== 'debug') ? '<br>' : ''),
@@ -1827,7 +1834,7 @@ class b_debug extends myPear_base{
 	$msg = (is_string($txt) ? $txt : self::parse_value($txt,10));
       }
       if (self::$starting_exiting || !@self::$xxx_cache[b_crypt::hash($msg)]++ || b_cnf::get('noCompactMessages')){
-	if (b_cnf::get('nodrupal')) print "<br>$msg\n";
+	if (b_cnf::get('nodrupal') || !function_exists('drupal_set_message')) print "<br>$msg\n";
 	else drupal_set_message($msg,$message_class);
       }
     }
@@ -1842,9 +1849,9 @@ class b_debug extends myPear_base{
     $callStack = debug_backtrace(False);
     $t = new b_table_zebra(array('n'=>' ','b'=>' ','l'=>' '));
     $t->showLineCounter = False;
-    foreach($callStack as $k=>$call) $t->prt(array('n'=>x('code class=smallerText',"$k"),
-						   'b'=>x('code class=smallerText',self::parse_tb_entry($call)),
-						   'l'=>x('code class=smallerText',preg_replace(';(.*/caa|'.trim(`pwd`).')/;','',@$call['file'].'#'.@$call['line']))));
+    foreach($callStack as $k=>$call) $t->prt(array('n'=>x('code class=smaller-text',"$k"),
+						   'b'=>x('code class=smaller-text',self::parse_tb_entry($call)),
+						   'l'=>x('code class=smaller-text',preg_replace(';(.*/caa|'.trim(`pwd`).')/;','',@$call['file'].'#'.@$call['line']))));
     $t->close();
     $tb = array(x('strong',(empty($id) ? 'TraceBack:' : $id)),
 		ob_get_contents());
@@ -2070,40 +2077,6 @@ class b_debug extends myPear_base{
     }
   }
 
-  /*
-   * Debug printout of associated array
-   */  
-  static function _array($r,$name='',$forced=NULL,$showEmptyValues=False,$showNumIndex=False) {
-    static $style = 'code';
-    if ($dont_print = ($name === 'get')) $name = '';
-    if (!empty($r) && ($dont_print || $forced || cnf_debug)){
-      if (cnf_CLI){
-	if ($name) print "$name\n";
-	print_r($r);
-      }else{
-	if (!$name) $name = 'dbgArray';
-	if ($flat = !b_fmt::isArrayAssociative($r)) $showNumIndex = True;
-	$counter = -1;
-	foreach ($r as $k=>$v) {
-	  $counter++;
-	  if (myPear::is_empty($v)) continue;
-	  if ($flat) $k="$k - ";
-	  if (($k==(string)$counter) && !$showNumIndex) continue;
-	  if ( $k==(string)$counter) $k="[]";
-	  if (is_array($v) && empty($v))   $v='[]';
-	  if (is_array($v))    $v = b_fmt::joinX('<br/>',$v);
-	  $tr[] = x('tr',($dont_print?'':x('td',$name.'&nbsp;')).x('td',x($style,$k)).x("td colspan='9'",x($style,b_fmt::_($v))));
-	  $name = '';
-	}
-	if (!empty($tr)){
-	  $reply = x("table class='b_table-zebra b_table' ",join(" ",$tr));
-	  if ($dont_print)         return $reply;
-	  else     myPear::DEBUG($name.$reply);
-	}
-      }
-    }
-  }
-  
   /*
    *
    */
@@ -4334,8 +4307,7 @@ class b_cnf{
       }
     }
     if (empty($reply)) $reply = False;
-    if (cnf_show_w || $verbose || $class->debug)
-      b_debug::xxx(($reply ? 'YES - ' : 'NO - ').$msg,array(3,$class,True,'redText'));
+    if (cnf_show_w || $verbose || $class::$_debug) b_debug::_debug(($reply ? 'YES - ' : 'NO - ').$msg,array(3,$class,True,$class::$_dbg_color));
     return $reply;
   }
 
@@ -4444,7 +4416,7 @@ class b_cnf{
     $value = Null;
     if(isset($_GET[$name]))                        list($value,$r) = array(strip_tags($_GET[$name]),      '_GET'); 
     if($class instanceof bForm){
-      $debug = (int)$class->debug;
+      $debug = (int)$class::$_debug;
       if($value===Null &&$class->myPost_bForm() && isset($_POST[$name]))    
 	                                           list($value,$r) = array(strip_tags(@$_POST[$name]),    '_POST');
       if($value===Null)                            list($value,$r) = array(@$class->formDB_modified[$name],'formDB_modified'); 

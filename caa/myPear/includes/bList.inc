@@ -238,7 +238,7 @@ class bList extends myPear_getValue{
   // those items are packed into the lm_option field
   protected $packed_items= array();
   protected $serialized  = 'lm_option';
-  protected $dbg_color = 'blueText';
+  public static $_dbg_color = 'blueText';
 
   public    $sortArgs    = '';
   protected $orderBy     = 'lm_key';
@@ -1458,7 +1458,7 @@ class bList extends myPear_getValue{
    */
   function isAddable(){
     $reply = $this->isWritable();
-    b_debug::xxx($reply);
+    $this->dbg($reply,cnf_dev);
     return $reply;
   }
 

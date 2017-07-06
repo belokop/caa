@@ -19,8 +19,10 @@ if (locateAndInclude(array('Mail',
   
   class bMailer extends myPear_base{
     
+    public static $_dbg_color = 'crimsonText';
+    public static    $_debug = cnf_dev;
+
     var $template      = False;
-    var $debug         = cnf_dev;
     var $signature     = '';
     var $from          = '';
     var $object        = Null;
@@ -29,7 +31,6 @@ if (locateAndInclude(array('Mail',
     private   $smtp_factory= array();
     protected $attachments = array();
     protected $no_preview  = False;
-    protected $dbg_color = 'crimsonText';
     protected $tooLateForEmail = False;
 
     private   $recipients        = array();
@@ -85,7 +86,7 @@ if (locateAndInclude(array('Mail',
       $this->dbg("to=$to,from=".$this->from.",subject=".$this->subject);
       
       if ($n=@$GLOBALS['mailDejaVu'][$to][$this->from][$this->subject]++){
-	if ($this->debug||cnf_dev||cnf_demo)  myPear::DEBUG("SKIP dejavu".($n+1).": to=$to subject=".$this->subject);
+	if (static::$_debug||cnf_dev||cnf_demo)  myPear::DEBUG("SKIP dejavu".($n+1).": to=$to subject=".$this->subject);
 	return Null;
       }
       
@@ -108,7 +109,10 @@ if (locateAndInclude(array('Mail',
       $charset   = 'iso-8859-1';
       $charset   = 'utf8';
       $mime_boundary = "==Multipart_Boundary_x{$semi_rand}x";
-      if ($n=count(array_unique($this->attachments))) $this->subject .= " ($n attachment".($n>1?'s':'').")";
+
+      // Tidy up attachments
+      $this->attachments = array_unique(array_values($this->attachments));
+      if ($n=count($this->attachments)) $this->subject .= " ($n attachment".($n>1?'s':'').")";
       
       // Is an html-formatted message (from internalError)?
       $html_message = (stripos($message,'<html>') !== False);
@@ -226,7 +230,7 @@ if (locateAndInclude(array('Mail',
       switch($sendmail_once){
       case 'send':  // ----------- sending the mail
 	$messageBody[] = '';
-	foreach(array_unique($this->attachments) as $file){
+	foreach($this->attachments as $file){
 	  if(is_file($file) && ($fp = @fopen($file,"rb"))){
 	    $data = @fread($fp,filesize($file));
 	    @fclose($fp);
@@ -421,7 +425,7 @@ Remember to save this mail or book-mark the URL to facilitate later access to th
      */
     private function packPWD($av, $args=array(), $hideURL=False) {
       
-      $this->dbg('$this->hideURL='.var_export($this->hideURL,True),$this->debug||cnf_dev);
+      $this->dbg('$this->hideURL='.var_export($this->hideURL,True),cnf_dev);
       if (!($av instanceof bForm_Avatar)){
 	$reply = '';
       }elseif ($hideURL || $this->hideURL){ 
@@ -450,7 +454,7 @@ Remember to save this mail or book-mark the URL to facilitate later access to th
 	// Get the absolute URL 
 	$reply = b_url::complete_url(b_fmt::joinX('&',$queryString));
       }
-      $this->dbg($reply,$this->debug||cnf_dev);
+      $this->dbg($reply,cnf_dev);
       return $reply;
     }
     
@@ -540,10 +544,8 @@ Remember to save this mail or book-mark the URL to facilitate later access to th
     private $isReady = False;
     private $subject_prefix  = '';
     function __construct($bMailer_host='',$bMailer_port='',$bMailer_user='',$bMailer_passwd='') {
-
-      self::$_dbg_color = $this->dbg_color;
       
-      if (b_cnf::get('smtpdebug')) $this->debug = True;
+      if (b_cnf::get('smtpdebug')) static::$_debug = True;
       $this->dbg('------------------------------------- '.__FUNCTION__);
       
       $reg = b_reg::get();
@@ -564,7 +566,6 @@ Remember to save this mail or book-mark the URL to facilitate later access to th
 				  'port'     => $bMailer_port,
 				  'timeout'  => 10,
 				  'localhost'=> 'localhost', //optional Mail_smtp parameter
-				  // 'debug'    => $this->debug
 				  );
       if ($auth = (!empty($bMailer_user) && !empty($bMailer_passwd))){
 	$this->smtp_factory += array('auth'    => $auth,

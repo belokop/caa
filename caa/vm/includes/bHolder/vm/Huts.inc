@@ -2,7 +2,7 @@
 locateAndInclude("bHolder_vm");
 class bHolder_vm_Huts extends bHolder_vm{
 
-  var $debug = False;
+  public static $_debug = False;
   var $repetValuesCol1only = True;
 
   public function __construct($title='All available buildings'){

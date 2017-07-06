@@ -8,7 +8,7 @@
 locateAndInclude('bList_vm');
 class bList_vm_hutCodes extends bList_vm{
   
-  var $debug = False;
+  public static $_debug = False;
   var $list_quering = array('lm_key'   =>'Unique code',
                             'lm_value' =>'Accommodation option',
 			    );

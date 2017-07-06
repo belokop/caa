@@ -1,14 +1,12 @@
 <?php
 class APIaccess extends myPear_base{
   
-  public static $cache  = Null;
   public     $roles      = array();
   protected  $RANK_privs = array();
-  protected  $dbg_color  = 'redText';
+  public     static $cache     = Null;
+  public     static $_dbg_color= 'redText';
 
   public function __construct(){
-
-    self::$_dbg_color = $this->dbg_color;
 
     //    locateAndInclude('b_cache');
     //    APIaccess::$cache = new b_cache_S(get_class($this));
@@ -37,7 +35,7 @@ class APIaccess extends myPear_base{
 	}else{
 	  define($_here,False);
 	}
-	if (cnf_show_acl) myPear::DEBUG(get_class($this).": $_here = ".(constant($_here) ? 'YES' : 'NO'),'forced');
+	if (cnf_show_acl) $this->dbg("$_here = ".(constant($_here) ? 'YES' : 'NO'));
       }
     }
   }
@@ -62,6 +60,7 @@ class APIaccess extends myPear_base{
   public function getTitle(){
     locateAndInclude('b_registry');
     $reply = b_reg_bUnit::getTitle(myPear_access()->getRank());
+    if (!$reply && cnf_dev) $reply = "??? title";
     $this->dbg($reply,cnf_dev);
     return $reply;
   }

@@ -13,7 +13,7 @@
 locateAndInclude('bUnit_ea');
 class bUnit_ea_members extends bUnit_ea {
 
-  var $debug    = False;
+  public static $_debug    = False;
   var $see_only = Null;
   public $b_tabs_Engine = Null;
   protected $packed_items= array('acl','day1','day9',EA_role_employee,EA_role_alumnus);

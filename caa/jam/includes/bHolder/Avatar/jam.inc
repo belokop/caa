@@ -3,7 +3,7 @@ b_reg::load_module(JAM_MODULE);
 locateAndInclude('bHolder_Avatar');
 class bHolder_Avatar_jam extends bHolder_Avatar{
 
-  var $debug = False;
+  public static $_debug = False;
   protected $left_join = array(" LEFT JOIN jam_recommendations ON rec_avid = av_id",
 			       " LEFT JOIN jam_applicants      ON ap_avid  = av_id");
   

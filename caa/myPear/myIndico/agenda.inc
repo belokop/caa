@@ -169,10 +169,10 @@ Supported arguments:
 
   protected function dbg($o='',$t1='',$t2=''){
     if (is_string($o)){
-      b_debug::xxx($o,array(3,'fuchsiaText',(bool)(cnf_dev||$this->debug),$this));
+      b_debug::_debug($o,array(3,'fuchsiaText',cnf_dev,$this));
     }else{
-      b_debug::xxx($o->name().' '.b_time::period($o->getValue($t1,1),$o->getValue($t2,1)),
-		   array('T',3, cnf_dev||$this->debug));
+      b_debug::_debug($o->name().' '.b_time::period($o->getValue($t1,1),$o->getValue($t2,1)),
+		      array('T',3, cnf_dev));
     }
   }
 }

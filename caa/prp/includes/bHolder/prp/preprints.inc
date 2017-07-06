@@ -5,7 +5,7 @@ locateAndInclude('bHolder');
 
 class bHolder_prp_preprints extends bHolder{
   
-  var $debug = False;
+  public static $_debug = False;
   var $noSort   = True;
   var $doing    = 'list';
    var $managingWhat = '';

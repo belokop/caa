@@ -9,14 +9,14 @@ locateAndInclude('bForm_Avatar_wiw');
  */
 if (!empty($_REQUEST['d_once']) && in_array($_REQUEST['form'],array('wiw_trip','bForm_wiw_trip'))){
   $trip = new bForm_wiw_trip($_REQUEST['id']);
-  myPear::WARNING('Trip '.$trip->name().' is cancelled');
+  myPear::WARNING($trip->name($trip->av->ID != bAuth::$av->ID).' is cancelled');
   myPear_db()->qquery("DELETE FROM wiw_trips WHERE t_id = '".$_REQUEST['id']."'",cnf_dev);
-  b_url::header(b_url::same('?q='.join('/',array(WIW_MODULE,APImenu::tab_code(tab_wiw_myTrips)))));
+  b_url::header(b_url::same('?av_id='.$trip->av->ID.'&q='.join('/',array(WIW_MODULE,APImenu::tab_code(tab_wiw_myTrips)))));
 }
 
 class bForm_wiw_trip extends bForm{
-  
-  public $show_gv = True;
+
+  public $av = Null;
 
   /*
    * Adjust the leave / arrival dates:
@@ -67,22 +67,20 @@ class bForm_wiw_trip extends bForm{
     // This will be redefined later
     $this->defineVariable(array('t_avid'=>'t_avid'),'only_if_not_defined');
     
-    /*
     // Hook Avatar
-    foreach(array($this->getValue('t_avid',True,1),@$_GET['av_id'],) as $av_id){
-      if (!empty($av_id)){
-       	$this->getValue_reset('t_avid');
-	break;
-      }
-    }
-    */
+    if (is_numeric($this->ID) && ($t_avid = $this->getValue('t_avid'))) $this->av = new bForm_Avatar_wiw($t_avid);
+
   }
-  
+
   /*
    *
    */
-  public function name(){
-    $reply = b_time::period($this->getValue('t_departure'),$this->getValue('t_arrival'));
+  public function name($includeTraveller_name=False){
+    $reply = sprintf('%s <em>"%s (%s) %s"</em>',
+		     ($includeTraveller_name ? $this->av->fmtName('fl').'\'s trip' : 'Trip'),
+		     $this->getValue('t_destination'),
+		     $this->getValue('lm_key',1,1),
+		     b_time::period($this->getValue('t_departure'),$this->getValue('t_arrival')));
     return $reply;
   }
 
@@ -252,7 +250,7 @@ class bForm_wiw_trip extends bForm{
       
       // get the group members list
       foreach(myOrg(myOrg_ID)->eaMembers()->get_memberInfo(Null,EA_role_employee,'get_byStatus') as $av_id=>$r){
-	$new_travelers[$av_id] = mb_strToUpper($r['av_lastname']).' '.$r['av_firstname'];
+	$new_travelers[$av_id] = bForm_Avatar::_fmtName('Lf',$r);
       }
       $new_travelers[bAuth::$av->ID] = " myself";
       asort($new_travelers);
@@ -311,17 +309,24 @@ class bForm_wiw_trip extends bForm{
     }			   
     
     $this->closeForm(($this->MODE=='RW'?'submit':''));
-    if ($this->getValue('t_departure') > time()) print b_btn::UL_buttons(array('&nbsp;',
-									       b_btn::big_button('Cancel this trip',array('form'  => get_class($this),
-															  'id'    =>$this->ID,
-															  'd_once'=>'yes',
-															  'resetcache_once'=>1),
-												 'red',True),
-									       '&nbsp;',
-									       ));
+    if ($this->MODE == 'RO') print b_btn::UL_buttons(array('&nbsp;',
+							   b_btn::big_button('Back to My trips',array('tab_force'=>'tab_wiw_myTrips',
+												      'av_id'     =>$this->av->ID,
+												      'resetcache_once'=>1),
+									     'green',True,False),
+							   '&nbsp;',
+							   ($this->getValue('t_departure') > time() 
+							    ? b_btn::big_button('Cancel this trip',array('form'  => get_class($this),
+													 'id'    =>$this->ID,
+													 'd_once'=>'yes',
+													 'resetcache_once'=>1),
+										'red',True)
+							    : ''),
+							   '&nbsp;',
+							   ));			    
     bIcons()->explain();
   }
-
+  
   /*
    *
    */

@@ -233,10 +233,11 @@ div.archived{
 .tealText   { color: teal ! important; }
 .whiteText  { color: white ! important; }
 .yellowText { color: yellow ! important; }
-.boldText   { font-weight:bold ! important; }
-.italicText { font-style:italic ! important; }
-.smallerText{ font-size:75% ! important; }
-.biggerText { font-size:120% ! important; }
+
+.bold-text   { font-weight:bold ! important; }
+.italic-text { font-style:italic ! important; }
+.bigger-text { font-size:120% ! important; }
+.smaller-text{ font-size:75% ! important; }
 
 .bg_grey     { background: none repeat scroll 0 0 #aaaaaa ! important; }
 .bg_red      { background: none repeat scroll 0 0 #bb0000 ! important; }
@@ -454,7 +455,7 @@ tr.hightlighMarked   * { background: none no-repeat scroll 0 0 #ffcc99 ! importa
 
 .highlightWhite    { background-color: transparent; vertical-align:top; /*border-top: 1px solid white ! important;*/ }
 
-.highlightText{ background-color: #ffffaa ! important }
+.highlight-text{ background-color: #ffffaa ! important }
 
 .highlightShadow{
    border-left:  1px solid #999 ! important;

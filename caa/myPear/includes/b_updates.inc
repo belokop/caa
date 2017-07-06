@@ -955,7 +955,6 @@ function myPear_locate_duplicate_bLists(){
 	  $bList->show();
 	  break;
 	default:
-	  b_debug::_array($rr,"$l_class l_id=$r[l_id]",1);
 	}
       }
     }

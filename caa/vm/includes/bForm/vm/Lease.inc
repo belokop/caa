@@ -7,6 +7,7 @@ define('as_cotenant',' (as a co-tenant)');
 class bForm_vm_Lease extends bForm_vm{
 
   private static $isReady = False;
+  public static $_dbg_color = 'maroonText';
 
   /*
    * Debugging....
@@ -106,9 +107,9 @@ class bForm_vm_Lease extends bForm_vm{
     }    
 
     // Silently refuse empty & "own accommodation" records   
-    if (isset($args['lease_aid'])&& ($args['lease_aid'] == VM::$OA->ID)) return Null;
+    if (isset($args['lease_aid'])&& VM_self_accommodated($args)) return Null;
     if (isset($args['v_status']) && ($args['v_status'] !== STATUS_YES))  return Null;
-
+    
     bTiming()->cpu(__function__);
 
     // Check the cache
@@ -156,8 +157,7 @@ class bForm_vm_Lease extends bForm_vm{
     }
 
     // Silently refuse empty records    
-    if ((@$args['v_status'] !== STATUS_YES) || 
-	(@$args['lease_aid'] == VM::$OA->ID)){
+    if ((@$args['v_status'] !== STATUS_YES) || VM_self_accommodated($args)){
       if (isset($cacheID)) $cache[$cacheID] = Null;
       bTiming()->cpu();
       return Null;
@@ -301,7 +301,6 @@ class bForm_vm_Lease extends bForm_vm{
 	if ($args['a_capacity'] > 1){
 	  if (empty($cotenants)){
 	    $reply[$args['lease_id']] = myOrg_nameS.' pays only for '.bForm_Avatar::_fmtName('Lf',$args);
-	  //$reply[$args['lease_id']] = b_fmt::redText($reply[$args['lease_id'],'blueText');
 	  }else{
 	    $leases[$args['lease_id']] = bForm_Avatar::_fmtName('Lf',$args);
 	    foreach($cotenants as $l_id=>$_fmtName) $leases[$l_id] = $_fmtName;
@@ -489,34 +488,38 @@ class bForm_vm_Lease extends bForm_vm{
    * Return the list of leases & hut_code's for the given visit
    */
   public static function _get_allLeases($visit){
+    static $cache = array(), $cache_count = array();
+
     if (is_object($visit)) $v_id = $visit->ID;
     else                   $v_id = $visit;
-    
-    $leases = array();
-    $q = myPear_db()->query("SELECT lease_id,hut_code,a_id,a_name FROM abs_leases ". 
-			    " LEFT JOIN abs_rooms ON a_id = lease_aid ".
-			    " LEFT JOIN abs_huts ON hut_id = a_hutid ".
-			    " WHERE lease_vid = '$v_id' ORDER BY lease_start");
-    while($r = myPear_db()->next_record($q)){
-      if (!is_numeric($r['lease_id'])) b_debug::internalError('?????????????? '.__method__,$r);
-      $leases[$r['lease_id']] = self::_hut_code($r);
-      // Sanity. Huge performance overhead...
-      //      if (cnf_dev && (($l=@myPear::getClassFromID($r['lease_id']),True,True)){
-      //     	myPear::WARNING_T("Bogus lease $l($r[lease_id]), not 'bForm_vm_Lease'");
-      //      }
-    }
 
-    // Create an empty lease on the fly is there is no-one
-    if (empty($leases) && is_object($visit) && ($visit->getValue('v_status',True) != STATUS_NO)){
-      if (is_object($visit)){
+    b_debug::_debug("call #".(int)@$cache_count[$v_id]++,cnf_dev);
+    if (isset($cache[$v_id])){
+      return $cache[$v_id];
+    }else{    
+      $leases = array();
+      $q = myPear_db()->query("SELECT lease_id,hut_code,a_id,a_name FROM abs_leases ". 
+			      " LEFT JOIN abs_rooms ON a_id = lease_aid ".
+			      " LEFT JOIN abs_huts ON hut_id = a_hutid ".
+			      " WHERE lease_vid = '$v_id' ORDER BY lease_start");
+      while($r = myPear_db()->next_record($q)){
+	if (!is_numeric($r['lease_id'])) b_debug::internalError('?????????????? '.__method__,$r);
+	$leases[$r['lease_id']] = self::_hut_code($r);
+	// Sanity. Huge performance overhead...
+	//      if (cnf_dev && (($l=@myPear::getClassFromID($r['lease_id']),True,True)){
+	//     	myPear::WARNING_T("Bogus lease $l($r[lease_id]), not 'bForm_vm_Lease'");
+	//      }
+      }
+      
+      // Create an empty lease on the fly is there is no-one
+      if (empty($leases) && is_object($visit) && ($visit->getValue('v_status',True) == STATUS_YES)){
 	$lease_id = self::create_firstLease(0,$visit);
-      }else{
-	$lease_id = self::create_firstLease(0,new bForm_vm_Visit($v_id));
+	if (!empty($lease_id)){
+	  $l = new bForm_vm_Lease($lease_id);
+	  $leases[$l->ID] = $l->hut_code();
+	}
       }
-      if (!empty($lease_id)){
-	$l = new bForm_vm_Lease($lease_id);
-	$leases[$l->ID] = $l->hut_code();
-      }
+      $cache[$v_id] = $leases;
     }
     return $leases;
   }
@@ -1046,8 +1049,7 @@ function __clean_cache(){}
    */
   function hasAccommodation($exclude_OA=False){
     $reply = $lease_aid = (int)$this->getValue('lease_aid',True);
-    if ($exclude_OA && (($lease_aid == VM::$OA->ID) || 
-			($lease_aid == VM::$BR->ID))) $reply = False;
+    if ($exclude_OA && VM_self_accommodated(array('lease_aid'=>$lease_aid))) $reply = False;
     $this->dbg($reply);
     return $reply;
   }
@@ -1108,7 +1110,7 @@ function __clean_cache(){}
       $this->getValue_reset_forced('lease_aid',0);
       $this->hookVisit();
       self::get_lease_options($this->ID,'reset');
-    }elseif ($lease_aid && (($old_aid=@$this->formDB['lease_aid']) != $lease_aid)){
+    }elseif (is_numeric($lease_aid) && (($old_aid=@$this->formDB['lease_aid']) != $lease_aid)){
       // sanity
       $room = myPear::getInstance_new('bForm_vm_Room',$lease_aid,'strict');
       if (!($room instanceof bForm_vm_Room)) {
@@ -1221,6 +1223,7 @@ function __clean_cache(){}
     $rec = array('lease_id'   =>$this->ID,
 		 'lease_start'=>$this->getValue('lease_start'),
 		 'lease_end'  =>$this->getValue('lease_end'),
+		 'v_id'       =>$this->parentForm->ID,
 		 'v_eid'      =>@$this->parentForm->e->ID);
     if ($a_id = $this->getValue('lease_aid')){
       $room = myPear::getInstance_new('bForm_vm_Room',$a_id,'strict');
@@ -1319,7 +1322,7 @@ function __clean_cache(){}
       return array();
     }
     /*
-    if (isset($rec['lease_aid']) && ($rec['lease_aid'] == VM::$OA->ID)){
+    if (isset($rec['lease_aid']) && VM_self_accommodated($rec)){
       b_debug::_debug("Skip, ".VM::$OA->name(),True);
       $reply[VM::$OA->ID] = VM::$OA->name();
       return $reply;
@@ -1378,7 +1381,7 @@ function __clean_cache(){}
     }
     $huts_list = join(', ',array_values($huts));
     
-    b_debug::_debug("context ".($event_context ? 'event '.$accommodationOptions->e->name() : 'org'),array('redText',cnf_dev));
+    b_debug::_debug("context ".($event_context ? 'event '.$accommodationOptions->e->name() : 'org'),cnf_dev);
     b_debug::_debug('huts = '.$huts_list,cnf_dev);
 
     // General time limits
@@ -1464,6 +1467,9 @@ function __clean_cache(){}
     if (empty($hut_code)){
       if ($hasAccommodation) $reply[LODGING_RM] = LODGING_RM_TXT;
       if ($event_context) foreach($accommodationOptions->get_BI() as $k=>$v) $reply[$k] = $v;
+      if (empty($rec['v_id'])) b_debug::print_r($rec);
+      if (empty($rec['v_id'])) b_debug::traceBack();
+      if (count(self::_get_allLeases($rec['v_id']) < 2)) unset($reply[VM::$BR->ID]);
       if (!empty($reply)) $reply['separator1'] = '';
     }
 
@@ -1474,17 +1480,17 @@ function __clean_cache(){}
       $n_booked_rooms = count($booked_rooms[$id]);
       if ($a_quantity < $n_booked_rooms){
 	// Disaster, something is wrong
-	if ($n_booked_rooms) b_debug::_debug(sprintf("$id over-booked %s/%s !!!",$n_booked_rooms,$a_quantity),array('redText',cnf_dev));
+	if ($n_booked_rooms) b_debug::_debug(sprintf("$id over-booked %s/%s !!!",$n_booked_rooms,$a_quantity),array('bold-text',cnf_dev));
       }elseif($a_quantity > $n_booked_rooms){
-	b_debug::_debug($id,array('greenText',cnf_dev));
+	b_debug::_debug($id,array('bold-text',cnf_dev));
 	$n_populated++;
 	$reply[$a_id] = $room_name;
       }elseif($available_beds){
 	// All rooms have tenants, check may be there is a free bed...
 	if($room_capacities[$id] > @$available_beds[$id]){
-	  b_debug::_debug("$id a_capacity=".$room_capacities[$id].", available_beds=".(int)@$available_beds[$id],cnf_dev);
+	  b_debug::_debug("$id a_capacity=".$room_capacities[$id].", available_beds=".(int)@$available_beds[$id],array('bold-text',cnf_dev));
 	  $n_populated++;
-	  $reply[$a_id] = $room_name.as_cotenant;
+	  $reply[$a_id] = $room_name . as_cotenant;
 	}
       }
     }
@@ -1509,7 +1515,7 @@ function __clean_cache(){}
 
     // If the reference lease has a room attached, include it in the reply
     if (@$rec['lease_aid'] && empty($reply[$rec['lease_aid']])){
-      b_debug::_debug("$id auto-added",array('greenText',cnf_dev));
+      b_debug::_debug("$id auto-added",array('bold-text',cnf_dev));
       $n_populated++;
       $reply[$rec['lease_aid']] = bForm_vm_Room::_a_name($rec,True);
     }
@@ -1584,8 +1590,8 @@ function __clean_cache(){}
       $name_for_select = $name . $rec['lease_id'];
       $MODE = 'RO';
     }
-    if ($rec['lease_aid'] == VM::$OA->ID) return '';
-
+    if (VM_self_accommodated($rec)) return '';
+    
     // Sanity
     if (empty($rec['lease_aid']) || (@$rec['v_status'] !== STATUS_YES)){
       b_debug::_debug('v_status='.@$rec['v_status'],cnf_dev);
@@ -1638,7 +1644,7 @@ function __clean_cache(){}
 	    ? $recP->formDB
 	    : $recP);
     if (isset($rec['v_status']) && ($rec['v_status'] !== STATUS_YES))  return '';
-    if ($rec['lease_aid'] == VM::$OA->ID) return '';
+    if (VM_self_accommodated($rec)) return '';
     if (!bForm_vm_Room::_mightBeSharable($rec) || self::_room_is_full($rec)) return '';
     
     $cotenants = VM_cotenants()->get_cotenants($rec);
@@ -1689,9 +1695,9 @@ function __clean_cache(){}
 					      "onchange='submit()'",
 					      $onlyRW=False). // it was "True"
 	      (($share_with = bForm_vm_Visit::_getGSF('share',$rec)) 
-	       ? str_replace('?',' ','<br>'.x('span class=smallerText',join('<br>',$share_with))) 
+	       ? str_replace('?',' ','<br>'.x('span class=smaller-text',join('<br>',$share_with))) 
 	       : '').
-	      (!is_object($recP)&&($n=@$rec['v_accompaning']) ? "<br><span class=smallerText>Accompaning persons - me + $n</span>" : "").
+	      (!is_object($recP)&&($n=@$rec['v_accompaning']) ? "<br><span class=smaller-text>Accompaning persons - me + $n</span>" : "").
 	      "<input type='hidden' name='lease_id' value='".$lease_id."'/>".
 	      "<input type='hidden' name='v_id'     value='".$rec['v_id']."'/>".
 	      "<input type='hidden' name='a_id'     value='".$rec['a_id']."'/>".

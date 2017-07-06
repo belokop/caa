@@ -21,7 +21,7 @@ b_os::needExecutable('pdftk',__FILE__,'../../src/pdftk.tar.gz','http://www.pdfla
 locateAndInclude('bForm_jam');
 class bForm_jam_Applicant extends bForm_jam {
 
-  var $debug = False;
+  public static $_debug = False;
   var $TABLEID = 'ap_id';
   var $pos = Null; // position class
   var $rf  = Null; // RF class  

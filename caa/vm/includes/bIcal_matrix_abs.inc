@@ -98,10 +98,11 @@ class bIcal_matrix_abs extends bIcal_matrix{
       /*
        * External accommodation
        */
+      locateAndInclude('bHolder_vm_Rooms');
       $query_EA = array();
       $this->dbg('Counting '.LODGING_OA_TXT,cnf_dev);
-      $oa = "(a_id = '".VM::$OA->ID."')";
-      $negates[] = "NOT $oa"; 
+      $negates[] = bHolder_vm_Rooms::reject_self_accommodated();
+      $oa = str_ireplace(' NOT ',' ',bHolder_vm_Rooms::reject_self_accommodated());
       $query_EA[LODGING_OA] = VM_query(array_merge($where,array($oa)));
       if ($n = myPear_db()->num_rows($query_EA[LODGING_OA])){
 	$this->dbg($n,cnf_dev);

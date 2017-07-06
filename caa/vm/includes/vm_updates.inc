@@ -162,7 +162,9 @@ function vm_compat_update_ad_hocks(){
 function vm_compat_update_53(){
 
   locateAndInclude('bForm_vm_Visit');
-
+  
+  myPear_db()->qquery(sprintf("UPDATE abs_leases JOIN abs_visits ON v_id=lease_vid  SET lease_aid=%s WHERE v_eid=272179 AND lease_aid=%s",5486,338272),True);
+  
   myPear_db()->qquery("UPDATE zzz_lists SET l_name='Event accommodation options' WHERE l_name='Selected accommodation options'",True);
 
   foreach(VM_projects()->get_projects($buildInOnly=True) as $id=>$type){

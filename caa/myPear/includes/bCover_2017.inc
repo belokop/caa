@@ -12,6 +12,7 @@ class bCover_2017 extends myPear_base{
   private $day1, $day2;
   private $holes = array();
   public  $debug = False;
+  public static $_dbg_color = 'silverText';
   
   function __construct($request){
     $this->request_size = count($request);

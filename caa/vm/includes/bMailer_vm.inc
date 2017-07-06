@@ -82,7 +82,7 @@ class bMailer_vm extends bMailer{
 
   var $isMailAutomatic = False;
   var $visit  = Null;
-  var $debug = True;
+  public static $_debug = True;
   
   private $rec    = array();
 
@@ -102,6 +102,57 @@ class bMailer_vm extends bMailer{
     foreach (get_class_methods($this) as $method){
       if (preg_match('/^m_/',$method)) call_user_func(array($this, $method));
     }
+  }
+
+  /*
+   *
+   */
+  public function attachmentFile($v_id,$lease_id,$att_type='hotel_confirmation'){
+    $extension = '.pdf';
+    $file_id = (empty($lease_id) ? '*' : $lease_id);
+    $reply = join(DIRECTORY_SEPARATOR,array(myPear_root_files,
+					    VM_MODULE,
+					    sprintf("%06d",myOrg_ID),
+					    sprintf("%06d",$v_id),
+					    sprintf("%s_%s%s",$att_type,$file_id,$extension)));
+    if (!is_dir($dir=dirname($reply))) mkdir($dir, 0777, True);
+    // Get all attachments if $lease_id is empty
+    if (empty($lease_id)){
+      $reply = array();
+      if ($dh = opendir($dir)) {
+        while (($file = readdir($dh)) !== false){
+	  if (strpos($file,$att_type) === 0) $reply[] = $dir . DIRECTORY_SEPARATOR . $file;
+        }
+        closedir($dh);
+      }
+    }
+    $this->dbg($reply);
+    return $reply; 
+  }
+  
+  /*
+   *
+   */
+  public function save_attachment($v_id,$lease_id,$FILES,$att_type='hotel_confirmation'){
+    
+    switch ($ue_code = $FILES['error']){
+    case UPLOAD_ERR_OK:
+      if ($FILES['type'] == 'application/pdf'){
+	if (!copy($FILES['tmp_name'],$this->attachmentFile($v_id,$lease_id,$att_type))) $error_message = "Can't copy the uploaded file";
+      }else{
+	$error_message = "The uploaded file is not in PDF format";
+      }
+      break;
+
+    case Null:
+    case UPLOAD_ERR_NO_FILE:
+    case UPLOAD_ERR_INI_SIZE:
+    case UPLOAD_ERR_FORM_SIZE:
+    case UPLOAD_ERR_PARTIAL:
+    default:
+      if (!($error_message = @bForm::$upload_errors[$ue_code]['m'])) $error_message = "An unknown error occurred during file upload";
+    }
+    if (!empty($error_message)) myPear::ERROR($error_message."<br>Can't upload the attachement, please try again");
   }
 
 
@@ -517,8 +568,8 @@ Visit information:
    */
   public function m_applicant_info_mail($v_id,$no_preview=False,$debug=Null){
 
-    $debug_sv = $this->debug;
-    if ($debug !== Null) $this->debug = $debug;
+    $debug_sv = self::$_debug;
+    if ($debug !== Null) self::$_debug = $debug;
 
     // Return if the visitor "is not concerned"
     $this->visit = ($v_id instanceof bForm_vm_Visit
@@ -554,7 +605,7 @@ Visit information:
       }
       $reply = CONST_not_concerned;
       $this->dbg("$reply, $case ".x('em',$this->visit->av->fmtName('fl')));
-      $this->debug = $debug_sv;
+      self::$_debug = $debug_sv;
       return $reply;
     }
     
@@ -565,7 +616,7 @@ Visit information:
 		? in_queue
 		: $VM_V_infoMailSent);
       $this->dbg("$reply, ".x('em',$this->visit->av->fmtName('fl')));
-      $this->debug = $debug_sv;
+      self::$_debug = $debug_sv;
       return $reply;
     }
     
@@ -579,7 +630,7 @@ Visit information:
 	myPear_taskManager()->addTask(get_class($this),__function__,array($this->visit->ID,'send_now'));
 	$this->visit->setPolicy(VM_V_infoMailQueued,1);
       }
-      $this->debug = $debug_sv;
+      self::$_debug = $debug_sv;
       return True;
     }
     
@@ -620,7 +671,7 @@ Organizing committee for \"<event/>\".
     $msg = sprintf('%s(%s) %s',__function__,$this->visit->av->getEmail(),($ok ? 'OK' : 'NOT sent ...'));
     $this->dbg($msg, cnf_dev||cnf_CLI);
     myPear_logs()->syslog($msg);
-    $this->debug = $debug_sv;
+    self::$_debug = $debug_sv;
     return (bool)$ok;
   }
   
@@ -795,10 +846,15 @@ Organizing committee for \"<event/>\"."));
     /*
      * Accommodation block (not for the local people)
      */
+    $this->attachments = array();
     $blabla = array();
     $include_accommodation_in_welcomeMail = (include_accommodation_in_welcomeMail && !empty($lease_id) && $this->visit->hut_codes($without_BI=True));
     $this->dbg("include_accommodation_in_welcomeMail=".var_export($include_accommodation_in_welcomeMail,True),cnf_dev);
     if ($include_accommodation_in_welcomeMail){
+
+      // Save attachments
+      foreach($this->attachmentFile($this->visit->ID,0,'hotel_confirmation') as $file) $this->attachments[(int)preg_replace('/[a-zA-Z_]*/','',basename($file))] = $file; 
+      if (!empty($this->attachments)) $this->dbg($this->attachments);
 
       $a = myPear::getInstance_new('bForm_vm_Room',$lease->getValue('lease_aid'),array('strict'));
       $a_name = bForm_vm_Room::_a_name($lease->formDB,'for_applicant');      
@@ -841,11 +897,11 @@ Please read carefully the cancellation policy. The violation of the cancellation
     
     $include_payForms_in_welcomeMail = (include_payForms_in_welcomeMail && ($VM_V_payTrip || $VM_V_payPerdiem));
     $this->dbg("include_payForms_in_welcomeMail=".var_export($include_payForms_in_welcomeMail,True),cnf_dev);
-    $this->attachments = array();
     $cc = array();
     if ($include_payForms_in_welcomeMail){
       $cc[] = reimbursement_email;
       foreach(VM::$forms2send as $pdf_tpl){
+	$attachments_to_sign = True;
 	$this->attachments[] = $exp->pdfReceipt($pdf_tpl,sys_get_temp_dir() . "/${pdf_tpl}_" . $this->visit->ID . '.pdf');
       }
     }
@@ -871,7 +927,7 @@ REIMBURSEMENT
 We will '.join(" and ",$pay).'.
 
 ';
-      if ($n=count($this->attachments)) $blabla[] = "For this we need you to fill the attached forms.
+      if (!empty($attachments_to_sign)) $blabla[] = "For this we need you to fill the attached forms.
 
 Please provide your name, home address, date of birth, the dates that you are traveling, and the date of your PhD (the last item is required by local university regulations).
 

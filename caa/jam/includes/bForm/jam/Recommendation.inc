@@ -18,10 +18,10 @@ function bForm_jam_Recommendation_sanity($verbose=True){
 
 class bForm_jam_Recommendation extends bForm_jam {
   
-  var $debug   = False;
+  public static $_debug   = False;
   var $TABLE   = 'jam_recommendations';
   var $TABLEID = 'rec_id';
-  protected $dbg_color = 'blueText';
+  public static $_dbg_color = 'blueText';
 
   // Referee
   public $av = Null;

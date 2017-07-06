@@ -87,7 +87,7 @@ class bHolder_jam_Recommendation extends bHolder_jam{
    *
    */
   function format() {
-    $name = x('i',bForm_Avatar::_fmtName('Lf,s',$this->r->ap->av->formDB)); // span class="boldText"'
+    $name = x('i',bForm_Avatar::_fmtName('Lf,s',$this->r->ap->av->formDB)); // span class="bold-text"'
     $this->rec['pos_name']= b_fmt::strcut($this->r->ap->pos->name(),25,'...');
     // Lets do it via ajax, then the "clicks" from the modal will "kill" modal window and transfer to the main one
     $this->rec['ap_name'] = bJS()->modal_ajax("?id=".$this->r->ap->ID."&form=jam_Applicant",$name);

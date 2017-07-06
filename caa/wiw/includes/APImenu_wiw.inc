@@ -5,6 +5,7 @@ if (function_exists('locateAndInclude')) locateAndInclude('APImenu');
 APItabs::define_tabs(array('tab_wiw'        => 'Who Is Where?',
 			   'tab_wiw_adm'    => 'Administer WIW',
 			   'tab_wiw_admTT'  => 'Edit Trip Colors',
+			   'tab_wiw_adm_all'=> 'See all Trips',
 			   'tab_wiw_myTrips'=> 'My Trips',
 			   'tab_wiw_sok'    => 'Search Trips',
 			   'tab_wiw_edit'   => 'Modify Trip',
@@ -24,6 +25,7 @@ function _wiw_title_callback($tab, $dTab=Null,$returnText=False){
  * Check that the given person has registered trips
  */
 function wiw_after_search_check($av_id,$_after_search=''){
+  if (cnf_dev) b_debug::traceBack();
   $q = myPear_db()->query("SELECT t_id FROM wiw_trips WHERE t_avid = '$av_id'");
   $reply = (myPear_db()->num_rows($q) > 0);
   return $reply;
@@ -36,7 +38,7 @@ class APImenu_wiw extends APImenu{
   var $static_menu = array(
 			   tab_wiw_reg    =>array(),
 			   tab_wiw_myTrips=>array(),
-			   tab_wiw_adm    =>array(tab_wiw_admTT),
+			   tab_wiw_adm    =>array(tab_wiw_admTT,tab_wiw_adm_all),
 			   // tab_wiw_sok    =>array(),
 			   );
   
@@ -91,8 +93,16 @@ class APImenu_wiw extends APImenu{
       }
 
       // Draw the members
-      bUnit::b_tabs_bUnits(WIW_MODULE,myOrg_ID);
+      //      bUnit::b_tabs_bUnits(WIW_MODULE,myOrg_ID);
+      WIW_managers()->getForm();
       break;      
+
+    case tab_wiw_adm_all:
+      $_GET['all_trips_once'] = 1;
+      locateAndInclude('bHolder_wiw_trip');
+      $holder = new bHolder_wiw_trip();
+      $holder->listEntries();
+      break;
 
     case tab_wiw_admTT:
       WIW::_TT()->getForm();
@@ -158,6 +168,7 @@ class APImenu_wiw extends APImenu{
 	
       case tab_wiw_adm:
       case tab_wiw_admTT:
+      case tab_wiw_adm_all:
 	$access = WIW_manager_here;
 	break;
 

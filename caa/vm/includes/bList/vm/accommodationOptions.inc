@@ -18,7 +18,7 @@ locateAndInclude('bList_vm');
  */
 class bList_vm_accommodationOptions extends bList_vm{
 
-  var $debug = True;
+  public static $_debug = True;
   var $list_quering = array('lm_key'  =>'Name',  // hut_id
 			    );
   var $list_showing = array('_hut_id' => '',

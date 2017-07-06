@@ -147,7 +147,7 @@ class bList_vm_cotenants extends bList_vm{
    */
   function get_candidate($rec){
 
-    if ($rec['lease_aid'] == VM::$OA->ID) return '';
+    if (VM_self_accommodated($rec)) return '';
     $this->dbg(b_time::period($rec['lease_start'],$rec['lease_end']).' '.bForm_Avatar::_fmtName('Lf',$rec)." $rec[lease_id] LOOKING FOR CANDIDATES ",cnf_dev);
     
     // Gather candidates in an array

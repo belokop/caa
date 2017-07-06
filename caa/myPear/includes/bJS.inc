@@ -9,7 +9,7 @@
 
 if ($movie = @$_GET['movie_once']) bJS()->fancybox_inline_movie(b_fmt::unEscape($movie,'url'));
 
-class bJS{
+class bJS extends myPear_base{
 
   /**
    * Modal window parameters
@@ -20,7 +20,6 @@ class bJS{
 
   var $w = 900;
   var $h = 600;
-  var $debug = 0;
   private $modalID = '';
   private $fadeID  = '';
   private static $N  = 0;
@@ -342,7 +341,7 @@ $(document).ready(function() {
    */
   function modal_ajax($url, $title='',$description=Null, $galery=False){
     $reply = $this->popup($title, $url, myPear::myPear_enabled_theme(), __FUNCTION__, $description, $galery);
-    if ($this->debug) b_debug::xxx(b_fmt::escape($reply));
+    $this->dbg(b_fmt::escape($reply));
     return $reply;
   }
   
@@ -368,7 +367,7 @@ $(document).ready(function() {
 
     $reply = $this->popup($title, $url, $mightBeModal, __FUNCTION__, $description, $galery);
 
-    if ($this->debug) b_debug::xxx(b_fmt::escape($reply));
+    $this->dbg(b_fmt::escape($reply));
     return $reply;
   }
   

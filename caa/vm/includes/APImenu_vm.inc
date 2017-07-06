@@ -243,7 +243,7 @@ class APImenu_vm extends APImenu_ea{
       VM::e_ID();
       if (!(VM::$e instanceof bForm_vm_Event)) $_SESSION[__method__] = Null;
     }
-    b_debug::xxx($_SESSION[__method__].($_SESSION[__method__]==='event' ? ' '.VM::$e->ID : ''));
+    b_debug::_debug($_SESSION[__method__].($_SESSION[__method__]==='event' ? ' '.VM::$e->ID : ''),cnf_dev);
     return $_SESSION[__method__];
   }
   
@@ -556,7 +556,7 @@ class APImenu_vm extends APImenu_ea{
 	$reply = False;
       }
     }
-    //    $this->dbg($reply,True);
+    $this->dbg($reply,True);
     return $reply;
   }
   

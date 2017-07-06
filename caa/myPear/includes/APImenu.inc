@@ -43,11 +43,13 @@ function _myPear_access_callback($menuItem){
   return myPear::_MENU()->access_callback($menuItem);
 }
 
-class APItabs{
+class APItabs extends myPear_base{
 
-  public  static $tab_definition = array();
   public  static $_ = '';
   public  static $q = array();
+  public  static $tab_definition = array();
+  public static $_dbg_color = 'fuchsiaText';
+  public static $_debug = cnf_dev;
   
   public static function define_tabs($tabs,$ignoreQ=False){
 
@@ -113,12 +115,10 @@ class APItabs{
 class APImenu extends myPear_base{
   var $q           = myPear_MODULE;
   var $sqlBackend  = True;
-  var $debug       = False;
   var $editPages   = array();
   var $static_menu = array();
   var $dynamic_menu= array();
-  protected $dbg_color = 'redText';
-
+  public static $_dbg_color = 'fuchsiaText';
 
   var $myPear_menu = array(
 			   tab__configure => array(),
@@ -141,9 +141,7 @@ class APImenu extends myPear_base{
   private $access_callback= Null;
   private $hash_parent    = Null;
 
-  function __construct($defaultTab=Null){
-    self::$_dbg_color = $this->dbg_color;
-  }
+  function __construct($defaultTab=Null){}
   
   /*
    * Make sure that the proper Avatar class are used
@@ -592,7 +590,7 @@ class APImenu extends myPear_base{
       
     }
     if ($common){
-      b_debug::xxx("common task",array('M'));
+      $this->dbg("common task",'M');
       return Null;
     }
     
@@ -601,8 +599,6 @@ class APImenu extends myPear_base{
     //
     // ??????? if ($tab != @$_SESSION['oldtab'])  b_url::setReferrer();  // set the "go_back" address for the "edit pages" , see the previous lines 
     $_SESSION['oldtab'] = $tab;
-    
-    //b_debug::xxx("tab='$tab' referrer=".b_url::getReferrer(),array(2,True));
     return $tab;
   }
   
@@ -610,7 +606,7 @@ class APImenu extends myPear_base{
    *
    */
   function processDownload($src){
-    b_debug::xxx(' to be done...',array('redText',2,True));
+    $this->dbg(' to be done...',array('redText',True));
     print b_btn::link(CONST_go_back,b_url::same(array(),array_keys($_GET)));
   }
   

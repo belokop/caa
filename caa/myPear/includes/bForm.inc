@@ -61,7 +61,7 @@ class bForm extends myPear_getValue{
   protected $normalLine = 66;
   protected $bForm_isJustCreated = False;
   protected $arrayToCheck = array();
-  protected $dbg_color = 'dorchidText';
+  public static $_dbg_color = 'dorchidText';
 
   // List of all RW fields for the current form. Used to decide about printing "update it" button
   private $all_RWfields = array(); 
@@ -91,8 +91,6 @@ class bForm extends myPear_getValue{
    */  
   private static $class_globalCount = 0;
   function __construct($id, $mode='RO', $SQL_backend=True) {
-
-    self::$_dbg_color = $this->dbg_color;
 
     locateAndInclude('bText');
     static $dejavu = array(), $MAX_FILE_SIZE = 0;
@@ -212,7 +210,7 @@ class bForm extends myPear_getValue{
 
     $this->formDB = array();
     if ($this->SQL_backend) {
-      $q = myPear_db()->qquery("SELECT * FROM $this->TABLE WHERE $this->TABLEID = '$this->ID'",$this->debug);
+      $q = myPear_db()->qquery("SELECT * FROM $this->TABLE WHERE $this->TABLEID = '$this->ID'",cnf_dev);
       while ($r=myPear_db()->next_record($q))    $this->formDB = $r; 
     }else{
       if ($s = @$_SESSION['DB_'.get_class($this)]) $this->formDB = $s;
@@ -397,7 +395,7 @@ class bForm extends myPear_getValue{
 			  (( (int)$this->ID && ($_POST['_post_bForm_ID_once'] == $this->ID)) ||
 			   (!(int)$this->ID && ($_POST['_post_bForm_ID_once']==='new' || 
 						$_POST['_post_bForm_ID_once']==='empty'))));
-      $color = (cnf_dev || ($this->dbg_color == 'blackText') ? 'oliveText' : $this->dbg_color);
+      $color = (cnf_dev || (static::$_dbg_color == 'blackText') ? 'oliveText' : static::$_dbg_color);
       $this->dbg($this->reply_myP,array(3,$this,$color,(bool)(cnf_dev && $this->reply_myP)));
     }
     return $this->reply_myP;
@@ -1206,7 +1204,7 @@ class bForm extends myPear_getValue{
     
     //    $this->dbg(starting);
     bTiming()->cpu(get_class($this).'.'.__FUNCTION__);
-    if ($this->debug) b_debug::print_r($data,$this.'[updateDB] input:');
+    if (static::$_debug) b_debug::print_r($data,$this.'[updateDB] input:');
 
     $pars = array();
     foreach ($data as $k=>$v) {
@@ -1556,7 +1554,7 @@ class bForm extends myPear_getValue{
     $this->t->tro();
     $this->fSpacer();
     $this->t->td(array('',''),$this->style('transp'));
-    $this->t->td($text,"class='boldText italicText align_right'");
+    $this->t->td($text,"class='bold-text italic-text align_right'");
     $this->t->trc();
   }
 
@@ -1999,10 +1997,10 @@ class bForm extends myPear_getValue{
     if ($onlyIfExists && ($this->timestamp <= 0))      $file_path = False;
     $this->dbg($file_path);
     /*
-    if    ($this->timestamp === False)                   $this->dbg('file missing',$this->debug||cnf_dev);
-    elseif($this->timestamp === 0)                       $this->dbg('file missing',$this->debug||cnf_dev);
-    elseif($this->timestamp ===-1)                       $this->dbg('file not PDF',$this->debug||cnf_dev);
-    else       $this->dbg(date(' Y-m-d ',$this->timestamp).basename($file_path),$this->debug||cnf_dev);
+    if    ($this->timestamp === False)                   $this->dbg('file missing',cnf_dev);
+    elseif($this->timestamp === 0)                       $this->dbg('file missing',cnf_dev);
+    elseif($this->timestamp ===-1)                       $this->dbg('file not PDF',cnf_dev);
+    else       $this->dbg(date(' Y-m-d ',$this->timestamp).basename($file_path),cnf_dev);
     */
     return $file_path;
   }
@@ -2023,18 +2021,19 @@ class bForm extends myPear_getValue{
    * The default file name is always lower case
    */
   function uploadedFile_name($name,$args=array(),$ext=True){
-    if (myPear::is_empty($fn = @$this->formDB[$name])){
+    if (myPear::is_empty($fn = $this->getValue($name))){
+    $this->dbg($this->expected_ext,cnf_dev);
       $fn = strToLower(join('_',array_merge(array($name),$args)) . ($ext ? $this->expected_ext[$name] : ''));
     }
-    $this->dbg($fn);
+    $this->dbg($fn,cnf_dev);
     return $fn;
   }
 
-    /*
+  /*
    * Uploading dialog
    */
   function uploadFile($name){
-
+    
     $this->dbg(' ');
     $this->uploadInit();
 
@@ -2482,7 +2481,7 @@ class bForm extends myPear_getValue{
           }elseif(!empty($method) && method_exists($this,$method)){
             call_user_func(array($this, $method), $field);
           }
-          $this->dbg10("method='$method' field='$field'");
+          $this->dbg("method='$method' field='$field'");
         }
       }
     }
@@ -2632,20 +2631,7 @@ class bForm extends myPear_getValue{
   protected function blockTitle_skip($block_ID){ 
     return False;
   }
-
-  function dbgArray10($array, $name='',$force=False, $showEmpty=False, $showIndeces=False) {
-    if ($this->debug > 9) $this->dbgArray($array, $name, $force, $showEmpty, $showIndeces);
-  }
-
-  function dbgArray($array, $name='',$force=False, $showEmpty=False, $showIndeces=False) {
-    b_debug::_array($array, "$this [$name:ARRAY]",
-		    $force||$this->debug,$showEmpty,$showIndeces);
-  }
   
-  function dbg100($text='',$f=0) { if ($f || $this->debug >99) $this->dbg('', $text, True, $addLevel=1); }
-
-  function dbg10 ($text='',$f=0) { if ($f || $this->debug > 9) $this->dbg('', $text, True, $addLevel=1); }
-
   /*
    * Build the url based on the current one.
    * Used for "update" & "cancel" buttons

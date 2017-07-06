@@ -18,7 +18,7 @@ class bHolder extends myPear_base{
   var $th_attr   = array();
   var $t         = Null; // table class
   var $styles = '';
-  var $debug  = False;
+  public static $_debug  = False;
   public $where = array();
 
   public $report_emptySelection = True;

@@ -5,18 +5,45 @@ class bHolder_wiw_trip extends bHolder{
 
   public $av_id = Null;
   public $sortBy_default = 't_departure';
+  public static $_debug = True;
 
   /*
    *
    */
   function __construct(){
-    $this->dbg('');
+    $this->dbg(@$_REQUEST['av_id']);
     parent::__construct();
-    if ($av_id = @$_GET['av_id']){
-      $this->av_id = $av_id;
-      $this->where[] = "av_id='$av_id'";
+
+    if (is_numeric(@$_REQUEST['av_id']) && $_REQUEST['av_id'] > 0){
+      $this->av_id = $_REQUEST['av_id'];
+    }elseif(!empty($_GET['all_trips_once'])){
+      // Select the employees
+      $in = array(-999);
+      foreach(myOrg()->eaMembers()->get_memberInfo(Null,EA_role_employee,'get_byStatus') as $av_id=>$r) $in[] = $av_id;
+
+      // Select the employee's trips
+      $q = myPear_db()->qquery('SELECT t_avid,av_lastname,av_firstname FROM wiw_trips LEFT JOIN zzz_avatars ON t_avid=av_id '.
+			       ' WHERE t_avid != '.bAuth::$av->ID.' AND t_avid IN ('.join(',',$in).') GROUP BY t_avid ORDER BY av_lastname ASC',cnf_dev);
+      while($r = myPear_db()->next_record($q)) $ids[$r['t_avid']] = bForm_Avatar::_fmtName('Lf',$r);
+      if (empty($ids)) $ids = array();
+      else $ids['*select_name*'] = 'the traveler';
+
+      // Select the employee to edit
+      $f = new bForm('new','RO',False);
+      $f->defineVariable('Select the traveler','av_id');
+      print x("form action='".b_url::same()."' method='post'",
+	      x('strong','Select the traveler').
+	      $f->selectMenu_exec('av_id',$ids,"onchange='submit()'",$onlyRW=True));
+    }else{
+      $this->av_id = bAuth::$av->ID;
     }
 
+    if (!empty($this->av_id)){
+      $this->where[] = "av_id=".$this->av_id;
+      $this->dbg($this->where);
+      unset($_GET['all_trips_once']);
+    }
+    
     // Info message
     myPear::INFO(array(wiw_acl_public. ' - '.wiw_acl_public_text,
 		       wiw_acl_protected.' - '.wiw_acl_protected_text),
@@ -30,15 +57,15 @@ class bHolder_wiw_trip extends bHolder{
     
     
     // Toggle the trip privacy
-    if (!empty($_REQUEST['acl_once'])){
+    if (isset($_REQUEST['acl_once'])){
       $this->set_acl($_REQUEST['acl_once'],		     
 		     $_REQUEST['set_once']);
     }
 
     // Toggle the trip privacy
-    if (!empty($_REQUEST['all_once'])){
+    if (!empty($_REQUEST['all_acls_once'])){
       $q = $this->query('t_id');
-      while($r = myPear_DB()->next_record($q)) $this->set_acl($r['t_id'],$_REQUEST['all_once']);
+      while($r = myPear_DB()->next_record($q)) $this->set_acl($r['t_id'],$_REQUEST['all_acls_once']);
     }
     
   }
@@ -49,10 +76,11 @@ class bHolder_wiw_trip extends bHolder{
   private function set_acl($t_id,$new_value){
     locateAndInclude('bForm_wiw_trip');
     $t = new bForm_wiw_trip($t_id);
+    $this->show_gv = cnf_dev;
     $old_value = $t->getValue('t_acl');
     if ($old_value != $new_value){
       $t->updateDB(array('t_acl'=>$new_value));
-      myPear::MESSAGE(sprintf('The trip "%s (%s)" is now "%s"',$t->getValue('t_destination'),$t->getValue('lm_key',1,1),$new_value));
+      myPear::MESSAGE(sprintf($t->name(bAuth::$av->ID != $this->av_id).' is now "%s"',$new_value));
     }
   }
 
@@ -85,7 +113,7 @@ class bHolder_wiw_trip extends bHolder{
 			     " LEFT JOIN zzz_avatars       ON  t_avid = av_id ".
 			     " LEFT JOIN zzz_list_members  ON  t_type = lm_id ".
 			     " WHERE ".join(' AND ',$this->where).
-			     " ORDER BY $_GET[sBy] $_GET[sByDir]",$this->debug);
+			     " ORDER BY $_GET[sBy] $_GET[sByDir]",cnf_dev);
     return $q;
   }
   
@@ -95,6 +123,7 @@ class bHolder_wiw_trip extends bHolder{
   private $rec_counter = 0;
   private $recs = array(); 
   function format() {
+
     // Extract the trip year
     $year = date('Y',$this->rec['t_departure']);
 
@@ -110,7 +139,7 @@ class bHolder_wiw_trip extends bHolder{
 	      ? wiw_acl_default 
 	      : $this->rec['t_acl']);
     $new_acl = ($t_acl == wiw_acl_public ? wiw_acl_protected : wiw_acl_public);
-    $this->rec['t_acl'] = bJS()->tip(x("a href=".x("'",b_url::same("?acl_once=".$this->rec['t_id']."&set_once=".$new_acl)),$t_acl),
+    $this->rec['t_acl'] = bJS()->tip(x("a href=".x("'",b_url::same("?av_id=".$this->av_id."&acl_once=".$this->rec['t_id']."&set_once=".$new_acl)),$t_acl),
 				     'Click to toggle');
     
     if (stripos($this->rec['lm_key'],$this->rec['t_destination']) !== False) unset($this->rec['t_destination']);
@@ -127,13 +156,18 @@ class bHolder_wiw_trip extends bHolder{
   /*
    * drawHeader is dummy for WIW
    */
-  function drawHeader(){}
+  function drawHeader(){
+    static $dejaVu = 0;
+    if (!empty($this->av_id) && !$dejaVu++) print x('h3',bForm_Avatar::_fmtName('fl',$this->rec));
+  }
 
   /*
    *
    */
   function listEntries_closing(){
     static $max_per_page = 30;
+
+    if (!empty($_GET['all_trips_once'])) return;
 
     // Collect the years into tabs, ~30 entries per tab
     if ($this->rec_counter <= $max_per_page){
@@ -166,7 +200,7 @@ class bHolder_wiw_trip extends bHolder{
     $b_tabs = new b_tabs_myPear(array_keys($tabs));
     foreach($tabs as $tab=>$search_string){
       if (!$b_tabs->body()) continue;
-      // Collect records dor one tabs
+      // Collect records for one tabs
       $years = preg_grep("/^($search_string)/",array_keys($this->recs));
       $recs = array();
       foreach($years as $year) $recs = array_merge($recs,$this->recs[$year]);
@@ -181,10 +215,12 @@ class bHolder_wiw_trip extends bHolder{
       $t->close();
     }
     $b_tabs -> close();
-    print b_btn::UL_buttons(array(b_btn::big_button('Make all trips '.wiw_acl_protected, array('all_once'=>wiw_acl_protected,
-											     'resetcache_once'=>1),
+    print b_btn::UL_buttons(array(b_btn::big_button('Make all trips '.wiw_acl_protected, array('av_id' => $this->av_id,
+											       'all_acls_once'=>wiw_acl_protected,
+											       'resetcache_once'=>1),
 						    'red',True),
-				  b_btn::big_button('Make all trips '.wiw_acl_public,  array('all_once'=>wiw_acl_public,
+				  b_btn::big_button('Make all trips '.wiw_acl_public,  array('av_id' => $this->av_id,
+											     'all_acls_once'=>wiw_acl_public,
 											     'resetcache_once'=>1),
 						    'green',True)));
   }

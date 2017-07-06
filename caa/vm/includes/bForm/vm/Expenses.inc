@@ -17,7 +17,7 @@ locateAndInclude('bForm_vm_Visit');
 class bForm_vm_Expenses extends bForm_vm{
 
   var $show_gv=True;
-  var $debug = False;
+  public static $_debug = False;
 
   static $pay_items = array('exp_living'  => array('d'=>'Accommodation', 
 						   'p'=>VM_V_payAccommodation, 
@@ -371,8 +371,8 @@ class bForm_vm_Expenses extends bForm_vm{
 	break;
       case '_exp_totalExpenses':
 	$isRO[] = $i;
-	$this->colorCode[$i]        = 'boldText';
-	$this->colorCode["${i}_est"]= 'boldText';
+	$this->colorCode[$i]        = 'bold-text';
+	$this->colorCode["${i}_est"]= 'bold-text';
 	break;
       default:
       }

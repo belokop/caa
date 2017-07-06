@@ -1030,7 +1030,7 @@ class bList_eaEmpRecords extends bList{
 
     // put the institute logo in front if there is an affiliation
     if ($e_org = @$this->r['e_org']){
-      $this->r['e_cc'] = b_fmt::redText(myOrg($e_org)->name(),'boldText italicText');
+      $this->r['e_cc'] = b_fmt::redText(myOrg($e_org)->name(),'bold-text italic-text');
       $this->r['favicon'] = myOrg($e_org)->getFavicon();
       $this->t->colspan['lm_value'] = 2;
     }

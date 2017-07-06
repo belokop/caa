@@ -1,5 +1,5 @@
 <?php
-locateAndInclude('APIaccess');
+locateAndInclude('APIaccess_ea');
 
 function WIW_access(){
   static $_ACCESS = Null;
@@ -10,7 +10,7 @@ function WIW_access(){
   return $_ACCESS;
 }
 
-class APIaccess_wiw  extends  APIaccess{
+class APIaccess_wiw  extends  APIaccess_ea{
   
   /*
    * Inherit the EA access list, add WIW administration
@@ -27,4 +27,15 @@ class APIaccess_wiw  extends  APIaccess{
 							 'def' => 'WIW_manager_here')));
   }
   
+  /*
+   *
+   */
+  function getRank($av_id=Null){
+    if (empty($av_id)) $av_id = @bAuth::$av->ID;
+    if (($reply = parent::getRank($av_id)) >= RANK__authenticated){
+      if (WIW_managers()->isMember($av_id))    $reply = RANK_wiw_manager;
+    }
+    $this->dbg($reply,cnf_dev);
+    return (int)@$reply;
+  }
 }
