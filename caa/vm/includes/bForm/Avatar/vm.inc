@@ -198,7 +198,7 @@ class bForm_Avatar_vm extends bForm_Avatar_ea{
     }elseif ($av = myPear::getInstance_new(get_class($this),$av_id,'strict')){
       $visits = $av->getVisits(Null,$visit_policies);
     }
-    if (!empty($visits)) $this->dbg(!empty($visits),(bool)($this->debug || cnf_show_a));
+    if (!empty($visits)) $this->dbg(!empty($visits),cnf_show_a);
     return !empty($visits);
   }
 
@@ -215,7 +215,7 @@ class bForm_Avatar_vm extends bForm_Avatar_ea{
     if ($e_id) $where[] = "v_eid = '$e_id'";
     $q = myPear_db()->query("SELECT v_eid FROM abs_visits WHERE ".join(' AND ',$where));
     while($r = myPear_db()->next_record($q)) $reply[] = $r['v_eid'];
-    if (!empty($reply)) $this->dbg($reply,(bool)($this->debug || cnf_show_a));
+    if (!empty($reply)) $this->dbg($reply,cnf_show_a);
     return $reply;
   }
 

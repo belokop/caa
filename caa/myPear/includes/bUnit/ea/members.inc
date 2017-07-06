@@ -529,7 +529,7 @@ class bUnit_ea_members extends bUnit_ea {
 			    " LEFT JOIN zzz_lists        ON av_id = l_parent ". // employment history
 			    " LEFT JOIN zzz_list_members ON l_id  = lm_lid ".
 			    " WHERE " . join(' AND ',$where) . myPear_db()->orderBy(),
-			    $this->debug);
+			    static::$_debug);
     $reply = array();
     while ($r=myPear_db()->next_record($q)){
       if ($o = $r['lm_option']) bList::_unserialize($r,'lm_option',array_keys(unserialize($o)));

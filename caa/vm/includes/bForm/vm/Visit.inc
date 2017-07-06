@@ -1737,7 +1737,7 @@ class bForm_vm_Visit extends bForm_vm {
 	$this->dbg('No leases to delete...',cnf_dev);
       }else{
 	foreach($leases as $l) {
-	  $l->debug = $this->debug;
+	  $l::$_debug = self::$_debug;
 	  $msg = $l->_periodToString();
 	  $this->dbg($l->__toString().' '.$msg,cnf_dev);
 	  if ($verbose && $msg) myPear::MESSAGE_add(b_fmt::redText("Delete lease $msg"));

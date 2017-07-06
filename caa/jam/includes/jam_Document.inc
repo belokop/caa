@@ -45,7 +45,7 @@ class jam_Document{
   }
 
   private function dbg($text='',$forced=False){
-    b_debug::xxx($text,array(3,$this,'maroonText',(bool)$forced || (bool)$this->debug));
+    b_debug::xxx($text,array(3,$this,'maroonText',(bool)$forced || (bool)self::$_debug));
   }
   
   /*
@@ -97,13 +97,13 @@ class jam_Document{
 			     " LEFT JOIN jam_applicants   ON ap_id=doc_apid ".
 			     " LEFT JOIN zzz_avatars      ON av_id=ap_avid ".
 			     " LEFT JOIN jam_positions    ON pos_id=ap_posid ".
-			     " WHERE ".join(' AND ',$w),$this->debug);
+			     " WHERE ".join(' AND ',$w),self::$_debug);
       while($r=myPear_db()->next_record($q))     $this->formDB = $r;
       
       if (empty($this->formDB)){
 	if (cnf_dev) myPear::MESSAGE("Creating documents folder for ".$this->ap->name());
 	$w[] = myPear_db()->quote(bMaster()->reserve_masterCounter(),True,'doc_id');
-	myPear_db()->qquery($cmd="INSERT INTO jam_documents SET ".join(',',$w),$this->debug);
+	myPear_db()->qquery($cmd="INSERT INTO jam_documents SET ".join(',',$w),self::$_debug);
 	$this->_init();
       }else{
 	$this->ID = $this->formDB['doc_id'];
@@ -125,7 +125,7 @@ class jam_Document{
   function set_uploaded($date,$verbose=True){
     if (empty($date)) $date = time();
     if ($date != $this->isUploaded()){
-      myPear_db()->qquery("UPDATE jam_documents SET doc_date=$date,timestamp='".b_time::sql_timestamp($date)."' WHERE doc_id = '$this->ID'",cnf_show_db||$this->debug);
+      myPear_db()->qquery("UPDATE jam_documents SET doc_date=$date,timestamp='".b_time::sql_timestamp($date)."' WHERE doc_id = '$this->ID'",cnf_show_db||self::$_debug);
       $this->_init();
       $msg = b_time::short_date($date).' upload '.$this->name().' for '.$this->ap->name();
       if ($date+3600 < time()) $verbose = False; // Do not report recovered files
@@ -188,7 +188,7 @@ class jam_Document{
    * (both as an applicant and as a referee)
    */
   public static function avatar_docs($av_id){
-    $debug = 0;
+    $debug = False;
     if (is_object($av_id)){
       $av    = $av_id;
       $av_id = $av->ID;

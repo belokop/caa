@@ -48,7 +48,6 @@ class bIcal_matrix_ea extends bIcal_matrix{
 
     $this->select_year();
     
-    myOrg()->eaMembers()->debug = $this->debug;
     foreach(myOrg()->eaMembers()->getMembers_byDate($this->day1,$this->day9) as $r){
       $av_id   = $r['av_id'];
       $av      = new bForm_Avatar_ea($av_id);

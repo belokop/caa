@@ -298,7 +298,7 @@ class bHolder_Logs extends bHolder{
     $q = myPear_db()->qquery("SELECT av_lastname,av_firstname,log_api,log_avid,log_comment,log_form,log_id,log_ip,log_org,log_time,log_type FROM zzz_logs ".
 			     join(' ',$left_join).
 			     " WHERE ".join(' AND ',$where).
-			     " ORDER BY $_GET[sBy] $_GET[sByDir] LIMIT ".$this->maxLines,$this->debug);
+			     " ORDER BY $_GET[sBy] $_GET[sByDir] LIMIT ".$this->maxLines,cnf_dev);
     return $q;
   }
   

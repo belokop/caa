@@ -1115,10 +1115,10 @@ function myPear_update07(){
 
 function myPear_update06(){
   if (!@$_SESSION['updates'][__METHOD__]++){
-    myPear_db()->debug = cnf_CLI;
+    bDB::$_debug = cnf_CLI;
     myPear_db()->query("ALTER TABLE  zzz_flavors DROP INDEX   f_nickname",$stopIfFails=False); 
     myPear_db()->query("ALTER TABLE `zzz_flavors` ADD UNIQUE (`f_nickname`)",$stopIfFails=False); 
-    myPear_db()->debug = 0;
+    bDB::$_debug = False;
 
     myPear_db()->query("ALTER TABLE  zzz_avatars DROP INDEX   av_email",$stopIfFails=False); 
     myPear_db()->qquery("ALTER TABLE `zzz_avatars` CHANGE `av_id2`    `av_id2`    TEXT NULL DEFAULT NULL",cnf_CLI); 
@@ -1215,15 +1215,15 @@ class b_renumber{
       self::getTables($TABLE,$TABLEID,$tablesToConsider);
       
       $q = $db->query("SELECT * FROM $TABLE");
-      $db->debug = self::$debug;
+      bDB::$_debug = self::$debug;
       while ($r = $db->next_record($q)){
 	$old_id = $r[$TABLEID];
-	$db->debug = 0; 
+	bDB::$_debug = False; 
 	$new_id = bMaster()->reserve_masterCounter();
-	$db->debug = self::$debug;
+	bDB::$_debug = self::$debug;
 	self::id($r,$TABLE,$TABLEID,$old_id,$new_id,$iddt);
       }
-      $db->debug = 0;
+      bDB::$_debug = False;
     }
     bTiming()->cpu();
   }

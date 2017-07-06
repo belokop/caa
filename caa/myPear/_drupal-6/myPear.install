@@ -21,7 +21,7 @@ function _myPear_install_bDB($module) {
   }
   myPear_init();
   myPear_db();
-  myPear_db()->debug=1;
+  bDB::$_debug = True;
   b_debug::xxx(array('M',2));
   
   if (myPear_db()->isReady()){

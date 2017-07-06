@@ -102,7 +102,7 @@ class bForm_wiw_trip extends bForm{
 				     " LEFT JOIN zzz_list_members  ON  t_type = lm_id ".
 				     " WHERE %s = '%s'",
 				     $this->TABLE,$this->TABLEID,$this->ID),
-			     $this->debug);
+			     self::$_debug);
     while ($r=myPear_db()->next_record($q))    $this->formDB = $r;
     if (empty($this->formDB['t_acl'])) $this->formDB['t_acl'] = wiw_acl_default;
   }

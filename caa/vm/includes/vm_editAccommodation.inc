@@ -1,5 +1,5 @@
 <?php
-b_debug::xxx(__FILE__);
+b_debug::_debug(__FILE__,cnf_dev);
 if (!empty($_REQUEST['id'])) myPear::WARNING_T("_GET[id] is not empty, but is ignored...");
 
 locateAndInclude('bIcal_matrix_abs');
@@ -47,10 +47,10 @@ if (!(int)$v->ID){
     case btn_edit_accommodation: 
       $v->getFormOpen();
       foreach($v->get_allLeases(True) as $l){
+	$l::$_debug = True;
 	$l->isEmbedded($v);
 	$l->MODE = ($l->ID == $lease_id ? 'RW' : 'RO');
 	$l->not_isWritable_point = ($l->ID != $lease_id);
-	$l->debug = True;
 	$l->getForm();
       }
       $v->closeForm();

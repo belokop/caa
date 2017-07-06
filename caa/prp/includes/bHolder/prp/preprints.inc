@@ -137,7 +137,7 @@ class bHolder_prp_preprints extends bHolder{
      return myPear_db()->qquery("SELECT *,YEAR(FROM_UNIXTIME(prp_day0))*1000+prp_report AS pn FROM prp_list LEFT JOIN zzz_avatars ON av_id = prp_avid ".
 				" WHERE ".join(' AND ',$where).
 				" ORDER BY $_GET[sBy] $_GET[sByDir]",
-				cnf_dev || (bool)b_cnf::get('prpdebug') || $this->debug);
+				cnf_dev || (bool)b_cnf::get('prpdebug'));
    }
 
    function listEntries(){

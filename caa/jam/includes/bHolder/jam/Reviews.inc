@@ -26,7 +26,7 @@ class bHolder_jam_Reviews extends bHolder_jam {
   }
   
   function query(){
-    myPear_db()->debug = $this->debug;
+    bDB::$_debug = self::$_debug;
     $query = myPear_db()->qquery("SELECT *,av_lastname AS name FROM jam_reviews "
 				   ." LEFT JOIN zzz_unit_members ON r_avid = um_avid "
 				   ." LEFT JOIN zzz_units        ON u_id   = um_uid "
@@ -36,8 +36,8 @@ class bHolder_jam_Reviews extends bHolder_jam {
 				   ." AND (u_rank = ".RANK_jam_SC1." OR u_rank = ".RANK_jam_SC2." ) "
 				   ." GROUP BY r_avid "
 				   .myPear_db()->orderBy(),
-				   $this->debug);
-    myPear_db()->debug = 0;
+				   self::$_debug);
+    bDB::$_debug = False;
     return $query;
   }
   

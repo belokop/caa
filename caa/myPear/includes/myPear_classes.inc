@@ -1713,8 +1713,9 @@ class b_debug extends myPear_base{
     }elseif(is_bool($arg) || ($arg === Null)){
       $arg = var_export($arg,True);
     }elseif(is_string($arg)){
-      if (strip_tags(trim($arg) != trim($arg))) $arg = b_fmt::escape($arg);
-      $arg = var_export((strlen($arg)>$max_s_l?substr($arg,0,$max_s_l).' ...' : $arg),True);
+      $arg = (strlen($arg)>$max_s_l?substr($arg,0,$max_s_l).' ...' : $arg);
+      if (strip_tags(trim($arg)) !== trim($arg)) $arg = b_fmt::escape($arg);
+      $arg = "'$arg'"; // as var_export does...
     }else{
       //      var_dump($arg);
       $arg = var_export($arg,True);
@@ -1870,7 +1871,7 @@ class b_debug extends myPear_base{
       // Clean locks
       if (class_exists('bDB',False) && defined('YBhere')){
 	if(cnf_dev || cnf_demo || YBhere) b_cnf::get('nodrupal',($_GET['nodrupal']=1));
-	myPear_db()->debug = cnf_dev || YBhere;
+	bDB::$_debug = cnf_dev || YBhere;
       }
 
       if (is_array($for_var_dump)) var_dump('requested var_dump follows...',$for_var_dump);
@@ -4429,7 +4430,7 @@ class b_cnf{
     
     if ($value !== Null){
       $value =  b_crypt::encode_utf8($value);
-      b_debug::xxx(substr($value,0,50)." - $r",array('C',($debug>=10)));
+      b_debug::_debug($value);
     }
     return $value;
   }

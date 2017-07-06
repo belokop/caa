@@ -543,7 +543,8 @@ class bForm_Avatar_ea extends bForm_Avatar{
     if (!empty($status) || !empty($status_was)){
       if ($status_was !== $status) $this->dbg(sprintf("status: '%s' --> '%s'",
 						      $status_was,
-						      $status),$this->debug||cnf_dev);
+						      $status),
+					      cnf_dev);
       myOrg()->eaMembers()->setStatus($this->ID,$status,$verbose=cnf_dev);
     }
   }

@@ -47,7 +47,7 @@ class bHolder_ea extends bHolder{
 
   function isWritable(){
     $reply = EA_administrator_here;
-    $this->dbg($reply,$this->debug || cnf_show_w);
+    $this->dbg($reply,cnf_show_w);
     return $reply;
   }
 

@@ -2,6 +2,8 @@ Changes log
                                                                                                                                                                                  
 2017-07-06, Version 5.0.dev,
                                                                                                                                                                                  
+2017-07-06, Version 5.0.dev,
+                                                                                                                                                                                 
 2017-06-24, Version 5.0.dev,
                                                                                                                                                                                  
 2017-04-27, Version 5.0.dev,

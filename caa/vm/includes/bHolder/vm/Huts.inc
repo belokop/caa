@@ -15,7 +15,7 @@ class bHolder_vm_Huts extends bHolder_vm{
     $_GET['sBy'] = 'hut_code';
     return myPear_db()->qquery("SELECT * FROM abs_huts ".
 			       " WHERE hut_code != '".HUT_BI."'".
-			       " ORDER BY hut_code,hut_name ASC ",$this->debug); 
+			       " ORDER BY hut_code,hut_name ASC ",self::$_debug); 
   }
     
   function header(){

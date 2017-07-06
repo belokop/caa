@@ -484,7 +484,7 @@ class bForm_jam_Applicant extends bForm_jam {
     // Check what parents think
     parent::check_formDB($setStatus);
     
-    if ($this->debug) b_debug::print_r($this->errorsInTheForm,
+    if (self::$_debug) b_debug::print_r($this->errorsInTheForm,
 				       __METHOD__."($this->ID) errorsInTheForm - ".$this->name());
   }
 
@@ -701,7 +701,7 @@ class bForm_jam_Applicant extends bForm_jam {
       
       $this->get_requiredDocs();
       foreach(array_keys($this->requiredDocs) as $doc_name){
-	if ($this->debug) $this->requiredDocs[$doc_name]->debug = $this->debug;
+	if (self::$_debug) $this->requiredDocs[$doc_name]::$_debug = self::$_debug;
 	$filename = $this->requiredDocs[$doc_name]->filename();
 	if ($this->requiredDocs[$doc_name]->isUploaded()){
 	  $this->formDB[$filename] = $filename . JAM_docs_ext;
@@ -763,7 +763,7 @@ class bForm_jam_Applicant extends bForm_jam {
 	  else  $av_data[$t] = $v;
 	}
 	if (empty($av_data)) continue;
-	if ($this->debug) b_debug::print_r($av_data,"_virt_referee${n}");	
+	if (self::$_debug) b_debug::print_r($av_data,"_virt_referee${n}");	
 	
 	// Catch multiple recommendations from the same referee
 	if (empty($av_data['av_email2'])) {
@@ -793,7 +793,7 @@ class bForm_jam_Applicant extends bForm_jam {
 	    myPear::WARNING("You have already requested ".((($n=count($recs)) == 1) ? "a recommendation" : "$n recommendations").
 			    " from ".$av->fmtName('sfl')."<br/>This request is ignored"); 
 	  }else{
-	    $av->debug = $this->debug;
+	    $av::$_debug = self::$_debug;
 	    $av->setPWD();
 	    $av->updateDB($av_data);
 	    
@@ -982,7 +982,7 @@ class bForm_jam_Applicant extends bForm_jam {
       if ($forced)         $toBeReplaced[] = 'Forced recreate';
       
       foreach ($this->my_recommendations() as $rec){
-	$rec->debug = $this->debug;
+	$rec::$_debug = self::$_debug;
 	if ($ts = $rec->isReceived()){
 	  $file = $rec->uploadedFile_path();	
 	  if ($ts > $dossierTS) $toBeReplaced[] = 'New '.$rec->__toString();
@@ -995,7 +995,7 @@ class bForm_jam_Applicant extends bForm_jam {
        */
       $this->get_requiredDocs();
       foreach(array_keys($this->requiredDocs) as $doc_name){
-	$this->requiredDocs[$doc_name]->debug = $this->debug;
+	$this->requiredDocs[$doc_name]::$_debug = self::$_debug;
 	if ($timestamp=$this->requiredDocs[$doc_name]->isUploaded()){
 	  if ($timestamp > $dossierTS){
 	    $toBeReplaced[] = 'New '.$this->requiredDocs[$doc_name]->__toString();
@@ -1052,12 +1052,12 @@ class bForm_jam_Applicant extends bForm_jam {
 
 	// Finally merge all the files into the dossier
 	b_pdf::join(array_values($dossier),$dossier_file);
-	if ($this->debug) b_debug::print_r($dossier,$dossier_file);
+	if (self::$_debug) b_debug::print_r($dossier,$dossier_file);
 
 	// Update the dossier location
 	$this->updateDB(array('ap_dossier_url'=>$dossier_url));
       }else{
-	$this->dbg('dossier is up-to-date',(bool)($this->debug));
+	$this->dbg('dossier is up-to-date',(bool)(self::$_debug));
       }
       
       bIcons()->hide_explainIcons = $savehide_explainIcons;   
@@ -1148,7 +1148,7 @@ class bForm_jam_Applicant extends bForm_jam {
 	break;
       }
       if (!is_bool($reply)){
-	if ($this->debug) b_debug::xxx(b_time::period($this->pos->getValue('pos_deadline',1),$reply));
+	if (self::$_debug) b_debug::xxx(b_time::period($this->pos->getValue('pos_deadline',1),$reply));
 	$reply = (($this->pos->getValue('pos_deadline',1) - $reply) < $this->pos->getValue('pos_req_phd_year',1)*366*24*3600);
       }
       break;
@@ -1201,7 +1201,7 @@ class bForm_jam_Applicant extends bForm_jam {
 									      'rvkd'=>$this->isStatus(JAM_ap_revoked)),
 								'default' => True),
 							  $this,
-							  $this->debug||cnf_show_a);
+							  self::$_debug||cnf_show_a);
     }
     return $this->isConsidered;
   }
@@ -1223,7 +1223,7 @@ class bForm_jam_Applicant extends bForm_jam {
 	}
       }
     }
-    $this->dbg($reply, (bool)$this->debug||cnf_show_a);
+    $this->dbg($reply, (bool)self::$_debug||cnf_show_a);
     return $reply;
   }
   
@@ -1390,7 +1390,7 @@ class bForm_jam_Applicant extends bForm_jam {
       if (count($_POST)>1 && !($this->av instanceof bForm_Avatar) && !$this->vitalFieldMissing()){
 	$this->av = new bForm_Avatar_jam('empty');
 	$this->av->defineVariables();
-	$this->av->debug = $this->debug;
+	$this->av::$_debug = self::$_debug;
 	
 	// The form ID was 'new' when the form was filled, make it the current one
 	$_POST['_post_bForm_ID_once'] = $this->ID;

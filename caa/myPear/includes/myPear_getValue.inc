@@ -68,12 +68,10 @@ class myPear_getValue extends myPear_base{
     /*
      * Set the debug level
      */
-    if (cnf_debug_level > 0)   $this->debug = cnf_debug_level;
-    
     $formdebug = strToLower(b_cnf::get('formDebug','?'));
     if(($formdebug == strToLower(get_class($this))) || 
        ((stripos(get_class($this),$formdebug) !== False) && (get_class($this)!='bForm'))){    
-      $this->debug = True;
+      static::$_debug = True;
     }
   }
 

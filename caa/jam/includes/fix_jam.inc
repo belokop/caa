@@ -161,7 +161,7 @@ function cleanLogs(){
     print '<h1>DOING '.__FUNCTION__.'</h1>';
     
     // clean non-interesting events
-    $db->debug = 1;
+    $db::$_debug = True;
     foreach(array('mail'    =>'',
 		  'fix'     =>'',
 		  'bug'     =>'',
@@ -177,7 +177,7 @@ function cleanLogs(){
     foreach(array('log_form','log_time') as $t){
       $db->qquery("DELETE FROM jam_old_logs WHERE $t='' OR $t=0 OR $t IS NULL OR $t=999999",1);
     }
-    $db->debug = 0;
+    $db::$_debug = False;
   }
 }
 
@@ -786,9 +786,9 @@ function createIfMissing($column,$table,$after,$size=4){
 
 function guess_ap_country($from,$what){
   $db = myPear_db();
-  $db->debug=1;
+  $db::$_debug=True;
   $q = $db->qquery("SELECT * FROM `jam_old_applicants` WHERE ( $what IS NULL OR $what = '' ) AND ap_status != 23");
-  $db->debug=0;
+  $db::$_debug=False;
   while ($r = $db->next_record($q)){
     tidy_country($r[$from],'jam_old_applicants',$what,'ap_id',$r['ap_id']);
   }

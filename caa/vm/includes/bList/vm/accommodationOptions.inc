@@ -53,7 +53,7 @@ class bList_vm_accommodationOptions extends bList_vm{
    * Parent is either the Organization or an Event
    */
   function __construct($parent_ID=Null){
-    if ($this->debug) b_debug::_debug(starting);
+    if (self::$_debug) b_debug::_debug(starting);
 
     //    This class makes sense for the events only...
     //    Difficult to imaging how it might be used for the "out of events" visits...
@@ -86,7 +86,7 @@ class bList_vm_accommodationOptions extends bList_vm{
 
     // Build rent prices for the selected accommodations
     $this->build_dynamic_packables();
-    if ($this->debug) b_debug::_debug(exiting);
+    if (self::$_debug) b_debug::_debug(exiting);
   }
 
   private static $id2x_prefix = 'r';
@@ -225,7 +225,7 @@ class bList_vm_accommodationOptions extends bList_vm{
    *
    */
   protected function getFormAdd(){
-    if ($this->debug) b_debug::_debug(starting);
+    if (self::$_debug) b_debug::_debug(starting);
 
     $this->bForm($this->list_quering,True);
     $this->f->tips = array();
@@ -257,7 +257,7 @@ class bList_vm_accommodationOptions extends bList_vm{
       if (!$this->getValue('lm_id')) $this->f->textHidden('lm_id','new');
     }
     $this->f->closeForm();
-    if ($this->debug) b_debug::_debug(exiting);
+    if (self::$_debug) b_debug::_debug(exiting);
   }
   
   /*
@@ -302,7 +302,7 @@ class bList_vm_accommodationOptions extends bList_vm{
       $this->orderBy     = 'hut_code';
       $this->orderByDir  = 'ASC';
     }else{
-      $this->debug = True;
+      self::$_debug = True;
       $this->hookJOIN = join(' ',array("LEFT JOIN abs_huts ON hut_id = lm_key",
 				       "LEFT JOIN abs_rooms ON a_hutid = hut_id",
 				       "LEFT JOIN abs_leases ON lease_aid = a_id",

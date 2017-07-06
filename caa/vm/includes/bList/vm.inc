@@ -13,7 +13,7 @@ class bList_vm extends bList{
    *
    */
   public function __construct($parent_ID_p){
-    if ($this->debug) b_debug::_debug(starting);
+    if (self::$_debug) b_debug::_debug(starting);
     locateAndInclude('bForm_vm_Event');
     
     // We might be called before the "official start"
@@ -49,7 +49,7 @@ class bList_vm extends bList{
                     ? myOrg_name. ' '. strToLower($this->getValue('l_name'))
 		    : $this->getValue('l_name') .' for ' . x('"',b_fmt::strcut($this->e->name(),33,'...')));
     $this->dbg($this->title);
-    if ($this->debug) b_debug::_debug(exiting);
+    if (self::$_debug) b_debug::_debug(exiting);
   }
 
   function isManager(){

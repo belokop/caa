@@ -91,13 +91,12 @@ class bHolder extends myPear_base{
 
     $widget = '';
     if ($_GET['holder'] == 'Logs'){
-      myPear_logs()->debug = (bool)$debug;
       myPear_logs()->report_emptySelection = empty($_GET['e_once']);
       $widget = myPear_logs()->getWidget();
     }else{
       if (locateAndInclude($h = 'bHolder_'.$_GET['holder'])){
 	$h = new $h(($arg=@$_GET['id']) ? $arg : @$_GET['mode']);
-	if ($debug !== Null) $h->debug = $debug;
+	if ($debug !== Null) $h::$_debug = $debug;
 	$h->report_emptySelection = empty($_GET['e_once']);
 	$widget = $h->getWidget();
       }

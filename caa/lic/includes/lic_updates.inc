@@ -58,9 +58,7 @@ function lic_updates_0(){
 		'lic_user'   => 'u_id',
 		  ) as $t=>$c){
     if (myPear_db()->columnExists($c,$t)){
-      myPear_db()->debug = 1;
       myPear_db()->query("ALTER TABLE `$t` CHANGE `$c` `lic$c` INT( 128 ) NOT NULL AUTO_INCREMENT"); 
-      myPear_db()->debug = 0;
       myPear_db()->reset_cache();
     }
   }

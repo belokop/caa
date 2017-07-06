@@ -1612,11 +1612,11 @@ function vm_compat_update_20(){
 function vm_compat_update_19(){
   $st = "(v_status IS NULL OR v_status = '' OR v_status = '".STATUS_PENDING."') AND v_end < ".time();
   foreach (array(VISIT_TYPE_PROGRAM,VISIT_TYPE_COLLABORATION) as $v_type){
-    myPear_db()->debug = 0;
+    bDB::$_debug = False;
     $where = "$st AND v_type='$v_type'";
     $q=myPear_db()->query("SELECT * FROM `abs_visits` WHERE $where ORDER BY v_end DESC");
     myPear_db()->query("UPDATE abs_visits SET v_status = '".STATUS_YES."' WHERE $where");
-    myPear_db()->debug = 0;
+    bDB::$_debug = False;
   }
 }
 
@@ -1693,11 +1693,11 @@ function vm_compat_update_17(){
 function vm_compat_update_12(){
   $q = myPear_db()->query("SELECT * FROM `zzz_units` WHERE u_parent='VM' OR u_parent='vm'");
   if (myPear_db()->num_rows($q)){
-    myPear_db()->debug=1;
+    bDB::$_debug = True;
     
     myPear_db()->query("UPDATE `zzz_units` SET `u_parent` = ".myOrg_ID." WHERE u_parent='VM' OR u_parent='vm'");
     myPear_db()->query("UPDATE `zzz_lists` SET `l_parent` = ".myOrg_ID." WHERE l_parent='VM' OR l_parent='vm'");
-    myPear_db()->debug=0;
+    bDB::$_debug = False;
   }
 }
 
@@ -1705,7 +1705,7 @@ function vm_compat_update_16(){
   $q = myPear_db()->query("SELECT * FROM zzz_units LEFT JOIN zzz_unit_members ON u_id = um_uid WHERE u_rank=".RANK_vm_organizer." AND u_parent=".myOrg_ID);
   if (myPear_db()->num_rows($q)){
     locateAndInclude('bUnit_vm_organizers');
-    myPear_db()->debug = 1;
+    bDB::$_debug = True;
     while($r = myPear_db()->next_record($q)){
       $u_id = $r['u_id'];
       if ($e_id=$r['um_status']){
@@ -1716,13 +1716,13 @@ function vm_compat_update_16(){
     }
     $q = myPear_db()->query("DELETE FROM zzz_units WHERE u_id = '$u_id'");
     $q = myPear_db()->query("DELETE FROM zzz_unit_members WHERE um_uid = '$u_id'");
-    myPear_db()->debug = 0;
+    bDB::$_debug = False;
   }
 }
 
 function vm_compat_update_15(){
 
-    myPear_db()->debug=0;
+    bDB::$_debug = False;
     myPear_db()->query("DELETE FROM `zzz_units` WHERE `u_id` = '5561'");
     myPear_db()->query("DELETE FROM `zzz_unit_members` WHERE um_uid = 5561");
 
@@ -1731,7 +1731,7 @@ function vm_compat_update_15(){
 		  'm_apart_welcome_signature',
 		  'm_apart_general_description',
 		  ) as $m) myPear_db()->query("DELETE FROM zzz_templates WHERE tpl_title = 'bMailer_vm::$m'");
-    myPear_db()->debug=False;
+    bDB::$_debug=False;
 }
 
 function vm_compat_update_14(){

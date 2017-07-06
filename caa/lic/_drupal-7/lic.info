@@ -3,4 +3,4 @@ description = Monitoring the FlexNet Publisher (formerly known as FLEXlm) licens
 package = myPear
 core = 7.x
 dependencies[] = myPear
-version = 7.x-5.3.15
+version = 7.x-5.3.16

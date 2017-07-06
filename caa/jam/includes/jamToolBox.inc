@@ -113,14 +113,14 @@ class jamToolBox extends bToolBox{
       // Collect the duplicated applications
       $where = array();
       if ($id=JAM_posID()) $where[] = "ap_posid = $id";
-      myPear_db()->debug=cnf_dev;
+      bDB::$_debug=cnf_dev;
       $qq = myPear_db()->qquery("SELECT COUNT(*),ap_posid,ap_id,av_id,av_lastname  FROM jam_applicants ".
 				" LEFT JOIN zzz_avatars ON ap_avid = av_id ".
 				" LEFT JOIN jam_positions ON ap_posid = pos_id ".
 				' WHERE '.join(' AND ',array_merge(array("pos_orgid = ".myOrg_ID),$where)).
 				" GROUP BY av_id,ap_posid ".
 				" HAVING COUNT(*)>1 ORDER BY ap_id DESC",cnf_dev);
-      myPear_db()->debug=0;
+      bDB::$_debug=False;
 
       // now create list of applications
       $list = array();
@@ -154,13 +154,13 @@ class jamToolBox extends bToolBox{
       
     case True:
       locateAndInclude('bForm_jam_Recommendation');
-      myPear_db()->debug=cnf_dev;
+      bDB::$_debug=cnf_dev;
       $qq = myPear_db()->qquery("SELECT COUNT(*), rec_apid, rec_avid ".
 				  " FROM jam_recommendations ".
 				  (($id=JAM_posID()) ? " LEFT JOIN jam_applicants ON rec_apid = ap_id WHERE ap_posid=$id ":'').
 				  " GROUP BY rec_avid,rec_apid ".
 				  " HAVING COUNT(*)>1 ORDER BY rec_apid DESC",cnf_dev);
-      myPear_db()->debug=0;
+      bDB::$_debug=False;
       if (!myPear_db()->num_rows()) myPear::MESSAGE("There is no more duplicated request for the reference letter for this position");
       
       while ($rr=myPear_db()->next_record($qq)){

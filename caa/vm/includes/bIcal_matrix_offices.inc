@@ -38,7 +38,7 @@ class bIcal_matrix_offices extends bIcal_matrix{
 
     if ($this->seeAgenda){  
       $q = myPear_db()->qquery("SELECT e_start,e_end,e_name FROM abs_events WHERE ".join(' AND ',array('e_code > 0',
-												       ))." ORDER BY e_start ASC",$this->debug);
+												       ))." ORDER BY e_start ASC",self::$_debug);
       while ($r = myPear_db()->next_record($q)){
 	if (!b_time::inInterval($r['e_start'],$r['e_end'],$this->day1,$this->day9)) continue;
 	$mPrograms[0][] = array('day1' => b_time::_($r['e_start'],08),

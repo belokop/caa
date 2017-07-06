@@ -46,7 +46,7 @@ class bCover_2017 extends myPear_base{
 	      list($start_of_line,$end_of_line) = $this->addEntryToSolution($hole_pivot,$pivot);
 	      $fits_a_hole = True;
 	      myPear::WARNING_T("!!!!!!!! Fits a hole",$this);
-	      if ($this->debug) $this->debug_pivot($hole_pivot);
+	      if (self::$_debug) $this->pivot_debug($hole_pivot);
 	    }
 	  }
 	}
@@ -66,7 +66,7 @@ class bCover_2017 extends myPear_base{
 	}
       }
       //      $this->show_solution(array($pivot=>$this->solution[$pivot]));
-      if ($this->debug) $this->debug_pivot($pivot);
+      if (self::$_debug) $this->pivot_debug($pivot);
       unset($this->request[$pivot]);
     }
     bTiming()->cpu();
@@ -88,7 +88,7 @@ class bCover_2017 extends myPear_base{
   /*
    *
    */
-  private function debug_pivot($pivot){
+  private function pivot_debug($pivot){
     $this->dbg("--------------------------------------------solution $pivot");
     foreach($this->solution[$pivot] as $entry) $this->dbg(b_time::period($entry['day1'],
 									 $entry['day9']));

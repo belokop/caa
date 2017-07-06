@@ -6,7 +6,9 @@ locateAndInclude('bForm');
 
 class bForm_lists extends bForm {
 
-  var $debug = False;
+  public static $_dbg_color = 'limeText';
+  public static $_debug = True; 
+
   var $modalRW_enabled = True;
 
   // The bList class which is served by this class
@@ -27,8 +29,6 @@ class bForm_lists extends bForm {
   function defineVariables(){
     $this->defineVariable($this->z_variables,$this->z_inversed);
     $this->defineVariable(array('memberID' => 'memberID'),True);
-
-    if ($d=$this->bList->debug)     $this->debug = $d;
     foreach($this->bList->formDB_member as $k=>$v) $this->formDB[$k] = $v;
     foreach($this->bList->isRO          as $k=>$v) $this->isRO[$k]   = $v;
   }

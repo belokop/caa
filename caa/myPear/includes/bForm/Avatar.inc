@@ -442,9 +442,9 @@ class bForm_Avatar extends bForm {
       foreach(array(" av_email = '$email'",
 		    ' av_email2 REGEXP \'[[:<:]]'.$email.'[[:>:]]\'') as $query){
 	if (!empty($reply))  continue;
-	myPear_db()->debug = cnf_show_hook;
+	bDB::$_debug = cnf_show_hook;
 	$q = myPear_db()->query("SELECT av_id,av_email,av_email2,av_firstname,av_lastname FROM zzz_avatars WHERE ".$query);
-	myPear_db()->debug = False;
+	bDB::$_debug = False;
 	while ($r=myPear_db()->next_record($q)){
 	  if (!empty($reply[$r['av_id']]))  continue;
 	  // SICK! The dot is a legal character inside an e-mail address, 
@@ -1065,7 +1065,7 @@ class bForm_Avatar extends bForm {
 	if (!SSN::is_valid($v,$this)){
 	   $err_msg = "SSN '$v' is not valid ";
 	   $this->bad_SSN = $v;
-	   if ($this->show_gv||$this->debug)$this->dbg($err_msg,True);
+	   if ($this->show_gv||self::$_debug)$this->dbg($err_msg,True);
 	}
 	break;
 	
@@ -1634,7 +1634,7 @@ class bForm_Avatar extends bForm {
 	if (!empty($av_birthdate)){
 	  $was = date('Y-m-d',$av_birthdate);
 	  $now = date('Y-m-d',$reply);
-	  $this->dbg("$was ==> $now",(bool)($this->show_gv||$this->debug||cnf_dev));
+	  $this->dbg("$was ==> $now",(bool)($this->show_gv||self::$_debug||cnf_dev));
 	}
       }
       break;

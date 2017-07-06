@@ -147,7 +147,7 @@ class legacy_maildb extends myPear_base{
       $old_value = '&lt;none&gt;';
       $_SESSION[__class__][$maildb_user]['m_myorg'] = ($new_value = $av_id);
       $_SESSION[__class__][$maildb_user]['user']    = $maildb_user;
-      if ($this->debug) b_debug::print_r($_SESSION[__class__][$maildb_user],"hook arrives '$maildb_user'");
+      if (self::$_debug) b_debug::print_r($_SESSION[__class__][$maildb_user],"hook arrives '$maildb_user'");
     }
 
     // build  av_id (combodb) -> user (maildb) links
@@ -162,8 +162,7 @@ class legacy_maildb extends myPear_base{
     if ($av_id !== '?'){
       foreach(array_keys($this->possible_hooks) as $hook){
 	if (($user = @$hooks[$hook][$av_id]) !== Null){
-	  $this->dbg($msg="Hooked user='$user' by $hook=$av_id");
-	  if (cnf_dev || $this->debug) myPear::DEBUG(__METHOD__."() - $msg");
+	  $this->dbg($msg="Hooked user='$user' by $hook=$av_id",cnf_dev);
 	  break;
 	}
       }

@@ -341,7 +341,7 @@ class bMasterClass{
     $this->query("UPDATE zzz_master SET master_value=".$this->masterCounter.bMasterClass_where);
   }
   
-  private function query($query,$debug=0){
+  private function query($query,$debug = False){
     $q = myPear_db()->query($query);
     return $q;
   }

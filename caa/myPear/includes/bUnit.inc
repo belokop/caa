@@ -203,7 +203,7 @@ class bUnit extends bList{
    */
   public function __construct($parent_ID, $rank){
     static $dejaVu = array(); $id="$parent_ID.$rank"; if (@$dejaVu[$id]++) b_debug::traceBack("deja vu '$id' #".$dejaVu[$id]);
-    if ($this->debug) b_debug::_debug(starting);
+    if (self::$_debug) b_debug::_debug(starting);
     
     // Say "I am bUnit, not bList";
     $this->rank = $rank;
@@ -213,7 +213,7 @@ class bUnit extends bList{
 
     // And go on
     parent::__construct($parent_ID,$rank);
-    if ($this->debug) b_debug::_debug(exiting);
+    if (self::$_debug) b_debug::_debug(exiting);
   }
 
   /*
@@ -446,7 +446,7 @@ class bUnit extends bList{
    */
   protected $b_table_styles = 'style=width:100%';
   function show($onlyNames=False){
-    if ($this->debug) b_debug::_debug(starting);
+    if (self::$_debug) b_debug::_debug(starting);
     locateAndInclude(bForm_Avatar::$bForm_Avatar);
 
     // Get the tabs by the start letters of surnames
@@ -490,7 +490,7 @@ class bUnit extends bList{
       $this->t->close(); 
     }
     $this->b_tabs->close();
-    if ($this->debug) b_debug::_debug(exiting);
+    if (self::$_debug) b_debug::_debug(exiting);
   }
 
   /*
@@ -849,7 +849,7 @@ class bUnit extends bList{
       if ((int)($av_id)) unset($_SESSION[$members_cache][$av_id]);
       else               unset($_SESSION[$members_cache]);
       if (empty($_SESSION[$counters_cache]['resetCounter'])) $_SESSION[$counters_cache]['resetCounter'] = 1;
-      $this->dbg("=================== RESET#".($_SESSION[$counters_cache]['resetCounter']++)." cache for av_id=$av_id",cnf_dev||$this->debug);
+      $this->dbg("=================== RESET#".($_SESSION[$counters_cache]['resetCounter']++)." cache for av_id=$av_id",cnf_dev);
       return;
     }   
     
@@ -873,7 +873,7 @@ class bUnit extends bList{
 			       " LEFT JOIN zzz_avatars ON zzz_avatars.av_id = zzz_unit_members.um_avid ".
 			       " LEFT JOIN zzz_units ON zzz_unit_members.um_uid = zzz_units.u_id ".
 			       " WHERE " . join(' AND ',$where) . myPear_db()->orderBy(),
-			       ($this->debug||cnf_dev));
+			       cnf_dev);
       $n_added = myPear_db($q)->num_rows();
       
       while ($r=myPear_db()->next_record($q)){
@@ -920,7 +920,7 @@ class bUnit extends bList{
       // Show counters
       if (empty($_SESSION[$counters_cache]['buildCounter'])) $_SESSION[$counters_cache]['buildCounter'] = 1;
       $this->dbg("build#".($_SESSION[$counters_cache]['buildCounter']++)." cache \"av_id=$av_id\", ".count(array_keys($_SESSION[$members_cache]))." members ($n_added added)",
-		 (bool)(cnf_dev||$this->debug));
+		 cnf_dev);
       // Sanity
       if (cnf_dev){
 	foreach($_SESSION[$members_cache] as $id=>$data){

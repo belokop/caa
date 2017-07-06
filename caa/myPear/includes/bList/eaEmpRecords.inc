@@ -100,7 +100,7 @@ class bList_eaEmpRecords extends bList{
     // Hook the parent Avatar
     if ($parent_ID instanceof bForm_Avatar){
       $this->av = $parent_ID;
-      if ($this->av->debug) $this->debug = True;
+      if (bForm_Avatar_ea::$_debug) self::$_debug = True;
     }elseif((int)$parent_ID){
       $this->av = new bForm_Avatar_ea($parent_ID);
     }
@@ -445,7 +445,7 @@ class bList_eaEmpRecords extends bList{
    *
    */
   protected function logIt(){
-    if (!myPear_db()->num_rows(myPear_db()->qquery("SELECT lm_id FROM $this->TABLE_member ".$this->hookJOIN()." WHERE ".$this->hookParent(),$this->debug||cnf_dev))){
+    if (!myPear_db()->num_rows(myPear_db()->qquery("SELECT lm_id FROM $this->TABLE_member ".$this->hookJOIN()." WHERE ".$this->hookParent(),cnf_dev))){
       myPear::INFO("Start ".$this->av->name()."'s employment history");
       myPear_logs()->add('ea',$this->av->ID);
     }
@@ -537,7 +537,7 @@ class bList_eaEmpRecords extends bList{
     if ($reply && ($reply !== 'new')){ 
       foreach(array_intersect($this->list_quering,$vital_fields) as $f){
 	if ($this->getValue($f)) continue;
-	$this->dbg("missing '$f'",$this->debug||cnf_dev);
+	$this->dbg("missing '$f'",cnf_dev);
 	$reply = False;
       }
     }
@@ -577,7 +577,6 @@ class bList_eaEmpRecords extends bList{
     // Rise standard bForm_List dialog for the other items
     //    $this->adjust_list_quering();
     $this->bForm($this->list_quering,$inversed=True);
-    $this->f->debug=True;
     $this->f->defineVariable('Period of stay','lm_period'); 
     $this->f->submitOnChange['rec_type'] = True;
     $this->f->isRO['lm_id'] = True;
@@ -773,7 +772,7 @@ class bList_eaEmpRecords extends bList{
       break;
     default:
     }
-    if ($value != $valueP) $this->dbg($value,(bool)($this->debug||$this->show_gv));
+    if ($value != $valueP) $this->dbg($value,$this->show_gv);
     return $value;
   }
 

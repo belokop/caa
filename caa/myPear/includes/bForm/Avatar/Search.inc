@@ -107,7 +107,7 @@ class bForm_Avatar_Search extends bForm {
     
     // We have reached the search engine,  hence may clean the cached URL 
     // "go to the search after creating new unit member"
-    b_url::$referrer_debug = $this->debug;
+    b_url::$referrer_debug = self::$_debug;
     if (b_url::getReferrer('bUnit')){
       b_url::setReferrer('bUnit','reset');
       b_url::setReferrer('search_again','reset');
@@ -305,7 +305,7 @@ class bForm_Avatar_Search extends bForm {
     if (!b_reg::$current_module)                                       $this->global_search = True;
     if (stripos(@$_REQUEST['_after_search'],'global_search')!== False) $this->global_search = True;
     if (stripos(@$_REQUEST['_after_search'],'add_m_once')   !== False) $this->global_search = True;
-    $this->dbg(sprintf("search_for_merge='%b' global_search='%b' show_log_widgets='%b'",$this->search_for_merge,$this->global_search,$this->show_log_widgets),cnf_dev||$this->debug);
+    $this->dbg(sprintf("search_for_merge='%b' global_search='%b' show_log_widgets='%b'",$this->search_for_merge,$this->global_search,$this->show_log_widgets),cnf_dev);
 
     if ($this->holder === Null){
       $holder_ext = (!bAuth::authenticated() || $this->search_for_merge || $this->global_search 
@@ -316,7 +316,7 @@ class bForm_Avatar_Search extends bForm {
 	if(locateAndInclude($holder)){
 	  $this->holder = new $holder;
 	  $this->dbg('module='.b_reg::$current_module.', holder='.$this->holder,cnf_dev);
-	  if ($this->debug) $this->holder->debug = $this->debug;
+	  if (self::$_debug) $holder::$_debug = True;
 	  $this->holder->show_icons = bAuth::authenticated();
 	  $this->holder->report_emptySelection = False;
 	  $this->holder->noSort = True;
@@ -328,8 +328,8 @@ class bForm_Avatar_Search extends bForm {
       if (empty($this->holder)) b_debug::internalError("can't find any holder to show search results");
     }
 
-    if ($this->debug) b_debug::print_r($_POST,__METHOD__."(_POST)");
-    if ($this->debug) b_debug::print_r($this->args,"Search args");
+    if (self::$_debug) b_debug::print_r($_POST,__METHOD__."(_POST)");
+    if (self::$_debug) b_debug::print_r($this->args,"Search args");
 
     locateAndInclude(bForm_Avatar::$bForm_Avatar);
     bTiming()->cpu(__METHOD__);

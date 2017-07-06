@@ -390,7 +390,7 @@ class myPear_taskManager extends myPear_base{
 	    if (empty($class_instance[$task['class']])) $class_instance[$task['class']] = new $class();
 	    if (method_exists($class_instance[$task['class']],$task['function'])){
 	      // Execute the task
-	      $class_instance[$task['class']]->debug = $this->debug;
+	      $class_instance[$task['class']]::$_debug = self::$_debug;
 	      $OK = call_user_func_array(array($class_instance[$task['class']],$task['function']),$args);
 	    }else{
 	      // Method does not exist...

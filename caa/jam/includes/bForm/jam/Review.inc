@@ -97,7 +97,7 @@ class bForm_jam_Review extends bForm_jam{
 				       "r_avid= '".$this->av->ID."'");
 
     $this->formDB = array();
-    $q = myPear_db()->qquery("SELECT * FROM jam_reviews LEFT JOIN jam_applicants ON r_apid = ap_id WHERE ".join(' AND ',$where),$this->debug);
+    $q = myPear_db()->qquery("SELECT * FROM jam_reviews LEFT JOIN jam_applicants ON r_apid = ap_id WHERE ".join(' AND ',$where),self::$_debug);
     while($r = myPear_db()->next_record($q)) $this->formDB = $r;
     
   }
@@ -156,7 +156,7 @@ class bForm_jam_Review extends bForm_jam{
 	  if ($reply=(JAM_unit($rank)->getUnitMemberStatus() == JAM::status(JAM_review_public))) break;
 	}
       }
-    $this->dbg($reply,(bool)(cnf_show_a||$this->debug));
+    $this->dbg($reply,(bool)(cnf_show_a||self::$_debug));
     return $reply;
   }
 

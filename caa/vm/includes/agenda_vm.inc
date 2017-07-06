@@ -230,7 +230,6 @@ class agenda_vm extends agenda{
 	  $this->v->isVITAL = array();
 	  $this->v->defineVariables();
 	  if (0){
-	    $this->v->debug = True;
 	    $this->v->updateDB(array('v_code'=>$v_code,
 				     'v_avid'=>$this->av->ID,
 				     'v_eid' =>$this->e->ID));

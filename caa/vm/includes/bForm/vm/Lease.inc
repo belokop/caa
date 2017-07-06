@@ -1208,7 +1208,7 @@ function __clean_cache(){}
    * delete lease
    */
   function delete(){
-    $this->dbg("Lease ".$this->ID." ".$this->getValue('a_name'),(bool)($this->debug or cnf_dev));
+    $this->dbg("Lease ".$this->ID." ".$this->getValue('a_name'),cnf_dev);
     $this->clean_cotenants();
     $this->formDB = array();
     $this->__clean_cache();

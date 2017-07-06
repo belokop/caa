@@ -257,7 +257,7 @@ class bForm_Avatar_jam extends bForm_Avatar{
     $reply = False;
     if (empty($pos_id))    $pos_id = JAM_posID();
     if(!empty($pos_id) && JAM_unit(RANK_jam_secr,$pos_id)->isMember($this->ID)) $reply = RANK_jam_secr;
-    if (!empty($reply)) $this->dbg($reply,(bool)$this->debug||cnf_show_a);
+    if (!empty($reply)) $this->dbg($reply,(bool)self::$_debug||cnf_show_a);
     return $reply;
   }                                                                                                                                                                                              
   
@@ -293,7 +293,7 @@ class bForm_Avatar_jam extends bForm_Avatar{
       }
       krsort($reply);
     }
-    if (!empty($reply)) $this->dbg((empty($reply) ? False : join(', ',array_keys($reply))),(bool)$this->debug||cnf_show_a);
+    if (!empty($reply)) $this->dbg((empty($reply) ? False : join(', ',array_keys($reply))),(bool)self::$_debug||cnf_show_a);
     return $reply;
   }
   
@@ -309,7 +309,7 @@ class bForm_Avatar_jam extends bForm_Avatar{
   function isReferee($pos_id=0) {
     locateAndInclude('bForm_jam_Recommendation');
     $rec_ids = bForm_jam_Recommendation::getRecommendations($pos_id, $this->ID);
-    if (!empty($rec_ids)) $this->dbg(join(', ',$rec_ids),(bool)$this->debug||cnf_show_a);
+    if (!empty($rec_ids)) $this->dbg(join(', ',$rec_ids),(bool)self::$_debug||cnf_show_a);
     $reply = !empty($rec_ids);
     return $reply;
   }

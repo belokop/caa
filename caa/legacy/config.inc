@@ -1,8 +1,8 @@
 <?php
 
-$releaseDate = '2017-05-11';
+$releaseDate = '2017-07-06';
 define('LEGACY_MODULE'   , 'legacy');
-define('LEGACY_VERSION','5.0.19');
+define('LEGACY_VERSION','5.0.20');
 
 // register the module in myPear registry
 b_reg::add_module(LEGACY_MODULE,

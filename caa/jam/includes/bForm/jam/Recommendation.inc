@@ -318,7 +318,7 @@ class bForm_jam_Recommendation extends bForm_jam {
     }
     
     if (empty($w)){
-      $this->dbg("Cant hook neither applicant nor referee",cnf_dev||$this->debug);
+      $this->dbg("Cant hook neither applicant nor referee",cnf_dev||self::$_debug);
       return;
     }
     $q = myPear_db()->query("SELECT * FROM $this->TABLE ". 
@@ -371,7 +371,7 @@ class bForm_jam_Recommendation extends bForm_jam {
   function isOwner() {
     $this->hook_ap_av();
     $reply = (@bAuth::$av->ID == $this->av->ID);
-    $this->dbg($reply,(bool)($reply && ($this->debug || cnf_show_a)));
+    $this->dbg($reply,(bool)($reply && (self::$_debug || cnf_show_a)));
     return $reply;
   }
 

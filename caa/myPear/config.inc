@@ -4,7 +4,7 @@ ini_set("allow_url_fopen", true);
 
 // myPear module 
 $releaseDate = '2017-07-06';
-define('myPear_VERSION','5.3.214');
+define('myPear_VERSION','5.3.215');
 define('myPear_MODULE', 'myPear');
 define('myPear_DATE',    $releaseDate);
 

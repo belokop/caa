@@ -357,7 +357,7 @@ class bForm_jam_Position extends bForm_jam {
     if($reply = is_object(bAuth::$av)){
       $reply = $this->isSCmember(bAuth::$av) || bAuth::$av->isSecretary($this->ID) || $this->isManager();
     }
-    $this->dbg($reply,(bool)$this->debug||cnf_show_a);;
+    $this->dbg($reply,(bool)self::$_debug||cnf_show_a);;
     return $reply;
   }
 
@@ -641,7 +641,7 @@ class bForm_jam_Position extends bForm_jam {
       }else{
 	$this->formDB['pos_status_auto'] = serialize($pos_status_auto);
       }
-      if ($this->debug) b_debug::print_r(array_merge(array($this->getValue('pos_status',1)),$pos_status_auto),"$this->".__FUNCTION__.'()');
+      if (self::$_debug) b_debug::print_r(array_merge(array($this->getValue('pos_status',1)),$pos_status_auto),"$this->".__FUNCTION__.'()');
     }
   }
   
