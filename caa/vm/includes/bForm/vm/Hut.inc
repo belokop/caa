@@ -183,6 +183,21 @@ class bForm_vm_Hut extends bForm_vm {
   /*
    *
    */
+  public static function _get_allHuts(){
+    static $reply = Null;
+    //    static $call = 0; b_debug::_debug("call #".(int)$call++,True);                                                                                                           
+    if ($reply === Null){
+      $reply = array();
+      $q = myPear_db()->qquery("SELECT hut_id,hut_name FROM abs_huts WHERE hut_code != '".HUT_BI."' ORDER BY hut_code",cnf_dev);
+      while($r = myPear_db()->next_record($q)) $reply[$r['hut_id']] = $r['hut_name'];
+    }
+    return $reply;
+  }
+
+
+  /*
+   *
+   */
   public function get_total_rooms($accommodationOptions=Null,$detailed=False){
     $q = myPear_db()->query(sprintf("SELECT a_id,a_quantity,a_capacity FROM abs_rooms WHERE a_hutid = %s AND a_quantity REGEXP '%s' ORDER BY a_quantity ASC",
 				    $this->ID,VM_quantity_total),cnf_dev);

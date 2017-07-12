@@ -17,8 +17,10 @@ locateAndInclude('bList_vm');
  *
  */
 class bList_vm_accommodationOptions extends bList_vm{
+ 
+  protected $isReady  = True;
+  public static $_debug = False;
 
-  public static $_debug = True;
   var $list_quering = array('lm_key'  =>'Name',  // hut_id
 			    );
   var $list_showing = array('_hut_id' => '',
@@ -26,29 +28,12 @@ class bList_vm_accommodationOptions extends bList_vm{
 			    '_number' => '<br/>N tenants',
 			    );
   protected $packed_items = array();
-  protected $isReady  = True;
 
   public static $default_option = array('a_quantity'=>VM_quantity2request,
 					'a_price'=>'999=9999');
-  
-  
+    
   public static $whatIsSaved = array('a_price',
 				     'a_quantity');
-  
-  /*
-   *
-   */
-  public static function get_allHuts(){
-    $q = myPear_db()->query("SELECT hut_id,hut_name FROM abs_huts WHERE hut_code != '".HUT_BI."' ORDER BY hut_code");
-    $reply = array();
-    while($r = myPear_db()->next_record($q)){
-      var_dump($r);
-      $reply[$r['hut_id']] = $r['hut_name'];
-    }
-    return $reply;
-  }
-  
-
   /*
    * Parent is either the Organization or an Event
    */
@@ -540,23 +525,6 @@ class bList_vm_accommodationOptions extends bList_vm{
     $this->dbg("add '$id' to lm_option");
   }      
   
-  /*
-   * Get "rooms" for the build-in options
-   */
-  function get_BI($return_a_code=False){
-    $reply = array();
-    $q = myPear_db()->query("SELECT a_id,a_name,hut_code FROM abs_huts LEFT JOIN abs_rooms ON a_hutid = hut_id WHERE hut_code = '".HUT_BI."'");
-    while($r = myPear_db()->next_record($q)){
-      if ($return_a_code){
-	locateAndInclude('bForm_vm_Lease');
-	$reply[$r['a_id']] = bForm_vm_Lease::_hut_code($r);
-      }else{
-	$reply[$r['a_id']] = $r['a_name'];
-      }
-    }
-    return $reply;  
-  }
-
   /*
    *
    */

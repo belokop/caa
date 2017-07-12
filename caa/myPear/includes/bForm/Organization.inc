@@ -246,14 +246,23 @@ class bForm_Organization extends bForm {
   /*
    * Get the EA unit
    */
+  /*
   private $eaMembers = Null;
   public function eaMembers(){
+    function EA_members($parent_id=myOrg_ID,$rank=RANK__ea_member){
+
     if (($this->eaMembers === Null) && ($r = b_reg_bUnit::get_description(RANK__ea_member))){
       $unit = $r['class'];
       locateAndInclude($r['class'],'fatal');
       $this->eaMembers = new $unit($this->ID,RANK__ea_member);
     }
     return $this->eaMembers;
+  }
+  */
+
+  public function eaMembers(){
+    locateAndInclude('bUnit_ea_members');
+    return EA_members($this->ID,RANK__ea_member);
   }
 
   /*

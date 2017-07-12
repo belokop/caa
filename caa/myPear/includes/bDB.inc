@@ -538,7 +538,7 @@ class bDB extends mysqli{
   protected function dbg_query($query){
 
     if ($this->result === False){
-      b_debug::_debug(x('strong',' ??? query failed '.$this->error),array(cnf_dev,'redText',2));
+      b_debug::_debug(x('strong',' ??? query failed '.$this->error."<br>$query"),array(cnf_dev,'redText',2));
       return;
     }
 

@@ -139,7 +139,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
     if (isset($_GET['hotel_confirmation_once'])){
       // ----------------------- Ask for the welcome mail attachment
       print x("span class='only_online'",
-	      x("form action='".b_url::same('?resetcache_once=1')."' method='post' enctype='multipart/form-data' name='upload_mailAttachment'",
+	      x("form action='".b_url::same('?resetcache_once=1')."' method='post' enctype='multipart/form-data' name='upload_mail_attachment'",
 		x('table',
 		  x('tr',
 		    x('td','Please select PDF file').
@@ -1611,12 +1611,12 @@ class bHolder_vm_Visitors extends bHolder_vm{
       $this->rec['cotenant'] = (bForm_vm_Room::_mightBeSharable($this->rec)
 				? (bForm_vm_Lease::_room_is_full($this->rec,True)
 				   ? x('em',join(',',VM_cotenants()->get_cotenants($this->rec['lease_id'],False,'names')))
-				   : x('em',bForm_vm_Lease::select_cotenant('_c_id:',
+				   : x('em',bForm_vm_Lease::_select_cotenant('_c_id:',
 									    $this->rec,
 									    (VM::hasRightTo('book_ah')&&!VM::isEventEndorsed()?'if_empty':False),
 									    $this->anchor(True))))
 				: '');
-      $this->rec['cotenant'] .= bForm_vm_Lease::select_who_pays('_p_id:',
+      $this->rec['cotenant'] .= bForm_vm_Lease::_select_who_pays('_p_id:',
 								$this->rec,
 								$this->anchor(True));
       

@@ -271,20 +271,22 @@ class bForm_vm_Room extends bForm_vm {
    * (the members of family to be paid by the tenant)
    */
   public static function _daily_price($rec,$e_class=Null){
-    locateAndInclude('bForm_vm_Lease');
     
-    switch(bForm_vm_Lease::_hut_code($rec)){
-    case LODGING_OA:  
+    if (VM_self_accommodated($rec)){
+
       $reply = 0;
-      break;
-      
-    default:
+
+    }else{
+
       // Workaround
       if (empty($rec['lease_aid'])) return 0;
 
       // Who pays?
       if (empty($rec['hut_id'])) b_debug::traceBack("??? empty hut_id");
       if (empty($rec['hut_id'])) b_debug::internalError("??? empty hut_id",$rec);
+      if (empty($rec['a_price']))b_debug::internalError("??? empty a_price",$rec);
+
+      locateAndInclude('bForm_vm_Lease');
       $get_pay = bForm_vm_Lease::get_lease_options($rec,'get_pay',array(),True);
       $cotenants = VM_cotenants()->get_cotenants($rec['lease_id'],True,'info');
       b_debug::_debug(array('cotenants'=>$cotenants,

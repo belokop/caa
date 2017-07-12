@@ -3,9 +3,9 @@
 /**
  * Visitors Manager (VM) configuration file
  */
-$releaseDate = '2017-07-06';
+$releaseDate = '2017-07-12';
 define('VM_MODULE'   , 'vm');
-define('VM_VERSION','5.13.47');
+define('VM_VERSION','5.13.48');
 
 //
 // The Indico (agenda) host name
@@ -921,7 +921,7 @@ class VM extends myPear{
     }
     
     if (!isset($reply) && cnf_dev) b_debug::internalError("unexpected case ".var_export($what,True));
-    if (cnf_show_a||cnf_show_acl) myPear::DEBUG(__method__."($what) <em>".($reply?'YES':'NO')."</em>");
+    b_debug::_debug((bool)$reply,cnf_show_a||cnf_show_acl);
     bTiming()->cpu();
     return $reply;
   }

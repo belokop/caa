@@ -487,8 +487,15 @@ class bForm_vm_Lease extends bForm_vm{
   /*
    * Return the list of leases & hut_code's for the given visit
    */
+  public static $_get_allLeases_reset = False;
   public static function _get_allLeases($visit){
     static $cache = array(), $cache_count = array();
+
+    if (self::$_get_allLeases_reset){
+      b_debug::_debug('RESET',True);
+      $cache = $cache_count = array();
+      self::$_get_allLeases_reset = False;
+    }
 
     if (is_object($visit)) $v_id = $visit->ID;
     else                   $v_id = $visit;
@@ -520,6 +527,7 @@ class bForm_vm_Lease extends bForm_vm{
 	}
       }
       $cache[$v_id] = $leases;
+      b_debug::_debug($leases,cnf_dev);
     }
     return $leases;
   }
@@ -554,7 +562,7 @@ class bForm_vm_Lease extends bForm_vm{
     bTiming()->cpu(__function__);
     if (!is_array($lease_ids)) $lease_ids = array($lease_ids);
     foreach($lease_ids as $lease_id){
-      if (empty($lease_id) || !is_numeric($lease_id)) b_debug::internalError('??? lease_id == '.var_export($lease_id,True));
+      if (empty($lease_id) || !is_numeric($lease_id)) b_debug::internalError('??? lease_id == '.var_export($lease_id,True),$lease_ids);
       $where[] = "lease_id = $lease_id";
     }
     $reply = myPear_db()->qquery("SELECT $select FROM abs_leases ".
@@ -727,8 +735,8 @@ function __clean_cache(){}
     $this->formDB = array();
     $q = myPear_db()->query("SELECT ".
 			    "lease_id,lease_start,lease_end,lease_vid,lease_aid,lease_option,".
-			    "v_id,v_eid,v_status,v_start,v_end,".
-			    "a_id,a_name,a_capacity,a_quantity,".
+			    "v_id,v_eid,v_status,v_start,v_end,v_group,".
+			    "a_id,a_name,a_capacity,a_quantity,a_price,".
 			    "hut_id,hut_code,".
 			    "av_id,av_lastname,av_firstname ".
 			    " FROM $this->TABLE ".
@@ -955,15 +963,15 @@ function __clean_cache(){}
 	    $this->dbg("Too late, force mode ".$this->MODE,cnf_dev);
 	  }
 	  // Select a cotenant if there are candidates
-	  $cotenant = self::select_cotenant('_cotenant',$this,($this->MODE === 'RW'));
+	  $cotenant = self::_select_cotenant('_cotenant',$this,($this->MODE === 'RW'));
 	  if (!empty($cotenant)) $dialog[b_rawData.'1'] = array('Cotenant',$cotenant);
 	}
 	
 	// Who pays for the accommodation?
-	$this->dbg('calling select_who_pays',cnf_dev);
-	$selector = self::select_who_pays('_virt_pay',$this);
+	$this->dbg('calling _select_who_pays',cnf_dev);
+	$selector = self::_select_who_pays('_virt_pay',$this);
 	if (!empty($selector)) $dialog[b_rawData.'2'] = array(' ',$selector);
-	$this->dbg('exit select_who_pays',cnf_dev);
+	$this->dbg('exit _select_who_pays',cnf_dev);
 	
 	// Visit period
 	if ($this->isRO('lease_start') && $this->isRO('lease_end')){
@@ -1012,12 +1020,29 @@ function __clean_cache(){}
   }
 
   /*
+   * Get "rooms" for the build-in options
+   */
+  static function _get_BI($return_a_code=False){
+    $reply = array();
+    $q = myPear_db()->query("SELECT a_id,a_name,hut_code FROM abs_huts LEFT JOIN abs_rooms ON a_hutid = hut_id WHERE hut_code = '".HUT_BI."'");
+    while($r = myPear_db()->next_record($q)){
+      if ($return_a_code){
+        locateAndInclude('bForm_vm_Lease');
+        $reply[$r['a_id']] = self::_hut_code($r);
+      }else{
+        $reply[$r['a_id']] = $r['a_name'];
+      }
+    }
+    return $reply;
+  }
+
+  /*
    *
    */
   private static function _mayBook($hut_code,$visit_class){
     $this->hookVisit();
-
-    if (in_array($hut_code,array_merge(array(HUT_BI),array_values(VM_accommodationOptions($this->parentForm->e)->get_BI())))){
+    
+    if (in_array($hut_code,array_merge(array(HUT_BI),array_values(bForm_vm_Lease::_get_BI())))){
       $reply = True;
     }elseif(!($reply = VM_manager_here)){
       switch($hut_code){
@@ -1107,7 +1132,7 @@ function __clean_cache(){}
       // clean the cotenants list (if any) since the apartment is changed  
       $this->clean_cotenants();
       if ($verbose) myPear::MESSAGE_add($this->_periodToString('Remove accommodation for'));
-      $this->getValue_reset_forced('lease_aid',0);
+      $this->getValue_reset('lease_aid',0);
       $this->hookVisit();
       self::get_lease_options($this->ID,'reset');
     }elseif (is_numeric($lease_aid) && (($old_aid=@$this->formDB['lease_aid']) != $lease_aid)){
@@ -1180,7 +1205,11 @@ function __clean_cache(){}
     return $this->isWritable;
   }
 
+  /*
+   *
+   */
   function split($date=Null){
+    $this->dbg(starting);
     $this->hookVisit(); 
     myPear::MESSAGE($this->_periodToString('Split lease'));
     if (!$date) $date = (int)((($e=$this->getValue('lease_end'))+($s=$this->getValue('lease_start')))/2);
@@ -1191,16 +1220,19 @@ function __clean_cache(){}
 			  'lease_end'  => $e,
 			  'lease_aid'  => 0,
 			  'lease_vid'  => $this->parentForm->ID,
-			  'lease_id'   => (($id=(int)$this->ID) ? $id : bMaster()->reserve_masterCounter())));
-
+			  //'lease_id'   => (($id=(int)$this->ID) ? $id : bMaster()->reserve_masterCounter())));
+			  'lease_id'   => bMaster()->reserve_masterCounter()));
+    $this->dbg("New lease ".$lnew->__toString(),cnf_dev);
+    
     $this->parentForm->get_allLeases(True);
 
-    if (0)    myPear::MESSAGE(join('<br/>',array($this->_periodToString(),
-						 $lnew->_periodToString())));
-			 
+    $this->dbg(join('<br/>',array($this->_periodToString(),
+				  $lnew->_periodToString())),cnf_dev);
+    
     // Adjust the new values
     self::adjust_all($this->parentForm,$lnew->ID);
 
+    $this->dbg(exiting);
     return $lnew->ID;
   }
   
@@ -1369,7 +1401,7 @@ function __clean_cache(){}
 	foreach($accommodationOptions->getMembers() as $x=>$r) $huts[] = $r['lm_key'];
       }else{
 	// Check ALL available rooms
-	foreach(bList_vm_accommodationOptions::get_allHuts() as $hut_id=>$hut_name) $huts[] = $hut_id;
+	foreach(bForm_vm_Hut::_get_allHuts() as $hut_id=>$hut_name) $huts[] = $hut_id;
       }
     }
     // Sanity
@@ -1465,10 +1497,10 @@ function __clean_cache(){}
     // Prepare the answer
     $reply = array();
     if (empty($hut_code)){
+      if (empty($rec['v_id'])) b_debug::print_r($rec,'??? empty $rec[v_id]');
+      if (empty($rec['v_id'])) b_debug::traceBack('??? empty $rec[v_id]');
       if ($hasAccommodation) $reply[LODGING_RM] = LODGING_RM_TXT;
-      if ($event_context) foreach($accommodationOptions->get_BI() as $k=>$v) $reply[$k] = $v;
-      if (empty($rec['v_id'])) b_debug::print_r($rec);
-      if (empty($rec['v_id'])) b_debug::traceBack();
+      foreach(bForm_vm_Lease::_get_BI() as $k=>$v) $reply[$k] = $v;
       if (count(self::_get_allLeases($rec['v_id']) < 2)) unset($reply[VM::$BR->ID]);
       if (!empty($reply)) $reply['separator1'] = '';
     }
@@ -1575,7 +1607,7 @@ function __clean_cache(){}
   /*
    * 
    */
-  public static function select_who_pays($name,$recP,$anchor='',$onlyFromObject=True){
+  public static function _select_who_pays($name,$recP,$anchor='',$onlyFromObject=True){
 
     if (is_object($recP)){
       $rec = $recP->formDB;
@@ -1637,7 +1669,7 @@ function __clean_cache(){}
   /*
    *
    */
-  public static function select_cotenant($name,$recP,$RW,$anchor=''){
+  public static function _select_cotenant($name,$recP,$RW,$anchor=''){
    locateAndInclude('bForm_vm_Room');
     
     $rec = (is_object($recP)

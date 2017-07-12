@@ -202,7 +202,11 @@ class bUnit extends bList{
    * bUnit generic constructor
    */
   public function __construct($parent_ID, $rank){
-    static $dejaVu = array(); $id="$parent_ID.$rank"; if (@$dejaVu[$id]++) b_debug::traceBack("deja vu '$id' #".$dejaVu[$id]);
+    // Tentative...
+    if (cnf_dev){
+      static $dejaVu = array(); $id="$parent_ID.$rank"; if (@$dejaVu[$id]++) b_debug::traceBack("deja vu '$id' #".($dejaVu[$id]-1));
+    }
+
     if (self::$_debug) b_debug::_debug(starting);
     
     // Say "I am bUnit, not bList";

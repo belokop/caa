@@ -163,7 +163,11 @@ class bList_vm_cotenants extends bList_vm{
 								 "lease_id != %s",					
 								 "lease_start <= %s",
 								 "lease_end >= %s",
-								 (accommodate_cotenants_from_different_events ? 1 : "v_eid = $rec[v_eid]"),
+								 (accommodate_cotenants_from_different_events 
+								  ? 1 
+								  : (empty($rec['v_eid'])
+								     ? "v_group = '".@$rec['v_group']."'" // "normal" visits, share with the group members
+								     : "v_eid = $rec[v_eid]")),     // "event" visits, share within the event
 								 // "lease_option NOT REGEXP '%s|%s'",
 								 )),
 				    $rec['a_id'],$rec['lease_id'],$rec['lease_end'],$rec['lease_start'] // ,VM_no_cotenants,VM_room_is_full
@@ -388,7 +392,7 @@ class bList_vm_cotenants extends bList_vm{
 	  if (in_array($l_id,$leases_current)) continue;
 	  if (b_time::inInterval($l['lease_start'],$l['lease_end'], $r['lease_start'],$r['lease_end'])){
 	    $toKeep = False;
-	    if (cnf_show_cot) myPear::DEBUG("$l[lease_name] <==> $r[lease_name]");
+	    b_debug::_debug("$l[lease_name] <==> $r[lease_name]",cnf_show_cot);
 	    break;
 	  }
 	}

@@ -43,35 +43,6 @@ class bForm_vm_Visit extends bForm_vm {
   }
   
   /*
-   * WM - Welcome Mail
-   */
-  public function upload_mailAttachment($id='WM'){
-    static $name = '_virt_att';
-
-    $c = VM::$formDummy;
-
-    self::$_debug = $c::$_debug = True;
-
-    VM::$formDummy->defineVariable('Please select the PDF file to be attached',$name);
-    VM::$formDummy->defineTypes(array('expected_ext'=>array($name=>'.pdf')));
-    VM::$formDummy->expected_ext[$name] = '.pdf';
-    VM::$formDummy->dbg(VM::$formDummy->expected_ext,cnf_dev);
-
-    ob_start();     
-    VM::$formDummy->uploadFile($name);
-    $dialog = ob_get_contents();
-    ob_end_clean();
-    var_dump($dialog);
-    
-    print x("span class='only_online'",
-	    x("form action='".b_url::same('?resetcache_once=1')."' method='post' enctype='multipart/form-data' name='upload_mailAttachment'",
-	      VM::$formDummy->uploadFile($name).//	      $dialog.
-	      "<input type='hidden' name='_post_bForm_ID_once' value='".$this->ID."'/>".
-	      "<input type='submit' value='submit'/>"));
-  }
-
-  
-  /*
    * Check does the avatar have visit with the active policy,
    * say, with paid trip 
    */
@@ -213,7 +184,7 @@ class bForm_vm_Visit extends bForm_vm {
   /*
    *
    */
-  static function _getPolicies($buffer){
+  public static function _getPolicies($buffer){
     if (!is_array($buffer['e_v_policy'])) b_debug::internalError("'e_v_policy' is not an array");
     $policies = array();
     $v_type = $buffer['v_type'];
@@ -540,11 +511,12 @@ class bForm_vm_Visit extends bForm_vm {
 
 
    /*
-    * Hook all the leases (leases) for this visit
+    * Hook all the leases for this visit
     */
    private $_allLeases = array(); // list of 'lease' objects
    function get_allLeases($reset=False,$mode='classes'){
-     if ($reset || (@$this->_allLeases[$mode] === Null)){
+     if (self::$_v_get_allLeases_reset = $reset) $this->_allLeases = array();
+     if (@$this->_allLeases[$mode] === Null){
        $this->_allLeases[$mode] = self::_v_get_allLeases($this,$mode);
      }
      return $this->_allLeases[$mode];
@@ -553,10 +525,12 @@ class bForm_vm_Visit extends bForm_vm {
    /*
     *
     */
-   static function _v_get_allLeases($v_id,$mode='hut_codes'){
+   private static $_v_get_allLeases_reset = False;
+   private static function _v_get_allLeases($v_id,$mode='hut_codes'){
      $reply = array();
      if (!empty($v_id)){
        locateAndInclude('bForm_vm_Lease');
+       bForm_vm_Lease::$_get_allLeases_reset = self::$_v_get_allLeases_reset;
        foreach(bForm_vm_Lease::_get_allLeases($v_id) as $lease_id=>$hut_code){
 	 if ($mode === 'classes'){
 	   if (empty($v)){
@@ -954,8 +928,7 @@ class bForm_vm_Visit extends bForm_vm {
 	$reply = array();
       }else{
 	$e = myPear::getInstance_new('bForm_vm_Event',$buffer['v_eid'],'fatal');
-	//$reply = array_diff($reply,array(HUT_BI),array_values($e->accommodationOptions()->get_BI(True)));
-	$reply = array_diff($reply,array(HUT_BI),array_values(VM_accommodationOptions($e)->get_BI(True)));
+	$reply = array_diff($reply,array(HUT_BI),array_values(bForm_vm_Lease::_get_BI(True)));
       }
     }
     if ($reply === array(Null)) $reply = array();
@@ -1016,7 +989,7 @@ class bForm_vm_Visit extends bForm_vm {
       $dialog['Visit_dates'] = array('datePickerField2','v_start','v_end','i-a-arrive','i-a-depart');
     }
 
-    if (!$this->get_allLeases('count')) $this->dialog_accompaning($dialog,$this);
+    if (!$this->get_allLeases()) $this->dialog_accompaning($dialog,$this);
     
     // Show the block
     $this->formBlock(VM_visit_info,

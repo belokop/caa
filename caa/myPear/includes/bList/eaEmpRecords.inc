@@ -37,7 +37,7 @@ class bList_eaEmpRecords extends bList{
   protected $packed_items = array('e_org', 'e_cc',  'e_gid', 'e_inst', 'e_off', 'e_rate','rec_type');
 
   var $list_quering= array('rec_type'   =>'Type of entry',
-			   'e_rate'     =>'', // placekeeper
+			   'e_rate'     =>'', // place-keeper
 			   'e_inst'     =>'Institute',
 			   'e_cc'       =>'Country',
 			   'lm_value'   =>'Position',  
@@ -215,7 +215,7 @@ class bList_eaEmpRecords extends bList{
 										 " LEFT JOIN zzz_list_members ON l_id = lm_lid ".
 										 " WHERE ".join(' AND ',$where),
 										 True));
-      b_debug::xxx(' '.$_SESSION[__METHOD__][$e_rate],True);
+      b_debug::_debug(' '.$_SESSION[__METHOD__][$e_rate],True);
     }
     return $_SESSION[__METHOD__][$e_rate];
   }
@@ -267,7 +267,7 @@ class bList_eaEmpRecords extends bList{
       foreach($future as $date) unset($recs[$date]);
     }
 
-    // The lastest records first...
+    // The latest records first...
     krsort($recs);
 
     $reply = $debug = array();
@@ -470,7 +470,7 @@ class bList_eaEmpRecords extends bList{
     case '34_phd':
     case '38_ms':
       if (isset($this->list_quering['e_inst'])){
-	// Cosmetical - remove "add education" if it is already there
+	// Cosmetic Al - remove "add education" if it is already there
       }
       unset($this->list_quering['lm_status']);
       $this->list_quering['lm_key'] = 'Awarded';
@@ -626,22 +626,25 @@ class bList_eaEmpRecords extends bList{
 	
       case 'e_rate':
 	if (!empty($e_org)){
-	  if ($this->f->getValue('e_rate')) $this->f->isRO['e_rate'] = True;
-	  if ($types=myOrg()->orgEmpTypes()->get_empTypes()){
+	  if ($this->av->isE() || ($this->MODE == 'RO')){
+	    // Currently employed member, the list of positions is strict
+	    if ($this->f->getValue('e_rate')) $this->f->isRO['e_rate'] = True;
 	    $this->f->submitOnChange['e_rate'] = True;
-	    $this->f->selectMenu('e_rate',$types);
+	    $this->f->selectMenu('e_rate',myOrg()->orgEmpTypes()->get_empTypes());
+	  }else{
+	    // Alumni, positions are "free text"
+	    $this->f->textField('e_rate');
 	  }
 	}
 	break;
 
-      case  'lm_value':       
       case 'lm_value':       
 	if (in_array($rec_type,self::$emp_groups[emp_education])){
 	  // ???? What is this ????
 	  $this->f->textHidden($item,$this->code2text($rec_type));
-	  b_debug::traceBack(__METHOD__.', strange piece of code. YB');
+	  b_debug::traceBack(__METHOD__.", strange piece of code, rec_type='$rec_type'. YB");
 	}else{
-	  if (empty($e_org)){
+	  if (empty($e_org) || !$this->av->isE()){
 	    $this->f->textField($item); 
 	  }elseif($this->f->getValue('e_rate')){
 	    // Due to historical reasons we inquire position as a pop-up menu (array of key=>value), 
@@ -970,7 +973,7 @@ class bList_eaEmpRecords extends bList{
 	(b_time::is_valid($av_ddate = $this->av->getValue('av_ddate',True,True))>0) && 
 	preg_match('/^\d\d\d\d-\d\d-\d\d$/',($was=$this->r['lm_status']))){
       $this->r['lm_status'] = $now = date('Y-m-d',min(b_time::txt2unix($this->r['lm_status']),$av_ddate));
-      if (cnf_dev && ($was != $now)) b_debug::xxx($this->av->name()." lm_status: $was->$now");
+      if (cnf_dev && ($was != $now)) $this->dbg($this->av->name()." lm_status: $was->$now");
     }
     
     $this->t->showLineCounter = False;
@@ -1020,7 +1023,7 @@ class bList_eaEmpRecords extends bList{
       }
     }
     if (cnf_show_dp && !empty($this->r['_emp_period'])){
-      b_debug::xxx($this->r['lm_key'].', '.$this->r['lm_status'].' ===>>  '.$this->r['_emp_period']);
+      $this->dbg($this->r['lm_key'].', '.$this->r['lm_status'].' ===>>  '.$this->r['_emp_period']);
     }
 
     // format the fields
