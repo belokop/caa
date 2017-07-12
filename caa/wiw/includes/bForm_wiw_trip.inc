@@ -89,7 +89,6 @@ class bForm_wiw_trip extends bForm{
    */
   public function getValue($name, $asIs=True, $d_MBE=True){
     $value = parent::getValue($name,$asIs,$d_MBE);
-    //    if (($name == 't_acl') && empty($value)) $value = wiw_acl_default;
     return $value;
   }
 
@@ -104,7 +103,6 @@ class bForm_wiw_trip extends bForm{
 				     $this->TABLE,$this->TABLEID,$this->ID),
 			     self::$_debug);
     while ($r=myPear_db()->next_record($q))    $this->formDB = $r;
-    if (empty($this->formDB['t_acl'])) $this->formDB['t_acl'] = wiw_acl_default;
   }
 
   /*
@@ -118,42 +116,9 @@ class bForm_wiw_trip extends bForm{
    * The trip is not visible for the "old organization" if the traveler
    * has retired AND the travel is within the "new organization"
    */
-  public static function _trip_visible($formDB){
-    /*
-    $reply = True;
-    if ($formDB['t_avid'] == @bAuth::$av->ID){
-      if (cnf_dev) myPear::MESSAGE("Own trips are always visible");
-    }else{
-      // Check if the person has ever changed the organization
-      $orgs = array_values(bUnit::get_unitsMembership(Null,RANK__ea_member,$formDB['t_avid'],'bUnit_ea_members'));
-      $orgs = $orgs[0];
-      if (count($orgs) > 1){
-	$margin = 33 * 24 * 3600;
-	// Yes, the organization was changed at least once. 
-	// Check that the trip is within the emp.period of the current organization  
-	$day1 = myOrg(myOrg_ID)->eaMembers()->get_memberInfo($formDB['t_avid'],'day1');
-	if ($formDB['t_arrival']+$margin < $day1){ 
-	  if (cnf_dev) myPear::DEBUG($formDB['av_lastname']." started at ".myOrg_nameS.date(' Y-m-d',$day1).", trip \"".b_time::period($formDB['t_departure'],$formDB['t_arrival']).'" is not visible');
-	  $reply = False;
-	}
-
-	$day9 = myOrg(myOrg_ID)->eaMembers()->get_memberInfo($formDB['t_avid'],'day9');
-	if ($formDB['t_departure']-$margin > $day9){ 
-	  if (cnf_dev) myPear::DEBUG($formDB['av_lastname']." retired from ".myOrg_nameS.date(' Y-m-d',$day9).", trip \"".b_time::period($formDB['t_departure'],$formDB['t_arrival']).'" is not visible');
-	  $reply = False;
-	}
-      }      
-      
-      // Check ACL
-      $t_acl  = (($a = @$formDB['t_acl']) ? $a : wiw_acl_public);
-    }
-    */
-
+  public static function _trips_visible_to_everyone(){
     // Check ACL, ok if the trip is public
-    $t_acl  = (($a = $formDB['t_acl']) ? $a : wiw_acl_default);
-    if ($reply=($t_acl == wiw_acl_public)){
-      b_debug::_debug("OK, trip is ".wiw_acl_public,cnf_dev);
-    }elseif($reply=is_object(bAuth::$av)){
+    if($reply=is_object(bAuth::$av)){
       b_debug::_debug('OK, authenticated',cnf_dev);
     }else{
       // Check the client address, ok if it is from trusted domain
@@ -281,9 +246,9 @@ class bForm_wiw_trip extends bForm{
       // Show the trip privacy
       $this->formBlock('tp',
 		       'Privacy',
-		       array('t_acl'=>array("selectMenu",array(wiw_acl_public =>wiw_acl_public_text,
+		       array('t_acl'=>array("selectMenu",array(wiw_acl_public   =>wiw_acl_public_text,
 							       wiw_acl_protected=>wiw_acl_protected_text,
-							       'default' => wiw_acl_default,
+							       'default'        =>wiw_acl_default,
 							       ))),
 		       array('d'=>'auto',
 			     'i'=>'i-portfolio_edit',

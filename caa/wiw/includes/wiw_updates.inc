@@ -8,9 +8,24 @@ function wiw_updates(){
       wiw_update01();
       wiw_update02();
     }
+    if (True){
+      wiw_update03();
+    }
   }
 }
 
+/*
+ *
+ */
+function wiw_update03(){
+  myPear_db()->qquery(sprintf("UPDATE wiw_trips SET t_acl='%s' WHERE (t_acl != '%s' AND t_acl != '%s')",
+			      wiw_acl_default,wiw_acl_public,wiw_acl_protected),
+		      cnf_dev);
+}
+
+/*
+ *
+ */
 function wiw_update02(){
   // Null
   myPear_update_DBdefaults(array('wiw_trips'=>array('int(11)' =>array('t_idf','t_idn','t_departure','t_arrival',
@@ -21,6 +36,9 @@ function wiw_update02(){
 			   'NULL');
 }
 
+/*
+ *
+ */
 function wiw_update01(){
   myPear_db()->qquery("DELETE FROM `zzz_lists` WHERE l_id = 7473",1);
   foreach(array('t_idf','t_idn') as $f){

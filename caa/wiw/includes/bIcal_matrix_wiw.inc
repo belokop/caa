@@ -15,7 +15,9 @@ class bIcal_matrix_wiw extends bIcal_matrix{
    */
   function show($arg=0){    
 
-    // Select the travellers    
+    //
+    // Select the travellers frm the current organization
+    //
     $where = array("t_departure <= $this->day9",
 		   "t_arrival   >= $this->day1",
 		   "u_parent = ". myOrg_ID,
@@ -23,8 +25,12 @@ class bIcal_matrix_wiw extends bIcal_matrix{
 		   "u_class  = 'bUnit_ea_members'",
 		   );
   
-    // Do the search
-    $q = myPear_db()->qquery("SELECT av_id,av_firstname,av_lastname,t_id,t_acl,t_orgid,t_avid,t_arrival,t_departure,t_destination,t_contact,t_comment,lm_key,lm_value ".
+    //
+    // Apply the visibility
+    //
+    if (!bForm_wiw_trip::_trips_visible_to_everyone()) $where[] = sprintf("t_acl = '%s'",wiw_acl_public);
+
+    $q = myPear_db()->qquery("SELECT av_id,av_firstname,av_lastname,t_id,t_orgid,t_avid,t_arrival,t_departure,t_destination,t_contact,t_comment,lm_key,lm_value ".
 			     " FROM zzz_avatars ".
 			     " LEFT JOIN wiw_trips        ON av_id = t_avid".
 			     " LEFT JOIN zzz_unit_members ON av_id  = um_avid".
@@ -38,8 +44,6 @@ class bIcal_matrix_wiw extends bIcal_matrix{
     $trips = array();
     $n_trip_exists = myPear_db()->num_rows($q);
     while($r = myPear_db()->next_record($q)){
-      if (empty($r['t_acl'])) $r['t_acl'] = wiw_acl_default;
-      if (!bForm_wiw_trip::_trip_visible(array('t_acl'=>$r['t_acl'])))  continue;
 
       // Leave just the first option of the trip types to limit the page width
       $lm_key = explode(',',@$r['lm_key']);
