@@ -1806,10 +1806,11 @@ class bForm_vm_Visit extends bForm_vm {
 
     if (True){      // Since 2017-03-28
       $reply = self::_getClashingVisits(array('v_start' => $start,
-				       'v_end'   => $end,
-				       'v_id'    => $this->getValue('v_id',True),
-				       'v_avid'  => $this->getValue('v_avid',True)),
-				 $verbose);
+					      'v_end'   => $end,
+					      'v_type'  => $this->getValue('v_type',True),
+					      'v_id'    => $this->getValue('v_id',True),
+					      'v_avid'  => $this->getValue('v_avid',True)),
+					$verbose);
       
     }else{         // Before 2017-03-28
       $reply = self::_getClashingVisits_byDate($this->ID, $this->getValue('v_code',1), $this->getValue('v_type',1), $this->getValue('v_avid',1),
@@ -1825,17 +1826,18 @@ class bForm_vm_Visit extends bForm_vm {
    */
   function getClashingVisits($verbose=True){
     // Get the data buffer
-    foreach(array('v_id','v_start','v_end','v_avid') as $f) $buffer[$f] = $this->getValue($f,True);
+    foreach(array('v_id','v_start','v_end','v_avid','v_type') as $f) $buffer[$f] = $this->getValue($f,True);
     // Call the engine
     $clashes = self::_getClashingVisits($buffer,$verbose);
     $this->dbg($clashes,True);
     return $clashes;
   }
   
-  static function _getClashingVisits($buffer=array(),$verbose=False){
+  static function _getClashingVisits($buffer=array(),$verbose=cnf_dev){
 
+    if (empty($buffer['v_type'])) b_debug::internal_error('??? gde v_type');
     $v_id = $buffer['v_id'];    
-    if (!(int)$v_id) return array();
+    if (!(int)$v_id || ($buffer['v_type'] != VISIT_TYPE_COLLABORATION)) return array();
 
     static $clashes = array();
     if (!isset($clashes[$v_id])){
@@ -1851,13 +1853,13 @@ class bForm_vm_Visit extends bForm_vm {
 		     myPear_db()->quote($buffer['v_avid'],1,'v_avid'),
 		     );
       
-      $q = myPear_db()->qquery("SELECT av_lastname,av_firstname,av_institute,v_id,v_start,v_end FROM abs_visits ".
+      $q = myPear_db()->qquery("SELECT av_lastname,av_firstname,av_institute,v_id,v_start,v_end,v_type FROM abs_visits ".
 			       " LEFT JOIN zzz_avatars  ON v_avid = av_id ".
-			       " WHERE ".join(' AND ',$where),cnf_dev);
+			       " WHERE ".join(' AND ',$where),$verbose);
       while ($r=myPear_db()->next_record($q)){
 	if (empty($clashes[$v_id]['msg'])){
-	  $clashes[$v_id]['msg'][] = x('strong','Overlap in visit dates detected:');
-	  $clashes[$v_id]['msg'][] = 'Current visit: '.b_time::period($buffer['v_start'],$buffer['v_end']);
+	  $clashes[$v_id]['msg'][] = x('strong','Overlap in visit dates is detected:');
+	  $clashes[$v_id]['msg'][] = sprintf('Current visit: %s %s',$buffer['v_type'],b_time::period($buffer['v_start'],$buffer['v_end']));
 	  
 	  locateAndInclude('bIcal_matrix_visits');
 	  ob_start();
@@ -1873,7 +1875,7 @@ class bForm_vm_Visit extends bForm_vm {
 	$bIcal->day1 = min($buffer['v_start']-3*86400,$bIcal->day1);
 	$bIcal->day9 = max($buffer['v_end']  +3*86400,$bIcal->day9);
 	
-	$clashes[$v_id]['msg'][] = 'Clashing visit: '.b_time::period($r['v_start'],$r['v_end']);
+	$clashes[$v_id]['msg'][] = sprintf('Clashing visit: %s %s',$r['v_type'],b_time::period($r['v_start'],$r['v_end']));
 	$clashes[$v_id]['ids'][] = $r['v_id'];
       }
       

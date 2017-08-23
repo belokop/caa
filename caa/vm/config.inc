@@ -3,14 +3,14 @@
 /**
  * Visitors Manager (VM) configuration file
  */
-$releaseDate = '2017-07-12';
+$releaseDate = '2017-08-23';
 define('VM_MODULE'   , 'vm');
-define('VM_VERSION','5.13.48');
+define('VM_VERSION','5.13.49');
 
 //
 // The Indico (agenda) host name
 //
-define('VM_agenda_host','agenda.albanova.se');
+define('VM_agenda_host',(cnf_localhost ? 'agenda.nordita.org' : 'agenda.albanova.se'));
 
 //
 // transition problems...

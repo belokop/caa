@@ -789,6 +789,7 @@ class myPear{
   }
   
   static public function WARNING  ($text,$class=Null){
+    b_debug::_debug($text,array(2,cnf_dev),'debug');
     b_debug::_debug($text,array(2,True,'bold-text'),'warning');
   }
 
