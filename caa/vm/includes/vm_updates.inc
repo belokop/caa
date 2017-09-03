@@ -156,8 +156,48 @@ function vm_compat_update_ad_hocks(){
 
 }
 
+// Remove spurious lease entries. 
+// Happens rather rare, however check check it ones per session...
+vm_compat_update_54();
+function vm_compat_update_54(){
+  if (@$_SESSION[__function__]++) return;
+  $q = myPear_db()->qquery("SELECT v_type,COUNT(*), CONCAT(lease_vid,'_',lease_start,'_',lease_end) AS xxx, ".
+			   " av_lastname,av_firstname,lease_vid,v_start,v_end,lease_start,lease_end,a_name ".
+			   " FROM abs_leases ".
+			   " LEFT JOIN abs_visits  ON v_id=lease_vid ".
+			   " LEFT JOIN zzz_avatars ON av_id=v_avid ".
+			   " LEFT JOIN abs_rooms   ON a_id=lease_aid ".
+			   " GROUP BY xxx ".
+			   " HAVING COUNT(*)>1 ORDER BY COUNT(*)",cnf_dev);
+  $msg = array();
+  while ($r = myPear_db()->next_record($q)){
+    if (empty($msg)) $msg[] = "Found ".myPear_db()->num_rows($q)." spurious lease clusters:";
+    if (empty($r['a_name'])) $r['a_name'] = 'no accommodation';
+    $msg[] = sprintf("%d leases for %s / visit : %s / lease: %s / %s / %s",
+		     $r['COUNT(*)'],
+		     $r['v_type'],
+		     b_time::period($r['v_start'],$r['v_end']),
+		     b_time::period($r['lease_start'],$r['lease_end']),
+		     $r['a_name'],
+		     bForm_Avatar::_fmtName('Lf',$r)
+		     );
+    b_debug::var_dump($r);
+    $n_removed = -1;
+    $removed_ids = array();
+    $qq = myPear_db()->qquery("SELECT lease_id,lease_start,lease_end FROM abs_leases WHERE lease_vid=$r[lease_vid]",True);
+    while ($rr = myPear_db()->next_record($qq)){
+      if (empty(++$n_removed)) continue;
+      $removed_ids[] = $rr['lease_id'];
+      myPear_db()->qquery("DELETE FROM abs_leases WHERE lease_id = $rr[lease_id]",True);
+    }
+    if (!empty($removed_ids)) $msg[] = str_repeat('&nbsp;',3)."removed $n_removed lease_id: ".join(', ',$removed_ids);
+  }
+  if (!empty($msg)) myPear::WARNING(join('<br>',$msg));
+}
+
+
 /*
- * This is EX private function set_buildInObjects(){}
+ * This is EX - "private function set_buildInObjects(){}"
  */
 function vm_compat_update_53(){
 

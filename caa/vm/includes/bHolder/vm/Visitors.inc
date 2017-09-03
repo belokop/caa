@@ -1807,7 +1807,9 @@ class bHolder_vm_Visitors extends bHolder_vm{
       $this->rec_visit[$this->visit_ID]['all_classes']  = $this->t->class;
       $this->rec_visit[$this->visit_ID]['all_highlight']= $this->highlight;
     }else{
-      var_dump($this->rec_visit[$this->visit_ID]);
+      $this->dbg("Multiple records for v_id ".$this->visit_ID,True); 
+      // b_debug::var_dump($this->rec_visit[$this->visit_ID],($err_msg="??? deja vu visit ".$this->visit_ID));
+      // myPear::WARNING_T($this->rec_visit[$this->visit_ID],"$err_msg<br>See b_debug::var_dump");
     }
     
     foreach ($this->rec as $k=>$v){
@@ -2166,19 +2168,12 @@ class bHolder_vm_Visitors extends bHolder_vm{
       if (empty($descr['i'])) continue; 
 
       $yes_no = (bool)bForm_vm_Visit::_getPolicy($p,$this->rec);
-      $this->dbg($yes_no);
+      $this->dbg("$p $descr[i] - ".var_export($yes_no,True),True);
       $icon = '';
       // don't draw useless button for the passed events
       if(!$not_my_case && (($yes_no || ($this->rec['v_end'] > time()-30*86400)))){
 	$already_paid = Null;
 	switch($p){
-	  /*
-	case VM_V_invoiceSent:
-	  if (VM_reimberser_here) $icon=bIcons()->getButton(array('i'=>'i-invoice',
-								  'd'=>'print invoice',
-								  'l'=>b_url::same("?invoice_once=yes&v_id=".$this->rec['v_id'],$this->anchor())));
-	  break; 
-	  */
 	    
 	case VM_V_provideOffice:
 	  if (myOrg()->eaMembers()->isMember($this->rec['av_id'])){
@@ -2188,13 +2183,15 @@ class bHolder_vm_Visitors extends bHolder_vm{
 	  $already_paid = '';
 	  $hasRightTo = 'assign_offices';
 	  $paid = 'provided';
+	  break;
 
 	case VM_E_provideLunches:
 	case VM_E_conferenceDinner:
 	  if ($already_paid === Null){
 	    $already_paid = '';
-	    var_dump($descr['i'],'already_paid===Null');
+	    b_debug::var_dump($descr['i'],'already_paid===Null');
 	  }
+	  break;
 
 	case VM_V_payPerdiem:
 	  if ($already_paid === Null){
@@ -2202,13 +2199,20 @@ class bHolder_vm_Visitors extends bHolder_vm{
 	    $hasRightTo = 'setup_reimbursement';
 	    $paid = 'paid';
 	  }
+	  break;
+
 	case VM_V_payTrip:
 	  if ($already_paid === Null){
 	    $already_paid = (bool)(is_object($this->exp) && $this->exp->scholarshipT(False,False));
 	    $hasRightTo = 'setup_reimbursement';
 	    $paid = 'paid';
 	  }
+	  break;
+
+	default:
+	}
 	  
+	if ($already_paid !== Null){
 	  // Show either a click-able button or just an icon
 	  $img  = @$descr['i'] . ($yes_no ? '_on' : '_off');
 	  $icon = (!$already_paid && VM::hasRightTo($hasRightTo,$this->rec)
@@ -2220,7 +2224,6 @@ class bHolder_vm_Visitors extends bHolder_vm{
 		   : bIcons()->get      (array('i'=>$img,
 					       'c'=>($yes_no ? 'only_online' : 'only_online opacity_on'),
 					       'd'=>$descr['i'].($yes_no ? '' :' not')." $paid")));
-	default:
 	}
       }else{
 	$this->dbg('too old visit '.$this->rec['av_lastname']);

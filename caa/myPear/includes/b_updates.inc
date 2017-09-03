@@ -157,8 +157,9 @@ function myPear_update35(){
 /*
  * Tentative problem
  */
+myPear_update34();
 function myPear_update34($delete=True){
-  static $dejaVu = 0; if ($dejaVu++) return;
+  if (@$_SESSION[__function__]++) return;
 
   $q = myPear_db()->qquery("SELECT * FROM `zzz_lists` ".
 			   " LEFT JOIN zzz_list_members ON lm_lid = l_id WHERE ".
@@ -187,8 +188,8 @@ function myPear_update34($delete=True){
     myPear::WARNING("Found $NN empty 'zzz_list_members' records (NOTE, <em>'Null'</em> VALUES ARE NOT SHOWN):<pre>".join('<br>',$txts).'</pre>'); 
     if ($delete){
       $sql = "DELETE FROM zzz_list_members WHERE $where";
-      myPear::WARNING("Trying <em>$sql...</em>");
-      myPear_db()->qquery($sql,True);
+      $q = myPear_db()->qquery($sql,True);
+      $q = myPear::WARNING("Trying to </br><em>$sql</em>.<br>".myPear_db()->num_rows($q)." rows affected");
     }
   }
 }

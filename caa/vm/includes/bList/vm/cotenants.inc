@@ -123,7 +123,9 @@ class bList_vm_cotenants extends bList_vm{
   }
   
   function message_deleteMember_sharing($lease_id,$args=array()){
-    $name = bForm_vm_Lease::_leaseInfo($lease_id,True);
+    $name = (empty($lease_id) || !is_integer($lease_id)
+	     ? Null
+	     : bForm_vm_Lease::_leaseInfo($lease_id,True));
     if (empty($name)){ 
       myPear::WARNING_T("non-existing lease in the share ".b_fmt::joinX(',',$args)); 
     }else{ 
@@ -260,6 +262,14 @@ class bList_vm_cotenants extends bList_vm{
 	$lm_option = unserialize($r['lm_option']);
 	$leases = $this->safe_explode($lm_option['leases'],True);
 	foreach($leases as $l_id){
+	  if (!is_integer($l_id) or empty($l_id)){
+	    bTiming()->cpu();
+	    $msg = "Empty member in the cotenants list, remove the entry...";
+	    b_debug::traceBack($msg);
+	    b_debug::var_dump($leases,$msg);
+	    $this->deleteMember($r['lm_id']);
+	    return array();
+	  }
 	  $l = ($l_id == $rec['lease_id'] && !empty($rec['lease_start'])
 		? $rec
 		: bForm_vm_Lease::_leaseInfo($l_id,array('lease_start','lease_end','av_firstname','av_lastname')));

@@ -14,7 +14,7 @@ function VM_query($where=array(1),$join_rooms=(' LEFT JOIN abs_leases ON v_id = 
 					       )){
   b_debug::_debug();
   $query = "SELECT av_id,av_lastname,av_firstname,av_city,av_institute,av_email,av_residentship "
-    .",v_id,v_type,v_host_avid,v_start,v_end,v_avid,v_status,v_acc_wish,v_eid,v_projectid,v_accompaning,v_gsf "
+    .",v_id,v_type,v_policy,v_host_avid,v_start,v_end,v_avid,v_status,v_acc_wish,v_eid,v_projectid,v_accompaning,v_gsf "
     .",e_id,e_policy,e_name,e_start,e_end,e_v_policy "
     .(strpos($join_rooms,'abs_rooms')  === False ? "" : ",a_id,a_name,a_capacity ")
     .(strpos($join_rooms,'abs_huts')   === False ? "" : ",hut_id,hut_name,hut_name,hut_code")
