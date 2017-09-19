@@ -455,10 +455,8 @@ class bForm_Avatar_Search extends bForm {
 	array_unshift($this->holder->t->extraTD, 
 		      b_checkBox::create(array($this->holder->rec['av_id']=>''),'',''));
       }elseif ($_after_search = @$this->args['_after_search']){
-	locateAndInclude('bUnit_ea_members');
-	$ea = new bUnit_ea_members(myOrg_ID);
 	$_after_search_check = @$this->args['_after_search_check'];
-	if ($ea->isMember($this->holder->rec['av_id'])){
+	if (EA_members()->isMember($this->holder->rec['av_id'])){
 	  $ok_show = True;
 	}elseif ($_after_search_check && function_exists($_after_search_check)){
 	  $ok_show = $_after_search_check($this->holder->rec['av_id'],$_after_search);

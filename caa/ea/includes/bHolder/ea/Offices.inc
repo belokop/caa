@@ -38,9 +38,7 @@ class bHolder_ea_Offices extends bHolder_ea{
    * Create list of all offices used by the staff members
    */  
   protected function init(){
-    locateAndInclude('bUnit_ea_members');
-    $ea = new bUnit_ea_members();
-    foreach($ea->getMembers_byStatus() as $av_id=>$rec){
+    foreach(EA_members()->getMembers_byStatus() as $av_id=>$rec){
       $av = myPear::getInstance_new('bForm_Avatar_'.b_reg::$current_module,$av_id,'fatal');
       $o_name = $av->get_staffOffice();
       if (empty($o_name))	$o_name = ' No office';

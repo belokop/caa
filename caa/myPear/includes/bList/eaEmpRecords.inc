@@ -37,7 +37,7 @@ class bList_eaEmpRecords extends bList{
   protected $packed_items = array('e_org', 'e_cc',  'e_gid', 'e_inst', 'e_off', 'e_rate','rec_type');
 
   var $list_quering= array('rec_type'   =>'Type of entry',
-			   'e_rate'     =>'', // place-keeper
+			   'e_rate'     =>'', // the description will be set on the fly, see "adjust_list_quering"
 			   'e_inst'     =>'Institute',
 			   'e_cc'       =>'Country',
 			   'lm_value'   =>'Position',  
@@ -66,7 +66,10 @@ class bList_eaEmpRecords extends bList{
 
   protected $orderBy    = 'lm_key';
   protected $orderByDir = 'DESC';
+  private   $strict_list_of_positions = Null;
+  private   $ask_for_period = Null;
   private   $dejaVu = array();
+
 
   /*
    * Check is the given person affiliate to the organization
@@ -107,7 +110,6 @@ class bList_eaEmpRecords extends bList{
     
     // Set the postponed naming 
     bForm_Avatar_ea::_init();
-    $this->list_quering['e_rate'] = bForm_Avatar_ea::$av2er['e_rate']['d'];
 
     // Complete the class
     parent::__construct($this->av->ID);
@@ -420,8 +422,8 @@ class bList_eaEmpRecords extends bList{
   protected function getMembers_removeDuplications(&$reply){
     // Do the default cleanup
     parent::getMembers_removeDuplications($reply);
-
     return;
+
     // ?? Is this correct?
     // A newly created record fits this definition of "empty".. (?)
 
@@ -455,13 +457,36 @@ class bList_eaEmpRecords extends bList{
   /*
    * setup list_quering
    */
-  protected function edit_bList_preFlight(){   //  
-    $this->adjust_list_quering();
-  }
-
   protected function adjust_list_quering(){
     $this->dbg(starting);
+
+    $this->list_quering['e_rate'] = bForm_Avatar_ea::$av2er['e_rate']['d'];
     $was = $this->list_quering;
+    b_debug::print_r($was,'was this->list_quering','nosort');
+
+    // Strict list of positions?
+    // $e_rate = $this->f->getValue('e_rate');
+    $lm_id = $this->getValue('lm_id',True,'isMBE');
+    $e_rate = $this->getMemberValue($lm_id,'e_rate');
+
+    // $lm_key = $this->f->getValue('lm_key');
+    $lm_key = $this->getMemberValue($lm_id,'lm_key');
+
+    $e_rates= myOrg()->orgEmpTypes()->get_empTypes();
+    $this->strict_list_of_positions = !empty($this->e_org) && (!$lm_key || // A new record (no start date) 
+							       in_array($e_rate,array_keys($e_rates)) ||    // e_rate is already set
+							       $this->av->isE(True));           // currently employed by the Org
+    $this->dbg(sprintf("e_rate=%s, strict_list_of_positions = %s",$e_rate,var_export($this->strict_list_of_positions,True)),cnf_dev);
+    if ($this->strict_list_of_positions && !$e_rate){
+      $this->dbg('no e_rate, hence dont query position & period of stay',cnf_dev);
+      unset($this->list_quering['lm_value'],
+	    $this->list_quering['lm_key'],
+	    $this->list_quering['lm_status']
+	    );
+      $this->ask_for_period = False;
+    }
+
+    // Check the rest
     switch($rec_type=$this->getMemberValue(0,'rec_type')){
     case '50_ah':
       $this->list_quering['lm_value'] = 'Award / Honor';
@@ -479,21 +504,25 @@ class bList_eaEmpRecords extends bList{
     case '10_cp':
       unset($this->list_quering['lm_status']);
     }
-    
+    $this->dbg("rec_type = $rec_type",cnf_dev);    
+
     // Do not ask country/institute for myOrg
-    if ($this->getMemberValue(0,'e_org')){
+    if ($this->getMemberValue(0,'e_org') || !empty($this->e_org)){
       unset($this->list_quering['e_cc']);
       unset($this->list_quering['e_inst']);
-    }else{
-      unset($this->list_quering['e_rate']);
     }
 
     // Ask for the e_rate only if this is a major position (within organization)
-    if (!in_array($rec_type,array('20_mp','40_va'))) unset($this->list_quering['e_rate']);
+    if (!EA_members()->isMember() || !in_array($rec_type,array('20_mp','40_va'))) unset($this->list_quering['e_rate']);
     if (empty($this->list_quering['e_rate'])) $this->isMBE['e_rate'] = True;
 
-    if ($was !== $this->list_quering) $this->dbg(array_diff($was,$this->list_quering));
+    // See the difference
+    if ($was !== $this->list_quering){
+      b_debug::print_r($this->list_quering,'now this->list_quering','nosort');
+      $this->dbg(array_diff($was,$this->list_quering),cnf_dev);
+    }
     $this->dbg(exiting);
+    return array($e_rate,$e_rates);
   }
 
   /*
@@ -574,9 +603,13 @@ class bList_eaEmpRecords extends bList{
     }      
 
     //
-    // Rise standard bForm_List dialog for the other items
-    //    $this->adjust_list_quering();
+    if (!empty($lm_id)) $this->e_org = $this->getMemberValue($lm_id,'e_org');
+
+    // Adjust list_quering
+    list($e_rate,$e_rates) = $this->adjust_list_quering();
     $this->bForm($this->list_quering,$inversed=True);
+
+    // Rise standard bForm_List dialog for the other items
     $this->f->defineVariable('Period of stay','lm_period'); 
     $this->f->submitOnChange['rec_type'] = True;
     $this->f->isRO['lm_id'] = True;
@@ -585,8 +618,6 @@ class bList_eaEmpRecords extends bList{
     foreach($this->packed_items as $item) if (empty($this->list_quering[$item])) $this->f->isMBE[$item] = True;
     
     // Do not(?) check the country for the EA, the Institute name is supposed to "say everything"
-    if (!empty($lm_id)) $e_org = $this->getMemberValue($lm_id,'e_org');
-    if (!empty($e_org)) $this->e_org = $e_org;
     if ($this->e_org){
       $e_inst_virtual = myOrg($this->e_org)->name();
       foreach ($this->rec_type_menuD as $k=>$v){
@@ -595,6 +626,7 @@ class bList_eaEmpRecords extends bList{
 	  $this->rec_type_menu[str_replace('_org','',$k)] = str_replace('ORG',$e_inst_virtual,$v);
 	}
       }
+      $this->f->defineVariable(' ','e_inst_virtual');
       $this->f->formDB['e_inst_virtual'] = $e_inst_virtual;
       $this->f->isRO['e_inst'] = True;
       $this->f->isRO['e_inst_virtual'] = True;
@@ -603,36 +635,25 @@ class bList_eaEmpRecords extends bList{
     
     // Build the form  
     foreach(array_keys($this->list_quering) as $item){
+      $this->dbg("item = $item",cnf_dev);
 
       if (empty($rec_type) && ($item != 'rec_type')) continue;
-      $ask_for_period = (!empty($this->list_quering['lm_status']) && ($rec_type != '10_cp'));
+      if (!isset($this->ask_for_period)) $this->ask_for_period = (!empty($this->list_quering['lm_status']) && ($rec_type != '10_cp'));
 
       switch($item){
 
       case 'rec_type':
 	$this->f->isRO['rec_type'] = !empty($rec_type);
 	$this->f->selectMenu('rec_type',$this->rec_type_menu); 
-	/*
-	  if (in_array($rec_type,array('20_mp'))){
-	  $this->f->selectMenu('rec_type',array('20_mp' => $this->rec_type_menu['20_mp'],
-						'40_va' => $this->rec_type_menu['40_va'],
-						'22_op' => $this->rec_type_menu['22_op']));
-						}else{
-						if (!($this->f->isRO['rec_type'] = !empty($rec_type)))  $this->f->keepRW[] = 'rec_type';
-						$this->f->selectMenu('rec_type',$this->rec_type_menu); 
-						}
-	*/
 	break;  
 	
       case 'e_rate':
-	if (!empty($e_org)){
-	  if ($this->av->isE() || ($this->MODE == 'RO')){
-	    // Currently employed member, the list of positions is strict
-	    if ($this->f->getValue('e_rate')) $this->f->isRO['e_rate'] = True;
+	if (!empty($this->e_org)){
+	  if ($this->$strict_list_of_positions){
+	    if ($e_rate) $this->f->isRO['e_rate'] = True;
 	    $this->f->submitOnChange['e_rate'] = True;
-	    $this->f->selectMenu('e_rate',myOrg()->orgEmpTypes()->get_empTypes());
+	    $this->f->selectMenu('e_rate',$e_rates);  
 	  }else{
-	    // Alumni, positions are "free text"
 	    $this->f->textField('e_rate');
 	  }
 	}
@@ -644,9 +665,7 @@ class bList_eaEmpRecords extends bList{
 	  $this->f->textHidden($item,$this->code2text($rec_type));
 	  b_debug::traceBack(__METHOD__.", strange piece of code, rec_type='$rec_type'. YB");
 	}else{
-	  if (empty($e_org) || !$this->av->isE()){
-	    $this->f->textField($item); 
-	  }elseif($this->f->getValue('e_rate')){
+	  if($this->strict_list_of_positions){
 	    // Due to historical reasons we inquire position as a pop-up menu (array of key=>value), 
 	    // and in the database we store the value, not the key as one would expect
 	    // Hence we need the following small gymnastics to extract the key from the value (see orgEmpTypes()->text2code($title)) 
@@ -656,21 +675,23 @@ class bList_eaEmpRecords extends bList{
 	    if (empty($titles[$lm_value])) $titles[$lm_value] = $lm_value;
 	    $this->f->getValue_reset($item,$lm_value);
 	    $this->f->selectMenu($item,$titles);
+	  }else{
+	    $this->f->textField($item); 
 	  }
 	}
 	break;
 	
       case 'e_cc':       
-	if (empty($this->e_org)) $this->f->textFieldCountry($item);   
+	if (empty($this->e_org))  $this->f->textFieldCountry($item);   
 	break; 
 	
       case 'lm_key':    
-	if ($ask_for_period)     $this->f->datePickerField2('lm_period','lm_key','lm_status');
-	else                     $this->f->datePickerField($item); 
+	if ($this->ask_for_period)$this->f->datePickerField2('lm_period','lm_key','lm_status');
+	else                      $this->f->datePickerField($item); 
 	break;
 	
       case 'lm_status': 
-	if(!$ask_for_period)     $this->f->datePickerField($item); 
+	if(!$this->ask_for_period)$this->f->datePickerField($item); 
 	break;
 	
       case 'e_inst':
@@ -686,17 +707,6 @@ class bList_eaEmpRecords extends bList{
 
     // Send lm_id
     $this->f->formDB['memberID'] = $this->member_ID;
-    /*
-    if (cnf_dev){
-      $this->f->isRO['memberID'] = True;
-      $this->f->textField('memberID');
-    }else{
-      $this->f->textHidden('memberID');
-    }
-    if (empty($lm_id)) $lm_id = $this->member_ID;
-    if (empty($lm_id)) b_debug::traceBack('????? empty lm_id');
-    else  $this->f->textHidden('lm_id',$lm_id);
-    */
 
     // Close the form
     $this->f->closeForm();

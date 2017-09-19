@@ -253,7 +253,7 @@ class bAuth{ // extends myPear_base{
       if (self::_authenticated() && ($ts=@$_SESSION['bAuth']['auth_timestamp'])) {
 	if (($dt = time()-$ts) > myPear_autoLogoutTime) {
 	  $this->logout();
-	  b_url::header(b_url::same("?autologout_once=$dt&q=".b_cms::_(0)));
+	  b_url::header(b_url::same("?autologout_once=$dt&q="));
 	}
       }
       $_SESSION['bAuth']['auth_timestamp'] = time();

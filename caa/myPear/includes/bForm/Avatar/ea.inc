@@ -325,6 +325,7 @@ class bForm_Avatar_ea extends bForm_Avatar{
 	$reply = True;	break;
       }
     }
+    $this->dbg($reply,cnf_dev);
     return $reply;
   }
 

@@ -73,8 +73,7 @@ class bCover_vm extends bCover_2010 {
    * Force automatic office assignment for the staff members
    */
   private static function allocateOfficesForStaff($e_id){
-    $ea = new bUnit_ea_members();
-    foreach($ea->getMembers_byStatus() as $av_id=>$rec){
+    foreach(EA_members()->getMembers_byStatus() as $av_id=>$rec){
       // b_debug::print_r($rec);
       myPear::getInstance_new('bForm_vm_Visit',array('v_avid'=>$av_id,'v_eid'=>$e_id),'strict');
     }

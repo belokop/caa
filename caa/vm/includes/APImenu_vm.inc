@@ -99,10 +99,7 @@ function vm_after_search_check($av_id,$_after_search=''){
     $our_man = (myPear_db()->num_rows($q) > 0);
   }
   // EA member?
-  if (!$our_man){
-    $ea = new bUnit_ea_members(myOrg_ID);
-    $our_man = $ea->isMember($av_id);
-  }
+  if (!$our_man) $our_man = EA_members()->isMember($av_id);
   return $our_man;
 }
 

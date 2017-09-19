@@ -10,12 +10,6 @@
  *  um_option - packed (<board membership> , <a_flag> , <acl ('p' for public)>)
  */
 
-function EA_members($parent_id=myOrg_ID,$rank=RANK__ea_member){
-  static $bUnit_ea_members = array();
-  if (empty($bUnit_ea_members["$parent_id.$rank"])) $bUnit_ea_members["$parent_id.$rank"] = new bUnit_ea_members($parent_id,$rank);
-  return $bUnit_ea_members["$parent_id.$rank"];
-}
-
 locateAndInclude('bUnit_ea');
 class bUnit_ea_members extends bUnit_ea {
 
@@ -86,10 +80,7 @@ class bUnit_ea_members extends bUnit_ea {
    */
   public static function rebuild_all(){
     locateAndInclude('bForm_Organization');
-    foreach(bForm_Organization::getAll() as $org_id){
-      $ea = new bUnit_ea_members($org_id);
-      $ea->rebuild();
-    }
+    foreach(bForm_Organization::getAll() as $org_id) EA_members($org_id)->rebuild();
     return True;
   }
  

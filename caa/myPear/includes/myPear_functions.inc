@@ -17,6 +17,16 @@ function myPear_exceptions_error_handler($severity, $message, $filename, $lineno
   }
 }
 
+function EA_members($parent_id=myOrg_ID){
+  static $bUnit_ea_members = array();
+  if (empty($parent_id)) $parent_id = myOrg_ID;
+  if (empty($bUnit_ea_members[$parent_id])){
+    locateAndInclude('bUnit_ea_members');
+    $bUnit_ea_members[$parent_id] = new bUnit_ea_members($parent_id,RANK__ea_member);
+  }
+  return $bUnit_ea_members[$parent_id];
+}
+
 function EA_member_here(){
   if (!defined('EA_member_here')) define('EA_member_here',(is_object(bAuth::$av)
                                                            ? myOrg()->eaMembers()->isMember(bAuth::$av->ID)
