@@ -1,5 +1,23 @@
 Changes log                                                                                                                                                             
                                                                                                                                                                                  
+2017-10-30, Version 5.3.220,
+D       myPear/languages/da_DK
+D       myPear/languages/de_DE
+D       myPear/languages/en_US
+D       myPear/languages/fi_FI
+D       myPear/languages/fr_FR
+D       myPear/languages/is_IS
+D       myPear/languages/it_IT
+D       myPear/languages/ka_GE
+D       myPear/languages/nl_NL
+D       myPear/languages/no_NO
+D       myPear/languages/pl_PL
+D       myPear/languages/ru_RU
+D       myPear/languages/sv_SE
+D       myPear/languages/uk_UA
+D       myPear/m2m.php
+D       myPear/m2m_org.php
+                                                                                                                                                                                 
 2017-09-19, Version 5.3.219,
                                                                                                                                                                                  
 2017-09-03, Version 5.3.218,

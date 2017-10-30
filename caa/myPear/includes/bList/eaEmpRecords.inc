@@ -66,7 +66,6 @@ class bList_eaEmpRecords extends bList{
 
   protected $orderBy    = 'lm_key';
   protected $orderByDir = 'DESC';
-  private   $strict_list_of_positions = Null;
   private   $ask_for_period = Null;
   private   $dejaVu = array();
 
@@ -96,6 +95,8 @@ class bList_eaEmpRecords extends bList{
    */
   private $e_org = Null;
   function __construct($parent_ID){
+
+    $this->show_gv = True;
 
     //    static $hghgh=0; if ($hghgh++ < 4) b_debug::traceBack();
     $this->dbg(starting);
@@ -453,11 +454,28 @@ class bList_eaEmpRecords extends bList{
     }
   }
   
+  /*
+   * Check is the list of position is trict for the record
+   */
+  private function strict_list_of_positions($start,$end){
+    $r0 = $r1 = $r2 = $r3 = Null;
+    $strict_list_of_positions = ($r0=!empty($this->e_org) && 
+				 (($r1=empty($start)) || // A new record (no start date), force "strict list" 
+				  ($r2=(time() >= b_time::txt2unix($start) && time() <= b_time::txt2unix($end))) ||
+				  ($r3=$this->av->isE(True)))); // currently employed by the Org
+    $this->dbg(sprintf("%s (r1=%s r2=%s R3=%s)",var_export($strict_list_of_positions,True),
+		       var_export($r1,True),var_export($r2,True),var_export($r3,True)),
+	       cnf_dev);
+    return $strict_list_of_positions;
+  }
 
   /*
    * setup list_quering
    */
   protected function adjust_list_quering(){
+    static $e_rate = Null, $e_rates=Null;
+
+    if ($e_rate === Null && $e_rates === Null){
     $this->dbg(starting);
 
     $this->list_quering['e_rate'] = bForm_Avatar_ea::$av2er['e_rate']['d'];
@@ -465,20 +483,16 @@ class bList_eaEmpRecords extends bList{
     b_debug::print_r($was,'was this->list_quering','nosort');
 
     // Strict list of positions?
-    // $e_rate = $this->f->getValue('e_rate');
     $lm_id = $this->getValue('lm_id',True,'isMBE');
     $e_rate = $this->getMemberValue($lm_id,'e_rate');
-
-    // $lm_key = $this->f->getValue('lm_key');
-    $lm_key = $this->getMemberValue($lm_id,'lm_key');
-
     $e_rates= myOrg()->orgEmpTypes()->get_empTypes();
-    $this->strict_list_of_positions = !empty($this->e_org) && (!$lm_key || // A new record (no start date) 
-							       in_array($e_rate,array_keys($e_rates)) ||    // e_rate is already set
-							       $this->av->isE(True));           // currently employed by the Org
-    $this->dbg(sprintf("e_rate=%s, strict_list_of_positions = %s",$e_rate,var_export($this->strict_list_of_positions,True)),cnf_dev);
-    if ($this->strict_list_of_positions && !$e_rate){
-      $this->dbg('no e_rate, hence dont query position & period of stay',cnf_dev);
+    $this->dbg($e_rate,cnf_dev);
+
+    $lm_key   = $this->getMemberValue($lm_id,'lm_key');
+    $lm_status= $this->getMemberValue($lm_id,'lm_status');
+
+    if ($this->strict_list_of_positions($lm_key,$lm_status) && !$e_rate){ // No e_rate, hence dont ask for period of stay, rate first
+      $this->dbg('no e_rate, hence dont query YET position & period of stay',cnf_dev);
       unset($this->list_quering['lm_value'],
 	    $this->list_quering['lm_key'],
 	    $this->list_quering['lm_status']
@@ -522,6 +536,7 @@ class bList_eaEmpRecords extends bList{
       $this->dbg(array_diff($was,$this->list_quering),cnf_dev);
     }
     $this->dbg(exiting);
+    }
     return array($e_rate,$e_rates);
   }
 
@@ -649,12 +664,13 @@ class bList_eaEmpRecords extends bList{
 	
       case 'e_rate':
 	if (!empty($this->e_org)){
-	  if ($this->$strict_list_of_positions){
+	  if ($this->strict_list_of_positions($this->getMemberValue($lm_id,'lm_key'),
+					      $this->getMemberValue($lm_id,'lm_status'))){
 	    if ($e_rate) $this->f->isRO['e_rate'] = True;
 	    $this->f->submitOnChange['e_rate'] = True;
 	    $this->f->selectMenu('e_rate',$e_rates);  
-	  }else{
-	    $this->f->textField('e_rate');
+	  }else{	
+	    $this->f->textHidden('e_rate','');
 	  }
 	}
 	break;
@@ -665,7 +681,8 @@ class bList_eaEmpRecords extends bList{
 	  $this->f->textHidden($item,$this->code2text($rec_type));
 	  b_debug::traceBack(__METHOD__.", strange piece of code, rec_type='$rec_type'. YB");
 	}else{
-	  if($this->strict_list_of_positions){
+	  if ($this->strict_list_of_positions($this->getMemberValue($lm_id,'lm_key'),
+					      $this->getMemberValue($lm_id,'lm_status'))){
 	    // Due to historical reasons we inquire position as a pop-up menu (array of key=>value), 
 	    // and in the database we store the value, not the key as one would expect
 	    // Hence we need the following small gymnastics to extract the key from the value (see orgEmpTypes()->text2code($title)) 

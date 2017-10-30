@@ -192,7 +192,7 @@ class APImenu extends myPear_base{
     // Here is a workaround
     // 
     $menuItem_encoded = APImenu::tab_code($menuItem);
-    if (!empty($menuItem_encoded) && (strpos($_SERVER['HTTP_REFERER'].$_GET['q'],"/$menuItem_encoded") !== False)){
+    if (!empty($menuItem_encoded) && (strpos(@$_SERVER['HTTP_REFERER'].$_GET['q'],"/$menuItem_encoded") !== False)){
       $this->dbg("Force staying on the page",cnf_dev);
       return True;
     }
