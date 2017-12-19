@@ -7,7 +7,6 @@ locateAndInclude('bList_vm');
 
 define('VM_budgetL','L'); // "long event" code
 define('VM_budgetS','S'); // "short event" code
-define('VM_no_projectCode', 'not initialized');
 
 class bList_vm_budgetSource extends bList_vm{
 
@@ -54,9 +53,9 @@ class bList_vm_budgetSource extends bList_vm{
   /*
    *
    */
-  private $project_code = VM_no_projectCode;
+  private $project_code = '?';
   function init(){
-    if ($this->project_code === VM_no_projectCode){
+    if ($this->project_code === '?'){
       $this->project_code = Null;
 
       // Extract the budget project code from the projects list,

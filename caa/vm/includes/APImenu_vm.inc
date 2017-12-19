@@ -366,6 +366,7 @@ class APImenu_vm extends APImenu_ea{
 	break;
 	
       case tab_vm_adm_projects:
+	$reply = !drop_legacy_cost_counting;
       case tab_vm_adm_unitOrganizers:
       case tab_vm_vis_welcome:
 	$reply = !VM::outOfScope() && VM_administrator_here;
@@ -809,7 +810,7 @@ class APImenu_vm extends APImenu_ea{
       break;
       
     case tab_vm_adm_projects:
-      VM_projects()->getForm();
+      if (!drop_legacy_cost_counting) VM_projects()->getForm();
       break;
       
     case  tab_vm_adm_sc_setup:

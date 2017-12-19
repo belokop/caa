@@ -240,7 +240,7 @@ class bForm extends myPear_getValue{
     $reply = True;
     return $reply;
   }
-
+  
   function isOwner() {
     return b_cnf::check_conditions(array(True => array('creating' => ((int)$this->ID == 0)),
 					 'default' => False),
@@ -2281,10 +2281,12 @@ class bForm extends myPear_getValue{
   protected function _visible($field,$value=Null){
     if ($value === Null) $value = $this->getValue($field,True);
     $spacer = (stripos($field,'spacer') !== False);
-    $reply = b_cnf::check_conditions(array(True =>array('debug'  => (stripos($field,'_debug') !== False),
-							'vitalA' => ((@$this->isADMIN[$field] || @$this->isVITAL_ifADMIN[$field]) && $this->isAdmin()),
-							'vital'  =>  @$this->isVITAL[$field],
-							'notMBE' => ($this->isWritable() || !empty($value)) && !@$this->isMBE[$field] && !$spacer,
+    $hide_admin_field= @$this->isADMIN[$field] && !$this->isAdmin() && !$this->isOwner();
+    if (@$this->isADMIN[$field]) b_debug::_debug('hide_admin_field='.var_export($hide_admin_field,True),array($this,True));
+    $reply  = b_cnf::check_conditions(array(True =>array('debug'  => !$hide_admin_field && (stripos($field,'_debug') !== False),
+							 'notMBE' => !$hide_admin_field && (($this->isWritable() || !empty($value)) && !@$this->isMBE[$field] && !$spacer),
+							 'vitalA' => (@$this->isVITAL_ifADMIN[$field] && $this->isAdmin()),
+							 'vital'  =>  @$this->isVITAL[$field],
 							),
 					   False=>array('spacer' =>  $spacer,
 							'empty'  => (($field === cnf_emptyString) || (empty($value) && @$this->isMBE[$field] && $this->isRO($field))),
@@ -2292,7 +2294,7 @@ class bForm extends myPear_getValue{
 							//'ROempt' => ($this->isRO($field) && @$this->isMBE[$field] && empty($value)),
 							'local'  => (@$this->isINTERNAL[$field] && function_exists('internalCall') && !internalCall()),
 							'privat' => (@$this->isPRIVATE[$field] && !$this->isWritable())),
-					   'default' => True),
+					   'default' => $hide_admin_field),
 				     $this,
 				     cnf_show_v);
     return $reply;

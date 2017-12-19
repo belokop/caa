@@ -3,9 +3,9 @@
 /**
  * Visitors Manager (VM) configuration file
  */
-$releaseDate = '2017-09-19';
+$releaseDate = '2017-12-19';
 define('VM_MODULE'   , 'vm');
-define('VM_VERSION','5.13.51');
+define('VM_VERSION','5.13.52');
 
 //
 // The Indico (agenda) host name
@@ -40,8 +40,11 @@ define('see_mails_exchange_with_attenders',(send_infoMail_to_applicants ||
 //
 // Define the VM policy 
 //
+// Drop the legacy monitoring of the real visit cost?
+define('drop_legacy_cost_counting',True);
 // Check occupied rooms outside the event?
 define('accommodate_cotenants_from_different_events',False);
+// Other options
 define('ignore_external_leases_when_booking',True);
 define('auto_accept_guest_invitations',True); // introduced 2017-03-27
 define('dont_show_reimbursements',True);      // introduced 2017-03-27

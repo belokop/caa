@@ -46,7 +46,7 @@ class myPear_getValue extends myPear_base{
   var $isRW_ifMissing=array(); // fields to stay RW when the whole block is RO 
   var $isRW_forced  = array(); // exceptionally writable field, has precedence over the other flags
   var $isRO         = array('id'=>True); // list of RO fields
-  var $isADMIN      = array('av_ssn');   // Fields shown to the administrator only
+  var $isADMIN      = array('av_ssn'=>True);   // Fields shown to the administrator only
 
   public    $keepRW = array(); // the form does not become RO if this field changes
   protected $keepRW_changed = 0;

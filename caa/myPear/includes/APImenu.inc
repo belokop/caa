@@ -362,7 +362,8 @@ class APImenu extends myPear_base{
 	    $c = $m = 'not set';
 	  }
 	  if (function_exists($f) || method_exists($c,$m)){
-	    myPear::WARNING_T("call_user_func($f(".join(',',array(var_export(@$_GET['arg_once'],True),var_export(@$_GET['arg2_once'],True)))."))");
+	    // myPear::WARNING_T("call_user_func($f(".join(',',array(var_export(@$_GET['arg_once'],True),var_export(@$_GET['arg2_once'],True)))."))");
+	    b_debug::xxx("call_user_func($f(".join(',',array(var_export(@$_GET['arg_once'],True),var_export(@$_GET['arg2_once'],True)))."))",array(cnf_dev));
 	    if (strpos($f,'--') !== False){
 	      $object = new $c();
 	      $object->$m(@$_GET['arg_once'],@$_GET['arg2_once']);

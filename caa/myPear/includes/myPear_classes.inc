@@ -1761,7 +1761,7 @@ class b_debug extends myPear_base{
   /*
    * The main messager
    */
-  public static function _debug($txt='',$flags=1,$message_class='debug'){
+  public static function _debug($txt='',$flags=array(1),$message_class='debug'){
 
     if (!in_array($message_class,array('status','error','debug','warning','SICK')) && cnf_dev) b_debug::internalError('??? '.__method__);    
     if ( in_array($message_class,array('debug','SICK')) && !cnf_dev) return;
@@ -4308,7 +4308,7 @@ class b_cnf{
       }
     }
     if (empty($reply)) $reply = False;
-    if (cnf_show_w || $verbose || $class::$_debug) b_debug::_debug(($reply ? 'YES - ' : 'NO - ').$msg,array(3,$class,True,$class::$_dbg_color));
+    if (cnf_show_w || $verbose || $class::$_debug) b_debug::_debug(($reply ? 'YES - ' : 'NO - ').$msg,array(2,$class,True,$class::$_dbg_color));
     return $reply;
   }
 
