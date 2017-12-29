@@ -47,6 +47,16 @@ class bForm_prp extends bForm{
   }
 
   /*
+   *
+   */
+  protected function _visible($field,$value=Null){
+    //    $reply = PRP_submitter_here || parent::_visible($field,$value);
+    $reply = ($this->MODE == 'RW' && $this->isWritable()) || parent::_visible($field,$value);
+    b_debug::xxx($reply,cnf_dev);
+    return $reply;
+  }
+
+  /*
    * Get free report number
    */
   function __construct($id, $mode='RO') {
