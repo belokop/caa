@@ -1247,7 +1247,7 @@ class bForm_vm_Visit extends bForm_vm {
     if (!$this->visitOutOfScope()){
       $all_leases = $this->get_allLeases();
       if (empty($all_leases) && ($this->getValue('v_type')==VISIT_TYPE_COLLABORATION)){
-	$this->setBooking(VM::$OA->ID,$verbose);
+	$this->setBooking(VM::$OA->ID,$verbose=True);
       }else{
 	foreach($all_leases as $l) $l->getForm();
       }
@@ -1497,14 +1497,26 @@ class bForm_vm_Visit extends bForm_vm {
     
 	
     // Close the dialog
-    $btn = array();
-    if (($this->getValue('v_type',1) != VISIT_TYPE_PROGRAM) && ($this->getStatus()==STATUS_NO)) 
-      $btn[txt_deleteVisit] = b_url::same(array(b_crypt_no=>1,
-						'function'=>'vm_cancel_visit',
-						'v_id'    => $this->ID,
-						'x_once'  => 'confirm_yes'),
-					  array('id'));
-    $this->closeForm('update',$btn);
+    if (($this->getValue('v_type',1) != VISIT_TYPE_PROGRAM) && ($this->getStatus()==STATUS_NO)){
+      $url = b_url::same(array(b_crypt_no=>1,
+			       'function'=>'vm_cancel_visit',
+			       'v_id'    => $this->ID,
+			       'x_once'  => 'confirm_yes'),
+			 array('id'));
+      if (False){
+	$btn = array(txt_deleteVisit => $url);
+	$this->closeForm(btn_update,$btn);
+      }else{
+	print x('tr',join("\n",array(x('td'),
+				     x('td'),
+				     x('td',x("a href='$url'",
+					      "<input type='button' value='".txt_deleteVisit."' onclick='return submitConfirm(this);'".
+					      " class='form-submit redText' style='padding:1px;font-size:small;' />")))));
+	$this->closeForm(btn_update);
+      }
+    }else{
+      $this->closeForm(btn_update);
+    }
     
     if ($this->getClashingVisits(False)){
       //

@@ -86,7 +86,7 @@ class bForm_lists extends bForm {
   /*
    * Print bList IDs
    */
-  function closeForm($submit_button='update',$extraButtons=array()){
+  function closeForm($submit_button=btn_update,$extraButtons=array()){
     if (cnf_show_st || cnf_dev){
       $f = '_debug_'.get_class($this);
       $this->isRO[$f] = True;

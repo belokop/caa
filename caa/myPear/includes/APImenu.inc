@@ -295,7 +295,7 @@ class APImenu extends myPear_base{
 		  '_post_bForm_class_once',
 		  'holder',
 		  ) as $t) if (in_array($t,array_keys($_REQUEST)) && !empty($_REQUEST[$t])){ 
-      //      if (cnf_dev) myPear::WARNING_T("processing \$_REQUEST[$t] = ".$_REQUEST[$t]);
+      b_debug::xxx("\$_REQUEST[$t] = ".$_REQUEST[$t],cnf_dev);
       switch($t){
 	
 	case 'login':
@@ -361,9 +361,9 @@ class APImenu extends myPear_base{
 	  }else{
 	    $c = $m = 'not set';
 	  }
+	  $dbg = "$f(".join(',',array(var_export(@$_GET['arg_once'],True),var_export(@$_GET['arg2_once'],True))).")";
 	  if (function_exists($f) || method_exists($c,$m)){
-	    // myPear::WARNING_T("call_user_func($f(".join(',',array(var_export(@$_GET['arg_once'],True),var_export(@$_GET['arg2_once'],True)))."))");
-	    b_debug::xxx("call_user_func($f(".join(',',array(var_export(@$_GET['arg_once'],True),var_export(@$_GET['arg2_once'],True)))."))",array(cnf_dev));
+	    b_debug::xxx("call_user_func($dbg)",array(cnf_dev));
 	    if (strpos($f,'--') !== False){
 	      $object = new $c();
 	      $object->$m(@$_GET['arg_once'],@$_GET['arg2_once']);
@@ -371,6 +371,8 @@ class APImenu extends myPear_base{
 	      call_user_func($f,@$_GET['arg_once'],@$_GET['arg2_once']);
 	    }
 	    return Null;
+	  }else{
+	    myPear::WARNING_T("??? declared function \"$dbg\" not found");
 	  }
 	  break 2;
 	  
