@@ -1,4 +1,1537 @@
 <?php
+
+if (!defined('ROOT_DEBUG')){
+  define('ROOT_DEBUG',dirname(dirname(dirname(dirname(__file__)))));
+}
+
+define('b_t_long_text',55);
+define('b_t_reference','reference');
+
+  /*
+   * Simple manually maintained translation module
+   */
+class b_t{
+  
+  static $do_statistics = True;
+  static $known_locales = array('ru_RU' => array('f'=>'ru.png',
+						 'c'=>'RUB',
+						 'l'=>'Russian'),
+				'sv_SE' => array('f'=>'se.png',
+						 'c'=>'SEK',
+						 'l'=>'Swedish'),
+				'en_US' => array('f'=>'us.png',
+						 'c'=>'USD',
+						 'l'=>'English'),
+				'fr_CH' => array('f'=>'ch.png',
+						 'c'=>'CHF',
+						 'l'=>'French'),
+				);
+  
+  
+  // By default translate to Russian
+  static $known_lang_default = 'ru_RU';
+
+  // Do not translate international expressions
+  static $text_not_to_be_translated = array('_','<>');
+
+  // Backwards compat...
+  static $acceptNewEntries, $doTranslation, $dropAfterSKIP;
+
+  /*
+   * A workaround... Translation might be called before the init is complited
+   */
+  static function current_module($filter="art|hrm"){
+    static $reply = Null;
+    if (empty($reply)){
+      if (!preg_match("/^($filter)/",$_REQUEST['q'],$match)) $match=array('myPear','myPear');
+      $reply = $match[1];
+      if (defined('cnf_dev')) b_debug::_debug($reply,cnf_dev);
+    }
+    return $reply;;
+  }
+
+  /*
+   *
+   */
+  private static function T_T_path_init($path=Null,$reset=False){
+    if (empty($path)) $path = self::T_T_path();
+    if ($reset) unlink($path);
+    if (!is_file($path)){
+      if (!is_dir(dirname($path))) mkdir(dirname($path));
+      file_put_contents($path,"<?php\n");
+    }
+  }
+
+  /*
+   *
+   */
+  private static function T_T_path($module=Null){
+    static $T_T_path = array();
+    if (empty($module)) $module = self::current_module();
+    if (empty($T_T_path[$module])){
+      $T_T_path[$module] = sprintf("%s/data/%s/translate/translation.php",myPear_root_files,$module);
+      if (defined('cnf_dev')) b_debug::_debug($T_T_path[$module],cnf_dev);
+    }
+    return $T_T_path[$module];
+  }
+
+  /*
+   * Set the module to be translated
+   */
+  static $modules  = array();
+  static $T_T_cache = array();
+  static function init($module=Null){
+    if (empty($module)) $module = self::current_module();
+    if (in_array($module,self::$modules)) return;
+    
+    // Add module to the list
+    self::$modules[] = $module;
+    if (class_exists('b_cnf',False) && !b_cnf::get('b_t_lang')){
+      b_cnf::set('b_t_lang',self::$known_lang_default);
+      setlocale(LC_TIME, b_cnf::get('b_t_lang'));
+    }
+    if (defined('cnf_dev')) b_debug::_debug(sprintf("Translation to '%s' started for %s",
+						    b_cnf::get('b_t_lang'),
+						    join(', ',self::$modules)),
+					    cnf_dev);
+    
+    // Create the translation file for the first entry
+    self::T_T_path_init();
+
+    // Load the translation table
+    require(self::T_T_path($module));
+
+    // Save the keys used by the module, we will need them when will update the tr.table
+    self::extract_keys($module);
+    
+    // Init the statistics
+    if (self::$do_statistics && !isset($_SESSION[__method__])){
+      // Load the current statistics from file if exists
+      $file = str_replace("/$module/","/myPear/",
+			  str_replace('translation.php','translation_unused.txt',self::T_T_path($module))); 
+      if (file_exists($file)){
+	foreach (explode("\n",file_get_contents($file)) as $k) $_SESSION[__method__][$k] = 'x';
+      }else{
+	foreach(self::$translation_table as $k=>$d) $_SESSION[__method__][$k] = 'x';
+      }
+      ksort($_SESSION[__method__]);
+    }
+  }
+
+  /*
+   *
+   */
+  private static function extract_keys($module){
+    if (empty($module)) $module = self::current_module();
+    if (!empty(self::$T_T_cache[$module])) return;
+
+    // Create first the myPear keys
+    if (($module != 'myPear') && empty(self::$T_T_cache['myPear'])) self::extract_keys('myPear');
+    //    b_debug::_debug($module,True);
+    
+    $src_tmp = "/tmp/$module/tt.php";
+    ob_start();
+    system("rm -rf ".dirname($src_tmp)."; mkdir -p ".dirname($src_tmp));
+    
+    system($cmd = sprintf("cat %s | sed s/self:://g | grep -v ^require > %s",
+			  realpath(self::T_T_path($module)),
+			  $src_tmp));
+    $err = ob_get_contents();
+    ob_end_clean();
+    
+    $translation_table = array();
+    require($src_tmp);
+    self::$T_T_cache[$module] = $translation_table;
+   
+    // debug - see the intersecting values 
+    foreach(array('art','hrm','myPear') as $m1){
+      if (empty(self::$T_T_cache[$m1])) continue;
+      foreach(array('art','hrm','myPear') as $m2){
+	if (empty(self::$T_T_cache[$m2])) continue;
+	if ($m1 === $m2) continue;
+	if (defined('cnf_dev') && ($module !== 'myPear')) b_debug::print_r(array_intersect(array_keys(self::$T_T_cache[$m1]),
+											   array_keys(self::$T_T_cache[$m2])),"$m1/$m2");
+      }
+    }
+  }
+
+
+  /*
+   *
+   */
+  static $keys_to_skip = array(); //	if (preg_match('/(_\w*ids?|_cc)$/',$field)){
+  static function keys_to_skip($keys){
+    self::$keys_to_skip = array_unique(array_merge(self::$keys_to_skip,$keys));
+  }
+
+  private static function b_t_short_txt($text){
+    return self::escape(strlen($text) > b_t_long_text
+			? mb_strcut($text, 0, b_t_long_text, "UTF-8") . ' ...' 
+			: $text);
+  }
+  
+  /*
+   * Translator
+   */
+  private static $source = array();
+  private static $translation_table;
+  static function _($text,$no_need_to_translate=False,$substituteIfEmpty=True){
+
+    static $init_done = 0;
+
+    if ($text === 'Все картины') b_debug::internalError('???'); // traceBack('??');
+    if ($text === 'tab_art_invoices') b_debug::internalError('???'); // traceBack('??');
+    if ($text === 'tab_hrm_invoices') b_debug::internalError('???'); // traceBack('??');
+
+    // Sanity
+    if (is_object($text)) b_debug::internalError("Object '$text' as argument");
+
+    // First of all get arguments
+    if (is_string($no_need_to_translate) && in_array($no_need_to_translate,array_keys(self::$known_locales))){
+      $to = $no_need_to_translate;
+      $no_need_to_translate = False;
+    }else{
+      $to = b_cnf::get('b_t_lang');
+    }
+    setlocale(LC_TIME, $to);
+
+    //
+    // The text which might be changed by the user should be indexed
+    //
+    $object_field = False;
+    if ($indexed = is_array($text)){
+      if (!empty($text['key'])){
+	$key  = $text['key'];
+	$text = (empty(self::$translation_table['key'])
+		 ? $text['item']
+		 : self::$translation_table['key']['_']);
+      }else{
+	$object_field = True;
+	$class = array_shift($text);
+	$field = array_shift($text);
+	if (!is_object($class)) b_debug::internalError("??? '$class' is not an object");
+
+	// Get the key
+	$key = self::build_key($class,$field);
+	if (!($class instanceof bForm)) b_debug::internalError('???');
+	$text  = (empty($text)
+		  ? $class->getValue($field)
+		  : array_shift($text));
+	if(empty($key)) return $text;
+	if (!$substituteIfEmpty){
+	  $reply = (($no_need_to_translate===b_t_reference) || in_array((string)@self::$translation_table[$key][$to],self::$text_not_to_be_translated)
+		    ? (string)@self::$translation_table[$key]['_']
+		    : (string)@self::$translation_table[$key][$to]);
+	  b_debug::_debug("no substituteIfEmpty, return '$reply'",cnf_dev);
+	  return $reply;
+	}
+
+	$keys_to_skip = join('|',self::$keys_to_skip);
+	if ($keys_to_skip && preg_match("/($keys_to_skip)\$/",$field)){
+	  $no_need_to_translate = True;
+	  b_debug::_debug("Field '$field' is a reference to another object, cancel translation",array('redText',True)); 
+	  return $text;
+	}
+	if (!myPear_db()->columnExists($field,($table=loader::$sql_identities[get_class($class)]['t']))){
+	  MSG::ERROR($msg="Field \"$field\" is not in database table '$table'");
+	  b_debug::traceBack($msg);
+	  return $text;
+	}
+	$key = sprintf("%s___%s",$field,$class->ID);
+      }
+    }elseif(is_numeric($text)){
+      $no_need_to_translate = True;
+    }
+
+    if (is_string($text)) $text = trim(str_replace('  ',' ',$text));
+    $text_original = $reply = $text;
+
+    //  Continue with no_need_to_translate
+    $s = join('|',array('gif','png','jpg','jpeg'));
+    $b = join('|',array('bForm','bList','bUnit','bHolder'));
+    $r = array();
+    if (!$no_need_to_translate) $no_need_to_translate = (($r['outOfMod '.($m=self::current_module())] = !in_array($m,self::$modules)) ||
+							 ($r['empty']   =empty($text))                        ||
+							 ($r['numeric'] =is_numeric($text))                   ||
+							 ($r['notA_Z']  =!preg_match('/[\sa-z\p{Cyrillic}]+/ui',$text))||
+							 ($r['test']    = (strToLower($text) === 'test'))     ||
+							 ($r['html']    =($text != strip_tags($text_original)))||
+							 ($r['dbField'] =myPear_db()->columnExists($text))    ||
+							 ($r['http']    =(strpos($text,'http:/' ) !== False)) ||
+							 ($r['https']   =(strpos($text,'https:/') !== False)) ||
+							 ($r['bForm']   =preg_match("/($b)/", $text))         ||       
+							 ($r['image']   =preg_match("/($s)$/i",$text))        ||       
+							 ($r['date']    =preg_match("/^[\d\s-x,]*$/ui",$text))  ||      // 200 x 300, 1900-2000
+							 ($r['date1']   =preg_match("/^\d\d\s.*\s\d\d\d\d$/",$text)) ||
+							 ($r['date2']   =preg_match("/^\d\d\s.*\s\d\d\d\d.*\d\d .* \d\d\d\d$/",$text)) ||
+							 ($r['money']   =preg_match("/^((USD|CHF)[\d ]*|[\d ]*(RUB|SEK))$/",$text))
+							 );
+
+    // Catch a simple html string
+    if (preg_match('#(<[^>]*>)([^<]*)(</[^>]*>)$#',$text,$match) && (count($match)==4) && trim($match[2])){
+      array_shift($match);
+      list($ob,$text,$cb) = $match;
+      $text_original = $text;
+    }else{
+      $ob = $cb = '';
+    }
+
+    // Non-indexed translation
+    if (empty($key)){
+      if (empty($text) || $no_need_to_translate){
+	$key = '???';
+      }else{
+	static $text2key = array();
+	if (empty($text2key[$text])){
+	  foreach(self::$translation_table as $k=>$d){
+	    foreach($d as $k2=>$t2){
+		if ($t2 == $text){
+		  $text2key[$text] = $k;
+		  b_debug::_debug("$text <== <strong>$k</strong>/$k2/$t2",cnf_dev);
+		  break 2;
+		}
+	    }
+	  }
+	  //	  var_dump($text2key);
+	}
+	if (!($key = @$text2key[$text])){
+	  if (!$no_need_to_translate) MSG::INFO("Nonindexed text '$text'");
+	  $key = self::b_t_short_txt($text); // b_crypt::hash($text);
+	}
+      }
+    }
+
+    // The string to be translated might be very long, massage it a bit
+    $short_txt = self::b_t_short_txt($text);
+
+    // Catch &nbsp;
+    //?    if ($nbsp = (stripos($text,'&nbsp;') !== False)) $text = str_ireplace('&nbsp;',' ',$text);
+
+    //
+    // No need to translate?
+    //
+    if (!empty(self::$translation_table[$key][$to]) && (self::$translation_table[$key][$to] === self::$text_not_to_be_translated[0])) $no_need_to_translate = True;
+    if ($no_need_to_translate){
+      $case = 'no_need_to_translate';
+      foreach($r as $n=>$condition) if ($condition) { $case = $n; break; }
+      static $n_outOfMod = array();
+      if (preg_match('/(outOfMod|dbField)/i',$case)){
+	if (empty($n_outOfMod[$case])) $n_outOfMod[$case] = 0;
+	$n_outOfMod[$case]++;
+      }else{
+	foreach($n_outOfMod as $case=>$n){
+	  b_debug::_debug($n." cancellations for \"$case\"",array('redText',cnf_dev));
+	}
+	b_debug::_debug("Translation canceled ($case), return '$reply'",cnf_dev);
+	$n_outOfMod = array();
+      }
+      return $reply;
+    }
+    
+    // Update the statistics for Unused translations
+    if (self::$do_statistics && isset($_SESSION[__method__][$key])){
+      unset($_SESSION[__method__][$key]);
+      $file = str_replace('/'.self::current_module().'/','/myPear/',
+			  str_replace('translation.php','translation_unused.txt',self::T_T_path(self::T_T_path($module)))); 
+      file_put_contents($file, join("\n",array_keys($_SESSION[__method__]))."\n");
+    }
+    
+    // Workaround(?) hook the known non-indexed expressions
+    if (!isset(self::$translation_table[$key]) && is_numeric($key)){
+      foreach(self::$translation_table as $k=>$d){
+	if (empty($d['_'])){
+	  var_dump("??? empty key='$k'",$d);
+	}elseif (self::escape($text_original) == $d['_']){
+	  if (in_array(self::$translation_table[$k][$to],self::$text_not_to_be_translated)) return $ob.$text_original.$cb;
+	  self::$translation_table[$key] = self::$translation_table[$k];
+	  self::$translation_table[$key]['hooked'] = 'x';
+	  //	  var_dump("Hook $k $text_original");
+	  break;
+	}
+      }
+    }
+    
+    // Do it...
+    if (isset(self::$translation_table[$key][$to])){
+      
+      // Try to translate
+      if (!empty(self::$translation_table[$key][$to])){  // The translation is known 
+	if (in_array(self::$translation_table[$key][$to],self::$text_not_to_be_translated)) self::$translation_table[$key][$to] = self::$translation_table[$key]['_'];
+	$reply = $ob . self::$translation_table[$key][$to] . $cb;
+	$case = 'OK';
+	b_debug::_debug($reply,array('greenText',cnf_dev));
+      }
+    }else{
+      // Update the current dictionary, add request for the manual update
+      self::add_dictionary_block($key,$text_original);
+      $case = 'add to trans. table';
+    }
+    
+    // Print invitation to fix the translation
+    if (empty(self::$translation_table[$key][$to])){
+      MSG::MESSAGE($object_field
+		   ? sprintf("%s(%s) %s",get_class($class),$class->ID,$field)
+		   : sprintf("Please update '%s' dictionary for '$short_txt'",self::current_module()));
+      $case = 'to be provided';
+    }
+    //    if (!empty($case) && ($case !== 'OK')) b_debug::_debug($case,True);
+    //    if($ob || $cb)  b_debug::var_dump("$reply",__method__);
+    if (in_array($reply,self::$text_not_to_be_translated)) b_debug::internalError("reply = '$reply'");
+    return $reply;
+  }
+
+  /*
+   *
+   */
+  static function build_key($class,$field){  
+    if (!is_object($class)) b_debug::internalError("class=\"".var_export($class,True)."\" is not an object");
+
+    if (!is_numeric($class->ID)){
+	MSG::ERROR($msg="ID=\"".var_export($class->ID,True)."\" is not numeric");
+	b_debug::traceBack($msg);
+      return Null;
+    }
+
+    $keys_to_skip = join('|',self::$keys_to_skip);
+    if ($keys_to_skip && preg_match("/($keys_to_skip)\$/",$field)){
+      $no_need_to_translate = True;
+      b_debug::_debug("Field '$field' is a reference to another object, cancel translation",array('redText',True)); 
+      return Null;
+    }
+
+    if (!myPear_db()->columnExists($field,loader::$sql_identities[get_class($class)]['t'])){
+      if (cnf_dev){
+	MSG::ERROR($msg="Field \"$field\" is not in ".$class->__toString());
+	b_debug::traceBack($msg);
+      }
+      return Null;
+    }
+
+    // OK, build the key
+    $key = sprintf("%s___%s",$field,$class->ID);
+    b_debug::_debug($key,True);
+    return $key;
+  }
+
+  /*
+   *
+   */
+  static function update_record($locale,$field,$class,$translated_text){
+    $key = self::build_key($class,$field);
+    if (empty(self::$translation_table[$key])){
+      //
+      // Simple case, new block arrives
+      //
+      b_debug::_debug("add block");
+      self::add_dictionary_block($key,$translated_text,$locale);
+      self::$T_T_cache[b_t::current_module()][$key] = self::$translation_table[$key];
+    }else{
+      //
+      // More tricky, an existing block is updated
+      //
+      b_debug::_debug("update block");
+      self::$translation_table[$key][$locale]                 = $translated_text;
+      self::$T_T_cache[self::current_module()][$key][$locale] = $translated_text;
+      
+      // Update the file by just rewriting it      
+      $output_file = sprintf("/tmp/%s/translation.php",self::current_module());
+      self::T_T_path_init($output_file,$reset=True);
+
+      foreach (self::$T_T_cache[self::current_module()] as $key=>$d){
+	foreach(array_merge(array('_'),array_keys(self::$known_locales)) as $locale){
+	  if (empty($d[$locale])) $d[$locale] = '';
+	  file_put_contents($output_file,
+			    sprintf("self::\$translation_table['%s']['%s'] = '%s';\n",
+				    $key,
+				    $locale,
+				    self::$T_T_cache[$key][$locale]),
+			    FILE_APPEND);
+	}
+      }
+      MSG::MESSAGE(__method__."($locale,$field,$class,$translated_text) => $output_file",True);
+    }
+  }
+  
+  /*
+   * Add one block to the dictionary, save it on disk
+   */
+  static function add_dictionary_block($key,$text_original,$locale_original=Null){
+    
+    if (!empty(self::$translation_table[$key]['hooked'])) return;
+    if (!empty(self::$translation_table[$key])) b_debug::internalError("translation_table[$key] already exists");
+    if ( empty($text_original)) b_debug::internalError('??? empty text_original');
+    
+    self::init();
+    if (empty(self::$translation_table[$key]['_'])){
+      self::$translation_table[$key]['_'] = self::escape($text_original);
+      file_put_contents(self::T_T_path(self::current_module()), 
+			sprintf("\nself::\$translation_table['%s']['_'] = '%s';\n",
+				$key,
+				self::$translation_table[$key]['_']),
+			FILE_APPEND);
+    }
+    
+    foreach(array_keys(self::$known_locales) as $locale){
+      self::$translation_table[$key][$locale] = ($locale === $locale_original
+						 ? '_'
+						 : '');
+      file_put_contents(self::T_T_path(self::current_module()), 
+			sprintf("self::\$translation_table['%s']['%s'] = '%s';\n",
+				$key,
+				$locale,
+				self::$translation_table[$key][$locale]),
+			FILE_APPEND);
+    }	
+    b_debug::_debug("Add block translation_table[$key][_] = $text_original",array(cnf_dev,'redText'));
+  }
+
+  /*
+   *
+   */
+  static function escape($text){
+    $escaped = b_fmt::escape($text);
+    foreach(array(',','.') as $i) $escaped = str_replace(b_fmt::escape($i),$i,$escaped);
+    $escaped = str_replace("\n","_CR_",
+			   str_replace("<em>","_EMO_",
+				       str_replace("</em>","_EMC_",
+						   $escaped)));
+    return $escaped;
+  }
+  
+  /*
+   *
+   */
+  static function unEscape($text){
+    $unEscaped = str_replace('_;_','<br>',
+			     str_replace("&apos;","'",
+					 str_replace("_EMO_","<em style=font-size:smaller>",
+						     str_replace("_EMC_","</em>",
+								 str_replace("_CR_","\n",b_fmt::unEscape($text))))));
+    return $unEscaped;
+  }
+  
+  /*
+   *
+   */
+  static function lang_selector($extras=''){
+    static $selector = Null;
+    if (empty($selector)){
+      foreach(self::$known_locales as $lang=>$flag){
+	if ($lang == b_cnf::get('b_t_lang')) continue;
+	$s[] = x("a href='?".$_SERVER['QUERY_STRING']."&b_t_lang=$lang'","<img src='".myPear_images."flags/$flag[f]"."'/>");
+      }
+      if ($extras) $s[] = $extras;
+      $selector = x('ul style="font-size:0.5em;list-style:none"',
+		    b_fmt::joinMap('li style="float:left;padding-left:10px;"',$s));
+    }
+    return $selector;
+  }
+
+  // Backwork compats
+  static function getForm(){}
+  static function getLangName($locale=Null){ return $locale; }
+}
+
+
+/*
+ * Currency converter
+ */
+// b_currency::demo();
+class b_currency{
+  
+  // European Central Bank URL
+  public static $ECBurl = "http://www.ecb.int/stats/eurofxref/eurofxref-daily.xml";
+
+  // Save time...  
+  public static $cache_refresh_interval = 36000;
+    
+  // Popular currencies
+  public static $currency_names = array ('EUR' => "European Euro",
+					 'USD' => "US Dollar",
+					 'GBP' => "Pound Sterling",
+					 'CHF' => "Swiss Franc",
+					 'CNY' => 'Chinese Yuan',
+					 'RUB' => "Russian Ruble",
+					 'JPY' => "Japanese Yen",
+					 'SEK' => "Swedish Krona",
+					 'DKK' => "Danish Krone",
+					 'NOK' => "Norwegian Krone",
+					 'ISK' => "Icelandic Krona",
+					 'BGN' => "Bulgarian Lev",
+					 'CYP' => "Cyprus Pound",
+					 'CZK' => "Czech Koruna",
+					 'HUF' => "Hungarian Forint",
+					 'EEK' => "Estonian Kroon",
+					 'LTL' => "Lithuanian Litas",
+					 'LVL' => "Latvian Lats",
+					 'MTL' => "Maltese Lira",
+					 'PLN' => "Polish Zloty",
+					 'ROL' => "Romanian Leu",
+					 'SIT' => "Slovenian Tolar",
+					 'SKK' => "Slovakian Koruna",
+					 'TRL' => "Old Turkish Lira (to 2004)",
+					 'TRY' => "New Turkish Lira (2005)",
+					 'AUD' => "Australian Dollar",
+					 'CAD' => "Canadian Dollar",
+					 'HKD' => "Hong Kong Dollar",
+					 'NZD' => "New Zealand Dollar",
+					 'SGD' => "Singapore Dollar",
+					 'KRW' => "South Korean Won",
+					 'ZAR' => "South African Rand",
+					 'RON' => 'Romanian Leu',
+					 'HRK' => 'Croatian Kuna',
+					 'BRL' => 'Brazilian Real',
+					 'ILS' => 'Israeli Shekel',
+					 'IDR' => 'Indonesian Rupiah',
+					 'INR' => 'Indian Rupee',
+					 'MXN' => 'Mexican peso',
+					 'MYR' => 'Malaysian Ringgit',
+					 'PHP' => 'Philippine peso',
+					 'THB' => 'Thai Baht',
+					 );
+  
+  /*
+   * The converter itself
+   */
+  static function convert($amount,$from,$to){
+    
+    // Grab current exchange rates from European Central Bank
+    // Check whether we have a recent copy of the data locally
+    $cache = sys_get_temp_dir()."/erates.xml";
+    if (!file_exists($cache) || ((time() - filemtime($cache)+1) > self::$cache_refresh_interval)){
+      // Protect againt "no network"
+      if (!$stuff = file(self::$ECBurl))	$stuff = array();
+      $fh = fopen ($cache,"w");
+      foreach ($stuff as $line) fputs($fh,$line);
+    } else {
+      $stuff = file($cache);
+    }
+    
+    // Extract data from page - conversion rates between each currency and the Euro
+    $exchrate['EUR'] = 1.0;
+    foreach ($stuff as $line) {
+      preg_match("/currency='([[:alpha:]]+)'/",$line,$gota);
+      if (preg_match("/rate='([[:graph:]]+)'/",$line,$gotb)) $exchrate[$gota[1]] = $gotb[1];
+    }
+
+    $ok = True;
+    foreach(array($from,$to) as $i){
+      if (!empty($exchrate[$i])) continue;
+      $ok = False; 
+      printf("Unknown currency '%s' %s<br>\n",$i,@self::$currency_names[$i]); 
+    }
+
+    if (!$ok){
+      return $amount;
+    }else{
+      $amount_converted = floor($amount * $exchrate[$to] / $exchrate[$from]);
+      // printf("exchrate(%s->%f) = %.2f <br>\n",$from,$to,$exchrate[$from]);
+      return $amount_converted;
+    }
+  }
+
+  /*
+   * Simple demo page
+   */
+  static function demo(){
+
+    if (function_exists("date_default_timezone_set") and 
+	function_exists("date_default_timezone_get"))  @date_default_timezone_set(@date_default_timezone_get());
+
+    print "<h2>Exchange rate demo</h2>\n";
+    
+    print "<pre>\n";
+    foreach (array('SEK',
+		   'EUR',
+		   'RUB',
+		   ) as $from){
+      foreach (array('SEK',
+		     'EUR',
+		     'RUB',
+		     'CHF',
+		     'DKK',
+		     ) as $to){
+	$amount = 1000;
+	$got = self::convert($amount,$from,$to);
+	printf("%d %s == %8.2f %s\n",$amount,$from,$got,$to);
+      }
+    }
+    print "</pre>\n";
+    
+    
+    // Sample output - a table showing an amount converted to Euros, Pounds and Dollars
+    print ("<h3>Conversion to Euros, Pounds, US Dollars from other currencies</h3><br>\n");
+    print ("<center>\n<table cellpadding=5>\n<tr><td>&nbsp;</td><th>Euros</th><th>Pounds</th><th>Dollars</th></tr>\n");
+    $amount = 1000;
+    foreach (self::$currency_names as $from=>$name) {
+      printf("<tr>\n<td>%s %s</td>\n",$amount,$name);
+      foreach (array("EUR","GBP","USD") as $to) {
+	$converted_amount = self::convert($amount,$from,$to);
+	if ($converted_amount === Null) print("<td align=right>?</td>\n");
+	else                            printf("<td align=right>%.2f</td>\n",$converted_amount);
+      }
+      print ("<tr>\n");
+    }
+    print ("</table></center>\n");
+    
+    print "<hr>
+Want to <a href=http://www.wellho.net/course/ph.html>learn
+how to write a page like this?</a><br>
+Copyright <a href=http://www.wellho.net>Well House Consultants</a>, ".date("Y")."\n";
+  }
+}
+
+/*
+ *
+ */
+class loader{
+
+  public  static $sql_identities = array();
+  public  static $sql_identities_extra = array();
+
+  /**
+   * Get the object for class(id) from the cache.
+   * Instantiate a new one if the cache is empty (see '$mode' below).
+   *
+   * @param $class
+   *   Class name to instantiate 
+   * @param $args
+   *   Class arguments
+   * @param $mode
+   *   Additional optional array of attributes. Recognized attributes:
+   *     'RO' or 'RW'- access mode for the class instantiation  
+   *     'strict'    - do not create an instance if the ID is unknown to the database 
+   *                   (otherwise a 'new' class is instantiated)
+   *     'fatal'     - like 'strict', but an internal error is generated if the instance is unknown
+   *     'nocache'   - do not save the object in the cache
+   *     'array'     - the output is expected as an array of classes, i.e. the instance might be not unique
+   *     'clean'     - remove instance from the cache and return NULL
+   *     'delete'    - remove instance from the cache AND from the database
+   *     ''(default) 
+   * @param $helper  - optional array($table,$id), needed when module is not yet ready...
+   * @return
+   *   Reference to the class object
+   */
+  public static function getInstance_new($class,$args,$mode=array(),$helper=array()){
+
+    // Escape the bogus invocation    
+    if (!myPear_db()->isReady()) return Null;
+
+    // Sanity...
+    if (!is_array($mode))      $mode = array($mode);
+    if (empty($args)){
+      if (in_array('fatal', $mode)) b_debug::internalError("??? Empty args, can't find $class($args)");
+      return Null;
+    }
+
+    if (b_posix::is_int($args)) $args = (int)$args;
+    if(!in_array('nocache',$mode)) bCount()->add(__FUNCTION__,$class);
+
+    // Optionally get the class name from class_ID
+    if (empty($class)){
+      $class = self::getClassFromID($args,False,True);
+      b_debug::_debug("getClassFromID($args) - $class",'I');
+      bCount()->add(__FUNCTION__,'getClassFromID');
+    }
+
+    // Workaround...
+    //    $class = str_replace('bForm_Avatar_myPear','bForm_Avatar_ea',$class);
+
+    // Keep the instances in a local cache
+    static $reply = array();
+    $hash = b_crypt::hash($class.serialize($args));
+    
+    // Save memory, remove instance from the cache 
+    if (in_array('clean',$mode)){ 
+      unset($reply[$hash]);
+      if ($class === 'all') $reply = array();
+      return Null;
+    }elseif(in_array('delete',$mode)){
+      unset($reply[$hash]);
+    }
+    
+    // Get the instance if it is not cached yet
+    if (empty($reply[$hash])){
+      locateAndInclude($class);
+      list($table,$id) = (empty($helper)
+                          ? array_values(b_reg::sql_ids($class,b_reg::$current_module))
+                          : $helper);
+
+      // Parse class arguments, it might be class_ID, av_email or query
+      if (is_numeric($args))            $args = array($id=>$args);
+      elseif ($m=b_fmt::RFC_2822($args))$args = array('av_email'=>x("'",array_shift($m)));
+      if (is_array($args)){
+        foreach($args as $k=>$v) $where[] = myPear_db()->quote($v,True,$k);
+      }else{
+        $where = array($args);
+      }
+
+      // Query the database
+      $where_str = join(' AND ',$where);
+      if (empty($table) || empty($id)){ // The module is not yet initialized
+        $qquery = sprintf("can't locate table for %s::%s",b_reg::$current_module,$class);
+        $num_rows = 0;
+      }else{
+        $q = myPear_db()->qquery($qquery="SELECT $id FROM $table WHERE $where_str",$verbose=cnf_show_i);
+        $num_rows = myPear_db()->num_rows($q);
+      }
+
+      // Analasise the query result
+      switch($num_rows){
+      case 0:
+        if ( in_array('fatal', $mode)) b_debug::internalError("??? Can't find $class($where_str) q=$qquery");
+        if ( in_array('delete',$mode)) return;
+        if (!in_array('strict',$mode)){
+          $instance = new $class('empty');
+	  b_debug::xxx('creating '.$instance,'I');
+          $isVITAL = $instance->isVITAL;
+          $instance->isVITAL = array();
+          $instance->updateDB($args);
+          $instance->isVITAL = $isVITAL;
+          if (in_array('nocache',$mode)){
+	    b_debug::xxx($instance,'I');
+            return $instance;
+          }
+          $reply[$hash] = $instance;
+        }
+        break;
+
+      case 1:
+        if (in_array('delete',$mode)){
+          myPear_db()->qquery("DELETE FROM $table WHERE ".($id=join(' AND ',$where)),cnf_dev||cnf_show_i);
+	  MSG::MESSAGE("Removing class $class($id)");
+        }else{
+          while ($r = myPear_db()->next_record($q)){
+            $instance = new $class($r[$id]); 
+            if (in_array('nocache',$mode)){
+	      b_debug::xxx($instance,'I');
+              return $instance;
+            }
+            $reply[$hash] = $instance;
+          }
+        }
+        break;
+
+      default:
+	b_debug::internalError("$num_rows answers for $qquery");
+      }
+    }else{
+      bCount()->add(__FUNCTION__,"$class <span class='greenText'>inCache</span>");
+    }
+    b_debug::xxx(@$reply[$hash],'I');
+    return @$reply[$hash];
+  }
+
+  public static function getInstance($class,$id,$mode=array()){
+
+    // Escape the bogus invocation
+    if (!myPear_db()->isReady() || empty($id)) return Null;
+    
+    // Convert argument to array
+    if (!is_array($mode))         $mode = array($mode);
+    if ( in_array('array',$mode)) $mode[] = 'nocache';
+    if (!in_array('RW',   $mode)) $mode[] = 'RO';
+    $mode = array_unique($mode);
+    
+    // Keep the Avatar class as the current module wants
+    bForm_Avatar::set_context($class,in_array('basic_avatar',$mode));
+    
+    // Get the class name
+    if ($class_toBeCreated=in_array($id,array('new','empty'))){
+      // The instance does not exists yet
+      $class_name = $class;
+      $class_IDs  = array($id);
+      $mode[] = 'RW';
+      $mode = array_diff($mode,array('RO'));
+
+    }else{
+
+      // The instance might already exist, check it
+      $class_name = self::isIdentified($id,(bool)(stripos($class,'Avatar') !== False),$class);
+      $class_IDs  = self::$isIdentified_ID;
+      if ($class === 'x') $class = $class_name;
+      if (empty($class_name))        return Null;
+
+      // This is not normal
+      if (($n=count($class_IDs)) > 1)   b_debug::traceBack("$n records found");
+      
+      // Sanity, check that the class name is what is is expected to be
+      if (!empty($class_name) && (stripos($class_name,$class)===False) && (stripos($class,$class_name)===False)){
+        if (cnf_dev){
+          $msg = __METHOD__."($class,$id) getClassFromID($id) == '$class_name'";
+          if (in_array('fatal',$mode)) b_debug::internalError($msg);
+          else                         b_debug::traceBack($msg);
+        }
+      }
+      
+      // Remove the instance from the cache (save memory) if needed
+      if (in_array('clean',$mode)){ 
+        $cache = new b_cache(__METHOD__);
+        if ($cache->wasSet($class_name,$id)){
+          $o = $cache->get();
+	  b_debug::xxx((method_exists($o,'name')?$o->name():''),array(3,'greenText',(bool)(cnf_show_i||cnf_debug),$o));
+          bCount()->add(__FUNCTION__,"$class_name <span class='greenText'>removed</span>");
+          $cache->remove($class_name,$id);
+        }
+        return Null;
+      }
+    }
+    
+    //
+    // Need the form instance, find or create it
+    //
+    bTiming()->cpu(__FUNCTION__); // ."($class_name)");
+    if(!in_array('nocache',$mode)) bCount()->add(__FUNCTION__,$class_name);
+    
+    // Check the cache and get the instance from the cache if avalaible,
+    // otherwise search the database
+    locateAndInclude('b_cache');
+    $cache = new b_cache(__METHOD__);
+    $cacheReady = ($class_toBeCreated
+                   ? False
+                   : $cache->wasSet($class_name,$id));
+    if ($cacheReady){  
+        
+      bCount()->add(__FUNCTION__,"$class_name <span class='greenText'>inCache</span>");
+      $reply = $cache->get();
+      if (!($reply instanceof $class_name)) b_debug::internalError(__METHOD__." got wrong class from the cache: $reply instead of $class_name($id)");
+      
+    }else{
+      
+      // Fix the e-mail on the fly
+      if ($m=b_fmt::RFC_2822($id)){
+        $id = array("av_email = '".array_shift($m)."'");
+        foreach($m as $email) $id[] = "av_email2 REGEXP '$email'";
+        $id = join(' OR ',$id);
+      }
+      
+      // Get new instances
+      $reply = array();
+      locateAndInclude($class_name,in_array('fatal',$mode));
+      foreach($class_IDs as $r_id){ 
+        $c = new $class_name($r_id,(in_array('RW',$mode) ? 'RW' : 'RO'));
+        // Initialise the cache for the newly created class
+        if ($class_toBeCreated) $cache->wasSet($class_name,$c->ID);
+        $reply[] = $c;
+      }   
+    }
+    
+    // Re-pack the output according to the request "expected as an array"
+    // (see avatar_merge)
+    $str = array();
+    if (empty($reply))       $str[] = '?not found';
+    if (in_array('array',$mode)){
+      if (empty($reply))     $reply = array();
+      if (is_array($reply))  $reply = array_unique($reply);
+      else                   $reply = array($reply);
+      foreach($reply as $o)  $str[] = $o->__toString(); 
+    }else{
+      if (is_array($reply))  $reply = @$reply[0];
+      if ($o=$reply)         $str[] = $o->__toString(); 
+    }
+    
+    if(empty($reply) && in_array('fatal',$mode)){
+      b_debug::internalError(__METHOD__." can't get instance $class_name(id='$id')");
+    }
+    if (is_object($reply) && !in_array('nocache',$mode))      $cache->set($reply);
+    bTiming()->cpu();
+    
+    b_debug::xxx(join(' ',$str),'I');
+    return $reply;
+  }
+  
+
+  /*
+   * Get the bForm class name from the record_ID.
+   * All the records in the database(s) of bForm/myPear classes have unique ID (see 'bMasterClass' class),
+   * so it is feasible.
+   */ 
+  public static $_getClassFromID = array();
+  public static function getClassFromID($id,$noFormPrefix=False,$current_module_only=False) {
+    $reply = Null;
+    if ($id instanceof bForm){
+      if    ($noFormPrefix==='class') $reply = $id;
+      elseif($noFormPrefix)           $reply = str_replace(array('form','bForm_'),'',get_class($id));
+      else                            $reply = get_class($id);
+    }elseif(b_posix::is_int($id)){
+      if ($reply = self::isIdentified($id,$current_module_only)){
+	self::$_getClassFromID = loader::$sql_identities[$reply];
+        if    ($noFormPrefix==='class') $reply = self::getInstance_new($reply,$id,'strict');
+        elseif($noFormPrefix)           $reply = str_replace(array('form','bForm_'),'',$reply);
+      }
+    }
+    return $reply;
+  }
+  
+  /*
+   *
+   */  
+  public static function replaceInstance($class){
+    $cache = new b_cache('myPear::instance');
+    if ($cache->wasSet(get_class($class),$class->ID)){
+      $cache->remove(get_class($class),$class->ID);
+    }
+    if ($cache->wasSet(get_class($class),$class->ID)){
+      b_debug::internalError('something wrong');
+    }else{
+      $cache->set($class);
+    }
+  }
+  
+  /*
+   * Get back the widget HTML code
+   *
+   * @param - the query string
+   */
+  public static function getWidget(){
+    if ($g=$_GET['holder']){
+      
+      locateAndInclude($h = "bHolder_$g");
+      $h = new $h(($arg=@$_GET['id']) ? $arg : @$_GET['mode']);
+      $w = $h->getWidget();
+
+    }elseif ($class=$_GET['form']){
+      
+      if (strpos($class,'bForm') === False) $class = "bForm_$class";
+      $f = loader::getInstance_new($class,$_GET['id'],'fatal');
+      $w = $f->getWidget();
+      if (cnf_dev) b_debug::xxx("expect class '$class', got ".$f->__toString());
+    }elseif ($f=$_GET['file_once']){
+      
+      ob_start();
+      include $f;
+      $reply = ob_get_contents();
+      ob_end_clean();
+      $w = x('center',b_fmt::compact_html($reply));
+
+    }else{
+      $w = $_SERVER['REQUEST_URI'];
+    }
+    return $w;
+    return "<div id='myPear_widget'>$w</div>";
+  }
+
+  public static function setIdentity($id) {
+    foreach($id as $class=>$i) loader::$sql_identities[$class] = $i;
+  }
+
+  public static $isIdentified_ID = 0;
+  public static $isIdentified_debug = False;
+  static function isIdentified($id,$current_module_only=False,$class_name=''){
+    static $specific_classes = array('l_class','u_class');
+    static $cache = array();
+    
+    // Since this function is called very often, the answer is cached 
+    if (is_object($id)){
+      // Exotic call with the argument as an object
+      $cache[$id->ID] = array('ID'       => array($id->ID),
+                              'generic'  => get_class($id),
+                              b_cms::_(0)=> get_class($id));
+      $id = $id->ID;
+    }elseif(is_array($id)){
+      // Exotic call with the argument as an array
+      if (cnf_dev) b_debug::var_dump($id,b_debug::__());
+      return Null;
+    }
+
+    if (empty($id))      return False;
+    if ($id === 'new')   return True;
+    if ($id === 'empty') return True;
+    if (stristr($id,'missing')!==False){
+      if (cnf_dev) b_debug::traceBack('Broken invocation '.b_debug::__());
+      return False;
+    }
+
+    // Normal call
+    bCount()->add(__FUNCTION__,($id_count = (b_posix::is_int($id) ? 'this->ID' : preg_replace('/( OR ).*/','',$id))));
+    if (isset($cache[$id])){
+      bCount()->add(__FUNCTION__,"$id_count <span class='greenText'>inCache</span>");
+    }else{
+      bTiming()->cpu(__METHOD__);
+      // Scan the database for this record
+      foreach(loader::$sql_identities as $_class=>$_identities){
+        // b_debug::xxx("$_class - ".b_fmt::joinX(',',$_identities));
+        if (empty($_identities['i'])){
+          continue;
+        }elseif (!empty($class_name)){
+          if ((strpos($_class,$class_name) === False) && (strpos($class_name,$_class) === False)) continue;
+          // if (cnf_dev) b_debug::xxx("waiting for '$class_name', got '$_class'");
+        }else{
+          static $cont = 0;
+          // if ($cont++ < 5) b_debug::traceBack();
+        }
+        
+        // Read the record ID and (if presents) the class name which uses this record
+        $selects = array();
+        foreach(array_merge($specific_classes,array($_identities['i'])) as $field){
+          if (myPear_db()->columnExists($field,$_identities['t'])) $selects[] = $field;
+        }
+        if (empty($selects))  continue;
+
+        $query = "SELECT ".implode(',',$selects)." FROM ".$_identities['t']." WHERE ".(b_posix::is_int($id) 
+                                                                                       ? $_identities['i']."='$id'" 
+                                                                                       : $id);
+        // MSG::DEBUG($query);
+        $q = myPear_db()->query($query,$stopIfFails=cnf_dev);
+        if (empty($q))  continue;
+        
+        unset($identified_class); 
+        while($r = myPear_db()->next_record($q)){
+          $IDs[] = $r[$_identities['i']];
+          $identified_class = $_class;
+          // Eventually replace the generic class name (like bList / bUnit) by the actual class name (bList_eaEmpRecords / bUnit_ea_members)
+          foreach($specific_classes as $c){
+            if (isset($r[$c])){
+              if (cnf_dev || self::$isIdentified_debug) MSG::DEBUG(__METHOD__."($id): $identified_class --> ".$r[$c]);
+              $identified_class = $r[$c];
+            }
+          }
+        }
+        if (!isset($identified_class)) continue;
+
+        // Save result in the cache
+        // Count all the modules/classes where the found SQL table is used
+        $cache[$id]['ID'] = $IDs;
+        $cache[$id]['generic'] = $identified_class;
+        foreach(loader::$sql_identities as $cls=>$ids){
+          if ($ids['t'] == $_identities['t'])  $cache[$id][$ids['m']] = $cls;
+        }
+        break;
+      }
+      if (!isset($cache[$id])) $cache[$id] = False;
+      bTiming()->cpu();
+    }
+
+    if (empty($cache[$id])){
+      self::$isIdentified_ID = array();
+      $reply = Null;
+    }else{
+      // Make the ID's available for the calling function
+      self::$isIdentified_ID = $cache[$id]['ID'];
+      
+      // The caller asks for the class_name, optionally filtered by the current myPear module 
+      if($current_module_only){
+        // During the authentication the proper Avatar class might not yet being loaded,
+        // hence give back the generic one instead.
+        $reply = @$cache[$id][b_cms::_(0)];
+        if (empty($reply) && @$cache[$id]['myPear']) $reply = $cache[$id]['myPear'];
+        if (empty($reply) && (stripos(@$cache[$id]['generic'],'Avatar') !== False)){
+          $reply = 'bForm_Avatar';
+        }
+      }else{
+        $reply = @$cache[$id]['generic'];
+      }
+    }
+    
+    // Sanity && debugging
+    if (cnf_dev || self::$isIdentified_debug){
+      if(($n=count(self::$isIdentified_ID))>1)b_debug::xxx("Search gives $n replies");
+    }
+    if (self::$isIdentified_debug || cnf_show_ii || (cnf_dev && empty($reply)))     b_debug::xxx($reply,'I');
+    return $reply;
+  }
+
+  /*
+   * Get the DB class from cache
+   */
+  public static    $__construct_notComplited = array();
+  protected static $_cacheF = array();
+  static function _fromCache($c,$arg0=Null,$arg1=Null,$arg2=Null){
+    
+    foreach(self::$__construct_notComplited as $reset_me){
+      foreach(array_merge(array($reset_me),
+                          preg_grep("/^$reset_me\./",array_keys(self::$_cacheF))) as $i){
+        if (cnf_dev)  b_debug::xxx("Reset cache '$i'");
+        unset(self::$_cacheF[$i]);
+      }
+    }
+    self::$__construct_notComplited = array();
+    
+    locateAndInclude($c,'fatal');
+    switch($n=func_num_args()){
+    case 4: if (!isset(self::$_cacheF["$c.$arg0.$arg1.$arg2"])) self::$_cacheF["$c.$arg0.$arg1.$arg2"] = new $c($arg0,$arg1,$arg2);
+      return self::$_cacheF["$c.$arg0.$arg1.$arg2"];
+    case 3: if (!isset(self::$_cacheF["$c.$arg0.$arg1"]))       self::$_cacheF["$c.$arg0.$arg1"]       = new $c($arg0,$arg1);  
+      return self::$_cacheF["$c.$arg0.$arg1"];
+    case 2: if (!isset(self::$_cacheF["$c.$arg0"]))             self::$_cacheF["$c.$arg0"]             = new $c($arg0);           
+      return self::$_cacheF["$c.$arg0"];
+    case 1: if (!isset(self::$_cacheF["$c"]))                   self::$_cacheF["$c"]                   = new $c();               
+      return self::$_cacheF["$c"];
+    default:  b_debug::internalError("strange call with $n arguments");
+    }
+  }
+}
+
+/*
+ * Social Security Number treatment
+ */
+class SSN{
+  
+  /* Year */
+  //static private $yymmdd   =       '(\d\d)([01]\d)([0123]\d)'; // y m d
+  static private $yymmdd   =       '(\d\d)(0[1-9]|1[012])([012]\d|3[01])'; // y m d
+  static private $yyyymmdd = '([12]\d\d\d)([01]\d)([0123]\d)'; // Y m d
+
+  /* Number */
+  static private $n = '\w\d\d\d';
+  
+  /*
+   * We know about the Swedish SSN only.
+   */
+  public static function known(){
+    $reply = array('SE' => array('/^'.self::$yymmdd         .self::$n.'$/', 
+				 '/^'.self::$yymmdd  .'[-+]'.self::$n.'$/', 
+				 '/^'.self::$yyyymmdd       .self::$n.'$/',  
+				 '/^'.self::$yyyymmdd. '-'  .self::$n.'$/',  
+				 ));
+    return $reply;
+  }
+
+  /*
+   * Fix known mistakes when filling SSN
+   */ 
+  public static function fix($ssn){
+    $pattern = '/^('.self::$yymmdd.')('.self::$n.')$/';
+    if (preg_match($pattern,$ssn,$m)){
+      $ssn = $m[1] .'-'. strToUpper($m[5]);
+    }
+
+    $pattern = '/^('.self::$yymmdd.')-('.self::$n.')\d*$/';
+    if (preg_match($pattern,$ssn,$m)){
+      $reply = $m[1] .'-'. strToUpper($m[5]);
+    }else{
+      $reply = $ssn;
+    }
+    if ($ssn !== $reply) MSG::WARNING_T("SSN '$ssn' ==> '$reply'");
+    return $reply;
+  }
+  
+  /*
+   * SE checksum, taken "from Google" as the official algorithm
+   * Modified however...
+   */
+  private static function checkPnr10($pnr) {
+    if (strlen($pnr) == 12){
+      $pnr = substr($pnr, 2);
+    }elseif(strlen($pnr) != 11){
+      return False;
+    }else{
+      $pnr = str_replace(array('-','+'), '', (string)$pnr);
+      if(strlen($pnr) != 10) return False;
+    }
+    if (!preg_match('/^'.self::$yymmdd.'/',$pnr,self::$matches)) return False;
+
+    $n = 2;
+    $sum = 0;
+    for ($i=0; $i<9; $i++) {
+      $tmp = $pnr[$i] * $n;
+      ($tmp > 9) ? $sum += 1 + ($tmp % 10) : $sum += $tmp; ($n == 2) ? $n = 1 : $n = 2;
+    }
+    $reply = (bool)(!(($sum + $pnr[9]) % 10));
+    //    if($reply)    var_dump($pnr,self::$matches);
+    return (bool)$reply;
+  }
+
+  /*
+   * SSN can't contain string "0000"
+   */
+  public static  $matches = array();
+  public static  $ssn_country = '?';
+  public  static function is_valid($ssn,$verbose=False){
+
+    self::$ssn_country = 'SE';
+    $ssn = preg_replace('/^(......)-[pP0]000$/','\\1'.'-P123',(string)$ssn);
+    $reply = !empty($ssn) && (strpos((string)$ssn,'000') === False) && (self::checkPnr10($ssn) || preg_match('/^(\d\d)?\d\d\d\d\d\d-[pP]\d\d\d$/',$ssn));
+  
+    /*  
+    $reply = False;
+    if (strpos((string)$ssn,'000') === False){
+      foreach(self::known() as $country=>$patterns){
+      foreach($patterns as $pattern){
+        if (preg_match($pattern, (string)$ssn,self::$matches)){
+	    
+	    // Careful if the age is > 100 years
+	        if (strpos($ssn,'+') == 6)   self::$matches[1] -= 100;
+		    
+		    // Guess the century...
+		        if(self::$matches[1] < 1900) self::$matches[1] += 1900;
+			    
+			    // static $ccc=0; if (++$ccc < 8) b_debug::print_r(self::$matches);
+			        self::$ssn_country = $country;
+				    $reply = True;
+				        break 2;
+					    }
+					      }
+					      }
+      } 
+    */
+
+    // Print a warning if the SSN is not valid & the record is editable
+    if ($verbose === 'check_only') $verbose = False;
+    if (!$reply && !empty($ssn)){
+      $msg = "\"$ssn\" is not a valid Social Security Number";
+      if (is_object($av=$verbose)){
+	$msg .= ' for '.$av->fmtName('fl');
+	if (!$av->isWritable()) unset($verbose);
+      }
+      if (!empty($verbose) && !empty($msg)) MSG::ERROR($msg);
+      // if (cnf_dev) b_debug::xxx($reply ? "Yes, ".self::$ssn_country : "No");
+    }
+    return $reply;
+  }
+  
+  /*
+   * The birthdate is packed to the SSN
+   * @param return 
+   *   - Null if SSN is not valid
+   *   - unix time if SSN is ok
+   */
+  public static function ssn2birthDate($ssn,$av=False){
+    $reply = (self::is_valid($ssn,$av)
+	      ? b_time::noon(self::$matches[1],self::$matches[2],self::$matches[3])
+	      : False);
+    return $reply;
+  }
+}
+
+
+/*
+ * Messages handling
+ */
+class MSG{
+  
+  static public function TBD($text='.',$class=Null)  { self::MESSAGE($text, $class, 'TBD'); }
+  
+  static public function ERROR($text,$class=Null){
+    if (stripos($text,'missing value')!==False)  self::mail_diagnostics(Null,strip_tags($text));
+    b_debug::_debug($text,array(2,True,'bold-text'),'error');
+    b_debug::_debug($text,array(2,cnf_dev,'redText'));
+  }
+  
+  static public function WARNING  ($text,$class=Null){
+    b_debug::_debug($text,array(2,True,'bold-text'),'warning');
+    b_debug::_debug($text,array(2,cnf_dev,'redText'));
+  }
+
+  static public function WARNING_T($text,$class=Null){
+    // WARNING
+    b_debug::_debug($text,array(2,True,'redText',$class),'SICK');
+    // debug line
+    if (is_object($class) && is_callable(array($class,'dbg')))  $class->dbg($text,array(3,True,'redText'));
+    else      b_debug::_debug($text,array(2,True,'redText'));
+  }
+
+  static public function MESSAGE2 ($text,$class=Null){ self::MESSAGE($text, $class, 'message_bottom'); }
+  
+  static public function MESSAGE_once($text,$class=Null,$id='status',$heading=''){ self::MESSAGE($text,$class,'status',$heading,True); }
+  
+  static public function INFO_once($text,$heading=''){ self::INFO($text,$heading,True); }
+  
+  static public function INFO($text,$heading='',$only_once=False){ 
+    if (empty($text))      $text = array();
+    if (!is_array($text))  $text = array($text);
+    if (is_array($heading))$heading = $heading[0];
+    if (!empty($heading))  $heading = x('span style="font-weight:bold"',$heading); 
+    
+    self::$show_this_message_in_NOUSER_context = True;
+    self::MESSAGE($heading . (empty($text) ? '' : x('ul',b_fmt::joinMap('li',$text))),
+		  Null,
+		  'info',
+		  '',
+		  $only_once);
+    self::$show_this_message_in_NOUSER_context = False;
+  }
+  
+  static public function DEBUG($text='',$class=Null){ 
+    $forced = ($class === 'forced');
+    if (($class === False) || (!YBhere && !cnf_dev && !$forced))  return;
+    if (!is_object($class)) $class = Null;
+    if ($forced) self::MESSAGE_forced($text?$text:b_debug::__(2), $class, 'debug'); 
+    else                self::MESSAGE($text?$text:b_debug::__(2), $class, 'debug'); 
+  }
+  
+  
+  private static $show_this_message_in_NOUSER_context = False;
+  static public function MESSAGE_forced($text,$class=Null,$id='warning',$heading=''){
+    self::$show_this_message_in_NOUSER_context = True;
+    self::MESSAGE($text,$class,$id,$heading);
+    self::$show_this_message_in_NOUSER_context = False;
+  }
+  
+  /*
+   * Display the unified message.
+   */
+  static public function MESSAGE($text,$class=Null,$id='status',$heading='',$only_once=False){
+    
+    // By default we don't show any messages in no-user context, unless it is explicitly requested 
+    $drop = (!self::$show_this_message_in_NOUSER_context &&
+	     !cnf_dev && (!class_exists('bAuth',0) ||
+			  (class_exists('bAuth',0) && !bAuth::$isReady) || 
+			  (class_exists('bAuth',0) && !is_object(bAuth::$av))));
+    if ($drop)  return;
+    if ($only_once && @$_SESSION[__METHOD__][b_crypt::hash($text.$heading)]++) return;
+    
+    // Add the caller in debug mode
+    if (cnf_dev && in_array($id,array('error'))) $text = x('strong',x('em',(b_debug::__(array(3),$class).": "))) . $text;
+    
+    // Go on
+    $caller = '';
+    if (trim(strip_tags(trim($text)))){
+      $css_class = $id;
+      switch($css_class){
+      case 'TBD':
+	$caller = b_debug::__(3,$class);
+	$text   = b_fmt::redText("<em>$id: $caller</em> $text");
+      case 'status':
+	if (!cnf_dev && !cnf_CLI && class_exists('bAuth',0) && !is_object(bAuth::$av)) return;  
+	break;
+      case 'error':  
+	myPear_logs()->syslog(strip_tags($text));
+	break;
+      case 'SICK': 
+	$css_class = 'debug';
+      case 'debug':
+	if (is_object($class)){
+	  $caller = b_debug::__(3,$class);
+	  $text = $caller.' '.x('strong',x('em',$text));
+	}
+	$text = b_debug::s_e_depth() . $text;
+	break;
+      default:
+      }
+      
+      static $MESSAGE_dejaVu = array();
+      $msg_id = b_crypt::hash($x=trim(str_replace('&nbsp;','',strip_tags($text . $id . (is_object($class)?@$class->ID:'x')))));
+      $msg_id = b_crypt::hash($x=trim(str_replace('&nbsp;','',$text)));
+      
+      if (empty($MESSAGE_dejaVu[$msg_id])) $MESSAGE_dejaVu[$msg_id] = 0;
+      if (b_cnf::get('noCompactMessages') || b_debug::$starting_exiting || !$MESSAGE_dejaVu[$msg_id]++){
+	if ($id=='message_bottom')  $_SESSION['message_bottom'][] = $text; 
+	elseif (function_exists('drupal_set_message') && !b_cnf::get('nodrupal')) drupal_set_message($text,$css_class);
+	elseif (cnf_CLI) b_fmt::printt($text);
+	else   print "<div class='messages $css_class'>$text</div>\n";
+      }
+    }
+  }
+  
+  static public $messageBuffer_active = False;
+  static public $MESSAGE_add_counter = 0;
+  static public function MESSAGE_open($title,$h3='h3') {
+    if (!empty($_SESSION['messages.cache'])) self::MESSAGE_close();
+    $_SESSION['messages.cache'] = array("<$h3>$title</$h3>");
+    self::$messageBuffer_active = True;
+  }
+  
+  static public function MESSAGE_close($id='status'){
+    if (is_array($c = @$_SESSION['messages.cache'])){
+      if ($id == 'status') MSG::MESSAGE(join('<br/>',$c).'<br/>&nbsp;');
+      else                 MSG::WARNING(join('<br/>',$c).'<br/>&nbsp;');
+    }
+    unset($_SESSION['messages.cache']);
+    self::$messageBuffer_active = False;
+    self::$MESSAGE_add_counter = 0;
+  }
+  
+  static public function MESSAGE_add($text,$add_counter=False,$noCompactMessages=True){
+    $noCompactMessages_sv = b_cnf::get('noCompactMessages');
+    b_cnf::set('noCompactMessages',(int)$noCompactMessages);
+    if ($add_counter) $text = (++self::$MESSAGE_add_counter) . " - $text";
+    if (empty($_SESSION['messages.cache']))  MSG::MESSAGE($text);
+    elseif(!in_array($text,$_SESSION['messages.cache']) || b_cnf::get('noCompactMessages')) $_SESSION['messages.cache'][] = $text;
+    b_cnf::set('noCompactMessages',(int)$noCompactMessages_sv);
+  }
+  
+  /*
+   *
+   */
+  public static function H1($text, $mode='noTranslate'){
+    static $dejaVu = array();
+    static $title = Null;
+
+    if ($text == 'get')   return $title;
+    
+    if (!empty($text) && ($text != b_reg::$current_module)){
+      if (!is_array($mode)) $mode = array($mode);
+      if ($text=='empty')   $mode[] = 'noTranslate';
+      
+      if (!empty($text)){
+	$text = ($text=='empty'
+		 ? ''
+		 : b_t::_($text,in_array('noTranslate',$mode)));
+	
+	if (is_null($title) || in_array('reset', $mode)){
+	  self::setPageHeader($title = trim(b_fmt::unEscape($text)));
+	}
+      }
+    }
+    b_debug::_debug($text,cnf_dev);
+    return '';
+  }
+  
+  static function H2($text,$noTranslate=True)  { 
+    static $dejaVu = array();
+    $reply = (empty($text) || @$dejaVu[mb_strToLower($text)]++ || (mb_strToLower($text) == mb_strToLower(self::H1('get')))
+	      ? ''
+	      : '<h2>'.b_fmt::escape(b_t::_($text,$noTranslate)).'</h2>'); 
+    b_debug::xxx($reply);
+    return $reply;
+  }
+  
+  static function H3($text,$noTranslate=False)  { 
+    return '<h3>'.b_fmt::escape(b_t::_($text,$noTranslate)).'</h3>'; 
+  }
+
+  /*
+   *
+   */
+  static function set_main_selector($input,$noPrint=False){
+    static $n = 0;
+    
+    $li = array('');
+    $enctype = (1 ? 'application/x-www-form-urlencoded' : 'multipart/form-data');
+    foreach($input as $label=>$selection){
+      if (!is_numeric($label)) $li[] = x("li role='label'",$label);
+      $li[] = x("li",
+		(preg_match('/<(select|input)/i',$selection)
+		 ? x(sprintf("form action='%s' method='POST' enctype='$enctype' class='only_online' name='%s%d' accept-charset='UTF-8'",
+			     b_url::same(),'selector',++$n),
+		     $selection)
+		 : $selection));
+    }
+    $reply = (x("div id='mypear_ul_selector'",x('ul',join("\n",$li))).
+	      x("div style='clear:both'",''));
+    if ($noPrint)   return $reply;
+    else            print  $reply;
+  }
+      
+  /*
+   *
+   */
+  static function setPageHeader($header,$strip_tags=True){
+    global $myPear_custom_title_striped,
+           $myPear_custom_title;
+
+    b_cache_file::CMS(__METHOD__,array($header));
+    $myPear_custom_title_striped = $header;
+
+    if (function_exists('drupal_set_title')) { 
+      // Drupal does not let html tags to be in the header
+      if (($header_striped = strip_tags($header)) != $header){
+	$myPear_custom_title = $header;
+	$myPear_custom_title_striped = $header_striped;
+	drupal_set_title($header_striped);
+      }else{
+	drupal_set_title($header);
+      }
+    }else{
+      $header = "<h1>$header</h1>\n"; 
+    }
+    b_debug::_debug($header,cnf_dev);
+    return $header;
+  }  
+
+}
+
 /*
  * Variables
  */
@@ -103,7 +1636,7 @@ class b_vars{
     if (!empty($value2)) $var_values[] = myPear_db()->quote(b_fmt::safe_encode($value2),True,'var_value2');
 
     // Create or update the record
-    myPear_db()->qquery((myPear::is_empty(self::get($name,$module))
+    myPear_db()->qquery((b_posix::is_empty(self::get($name,$module))
 			 ? "INSERT INTO zzz_variables SET ".join(',',array_merge($var_values,self::args($name,$module)))
 			 : "UPDATE zzz_variables SET ".join(',',$var_values)." WHERE ".join(' AND ',self::args($name,$module))),
 			True);
@@ -196,11 +1729,36 @@ class b_btn{
   }
 
   /*
+   * Really Big Button
+   */
+  static function big_button_grey($text,$url='',$bgColor=Null,$smaller=Null,$confirm=Null){
+    return self::big_button($text,
+			    $url,
+			    ($background=(stripos($text,'delete') === False ? 'grey' : 'red')),
+			    ($smaller_font=(is_bool($smaller) ? $smaller : True)),
+			    ($confirm=(stripos($text,'delete') !== False)));
+  }
+
+  static function big_button($text,$url='',$bgColor='green',$smaller=False,$confirm=True){
+    if (is_array($url)) $url = '?'.b_fmt::joinX('&',$url);
+    if (!empty($url) && (strpos($url,'?') !== 0)) $url = b_url::same($url);
+    return self::submit($text,
+			$url,
+			$confirm,
+			$class=($smaller ? "mdl" : "big" )."_button bg_$bgColor");
+  }
+  
+  /*
    * Button type="submit", uses Java-Script for the submittion, hence works without the <form> as well.
    * Raison d'être - to have multiple submit buttons in the form, not all of them "parts" of the <form>
    */
   static function submit($text, $url='', $confirm=False, $class='', $img=''){
-    $style = sprintf("style='padding:1px; font-size:small;' class='%s form-submit'",$class);
+    // Optionally translate ....
+    $maxL = 20;
+    $text = b_t::_(array('key'=>'button_'.(strlen($text)>$maxL?substr($text,0,$maxL):$text),'item'=>$text));
+
+    $style = "style='padding:1px; font-size:small;'";
+    $style = '';
     list($img,$type)= (!empty($img)
 		       ? array("src='$img'", 'image')
 		       : array('',           'submit'));
@@ -210,14 +1768,16 @@ class b_btn{
     if (stripos($url,b_crypt::hex_encode('confirm_yes')) !== False) $confirm = True;
     
     if (empty($url)){ 
-      $reply = "<input type='$type' value='$text' $style title='$text' name='_${url}' />\n";
+      $reply = "<input type='$type' value='$text' $style class='$class form-submit' title='$text' name='_${url}' />\n";
     }else{
       if (strpos($url,'?')===0) $url = b_url::repack($url);
       $url = str_replace('&amp;','&',$url);
-      if($confirm)
-	$reply = "<input type='$type' value='$text' $style $img onClick='return submitConfirm(this);' title='$text' name='$url' />\n";
-      else
-	$reply = "<input type='$type' value='$text' $style $img onClick='document.location.href=\"$url\";return false;' title='$text'/>\n";
+      $reply = sprintf("<input type='$type' value='$text' $style class='$class form-submit' $img onClick='%s' title='$text' name='%s' />\n",
+		       ($confirm 
+			? "return submitConfirm(this);"
+			: "document.location.href=\"$url\";return false;"),
+		       $url
+		       );
     }
     return $reply;
   }
@@ -232,16 +1792,6 @@ class b_btn{
 	       bIcons()->get(array('i'=>$icon,'d'=>$text_action,'class'=>"form-submit $min100"))));
   }
 
-  /*
-   * Really Big Button
-   */
-  static function big_button($text,$args=array(),$bgColor='green',$smaller=False,$confirm=True){
-    return self::submit($text,
-			b_url::same('?'.b_fmt::joinX('&',$args)),
-			$confirm,
-			$class=($smaller ? "mdl" : "big" )."_button bg_$bgColor");
-  }
-  
   /*
    * return "<a href='$url'>$text</a>"
    */
@@ -275,10 +1825,10 @@ class b_btn{
     // If the text in not an icon name, then continue
     if (empty($button)){
       if (!empty($text)){
-	$text = trim(bText::_($text));
+	$text = trim(b_t::_($text));
 	if (!preg_match('/^<.*>/',$text)) $text = str_replace(' ','&nbsp;',$text);
       }
-      $button = (is_string($img) ? "<img src=$img ".(strpos($img,'alt=')?'':" alt='$text' ")."/>" : '').$text;
+      $button = (is_string($img) ? "<img src=$img ".(strpos($img,'alt=')?'':" alt='$text' title='$text'")."/>" : '').$text;
       if (!empty($text)) $button = "&nbsp;[&nbsp;$button&nbsp;]&nbsp;";
     }
 
@@ -289,12 +1839,35 @@ class b_btn{
     return x("span class='only_online'","<a class='mypear_a' ".@$onclick." href='$url'>$button</a>");
   }
 
+  /*
+   *
+   */
   static function UL_buttons($submits){
     if (is_string($submits)) $submits = array($submits);
     $li = "li style='float:left;margin:2px;list-style:none;background:none'";
     $dv = "div class='centralized'";
     return x($dv,x('ul',b_fmt::joinMap($li,$submits)));
   }
+
+  /*
+   *
+   */
+  static function buttons_line($submits,$print=True){
+    if (empty($submits)){
+      $reply = "<!-- empty 'buttons_line' -->\n";
+    }else{
+      if (!is_array($submits)) $submits = array($submits);
+      $reply =
+	x("div style='clear:both'",'').
+	x('div class="buttons_line online_only"',
+	  x('ul',
+	    b_fmt::joinMap('li',$submits))).
+	x("div style='clear:both'",'');
+    }
+    if ($print) print "$reply\n";
+    else        return $reply;
+  }
+  
 }
 
 /*
@@ -303,9 +1876,21 @@ class b_btn{
 class b_fmt{
 
   /*
+   * convert 'Öle Åkaön','è','å','Å','ö','Ö','ä','Ä'
+   *      to 'Ole Åkaon','e','a','A','o','O','a','A'
+   */
+  static function translit($text,$killSpaces=False){
+    $text = preg_replace('/[\(\)]*/','',
+			preg_replace("/&([a-z])[a-z]+;/i", "$1", htmlentities($text)));
+    if ($killSpaces) $text = str_replace(' ','_',$text);
+    return $text;
+  }
+
+
+  /*
    *
    */
-  public static function safe_explode($delimiter,$value){
+  static function safe_explode($delimiter,$value){
     if (is_array($value)){
       $reply = $value;
     }else{
@@ -394,6 +1979,7 @@ class b_fmt{
     if (is_array($v))                                  return sprintf('array-%d(%s)',count($v),b_fmt::join($v));
     if (empty($v))                                     return b_fmt::escape(cnf_emptyString);
     if ($v instanceof bForm)                           return $v->__toString();
+    if ($v instanceof myPear_getValue)                 return $v->__toString();
     return $v;
   }
 
@@ -420,7 +2006,7 @@ class b_fmt{
     }
     
     // Convert everything to the lower case, then selectively apply 'mb_convert_case'
-    $text = mb_convert_case(mb_convert_case($text,MB_CASE_LOWER,'utf-8'),MB_CASE_TITLE,'utf-8');;
+    $text = mb_convert_case(mb_convert_case($text,MB_CASE_LOWER,'utf-8'),MB_CASE_TITLE,'utf-8');
     foreach(array(',','.','-','/',"'") as $s){
       if (strpos($text,$s) !== False){
 	$words = array();
@@ -896,7 +2482,7 @@ class b_fmt{
   }
   
   /*
-   * @param return "<$glue><$glue2>$k</$glue2><i>$v</i></$glue>";
+   * @param return "<$glue><$glue2>$key</$glue2><i>$value</i></$glue>";
    */
   static function joinMap($glue,$items=array(),$glue2=''){
     if (!is_array($items)) if(cnf_dev) b_debug::traceBack('input is NOT array');
@@ -1097,12 +2683,81 @@ class b_fmt{
       $reply = True;
     }elseif(is_array($array)){
       $reply = !empty($array) && ($array !== array_values($array));
-      //     var_dump($reply,$array);
     }else{
       b_debug::internalError("$array in not an array",$array);
     }
     return $reply;
   }
+
+  /*
+   *
+   * $a[0] and $a[1] are the width and height of the image.
+   * $a[2] has the image type.
+   *
+   * Other image formats include :
+   *
+   * [IMAGETYPE_UNKNOWN] => 0
+   * [IMAGETYPE_GIF]     => 1
+   * [IMAGETYPE_JPEG]    => 2
+   * [IMAGETYPE_PNG]     => 3
+   * [IMAGETYPE_SWF]     => 4
+   * [IMAGETYPE_PSD]     => 5
+   * [IMAGETYPE_BMP]     => 6
+   * [IMAGETYPE_TIFF_II] => 7
+   * [IMAGETYPE_TIFF_MM] => 8
+   * [IMAGETYPE_JPC]     => 9
+   * [IMAGETYPE_JPEG2000]=> 9
+   * [IMAGETYPE_JP2]     => 10
+   * [IMAGETYPE_JPX]     => 11
+   * [IMAGETYPE_JB2]     => 12
+   * [IMAGETYPE_SWC]     => 13
+   * [IMAGETYPE_IFF]     => 14
+   * [IMAGETYPE_WBMP]    => 15
+   * [IMAGETYPE_XBM]     => 16
+   * [IMAGETYPE_ICO]     => 17 // mpeg videos are detected as IMAGETYPE_ICO !!
+   * [IMAGETYPE_COUNT]   => 18
+   */
+  public static $image_size = array();
+  public static $image_size_string = '';
+  static function isImage($path,$get_size=False) {
+    b_debug::_debug($path,cnf_dev);
+    if ($reply = (file_exists($path) && !is_dir($path))){ 
+      if ($reply = in_array(exif_imagetype($path),
+                            array(IMAGETYPE_GIF , IMAGETYPE_JPEG ,IMAGETYPE_PNG , IMAGETYPE_BMP))){
+        // Optionally get the image size
+        if (!b_posix::is_empty($get_size)){
+	  static::$image_size = array();
+	  static::$image_size_string = '';
+	}else{
+          $a = getimagesize($path);
+	  static::$image_size = array($a[0],$a[1]);
+	  if ($get_size == 0){
+	    $c = 1;
+	    static::$image_size_string = '';
+	  }else{
+	    $max_size = $get_size;
+	    if (  ($a[1] <= $max_size) && ($a[0] <= $max_size)) $c = 1;
+	    elseif($a[1] <= $a[0])                              $c = $max_size / $a[0];
+	    else                                                $c = $max_size / $a[1];
+	    static::$image_size_string = sprintf("max-width='%s' max-height='%s'",
+						 (int)round($a[0]*$c),
+						 (int)round($a[1]*$c));
+/*	    
+	    if (  ($a[1] <= $max_size) && ($a[0] <= $max_size)) $c = 100;
+	    elseif($a[1] <= $a[0])                              $c = round(100 * $max_size / $a[0]);
+	    else                                                $c = round(100 * $max_size / $a[1]);
+	    static::$image_size_string = sprintf("width='%s' height='%s'","$c%","$c%");
+*/	    
+	  }
+	  b_debug::_debug("size=".var_export(static::$image_size,True).
+			  " string=".var_export(static::$image_size_string,True),cnf_dev);
+        }
+      }
+    }
+    b_debug::_debug($reply,cnf_dev);
+    return $reply;
+  }
+
   
   /*
    Sorry for my English
@@ -1326,6 +2981,7 @@ class b_pdf{
 
     // Keep the answer for the whole session
     if (!is_object(self::$cache_pdf)){
+      locateAndInclude('b_cache');
       self::$cache_pdf = new b_cache_S(__FUNCTION__);
     }
 
@@ -1353,7 +3009,7 @@ class b_pdf{
       self::$cache_pdf->set($save);
       bTiming()->cpu();
     }
-    if (!$isPDF) myPear::WARNING_T(self::$isPDF_error);
+    if (!$isPDF) MSG::WARNING_T(self::$isPDF_error);
     return !empty($isPDF);
   }
   
@@ -1399,6 +3055,7 @@ class b_pdf{
 /*
  * Set of debug helpers
  */
+if (!class_exists('myPear_base',False)) require_once "../myPear/includes/myPear_base.inc";
 class b_debug extends myPear_base{
 
   public static $backtraceData = '';
@@ -1429,7 +3086,7 @@ class b_debug extends myPear_base{
       elseif ($id=@$class->ID)         $classArgs[] = $id;
       elseif ($id=@$class->id)         $classArgs[] = $id;
       elseif ($id=@$class->parent_ID)  $classArgs[] = $id;
-      if($class instanceof bForm)      $classArgs[] = $class->MODE;
+      if($class instanceof myPear_getValue)      $classArgs[] = $class->MODE;
       $clas = get_class($class) . "(".join(',',$classArgs).")";      
     }elseif (is_string($class) && !empty($class)){
       $clas = $class;
@@ -1535,7 +3192,7 @@ class b_debug extends myPear_base{
       if (trim($t2))     $t2 = '['.trim($t2).'] ';
       if ($txt = $txt.($t2.$t3 ? $t2.b_fmt::_($t3):'')){
 	if ($color) $txt = "<span class='$color'>$txt</span>";
-	myPear::DEBUG($txt);
+	MSG::DEBUG($txt);
       }
     }
   }
@@ -1622,7 +3279,7 @@ class b_debug extends myPear_base{
 	    $level = 2;
 	    $color='maroonText';
 	    break;
-	  case 'L': // Load &  require
+	  case 'L': // Load & include
 	    $stringFormat = 'L';
 	    if ($toPrint===Null) $toPrint = cnf_show_l;
 	    break;
@@ -1663,7 +3320,7 @@ class b_debug extends myPear_base{
       case 'I':   $dbgString = sprintf("... %s %s",$caller,$text);                  $color='maroonText';  break;
       case 'L':   $dbgString = sprintf("... %s",$text);                             $color='blueText';    break;
       case 'M':   $dbgString = sprintf("--- %s %s", $caller, $text);                $color='fuchsiaText'; break;
-      case 'A':   $dbgString = sprintf("--- <code>%-3s</code> %s",$text,$caller);   $color='redText';     break;
+      case 'A':   $dbgString = sprintf("--- <tt>%-3s</tt> %s",$text,$caller);   $color='redText';     break;
       case 'AA':  $dbgString = sprintf("%s %s", $caller, $text);                    $color='redText';     break;
       case 'DB':  $dbgString = sprintf("%s %s",str_replace('bDB','DB',$caller), $text); $color='greenText';   break;
       default:    $dbgString = sprintf("%s %s", $caller, $text);
@@ -1674,7 +3331,7 @@ class b_debug extends myPear_base{
 	if (isset($class) && is_object($class) && (bool)@$class->nodrupal){
 	  printf("<br/>\n%s%s\n",self::s_e_depth(),$dbgString);
 	}else{
-	  myPear::DEBUG($dbgString);
+	  MSG::DEBUG($dbgString);
 	}
       }
     }
@@ -1713,6 +3370,7 @@ class b_debug extends myPear_base{
     }elseif(is_bool($arg) || ($arg === Null)){
       $arg = var_export($arg,True);
     }elseif(is_string($arg)){
+      $arg = str_replace(ROOT_DEBUG.'/','',$arg);
       $arg = (strlen($arg)>$max_s_l?substr($arg,0,$max_s_l).' ...' : $arg);
       if (strip_tags(trim($arg)) !== trim($arg)) $arg = b_fmt::escape($arg);
       $arg = "'$arg'"; // as var_export does...
@@ -1763,7 +3421,7 @@ class b_debug extends myPear_base{
    */
   public static function _debug($txt='',$flags=array(1),$message_class='debug'){
 
-    if (!in_array($message_class,array('status','error','debug','warning','SICK')) && cnf_dev) b_debug::internalError('??? '.__method__);    
+    if (!in_array($message_class,array('status','error','debug','warning','SICK')) && cnf_dev) b_debug::internalError("??? unknown message class '$message_class' ".__method__);
     if ( in_array($message_class,array('debug','SICK')) && !cnf_dev) return;
     
     static $color_codes = array('I' => array('c'=>'maroonText', // instance
@@ -1846,18 +3504,23 @@ class b_debug extends myPear_base{
    *
    */
   static function traceBack($id='',$object=Null,$ignore_args=False){
-    ob_start();
-    $callStack = debug_backtrace(False);
-    $t = new b_table_zebra(array('n'=>' ','b'=>' ','l'=>' '));
-    $t->showLineCounter = False;
-    foreach($callStack as $k=>$call) $t->prt(array('n'=>x('code class=smaller-text',"$k"),
-						   'b'=>x('code class=smaller-text',self::parse_tb_entry($call)),
-						   'l'=>x('code class=smaller-text',preg_replace(';(.*/caa|'.trim(`pwd`).')/;','',@$call['file'].'#'.@$call['line']))));
-    $t->close();
-    $tb = array(x('strong',(empty($id) ? 'TraceBack:' : $id)),
-		ob_get_contents());
-    ob_end_clean();
-    myPear::DEBUG(join('<br>',$tb));
+    static $recursion = 0;
+    if (!$recursion++){
+      locateAndInclude('b_table');
+      ob_start();
+      $callStack = debug_backtrace(False);
+      $t = new b_table_zebra(array('n'=>' ','b'=>' ','l'=>' '));
+      $t->showLineCounter = False;
+      foreach($callStack as $k=>$call) $t->prt(array('n'=>x('tt class=smaller-text',"$k"),
+						     'b'=>x('tt class=smaller-text',self::parse_tb_entry($call)),
+						     'l'=>x('tt class=smaller-text',preg_replace(';(.*/caa|'.trim(`pwd`).')/;','',@$call['file'].'#'.@$call['line']))));
+      $t->close();
+      $tb = array(x('strong',(empty($id) ? 'TraceBack:' : $id)),
+		  ob_get_contents());
+      ob_end_clean();
+      MSG::DEBUG(join('<br>',$tb));
+    }
+    $recursion--;
   }
   
   /*
@@ -1890,7 +3553,6 @@ class b_debug extends myPear_base{
 	}
       }
     }
-    return;
     die("INTERNAL ERROR: $txt\n");
   }
   
@@ -1905,6 +3567,9 @@ class b_debug extends myPear_base{
 			  True);
   }
   
+  /*
+   *
+   */
   static function get_diagnostics(){
 
       ob_start();
@@ -1913,11 +3578,13 @@ class b_debug extends myPear_base{
       print x('h2',__method__.'()');
       print x('pre',date('Y-m-d H:i:s',time()));
       
+      printf("\n<h2>---Current module \"%s\"</h2>\n",b_reg::$current_module);
+      
       print "\n<h2>---Database transactions</h2>\n";
       printf("%s = %s\n",x('strong','in_autocommit'), var_export(myPear_db()->in_autocommit, True));
       printf("%s = %s\n",x('strong','in_transaction'),var_export(myPear_db()->in_transaction,True));
-
-      if (is_object(bAuth::$av)){
+      
+      if (class_exists('bAuth',False) && is_object(bAuth::$av)){
 	print "\n<h2>---__AUTHENTICATION</h2>\n";
 	print bAuth::$av->__toString()."\n";
 	print bAuth::$av->fmtName('Lf')."\n";
@@ -1973,13 +3640,13 @@ class b_debug extends myPear_base{
 	$l[] = x('td',self::print_r($a, "$req", $doNotPrint=True));
       }
     }
-    myPear::DEBUG(str_replace(array('[',']'),'',x("table class='align_left b_table'",x('tr',join('',$l)))));
+    MSG::DEBUG(str_replace(array('[',']'),'',x("table class='align_left b_table'",x('tr',join('',$l)))));
   }
   
   /*
    *
    */
-  static function print_r(&$array,$txt='',$doNotPrint=False) {
+  static function print_r($array,$txt='',$doNotPrint=False) {
 
     if ($txt === 'get_diagnostics'){
       $txt = '';
@@ -2008,7 +3675,7 @@ class b_debug extends myPear_base{
     if (!empty($array)){
       $dropped = $o = array();
       if (!empty($array)) foreach($array as $k=>$v){
-	  if (myPear::is_empty($v) && !$nosort) $dropped[] = $k;
+	  if (b_posix::is_empty($v) && !$nosort) $dropped[] = $k;
 	  else $o[$k] = (is_string($v) ? trim(strip_tags($v)) : $v);
 	}
       if (!$nosort) ksort($o);
@@ -2039,7 +3706,7 @@ class b_debug extends myPear_base{
 					   str_replace(']','',
 						       str_replace("\n",'<br/>',$print_r))));
 	if ($doNotPrint) return x('pre class="print_r"',$print_r);
-	else      myPear::DEBUG(x('pre class="print_r"',$print_r));
+	else      MSG::DEBUG(x('pre class="print_r"',$print_r));
       }
     }
   }
@@ -2055,7 +3722,7 @@ class b_debug extends myPear_base{
     ob_end_clean();
     $reply = sprintf("<pre>%s(%s)\n%s</pre>",__METHOD__,$id,$dump);
     if ($return)        return $reply;
-    else         myPear::DEBUG($reply);
+    else         MSG::DEBUG($reply);
   }
 
   /*
@@ -2072,7 +3739,7 @@ class b_debug extends myPear_base{
       print self::getTraceBack();
     }else{
       if (empty($id)) $id = 'TraceBack:';
-      myPear::DEBUG(x('strong',$id).'<br/>'.		    
+      MSG::DEBUG(x('strong',$id).'<br/>'.		    
 		    self::getTraceBack(True,$ignore_args));
       self::print_r($object,__FUNCTION__);
     }
@@ -2215,7 +3882,7 @@ class b_time{
    * Make sure that $start < $end
    */ 
   public static function adjust_start_end(&$start,&$end){
-    if (myPear::is_int($start) && myPear::is_int($end) && ($start > $end)){
+    if (b_posix::is_int($start) && b_posix::is_int($end) && ($start > $end)){
       $t = $start; 
       $start = $end; 
       $end = $t; 
@@ -2229,7 +3896,7 @@ class b_time{
   public static function date($format,$date=Null){
     if (empty($date)) $date = date();
     $date = b_time::txt2unix($date);
-    $reply = (myPear::is_int($date)
+    $reply = (b_posix::is_int($date)
 	      ? date($format,$date)
 	      : $date);
     return $reply;
@@ -2281,7 +3948,7 @@ class b_time{
   }
 
   public static function long_week($date=Null){
-    return b_time::strftime(bText::_('week').' '.rbs_weekNumberCode.', '.bText::_('year').' %Y',$date);
+    return b_time::strftime(b_t::_('week').' '.rbs_weekNumberCode.', '.b_t::_('year').' %Y',$date);
   }
 
   public static function short_week($date=Null){
@@ -2292,7 +3959,7 @@ class b_time{
     return b_time::strftime("%B %Y",$date);
   }
   public static function long_year($date=Null){
-    return b_time::strftime(bText::_('year').' %Y',$date);
+    return b_time::strftime(b_t::_('year').' %Y',$date);
   }
 
   /*
@@ -2610,7 +4277,7 @@ class b_time{
     elseif ((int)$time2 >= (int)$start && (int)$time2 <= (int)$end) $r = True;
     elseif ((int)$time1 <= (int)$start && (int)$time2 >= (int)$end) $r = True;
     else                                                            $r = False;
-    if (False) myPear::DEBUG(x('pre',
+    if (False) MSG::DEBUG(x('pre',
 			       "test ".b_time::strftime("%F",$time1).' '.b_time::strftime("%F",$time2)."\n".($r?'IN ':'OUT').
 			       "  ".   b_time::strftime("%F",$start).' '.b_time::strftime("%F",$end)));
     return $r;
@@ -2687,6 +4354,39 @@ class b_time{
  * users are stored in the database(s) during the myPear lifetime
  */
 class b_posix{
+
+  /*
+   * (string)'0' & (int)0 are NOT empty value for this function
+   */
+  public static function is_empty($value){
+    if (is_string($value))     $value = trim($value);
+    $reply = empty($value) && ($value !== 0) && ($value !== '0');
+    return $reply;
+  }
+
+  /*
+   * 0 is not int for this function
+   */
+  public static function is_int($value){
+    $reply = !empty($value) && (is_int($value) || is_numeric($value));
+    return $reply;
+  }
+
+
+  /*
+   * Compare two values (start '===')
+   */
+  public static function is_equal($v1,$v2){
+    if (is_string($v1)) $v1 = trim($v1);
+    if (is_string($v2)) $v2 = trim($v2);
+    $reply = ($v1 === $v2);
+    if (($v1 !== Null) && ($v2!==Null)){
+      if (!$reply && (is_numeric($v1) || is_numeric($v2))) $reply = ((string)$v1 === (string)$v2);
+      if (!$reply) $reply = ($v1 == $v2);
+    }
+    return $reply;
+  }
+
   /*
    * name   The name element contains the username of the user. 
    *        This is a short, usually less than 16 character "handle" of the user, not the real, full name. 
@@ -2759,7 +4459,9 @@ class b_cc{
       $reply = '';
     }
     if (cnf_show_c) b_debug::xxx("$reply ");
-    return $reply;
+    return (strlen($reply) > 2
+	    ? b_t::_(array('key'=>'cc_'.$reply,'item'=>$reply))
+	    : $reply);
   }
   
   static function getContinent($country_code){
@@ -2768,7 +4470,9 @@ class b_cc{
       $reply = $country_code;
     }
     if (cnf_show_c) b_debug::xxx("$reply ");
-    return $reply;
+    return (strlen($reply) > 2
+	    ? b_t::_($reply)
+	    : $reply);
   }
 
   static function getCC($country_name){
@@ -3001,7 +4705,7 @@ class b_crypt{
       break;
       
     default:
-      myPear::ERROR(b_debug::__());
+      MSG::ERROR(b_debug::__());
       return $string;
     }
     b_debug::xxx("$encoding $reply",array(2,'M',True));
@@ -3115,8 +4819,8 @@ class b_crypt{
       if (is_numeric($key)) $reply_int[$key] = $value;
       else                  $reply_txt[$key] = $value;
     }
-b_debug::xxx('reply_int: '.b_fmt::joinX(',',$reply_int));
-b_debug::xxx('reply_txt: '.b_fmt::joinX(',',$reply_txt));
+    b_debug::xxx('reply_int: '.b_fmt::joinX(',',$reply_int));
+    b_debug::xxx('reply_txt: '.b_fmt::joinX(',',$reply_txt));
     return array($reply_int,$reply_txt);
   }
 
@@ -3141,10 +4845,11 @@ b_debug::xxx('reply_txt: '.b_fmt::joinX(',',$reply_txt));
    */
   public static function urlize($str, $delimiter='', $replace=array()) {
     if(!empty($replace)) $str = str_replace((array)$replace, ' ', $str);
+    return b_fmt::translit(trim($str));
 
     $clean = iconv('UTF-8', 'ASCII//TRANSLIT', $str);
     if ($clean === False){
-      myPear::WARNING_T("iconv('UTF-8', 'ASCII//TRANSLIT', $str) FAILED");
+      MSG::WARNING_T("iconv('UTF-8', 'ASCII//TRANSLIT', $str) FAILED");
       $clean = html_entity_decode(htmlentities($str, ENT_QUOTES, 'UTF-8'), ENT_QUOTES , 'ISO-8859-15');
     }
     $clean = preg_replace("/[^a-zA-Z0-9\/_|+ -]/", '', $clean);
@@ -3509,7 +5214,7 @@ class b_cms{
     }
 
     if (empty($flavor) || cnf_CLI){
-      if (!empty($desired_theme)) myPear::WARNING("The desired theme \"$desired_theme\" does not exist");
+      if (!empty($desired_theme)) MSG::WARNING("The desired theme \"$desired_theme\" does not exist");
       return;
     }elseif (($current_flavor = @$_SESSION[myPear_cache][__METHOD__]) === $flavor){
       return;
@@ -3533,7 +5238,7 @@ class b_cms{
 	  module_list(TRUE, FALSE, FALSE, $module_list);
 	  drupal_load('module', 'system');
 	}
-	if (!empty($current_flavor)) myPear::WARNING("Fail (don't know how to do it) to change theme to '$current_flavor --> $flavor'");
+	if (!empty($current_flavor)) MSG::WARNING("Fail (don't know how to do it) to change theme to '$current_flavor --> $flavor'");
 	variable_set('theme_default', $flavor);
 	break;
       case 6:
@@ -3600,7 +5305,7 @@ class b_url{
     if ($replace){
       if (stripos($url,'https://') === False) $url = preg_replace('|^http:/+|i',$http,$url);
     }else{
-      $url = sprintf('%s%s/%s',$http,$_SERVER['HTTP_HOST'],$url);
+      $url = sprintf('%s%s/%s',$http,@$_SERVER['HTTP_HOST'],$url);
     }
     if ($url !== $url_) b_debug::xxx($url,array(2,'redText',True));
     return $url;
@@ -3697,6 +5402,7 @@ class b_url{
    */  
   private static function repack_init(){
     if (!empty(b_cnf::$_GET_dropped_by_drop_all_array)){
+      locateAndInclude('b_registry');
       foreach(b_cnf::$_GET_dropped_by_drop_all_array as $item)b_cnf::$_GET_never_dropped[] = $item;
       foreach(b_reg::get_modules() as $m)            b_cnf::$_GET_never_dropped[] = "${m}_.*";
       //b_debug::print_r(b_cnf::$_GET_never_dropped,'_GET_never_dropped');
@@ -3975,12 +5681,12 @@ class b_os{
       fclose($fp);
     }
     if (empty($bytes)){
-      myPear::ERROR("Can not open Excel output file");
+      MSG::ERROR("Can not open Excel output file");
     }else{
       $bytes = (($bytes > 1023)
 		? ((int)(($bytes+512)/1024)).'KB'
 		: "$bytes Bytes");
-      myPear::MESSAGE(// "Written $bytes of data.". 
+      MSG::MESSAGE(// "Written $bytes of data.". 
 		      " Click <a href='$fn'>".bIcons()->get('i-m_excel').
 		      "</a> to download Excel file \"".str_ireplace('csv','',basename($file))."\"");
     }
@@ -4068,10 +5774,10 @@ class b_os{
 	}
 	umask($oldumask); 
 	$text   = preg_replace(';.*/trunk/;','&lt;trunk&gt;/',str_replace(getcwd(),'&lt;cwd&gt;',$dir));
-	if (cnf_dev && $ok) myPear::MESSAGE("creating $text umask=".$umask);
+	if (cnf_dev && $ok) MSG::MESSAGE("creating $text umask=".$umask);
       }
       if (!is_dir($dir)){
-	myPear::ERROR(b_debug::__()." can't create '$dir'");
+	MSG::ERROR(b_debug::__()." can't create '$dir'");
 	$reply = False;
       }
       //      $l = error_reporting($l);
@@ -4097,12 +5803,13 @@ class b_os{
     case 'M':    $ret *= 1024;
     case 'K':    $ret *= 1024;
     }
+    if ($v != $ret) b_debug::_debug("$v --> $ret",cnf_dev);
     return $ret;
   }
 
   static function max_upload_size(){
     $max_upload_size = min(($p=self::php_settings('post_max_size')), ($f=self::php_settings('upload_max_filesize')));
-    b_debug::xxx(($max_upload_size/1024/1024)."MB (max post=".($p/1024/1024)."MB max_file=".($f/1024/1024)."MB)",array('M',(bool)b_cnf::get('debug'),2));
+    b_debug::_debug(($max_upload_size/1024/1024)."MB (max post=".($p/1024/1024)."MB max_file=".($f/1024/1024)."MB)",cnf_dev);
     return $max_upload_size;
   }
 
@@ -4157,7 +5864,7 @@ class b_os{
     if (!preg_match('/(2>|2\s>)/',$cmd)) $cmd = "{ $cmd; } 2>&1";
     if (cnf_debug || cnf_show_exec){
       if (cnf_CLI) print "$cmd\n";
-      else         myPear::DEBUG("b_os::exec:<br/>".str_replace(';','<br/>',$cmd));
+      else         MSG::DEBUG("b_os::exec:<br/>".str_replace(';','<br/>',$cmd));
     }
     ob_start();
     system("$cmd");
@@ -4170,7 +5877,7 @@ class b_os{
 	if (strpos($err,$ifFails) === False) break;
 
       case 'print':
-	myPear::WARNING($msg=x('pre',b_fmt::escape($err))); 
+	MSG::WARNING($msg=x('pre',b_fmt::escape($err))); 
 	if (cnf_dev) b_debug::xxx($msg);
 	break;
 
@@ -4222,11 +5929,11 @@ class b_os{
 	if (file_exists($from)){
 	  if (!is_file($tmpFile)) copy(realpath(dirname($file).DIRECTORY_SEPARATOR.$url),$tmpFile);
 	}else{
-	  myPear::WARNING_T("'$from' does not exist");
+	  MSG::WARNING_T("'$from' does not exist");
 	}
       }
       $path = b_os::path() . 'echo $PATH;';
-      myPear::WARNING("'".basename($file)."' needs an executable '$name',".
+      MSG::WARNING("'".basename($file)."' needs an executable '$name',".
 		      "which in not installed on your server '".`hostname`."'<br/>within the search PATH=".`$path`.'<br/><br/>'.
 		      'Please upgrade your software. '.($url
 							? "<br/><a href='$tmpFile'>Download $name from here.</a><br/>"
@@ -4345,7 +6052,15 @@ class b_cnf{
     if (isset($reply))      return $reply;
     else                    return Null;
   }
-  
+
+  /*
+   *
+   */  
+  static function _GET_and_unset($name) {
+    static $tmp;
+    $tmp = @$_GET[$name]; b_cnf::_unset($name);
+    return $tmp; 
+  }
   
   /*
    * Save the key from _REQUEST into the session
@@ -4366,6 +6081,7 @@ class b_cnf{
     if (!in_array($keyL,self::$never_cache) && isset($value)){
       $_SESSION[CONST_cnfOptions][$keyL] = (string)$value;
     }
+    //    if ($keyL == 'act_code') var_dump($_POST,True);
     if (isset($oldValue))  return $oldValue;
   }
 
@@ -4399,10 +6115,9 @@ class b_cnf{
 	      $_SESSION[CONST_cnfOptions][$keyL]);
       }
     }
-    if (defined('cnf_dev')){
-      if (cnf_dev && !empty($dbg)) b_debug::print_r($dbg,b_debug::__());
-    }
-  }
+    if (@$dbg && defined('cnf_dev')) b_debug::print_r($dbg,__method__);
+    //    if (@$dbg) b_debug::var_dump($dbg);
+}
 
   
   /*
