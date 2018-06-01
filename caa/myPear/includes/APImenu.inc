@@ -43,14 +43,20 @@ function _myPear_access_callback($menuItem){
   return myPear::_MENU()->access_callback($menuItem);
 }
 
+/*
+ *
+ */
 class APItabs extends myPear_base{
 
-  public  static $_ = '';
-  public  static $q = array();
-  public  static $tab_definition = array();
+  public static $_ = '';
+  public static $q = array();
+  public static $tab_definition = array();
   public static $_dbg_color = 'fuchsiaText';
   public static $_debug = cnf_dev;
   
+  /*
+   *
+   */
   public static function define_tabs($tabs,$ignoreQ=False){
 
     foreach($tabs as $code=>$text) APItabs::define_tab($code,$text);
@@ -63,7 +69,7 @@ class APItabs extends myPear_base{
 	       ? @$GLOBALS["code2tab"][$v]
 	       : $v);
 	if (empty($hr)){
-	  //	  if (self::$q[0] == b_reg::$current_module) myPear::WARNING_T("??? tab '$v' does not exist");
+	  //	  if (self::$q[0] == b_reg::$current_module) MSG::WARNING_T("??? tab '$v' does not exist");
 	  break;
 	}else{
 	  // Keep the decoded tab for future use
@@ -193,8 +199,10 @@ class APImenu extends myPear_base{
     // 
     $menuItem_encoded = APImenu::tab_code($menuItem);
     if (!empty($menuItem_encoded) && (strpos(@$_SERVER['HTTP_REFERER'].$_GET['q'],"/$menuItem_encoded") !== False)){
-      $this->dbg("Force staying on the page",cnf_dev);
-      return True;
+      // $this->dbg("Force staying on the page '$menuItem'",cnf_dev);
+      $reply = True;
+      $this->dbg($reply,array(cnf_show_a));
+      return $reply;
     }
 
     switch ($menuItem){
@@ -205,7 +213,7 @@ class APImenu extends myPear_base{
 
     case tab__bText: 
       locateAndInclude('bText');
-      $reply = is_object(bAuth::$av) && bAuth::$av->isManager() && bText::$doTranslation;
+      $reply = is_object(bAuth::$av) && bAuth::$av->isManager() && b_t::$doTranslation;
       break;
 
     case tab__search:
@@ -239,7 +247,7 @@ class APImenu extends myPear_base{
     default:
       $reply = Null;
     }
-    if ($reply !== Null)    $this->dbg($reply);
+    if ($reply !== Null)    $this->dbg($reply,array(cnf_show_a));
     return $reply;
    }
 
@@ -251,6 +259,7 @@ class APImenu extends myPear_base{
     //
     // Set the proper context
     //
+    myPear_clean_once();
     bForm_Avatar::set_context(bAuth::$av);
     self::set_context($this->q);
 
@@ -295,7 +304,7 @@ class APImenu extends myPear_base{
 		  '_post_bForm_class_once',
 		  'holder',
 		  ) as $t) if (in_array($t,array_keys($_REQUEST)) && !empty($_REQUEST[$t])){ 
-      b_debug::xxx("\$_REQUEST[$t] = ".$_REQUEST[$t],cnf_dev);
+      b_debug::_debug("\$_REQUEST[$t] = ".$_REQUEST[$t],cnf_dev);
       switch($t){
 	
 	case 'login':
@@ -342,7 +351,7 @@ class APImenu extends myPear_base{
 
       case 'function_form':	  
 	if (function_exists($_GET[$t])){
-	  $f=call_user_func($_GET[$t],$_GET['arg_once'],@$_GET['arg2_once']);
+	  $f=call_user_func($_GET[$t],$_GET['arg1_once'],@$_GET['arg2_once']);
 	  $f->getForm();
 	  return Null;
 	}
@@ -361,18 +370,18 @@ class APImenu extends myPear_base{
 	  }else{
 	    $c = $m = 'not set';
 	  }
-	  $dbg = "$f(".join(',',array(var_export(@$_GET['arg_once'],True),var_export(@$_GET['arg2_once'],True))).")";
+	  $dbg = "$f(".join(',',array(var_export(@$_GET['arg1_once'],True),var_export(@$_GET['arg2_once'],True))).")";
 	  if (function_exists($f) || method_exists($c,$m)){
 	    b_debug::xxx("call_user_func($dbg)",array(cnf_dev));
 	    if (strpos($f,'--') !== False){
 	      $object = new $c();
-	      $object->$m(@$_GET['arg_once'],@$_GET['arg2_once']);
+	      $object->$m(@$_GET['arg1_once'],@$_GET['arg2_once']);
 	    }else{
-	      call_user_func($f,@$_GET['arg_once'],@$_GET['arg2_once']);
+	      call_user_func($f,@$_GET['arg1_once'],@$_GET['arg2_once']);
 	    }
 	    return Null;
 	  }else{
-	    myPear::WARNING_T("??? declared function \"$dbg\" not found");
+	    MSG::WARNING_T("??? declared function \"$dbg\" not found");
 	  }
 	  break 2;
 	  
@@ -381,7 +390,7 @@ class APImenu extends myPear_base{
 	  //
 	  // Forced tab, has precedence over the "q" tab
 	  //
-	  myPear::WARNING_T("tab_force='$_GET[$t]', unset tab='$tab'");
+	  MSG::WARNING_T("tab_force='$_GET[$t]', unset tab='$tab'");
 	  $tab = $_GET[$t];
 	  b_cnf::_unset('holder');
 	  break 2;
@@ -398,7 +407,7 @@ class APImenu extends myPear_base{
 	foreach(array('id'  => '_post_bForm_ID_once',
 		      'form'=> '_post_bForm_class_once') as $_g=>$_p){
 	  if (empty($_GET[$_g]) && !empty($_REQUEST[$_p]))  $_GET[$_g] = $_REQUEST[$_p];
-	  if (($__g=@$_GET[$_g]) !== ($__p=$_REQUEST[$_p])) myPear::WARNING_T("??? $__g !== $__p",$this); 
+	  if (($__g=@$_GET[$_g]) !== ($__p=$_REQUEST[$_p])) MSG::WARNING_T("??? $__g !== $__p",$this); 
 	}
       case 'form':
 
@@ -413,7 +422,7 @@ class APImenu extends myPear_base{
 	case 'bForm_Avatar_Search':
 	  if (($tab_o=$tab) != tab__mergeAV){
 	      $tab = tab__search;
-	      myPear::WARNING_T("tab $tab_o ==> $tab");
+	      MSG::WARNING_T("tab $tab_o ==> $tab");
 	  }
 	case 'bForm':
 	case 'bForm_lists':
@@ -426,9 +435,9 @@ class APImenu extends myPear_base{
 	  // Applying template
 	  $id = @$_GET['id'];
 	  if (!empty($id) && locateAndInclude($form)){
-	    // myPear::WARNING_T("applying template '$form'");
+	    // MSG::WARNING_T("applying template '$form'");
 	    $f = new $form($id,(isset($_GET['mode']) ? $_GET['mode'] : 'RO'));
-	    if (!(int)$id || ($id  == $f->ID)){
+	    if (!(int)$id || ($id == $f->ID)){
 	      if ($url = b_url::getReferrer('bUnit'))  $f->buttons_external[] = b_btn::submit(b_url::$getReferrer_comment, $url);
 	      $f->getForm();
 	      return Null;
@@ -442,7 +451,7 @@ class APImenu extends myPear_base{
 	  //
 	  // holder template
 	  //
-	  // myPear::WARNING_T("applying template bHolder_$t");
+	  // MSG::WARNING_T("applying template bHolder_$t");
 	  locateAndInclude($h="bHolder_$_GET[holder]",'fatal');
 	  $h = new $h();
 	  $h->listEntries();
@@ -510,7 +519,7 @@ class APImenu extends myPear_base{
 	//
 	// an exotic case when the API knows which tab to be pressed
 	//
-	myPear::WARNING_T("tab $tab===>'$_GET[tab_mypear]'");
+	MSG::WARNING_T("tab $tab===>'$_GET[tab_mypear]'");
 	$tab = $$_GET['tab_mypear'];
 	break 2;
       }
@@ -534,9 +543,9 @@ class APImenu extends myPear_base{
       break;
       
     case tab__lists:
-      myPear::WARNING('TBD');
+      MSG::WARNING('TBD');
     case tab__units:
-      myPear::WARNING('TBD');
+      MSG::WARNING('TBD');
       break;      
 
     case tab__templates:
@@ -569,7 +578,7 @@ class APImenu extends myPear_base{
       // editor for the translation dictionary
     case tab__bText:
       $common = True;
-      bText::getForm();
+      b_t::getForm();
       break;
       
       // locate the people which have clashing identities
@@ -646,7 +655,7 @@ class APImenu extends myPear_base{
     // Build low level menu
     foreach(array_values($this->static_menu[$tab_top]) as $tab){
       if ($this->access($tab)){
-	$weight = (myPear::is_empty($w=$this->tabWeight[$tab]) 
+	$weight = (b_posix::is_empty($w=$this->tabWeight[$tab]) 
 		   ? $w
 		   : APItabs::get_tab($tab).$tab);
 	$acts[$weight] = x('li',x("a href='?q=$_GET[q]/".APItabs::tab2code($tab)."'",x($b,ucwords(APItabs::get_tab($tab)))));
@@ -823,7 +832,7 @@ function APImenu_title_callback($tab, $dTab='',$returnText=False){
     $menuItem = APItabs::get_tab($tab);
     $menuItem = ($returnText
 		 ? $menuItem
-		 : t(bText::_(array('key' => "MENU_$tab",'item'=> $menuItem))));
+		 : t(b_t::_(array('key' => "MENU_$tab",'item'=> $menuItem))));
   }
   return $menuItem;
 }

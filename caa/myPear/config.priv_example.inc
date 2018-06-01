@@ -3,12 +3,17 @@
 // Settings for the MySQL database.
 // The database must exist and be writable by the user
 //
-foreach(array('host'  =>'localhost:3306',
+
+// Database engine class (NOT TO BE CHANGED!)
+$GLOBALS['DBengine'] = $DBengine = 'bDB_myPear';
+
+// Access parameter
+foreach(array('host'  =>'localhost',
 	      'dbname'=>'combodb',
               'user'  =>'username',
               'passwd'=>'secret',
 	      ) as $item=>$v){
-  $GLOBALS["bDB_myPear_$item"] = $v;
+  $GLOBALS[$DBengine][$item] = $v;
 }
 
 //

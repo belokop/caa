@@ -70,8 +70,8 @@ if (locateAndInclude(array('Mail',
       
       // Skip the installation phase
       if (!$this->isReady){
-	if (cnf_dev) myPear::DEBUG('!!!!! '.get_class($this). ' is not initialized, can\'t send mails');
-	if (cnf_dev) myPear::ERROR('!!!!! '.get_class($this). ' is not initialized, can\'t send mails');
+	if (cnf_dev) MSG::DEBUG('!!!!! '.get_class($this). ' is not initialized, can\'t send mails');
+	if (cnf_dev) MSG::ERROR('!!!!! '.get_class($this). ' is not initialized, can\'t send mails');
 	return Null;
       }
 
@@ -86,7 +86,7 @@ if (locateAndInclude(array('Mail',
       $this->dbg("to=$to,from=".$this->from.",subject=".$this->subject);
       
       if ($n=@$GLOBALS['mailDejaVu'][$to][$this->from][$this->subject]++){
-	if (static::$_debug||cnf_dev||cnf_demo)  myPear::DEBUG("SKIP dejavu".($n+1).": to=$to subject=".$this->subject);
+	if (static::$_debug||cnf_dev||cnf_demo)  MSG::DEBUG("SKIP dejavu".($n+1).": to=$to subject=".$this->subject);
 	return Null;
       }
       
@@ -96,12 +96,12 @@ if (locateAndInclude(array('Mail',
 		 : $to);
       // See myPear_taskManager
       if ($task_report_to = @$GLOBALS['task_report_to']){
-	myPear::WARNING("Replace recipient by a developer: $realTO ==> $task_report_to");
+	MSG::WARNING("Replace recipient by a developer: $realTO ==> $task_report_to");
 	//	$realTO = $task_report_to;
       }
       
       if (($realTO != cnf_demo_email()) && (cnf_localhost || cnf_dev || cnf_demo)){
-	myPear::ERROR("To be sent to <em>$realTO</em>, not to <em>".cnf_demo_email()."</em>... Correct?");
+	MSG::ERROR("To be sent to <em>$realTO</em>, not to <em>".cnf_demo_email()."</em>... Correct?");
 	return False;
       }
       
@@ -244,7 +244,7 @@ if (locateAndInclude(array('Mail',
 							  $data,
 							  ""));
 	  }else{
-	    myPear::ERROR("Declared attachment '$file' is not accessible");
+	    MSG::ERROR("Declared attachment '$file' is not accessible");
 	  }
 	}
 	$this->attachments = array();
@@ -373,7 +373,7 @@ if (locateAndInclude(array('Mail',
       $SMTP_info = ($add_SMTP_info
 		    ? '<br/>'.x('strong','SMTP server: ').b_fmt::joinX(', ',$this->smtp_factory)
 		    : '');
-      myPear::WARNING(join('<br>',array(x('strong','E-mail is NOT sent!!'),
+      MSG::WARNING(join('<br>',array(x('strong','E-mail is NOT sent!!'),
 					x('strong','To: ').join(', ',array_unique($this->recipientsEscaped)),
 					x('strong','Subject: ').$this->subject . $SMTP_info,
 					x('em',x('strong','Reason: ').$msg),
@@ -399,7 +399,7 @@ if (locateAndInclude(array('Mail',
 
       $this->dbg();      
       if ($av_id instanceof bForm_Avatar) $av = $av_id;
-      else                                $av = myPear::getInstance_new(bForm_Avatar::$bForm_Avatar,$av_id,array('strict','nocache'));
+      else                                $av = loader::getInstance_new(bForm_Avatar::$bForm_Avatar,$av_id,array('strict','nocache'));
       $this->no_preview = True;
       $this->send(array($av),
 		  $av->getEmail(),
@@ -474,7 +474,7 @@ Remember to save this mail or book-mark the URL to facilitate later access to th
 	$listOfUnsentEmails = array_unique($listOfUnsentEmails);
 	sort($listOfUnsentEmails);
 	$n = count($listOfUnsentEmails);
-	if (!empty($listOfUnsentEmails)) myPear::WARNING(x('strong',"The following $n email".($n>1?'s are':' is ')." still to be sent:").'<br/>'.
+	if (!empty($listOfUnsentEmails)) MSG::WARNING(x('strong',"The following $n email".($n>1?'s are':' is ')." still to be sent:").'<br/>'.
 							 join('<br/>',$listOfUnsentEmails));
       }
 
@@ -490,7 +490,7 @@ Remember to save this mail or book-mark the URL to facilitate later access to th
 	  if (empty($v) || is_numeric($to))    continue;
 	  foreach ($v as $k=>$subject) {
 	    if (!myPear::$messageBuffer_active){
-	      myPear::MESSAGE_open('We have sent the following email'.($many?'s':'').' with an important information:','strong');
+	      MSG::MESSAGE_open('We have sent the following email'.($many?'s':'').' with an important information:','strong');
 	      $t = new b_table("width='100%'");
 	      $t->tro();
 	      $t->th('&nbsp;');
@@ -511,14 +511,14 @@ Remember to save this mail or book-mark the URL to facilitate later access to th
 	ob_end_clean();
 	
 	if (myPear::$messageBuffer_active){
-	  myPear::MESSAGE_add($fp);
-	  myPear::MESSAGE_close();
+	  MSG::MESSAGE_add($fp);
+	  MSG::MESSAGE_close();
 	}
       }else{
 	foreach ($listOfSentEmails as $to=>$v) {
 	  if (empty($v) || is_numeric($to))    continue;
 	  foreach ($v as $k=>$subject) {
-	    myPear::MESSAGE(join('<br>',array('We have sent an important email',
+	    MSG::MESSAGE(join('<br>',array('We have sent an important email',
 					      x('i',"To: ").$to,
 					      x('i',"Subject: ").$subject)));
 	  }
@@ -626,7 +626,7 @@ Remember to save this mail or book-mark the URL to facilitate later access to th
     }
   }
 }else{
-  myPear::ERROR("php class 'PEAR/Mail' not found, <a href='http://pear.php.net/search.php?q=mail&in=packages'>please upgrade</a>");
+  MSG::ERROR("php class 'PEAR/Mail' not found, <a href='http://pear.php.net/search.php?q=mail&in=packages'>please upgrade</a>");
   class bMailer extends myPear_base{
     function __construct(){}
     

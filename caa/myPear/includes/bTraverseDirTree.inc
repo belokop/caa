@@ -72,7 +72,7 @@ class bTraverseDirTree{
 	default:
 	}
       }
-      myPear::DEBUG(str_replace(self::$base,'',$path));
+      MSG::DEBUG(str_replace(self::$base,'',$path));
     }
   }
 

@@ -36,6 +36,7 @@ class myPear_getValue extends myPear_base{
   var $isMBE        = array(); // "Might Be Empty" - list of variables which might be filled later
   var $isPRE        = array(); // pre-formatted fields, to be shown as <pre>field</pre> 
   var $isIcon       = array(); // icon to be shown in the text
+  var $isHidden     = array();
   var $isVITAL      = array(); // if any of the isVITALfields are missing, the DB record is NOT created
   var $isVITAL_ifADMIN= array(); // isVITAL for admins, otherwise is "like MBE"  
   var $isMONEY      = array(); // shortcut for formatting money
@@ -58,7 +59,7 @@ class myPear_getValue extends myPear_base{
   protected $dejaVu_me = 0;
   function __construct($arg1=Null, $arg2=Null, $arg3=Null){
 
-    if ($this->dejaVu_me++) myPear::WARNING("??? dejaVu_me = ".$this->dejaVu_me);
+    if ($this->dejaVu_me++) MSG::WARNING("??? dejaVu_me = ".$this->dejaVu_me);
     if (cnf_show_gv) $this->show_gv = True;
 
     // Instance counter, used for debugging only
@@ -78,9 +79,10 @@ class myPear_getValue extends myPear_base{
   /*
    *
    */
-  function __toString(){    $ids = array($this->ID,$this->MODE);
+  function __toString(){  
     $ids = array($this->ID,$this->MODE);
     if ($t=$this->block_ID) $ids[] = "block=$t";
+    return get_class($this) . '('.implode(',',$ids).')';
     return str_replace('bForm_','',get_class($this)) . '('.implode(',',$ids).')';
   }
 
@@ -120,6 +122,7 @@ class myPear_getValue extends myPear_base{
    */
   private $getValue_MBND = False; // Might Be Not Defined
   private $list_memberID = array();
+  protected $datePicker = array();
   public function getValue($name, $asIs=True, $d_MBE=False){ // BIG REVOLUTION ! //  public function getValue($name, $asIs=False, $d_MBE=False){
     
     //
@@ -148,7 +151,7 @@ class myPear_getValue extends myPear_base{
 	$hint = 'empty _POST';
       }elseif($d_MBE === 'isMBE'){
 	static $isMBE_case = 0;
-	$this->dbg(($isMBE_case++)." - ???? not found name '$name', but this was expected",cnf_dev);
+	$this->dbg("??? Case #".($isMBE_case)." - not found name '$name', but this was expected",cnf_dev);
       }else{
 	$this->dbg($msg="???? not found name '$name'",cnf_dev);
 	if (cnf_dev) b_debug::traceBack($msg);
@@ -179,7 +182,7 @@ class myPear_getValue extends myPear_base{
 
     // well...
     if (@$this->getValue_recursion[$name]++){
-      myPear::WARNING_T($msg="Recursion ".$this->getValue_recursion[$name]);
+      MSG::WARNING_T($msg="Recursion ".$this->getValue_recursion[$name]);
       b_debug::traceBack($msg);
       bTiming()->cpu();
       return Null;
@@ -204,8 +207,9 @@ class myPear_getValue extends myPear_base{
 	
 	if (is_string($value) && preg_match('/^[12]\d\d\d-\d\d-\d\d$/',$value)){      
 	  // Convert datePicker reply to unix time
-	  $hint .= 'calendar';
+	  $hint .= 'datePicker';
 	  $value = b_time::txt2unix(min($value,CONST_eternity));
+	  $this->datePicker[] = $name;
 	}elseif (preg_match('/residentship|citizenship|country/',$name)){
 	  // Convert country name to country code
 	  $hint .= 'country';
@@ -260,7 +264,7 @@ class myPear_getValue extends myPear_base{
 	// $value = $this->formDB_member[$name];
 	$value = Null;
 	$hint  = 'formDB_member';
-	myPear::WARNING_T("Consider using getMemberValue(\$lmid,$name), and not getMember($name)");
+	MSG::WARNING_T("Consider using getMemberValue(\$lmid,$name), and not getMember($name)");
 	if (cnf_dev){ @$this->tttt++;	if ($this->tttt < 3){b_debug::traceBack("traceback $name");}}
 
 	//
@@ -398,7 +402,7 @@ class myPear_getValue extends myPear_base{
 
     if (isset($this->getValue_cache[$name])){ // The value is in the cache
       @self::$getValue_cache_counter[$this->ID][$name]++;
-      switch(myPear::is_empty($value = $this->getValue_cache[$name])){
+      switch(b_posix::is_empty($value = $this->getValue_cache[$name])){
       case False: 
 	$reply = $value; 
 	break;
@@ -464,7 +468,7 @@ class myPear_getValue extends myPear_base{
   protected function getValue_validate_value($k, &$value){
 
     $msg = '';
-    if (!myPear::is_empty($value)){
+    if (!b_posix::is_empty($value)){
       
       // The vital fields must contain some readable information
       if (@$this->isVITAL[$k]){
@@ -478,11 +482,11 @@ class myPear_getValue extends myPear_base{
 	  case 'email':      // The e-mail address should comply with the RFC 2822
 	    if ($emails = b_fmt::RFC_2822($value)){
 	      if (($vnew = join(',',$emails)) != $value){
-		if (strToLower($vnew) != strToLower($value)) myPear::WARNING("E-mail '$value' is not valid, replacing by '$vnew'");
+		if (strToLower($vnew) != strToLower($value)) MSG::WARNING("E-mail '$value' is not valid, replacing by '$vnew'");
 		$value = $vnew;
 	      }
 	    }else{
-	      myPear::WARNING($msg = "'$value' is not a proper email address, ignored.");
+	      MSG::WARNING($msg = "'$value' is not a proper email address, ignored.");
 	    }
 	    break;
 	    
@@ -509,7 +513,7 @@ class myPear_getValue extends myPear_base{
   protected function getValue_validate_empty($k, &$value){
     
     $msg='';
-    if (myPear::is_empty($value)){
+    if (b_posix::is_empty($value)){
 
       // Seem to be the most reasonable place for this check
       if (@$this->isVITAL[$k])        $this->isMBE[$k] = False;
@@ -524,7 +528,7 @@ class myPear_getValue extends myPear_base{
 	  if ($this->getValue_cancel_error($k,'x','x',array('_')) || !myPear_db()->columnExists($k,$this->TABLE))  $this->{$type}[$k] = $default_value;
 	  elseif(0 && cnf_dev) b_debug::internalError($err_msg);
 	  elseif(!$case++)     b_debug::traceBack($err_msg);
-	  else                 myPear::WARNING_T($err_msg);
+	  else                 MSG::WARNING_T($err_msg);
 	}
       }
       
@@ -533,7 +537,7 @@ class myPear_getValue extends myPear_base{
 	if (isset($_POST["${k}_select"])){
 	  // "Select menu" answer missing
 	  $msg = missing_value;                                 
-	}elseif (myPear::is_empty($value)){ // string '0' is not empty, while PHP insists it is
+	}elseif (b_posix::is_empty($value)){ // string '0' is not empty, while PHP insists it is
 	  // Text field data missing
 	  $msg = missing_value;    
 	}
@@ -597,13 +601,15 @@ class myPear_getValue extends myPear_base{
 	}
 	
 	// build the column description table
+	if (empty($description_array)) $description_array = array();
 	foreach ($description_array as $name=>$descr){
+	  if (!trim($name) && !trim($descr)) continue;
 	  // does not work for bList, where the definition of fields is
 	  // dynamic... Need a better idea...
 	  // This is just a workaround...
-	  if (get_class($this)=='bForm') $this->vars[$name] = $descr;
-	  else                           $this->vars[$name] = bText::_(array('key'=>$name,'item'=>$descr));
-	  
+	  $this->vars[$name] = (!trim($descr) || (get_class($this)=='bForm')
+				? $descr
+				: $this->vars[$name] = b_t::_(array('key'=>$name,'item'=>$descr)));
 	  // Fill the default values for the vital types
 	  foreach(self::$vital_types as $type=>$default_value){
 	    if (!isset($this->{$type}[$name])) $this->{$type}[$name] = $default_value;
@@ -669,8 +675,7 @@ class myPear_getValue extends myPear_base{
       if ($this->MODE == 'RO' || @$this->isRO[$name]) $descr = preg_replace('/-SKIP-.*/',' ',$descr);
       else                                            $descr = str_replace(  '-SKIP-',   ' ',$descr);
       
-      if (preg_match('/(_cm_|_cm$)/', $name))                 $this->IDV[$name] = 'comma separated list';
-      //      if ((int)$this->ID && !$this->getValue($name,True) && !@$this->isMBE[$name]) $descr = x("span class='redText'",$descr);
+      if (preg_match('/(_cm_|_cm$)/', $name))         $this->IDV[$name] = 'comma separated list';
     }
     return $descr;
   }

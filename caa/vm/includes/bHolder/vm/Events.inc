@@ -22,7 +22,7 @@ class bHolder_vm_Events extends bHolder_vm{
 	if ((time() - AUTO_EXPIRATION*86400) > $e->getValue('e_end',1)){
 	  $e->setPolicy(VM_E_archived,1,$verbose=True);
 	}else{
-	  if (cnf_dev) myPear::MESSAGE(sprintf("KEEP %s",$e->name()));
+	  if (cnf_dev) MSG::MESSAGE(sprintf("KEEP %s",$e->name()));
 	}
       }
     }
@@ -45,7 +45,7 @@ class bHolder_vm_Events extends bHolder_vm{
   function format() {
     static $year_was = '?';
 
-    $e = myPear::getInstance_new('bForm_vm_Event',$this->rec['e_id'],array('nocache','fatal'));
+    $e = loader::getInstance_new('bForm_vm_Event',$this->rec['e_id'],array('nocache','fatal'));
     if ($e->getValue('e_code')){
       $year = date('Y',$this->rec['e_start']);
       if ($year != $year_was) $this->t->prt(array('year_nosort'=>x('h3',$year)));      $year_was = $year;

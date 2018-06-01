@@ -17,7 +17,6 @@ locateAndInclude(bForm_Avatar::$bForm_Avatar);
  */
 class bForm_Avatar_Search extends bForm {
 
-  var $debug = False;
   var $aceptAsIs_DoNotSave = True;
   var $modalRW_enabled = True;
 
@@ -88,7 +87,7 @@ class bForm_Avatar_Search extends bForm {
       if (!empty($v) && !preg_match('/\w.*\w/',$v)) $ok = False;
     }
     if ($query_length < 3)                          $ok = False;
-    if (!$ok) myPear::WARNING("Not a valid search query, ignored");
+    if (!$ok) MSG::WARNING("Not a valid search query, ignored");
     $this->dbg($ok);
     return $ok;
   }
@@ -119,7 +118,7 @@ class bForm_Avatar_Search extends bForm {
     // _POST has precedence over the arguments
     if ($this->myPost_bForm()){
       foreach($_POST as $k=>$v){
-	if (isset($this->args[$k]))  myPear::WARNING_T("Set \$args[$k] '".$this->args[$k]."' => '$_POST[$k]'");
+	if (isset($this->args[$k]))  MSG::WARNING_T("Set \$args[$k] '".$this->args[$k]."' => '$_POST[$k]'");
 	$this->args[$k] = $_POST[$k];
       }
     }
@@ -133,7 +132,7 @@ class bForm_Avatar_Search extends bForm {
     $this->search_for_merge = (@$this->args['_lookFor'] === 'X');
     if ($this->search_for_merge)      $this->maxRows = 13; 
     
-    print myPear::H1(@$this->args['_header']);
+    print MSG::H1(@$this->args['_header']);
   }
 
   /*
@@ -148,7 +147,7 @@ class bForm_Avatar_Search extends bForm {
     $this->init_search();
     
     $this->getFormOpen();
-    switch($this->got_search_request = (bool)!myPear::is_empty(array_intersect(array_keys($_POST),
+    switch($this->got_search_request = (bool)!b_posix::is_empty(array_intersect(array_keys($_POST),
 									       array_keys(self::$search_items)))){
     case False:
       /*
@@ -221,7 +220,7 @@ class bForm_Avatar_Search extends bForm {
       $reply = array();
       if ($this->search_for_merge){ // Search to get duplicated avatar records to be merged
 	if($this->searchNumRows > 1){
-	  myPear::INFO("Please check the records which You believe belong to the same person");
+	  MSG::INFO("Please check the records which You believe belong to the same person");
 	  $reply[] = b_btn::submit('merge the selected records');
 	}
       }else{
@@ -338,7 +337,7 @@ class bForm_Avatar_Search extends bForm {
     $leftJoin = (($q = @$this->args['_join']) 
 		 ? str_replace(':','=',"LEFT JOIN $q")
 		 : '');
-    $ident = myPear::$sql_identities[bForm_Avatar::$bForm_Avatar]; 
+    $ident = loader::$sql_identities[bForm_Avatar::$bForm_Avatar]; 
     $table = $ident['t'];
     
     //
@@ -417,8 +416,8 @@ class bForm_Avatar_Search extends bForm {
 
     // Print messages if nothing is selected
     $this->dbg("Found $this->searchNumRows avatars");
-    if (!$this->searchNumRows) myPear::WARNING("The search gives no result");
-    elseif ($too_many)         myPear::WARNING("The search gives too many results, presenting only the first ".$this->searchNumRows." records out of ".($this->searchNumRows+$n_dropped));
+    if (!$this->searchNumRows) MSG::WARNING("The search gives no result");
+    elseif ($too_many)         MSG::WARNING("The search gives too many results, presenting only the first ".$this->searchNumRows." records out of ".($this->searchNumRows+$n_dropped));
     
     // Explain the role icons
     if (myPear_access()->authorized())  bIcons()->explain();

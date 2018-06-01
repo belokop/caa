@@ -54,10 +54,10 @@ class b_avatarsMerger{
     $header = array('key'=>'');
     $table  = array();
     foreach ($listofavatars as $av_id){
-      if ($av = myPear::getInstance('bForm_Avatar',$av_id,array('nocache','strict'))){
+      if ($av = loader::getInstance('bForm_Avatar',$av_id,array('nocache','strict'))){
 	$av->defineVariables();
 	$header[$av_id] = $av_id;
-	print myPear::H1($av->fmtName(),array('reset','noTranslate'));
+	print MSG::H1($av->fmtName(),array('reset','noTranslate'));
 	foreach ($av->formDB as $k=>$v) {
 	  if (!empty($v) && (strpos($k,'av_id')===False) && (strpos($k,'av_') === 0)){
 	    $v = str_replace(',',' ',b_time::unix2txt($v));
@@ -110,9 +110,9 @@ class b_avatarsMerger{
     $listofavatars = explode(',',b_cnf::getValue('listofavatars'));
 
     // Show the header - the last/first name of the avatar
-    $av = myPear::getInstance('bForm_Avatar',$toKeep,array('fatal','nocache'));
+    $av = loader::getInstance('bForm_Avatar',$toKeep,array('fatal','nocache'));
     $av->defineVariables();
-    print myPear::H1($av->fmtName(),array('reset','noTranslate'));
+    print MSG::H1($av->fmtName(),array('reset','noTranslate'));
     
     // Show the records which will be merged now
     $this->showSelection($listofavatars,

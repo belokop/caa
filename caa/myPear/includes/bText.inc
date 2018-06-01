@@ -12,7 +12,7 @@
  *  - table builder for the new languages
  */
 
-define('bText' , 'bText');
+define('bText', 'bText');
 
 new   bText();
 class bText{
@@ -34,17 +34,19 @@ class bText{
 				       '/\W/'           => '',
 				       '/[^\x00-\x7F]/' => '',
 				       );
-  public static $doNotTranslate = array('_post_bForm_ID_once','_post_bForm_class_once','ID','DEBUG','AV_PWD');
-  public static $debug = False;  
-  public static $dropAfterSKIP = False;
+  static $doNotTranslate = array('_post_bForm_ID_once','_post_bForm_class_once','ID','DEBUG','AV_PWD');
+  static $debug = False;  
+  static $dropAfterSKIP = False;
   private static $initDone = False;
   
-  public function __construct(){
+  function __construct(){
     if (isset($_GET['doTranslation_once'])) self::$doTranslation = (bool)$_GET['doTranslation_once'];
   }
   
   private static function init(){
     if (!self::$initDone){
+
+      define('myPear_languages',join(DIRECTORY_SEPARATOR,array(myPear_root_files,myPear_MODULE,'languages','')));
       
       /*
        * Set the default language
@@ -111,7 +113,7 @@ class bText{
   /*
    * Fetch the translation
    */
-  public static function _($text,$autoLearn=True,$baseLanguage=Null){
+  static function _($text,$autoLearn=True,$baseLanguage=Null){
     if (self::$doTranslation){
       self::init();
       $reply = cnf_emptyString;
@@ -169,20 +171,20 @@ class bText{
     return $reply;
   }
   
-  public static function getLangName($locale=Null){
+  static function getLangName($locale=Null){
     self::init();
     if (!$locale)  $locale = b_cnf::get('apilang',CONST_localeBase);
     if ($l = @$_SESSION[bText]['TM']['___lang'][$locale]) return $l;
     else                                                   return self::key2lang($locale);
   }
 
-  public static function getFlag($locale=Null){
+  static function getFlag($locale=Null){
     self::init();
     if ($locale) return bIcons()->getFlag($locale);
     else         return bIcons()->getFlag(b_cnf::get('apilang'));
   }
 
-  public static function getLangIcons(){
+  static function getLangIcons(){
     self::init();
     $list = array();
     foreach(self::$localesToShow as $l){
@@ -270,7 +272,7 @@ class bText{
 	if ($locale)       $reply .= $locale;
 	return $reply;
       }else{
-	if (!cnf_noFS) myPear::WARNING(b_debug::__()." can't create $reply");
+	if (!cnf_noFS) MSG::WARNING(b_debug::__()." can't create $reply");
 	return Null;
       }
     }
@@ -294,7 +296,7 @@ class bText{
     }
   }
   
-  public static function getForm($locales=array()){
+  static function getForm($locales=array()){
     self::init();
     if (!is_array($locales)) $locales = array($locales);
     if (empty($locales))     $locales = array(b_cnf::get('apilang'));
@@ -368,7 +370,7 @@ class bText{
 	}
       }
     }else{
-      myPear::WARNING_T("Can't save");
+      MSG::WARNING_T("Can't save");
     }
   }
   
@@ -384,7 +386,7 @@ class bText{
     return $_SESSION[bText]['keys'][$text];
   }
   
-  public static function dbg($text){
+  static function dbg($text){
     b_debug::xxx($text,array(3,'purpleText',(bool)self::$debug));
   }
 
@@ -395,7 +397,7 @@ class bText{
     return mb_strToLower(preg_replace('/[_-].*/','',$locale));
   }
 
-  public static function key2lang($code){
+  static function key2lang($code){
     static $langs = array('aa' => 'Afar',
 			  'ab' => 'Abkhazian',
 			  'ae' => 'Ave Stan',
@@ -583,7 +585,7 @@ class googleTranslate{
   private static $BaseUrl = 'http://ajax.googleapis.com/ajax/services/language/translate';
   private static $counter = 0;
   
-  public static function _($text,$FromLang,$ToLang){
+  static function _($text,$FromLang,$ToLang){
     if ($FromLang == $ToLang)                 return $text;
 #   if ($_SERVER['HTTP_HOST'] == 'localhost') return $text; 
 
@@ -597,7 +599,7 @@ class googleTranslate{
       if (@$_SESSION['autotranslate'][$text.$FromLang.$ToLang]++) return '';
 
       $CallUrl = self::$BaseUrl . "?v=" . self::$googleVersion . "&q=" . urlencode($text) . "&langpair=" .
-	bText::getLang($FromLang) . "%7C" . bText::getLang($ToLang);
+	static::getLang($FromLang) . "%7C" . static::getLang($ToLang);
       
       $contents = '';
       if(function_exists('curl_init')){
@@ -613,12 +615,12 @@ class googleTranslate{
 
       $json = json_decode($contents, true);
       if($json['responseStatus'] == 200){
-	bText::dbg($json['responseData']['translatedText']);
+	static::dbg($json['responseData']['translatedText']);
 	return $json['responseData']['translatedText'];
       }
       
       if($json['responseStatus'] == 400) $_SESSION[$IL][] = $ToLang;
-      myPear::WARNING_T($json['responseDetails']);
+      MSG::WARNING_T($json['responseDetails']);
     }
   }
 }

@@ -27,9 +27,9 @@ class bDB extends mysqli{
     if (class_exists('b_cnf',0) && b_cnf::get('dbdebug')) self::$_debug = True;
 
     foreach(array('host','user','passwd','dbname') as $arg){
-      if (empty($$arg) && isset($GLOBALS[get_class($this)."_$arg"])){
-	$$arg = $GLOBALS[$var=get_class($this)."_$arg"];
-	$this->dbg("set $var='".$$arg."'");
+      if (empty($$arg)){
+	global $DBengine;
+	$$arg = $GLOBALS[$DBengine][$arg];
       }
     }
 
@@ -54,15 +54,20 @@ class bDB extends mysqli{
       $this->Database= $dbname;
 
       // $this->charset = $this->character_set_name();
-      $q = $this->query('show variables like "character_set_database"');
-      while($r = $this->next_record($q))  $this->charset = $r['Value'];
-      $this->dbg("character_set_database = '$this->charset'",True);
-
+      foreach(array('collation_',
+		    'character_set_',
+		    ) as $var){
+	$q = $this->query("show variables like '$var%'");
+	while($r = $this->next_record($q)){
+	  MSG::DEBUG(sprintf("%s = '%s'",$r['Variable_name'],$r['Value']));
+	}
+      }
+      
       $this->dbg_changes = (defined('cnf_show_db') && cnf_show_db);
-      $this->dbg(sprintf("user = %s,  database = %s@%s", $user, $this->Database, $this->Host),
+      MSG::DEBUG(sprintf("user = %s,  database = %s@%s", $user, $this->Database, $this->Host),
 		 $this->dbg_changes || (defined('YBhere') && YBhere));
     }
-    $this->dbg("__construct done, isReady=".var_export($this->isReady,True));
+    MSG::DEBUG("__construct done, isReady=".var_export($this->isReady,True));
   }
 
   function isReady(){
@@ -78,7 +83,7 @@ class bDB extends mysqli{
   function noAutoCommit($mode='end'){
 
     if (!DB_autocommit){
-      if(cnf_dev) myPear::WARNING('"SET AUTOCOMMIT" is ignored...');
+      if(cnf_dev) MSG::WARNING('"SET AUTOCOMMIT" is ignored...');
       return;
     }
 
@@ -300,7 +305,7 @@ class bDB extends mysqli{
 	    $str = str_ireplace($h,'('.join('|',$inv_synonyms[$f]).')',$str);
 	  }
 	  if (strToLower($str) !== strToLower($str_orig)){
-	    // myPear::WARNING_T(__FUNCTION__." converted REGEXP '$str_orig' -> '$str'");
+	    // MSG::WARNING_T(__FUNCTION__." converted REGEXP '$str_orig' -> '$str'");
 	  }
 	  $sub_str[] = "CONVERT(`$key` USING utf8) REGEXP '$str'";
 	  
@@ -381,8 +386,8 @@ class bDB extends mysqli{
    *
    */
   function tableExists($table){
-    $reply = in_array($table,$this->getTables());
-    $this->dbg($reply);
+    $reply = in_array(trim($table),$this->getTables());
+    if (!$reply) $this->dbg($reply);
     return $reply;
   }
 
@@ -399,14 +404,14 @@ class bDB extends mysqli{
 
   function getTables(){
     if (!$this->isReady)   return array();;
-    if (($cache = $this->cache($id=__FUNCTION__)) === Null){
+    if (($cached = $this->cache(__FUNCTION__)) === Null){
       $reply = array();
       $q = $this->query("SHOW tables");
       while ($r = $this->next_record($q,MYSQLI_BOTH)) $reply[] = $r[0];
-      $cache = $this->cache($id,$reply);
+      $cached = $this->cache(__FUNCTION__,$reply);
+      $this->dbg($cached);
     }
-    $this->dbg($cache);
-    return $cache;
+    return $cached;
   }
 
   /*
@@ -451,7 +456,7 @@ class bDB extends mysqli{
    */
   function getColumns($table) {
     if (!$this->isReady)   return array();
-    if (($cache = $this->cache($id=__FUNCTION__.$table)) === Null){
+    if (($cache = $this->cache($id=__FUNCTION__.".$table")) === Null){
       $reply = array();
       if ($this->tableExists($table)){
 	$q = $this->query("SHOW COLUMNS FROM $table");
@@ -484,7 +489,7 @@ class bDB extends mysqli{
       $what = 'Type';
     }
 
-    $id = __FUNCTION__.$table;
+    $id = __FUNCTION__.".$table";
     if (($cache = $this->cache($id)) === Null){
       $q = $this->query("SHOW COLUMNS FROM $table");
       while($r = $this->next_record($q)) $c[$r['Field']] = $r;
@@ -493,22 +498,6 @@ class bDB extends mysqli{
     return $cache[$column][$what];
   }
 
-  function getColumnType_OBSOLETE($table,$column,$keep_all=False) {
-    if (!$this->isReady)   return Null;
-
-    $id = __FUNCTION__.$table.$keep_all;
-    if (($cache = $this->cache($id)) === Null){
-      $c = array();
-      $q = $this->query("SHOW COLUMNS FROM $table");
-      while($r = $this->next_record($q)){
-	$c[$id][$r['Field']] = $keep_all ? $r['Type'] : preg_replace('/\(.*/','',$r['Type']);
-      }
-      $cache = $this->cache($id,$c[$id]);
-    }
-    $this->dbg($cache[$column]);
-    return $cache[$column];
-  }
-  
   /*
    *
    */
@@ -520,16 +509,25 @@ class bDB extends mysqli{
    *
    */
   protected function cache($id,$action='get'){
-    if ($id === 'reset') $action = 'reset';
+    if ($id === 'reset'){
+      $action = 'reset';
+    }
+
+    $id_cache = get_class($this);
     switch($action){
     case 'reset':      // reset the cache
-      $_SESSION[get_class($this)] = array();
+      $_SESSION[$id_cache] = array();
+      $this->dbg("Resetting cache",True);
+      break;
     case 'get':        // asking for the cache info
       break;
     default:           // A new value provided, store it
-      $_SESSION[get_class($this)][$id] = $action;
+      $_SESSION[$id_cache][$id] = $action;
+      $this->dbg($action);
     }
-    return @$_SESSION[get_class($this)][$id];
+    $reply = @$_SESSION[$id_cache][$id];
+    //    $this->dbg($reply,True);
+    return $reply;
   }
 
   /*
@@ -538,7 +536,7 @@ class bDB extends mysqli{
   protected function dbg_query($query){
 
     if ($this->result === False){
-      b_debug::_debug(x('strong',' ??? query failed '.$this->error."<br>$query"),array(cnf_dev,'redText',2));
+      $this->dbg(x('strong',' ???? query failed '.$this->error."<br>$query"),array(cnf_dev,'redText'));
       return;
     }
 
@@ -589,7 +587,7 @@ class bDB extends mysqli{
     if (!isset($debug_force)) $debug_force = False;
     if (!isset($color)      ) $color = 'lgreenText';
 
-    b_debug::_debug($text,array($color,2,$this,(self::$_debug || $this->dbg_qquery || $debug_force)));
+    b_debug::_debug($text,array($color,2,$this,(static::$_debug || $this->dbg_qquery || $debug_force)));
   }
 }
       

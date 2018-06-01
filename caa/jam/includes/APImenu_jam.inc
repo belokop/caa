@@ -78,7 +78,7 @@ class APImenu_jam extends APImenu{
       // put all the positions into the list of tabs
       foreach (bForm_Organization::getAll() as $org_id){
 	foreach(array_keys(bForm_jam_Position::getPositions($org_id)) as $pos_id){
-	  $pos = myPear::getInstance('bForm_jam_Position',$pos_id);
+	  $pos = loader::getInstance('bForm_jam_Position',$pos_id);
 	  if ($pos->managedByJAM()){
 
 // /*	    
@@ -175,7 +175,7 @@ class APImenu_jam extends APImenu{
       default:
 	if (!empty($dynamicTab) && is_array($items = unserialize($dynamicTab))){
 	  foreach ($items as $key=>$value){
-	    // myPear::DEBUG("$key - $value");
+	    // MSG::DEBUG("$key - $value");
 	    switch($key){
 	    case 'ap_posid':
 	      $reply = ((int)@bAuth::$av->ID && method_exists(bAuth::$av,'isApplicant') && bAuth::$av->isApplicant($value,$onlyActive=True));
@@ -184,7 +184,7 @@ class APImenu_jam extends APImenu{
 	      $reply = ($value == JAM_posID());
 	      break;
 	    case 'rf_id': // research fields
-	      $reply = $reply && is_object($rfClass=myPear::getInstance('bForm_jam_RF',$value,'strict')) && ($rfClass->name()!=CONST_noname) && count($rfClass->applicants()); 
+	      $reply = $reply && is_object($rfClass=loader::getInstance('bForm_jam_RF',$value,'strict')) && ($rfClass->name()!=CONST_noname) && count($rfClass->applicants()); 
 	      break;
 	    case 'rank': // SC,admins,secretaries units
 	      switch($value){
@@ -205,7 +205,7 @@ class APImenu_jam extends APImenu{
 	  }
 	}else{
 	  if (empty($tab))      $reply = False;
-	  else myPear::WARNING_T(__METHOD__." unexpected tab '$tab'");
+	  else MSG::WARNING_T(__METHOD__." unexpected tab '$tab'");
 	}
       }
       if ($reply)      b_debug::xxx($reply,array(2,$this,'A'));
@@ -233,8 +233,8 @@ class APImenu_jam extends APImenu{
      * see what we can do, see which menu tab is pressed
      */
     $rank = JAM_access()->getRank();
-    if (JAM_posID()) myPear::setPageHeader(JAM_pos()->name());
-    else             myPear::setPageHeader('Job Applications Manager (JAM)');
+    if (JAM_posID()) MSG::setPageHeader(JAM_pos()->name());
+    else             MSG::setPageHeader('Job Applications Manager (JAM)');
 
     $tab = $this->processTemplates($tab);
     switch ($tab){
@@ -327,7 +327,7 @@ class APImenu_jam extends APImenu{
       /*
       if(JAM_posID()){
 	$unit = new bUnit(JAM_posID(),'virtual','Applicants & Referees');
-	if (myPear::is_empty($unit->getMembers())){
+	if (b_posix::is_empty($unit->getMembers())){
 	  locateAndInclude('bHolder_Avatar_jam');
 	  $holder = new bHolder_Avatar_jam();
 	  $holder->where[] = "ap_posid = ".JAM_posID();
@@ -357,17 +357,17 @@ class APImenu_jam extends APImenu{
       
     case tab_jam_sc:
       locateAndInclude('bUnit');
-      myPear::H1('Search & Selection Committee');
+      MSG::H1('Search & Selection Committee');
       bUnit::b_tabs_bUnits(JAM_MODULE,Null,array(),JAM::SC_ranks());
       break;
       
     case tab_jam_myApplications:
       // Discover the position for the logged in person
-      myPear::setPageHeader("My applications");
+      MSG::setPageHeader("My applications");
       $table = array();
       $n_positions = 0;
       foreach(bAuth::$av->positionsConserned($asReferee=False) as $pos_id=>$ap_id){
-	if ($pos = myPear::getInstance('bForm_jam_Position',$pos_id,'strict')){
+	if ($pos = loader::getInstance('bForm_jam_Position',$pos_id,'strict')){
 	  $table[$pos->isStatus(JAM_pos_archived) ? 'Archived' : 'Current'][$ap_id] = $pos;
 	  $n_positions++;
 	  $latest_ap = $ap_id;
@@ -379,7 +379,7 @@ class APImenu_jam extends APImenu{
 	$ap->getForm();
       }else{
 	foreach(array('Current','Archived') as $s){
-	  if (!myPear::is_empty($aps=@$table[$s])) {
+	  if (!b_posix::is_empty($aps=@$table[$s])) {
 	    print x('h3',"$s application".(count($aps)>1 ? 's' : '').':').'<ul>';
 	    foreach($aps as $ap_id=>$pos){
 	      print x('li',x('a href="'.b_url::same("?id=$ap_id&form=jam_Applicant").'"',x('strong',$pos->name())));
@@ -397,7 +397,7 @@ class APImenu_jam extends APImenu{
     default: 
       if (is_array($items = unserialize($dynamicTab))){
 	foreach ($items as $key=>$value){
-	  // myPear::WARNING_T("$key: $value");
+	  // MSG::WARNING_T("$key: $value");
 	  switch($key){
 	  case 'ap_posid': 
 	    $this->getForm_applicant($value);
@@ -415,7 +415,7 @@ class APImenu_jam extends APImenu{
 	}
       }else{
 	if (empty($tab))       print bHolder::loadWidget('?holder=jam_Positions');
-	else  myPear::ERROR(b_debug::__()." unexpected tab '$tab'");
+	else  MSG::ERROR(b_debug::__()." unexpected tab '$tab'");
       }
     }
     
@@ -453,7 +453,7 @@ function _jam_title_callback($tab, $dTab='',$returnText=False){
     if(isset(APItabs::$tab_definition[$tab]))  $tab = APItabs::$tab_definition[$tab];
     $menuItem = ($returnText
 		 ? $tab
-		 : t(bText::_(array('key' => "MENU_$tab",'item'=> $tab))));
+		 : t(b_t::_(array('key' => "MENU_$tab",'item'=> $tab))));
   }
   return $menuItem;
 }

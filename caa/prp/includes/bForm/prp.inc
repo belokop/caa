@@ -89,7 +89,7 @@ class bForm_prp extends bForm{
 
     default:
       $reply = '???';
-      myPear::ERROR('???'.b_debug::__());
+      MSG::ERROR('???'.b_debug::__());
     }
     $this->dbg($reply,True);
     return $reply;
@@ -152,7 +152,7 @@ class bForm_prp extends bForm{
     if (!cnf_CLI){
       PRP_mailer()->informCensor('Reserved',$this);
       PRP_mailer()->informSubmitter('Reserved',$this);
-      myPear::MESSAGE("Allocated preprint ".$this->serial());
+      MSG::MESSAGE("Allocated preprint ".$this->serial());
       myPear_logs()->add('reserve',$this->ID);
     }
   }
@@ -212,9 +212,9 @@ class bForm_prp extends bForm{
 
   protected function getFormHeader(){
     if ((int)$this->ID){
-      myPear::setPageHeader($this->serial());
+      MSG::setPageHeader($this->serial());
     }else{
-      myPear::setPageHeader('Reservation of new Preprint Number');
+      MSG::setPageHeader('Reservation of new Preprint Number');
     }
   }
 
@@ -246,10 +246,10 @@ class bForm_prp extends bForm{
        */
       if (($this->MODE == 'RW') && (int)$this->ID){
 	// Do not offer "local storage"
-	if (False) myPear::MESSAGE("You may store the preprint in a ".
+	if (False) MSG::MESSAGE("You may store the preprint in a ".
 				   "<br/>&nbsp;* external world-wide archive AND/OR".
 				   "<br/>&nbsp;* ".myOrg_name." local archive<br/>");
-	myPear::MESSAGE("Please don't forget to update \"".$this->vars['prp_publisher']."\" field when the preprint is published");
+	MSG::MESSAGE("Please don't forget to update \"".$this->vars['prp_publisher']."\" field when the preprint is published");
       }
       
       $dialog = array(
@@ -307,7 +307,7 @@ class bForm_prp extends bForm{
   function setAccepted(){
     $this->updateDB(array('prp_status' => PRP_OK,
 			  'prp_tm'     => time()));
-    myPear::MESSAGE("Preprint ".$this->serial()." is ACCEPTED");
+    MSG::MESSAGE("Preprint ".$this->serial()." is ACCEPTED");
     PRP_mailer()->informCensor('Accepted',$this);
     PRP_mailer()->informSubmitter('Accepted',$this);
     myPear_logs()->add('accept',$this->ID);
@@ -316,7 +316,7 @@ class bForm_prp extends bForm{
   function setCanceled(){
     $this->updateDB(array('prp_status' => PRP_CANCELED,
 			  'prp_tm'     => time()));
-    myPear::MESSAGE("Preprint ".$this->serial()." is CANCELED");
+    MSG::MESSAGE("Preprint ".$this->serial()." is CANCELED");
     PRP_mailer()->informCensor('Canceled',$this);
     PRP_mailer()->informSubmitter('Canceled',$this);
     myPear_logs()->add('cancel',$this->ID);

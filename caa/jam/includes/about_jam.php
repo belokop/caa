@@ -1,7 +1,7 @@
 <?php 
 if (class_exists('myPear',0)){
-  if (JAM_posID())   myPear::H1(JAM_pos()->name());
-  else                myPear::H1('JAM - Job Applications Manager','reset');
+  if (JAM_posID())   MSG::H1(JAM_pos()->name());
+  else                MSG::H1('JAM - Job Applications Manager','reset');
   JAM_access()->selectPosition(); 
 }
 ?>

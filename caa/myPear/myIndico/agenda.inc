@@ -3,9 +3,6 @@
  * Get UTF-8 encoded conferens data.                            YB 2009-02-26
  */
 class agenda {
-  
-  // Default indico server
-  protected $agenda_url = 'http://agenda.albanova.se/';
 
   // URL of the agenda tools on the server
   public $tools_url  = '/tools/getConf.py?';
@@ -37,7 +34,7 @@ Supported arguments:
   var $url = '';
 
   function __construct($url=Null){
-    if (!empty($url)) $this->agenda_url = $url;
+    if (!defined('AGENDA_URL')) define('AGENDA_URL',$url);
   }
 
   /*
@@ -52,8 +49,8 @@ Supported arguments:
    */
   function getCategoryInfo($category='270',$args='') {
     $this->dbg('=================================================');
-    $url = sprintf("%s%s?catinfo=%s",$this->agenda_url,$this->tools_url,270);
-    //    $xml   = simplexml_load_string(`curl http://agenda.albanova.se/tools/getConf.py?catinfo=270`);
+    $url = sprintf("%s%s?catinfo=%s",AGENDA_URL,$this->tools_url,270);
+    //    $xml   = simplexml_load_string(`curl http://agenda.nordita.org/tools/getConf.py?catinfo=270`);
     $xml   = simplexml_load_string($this->curl($url)); 
     $json  = json_encode($xml);
     $array = json_decode($json,TRUE);
@@ -91,7 +88,9 @@ Supported arguments:
    $structues = 'registrant|contribution';
    $reply  = $bufer = array();
    $lastKey= 'No key';
-   $url = $this->agenda_url.$this->tools_url.$args;
+   $url = AGENDA_URL.$this->tools_url.$args;
+
+   b_debug::_debug($url,cnf_dev);
    foreach (preg_split("/\n/",$this->curl($url)) as $line) {
      if (strstr($line,'=') !== False){
        list($key,$value) = explode('=',$line,2); $key = mb_strToLower($key);

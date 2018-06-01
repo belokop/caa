@@ -8,6 +8,7 @@
  */
 
 if ($movie = @$_GET['movie_once']) bJS()->fancybox_inline_movie(b_fmt::unEscape($movie,'url'));
+locateAndInclude('b_cache_file');
 
 class bJS extends myPear_base{
 
@@ -128,7 +129,7 @@ $(document).ready(function() {
   private function warning(){
     static $dejaVu = 0;
     // should be done better...
-    if(0) if (!$dejaVu++) myPear::MESSAGE(x('noscript',(x('strong','WARNING, this page uses javaScript.').'<blockquote>'.
+    if(0) if (!$dejaVu++) MSG::MESSAGE(x('noscript',(x('strong','WARNING, this page uses javaScript.').'<blockquote>'.
 							'Your browser either doesn\'t support javaScript or you have it turned off. <br/>'.
 							'To see this page as it is meant to appear please use '.
 							'a javaScript enabled browser</blockquote>')));
@@ -156,7 +157,7 @@ $(document).ready(function() {
 	  break;
 	case 9:
 	default:
-	  myPear::ERROR(b_debug::__().' is not ready for drupal-'.HOSTED_BY_CMS_vrsn);
+	  MSG::ERROR(b_debug::__().' is not ready for drupal-'.HOSTED_BY_CMS_vrsn);
 	}
 	break;
 	
@@ -186,7 +187,7 @@ $(document).ready(function() {
 	  break;
 	}
       }
-      if (!file_exists($f=b_os::url2path($object))) myPear::ERROR(b_debug::__()." $f doesn't exist",$this);
+      if (!file_exists($f=b_os::url2path($object))) MSG::ERROR(b_debug::__()." $f doesn't exist",$this);
 
       switch(HOSTED_BY_CMS){
       case 'drupal':
@@ -209,8 +210,8 @@ $(document).ready(function() {
 	  break;
 
 	default:
-	  myPear::ERROR($object);
-	  myPear::ERROR(b_debug::__().' is not ready for drupal-'.HOSTED_BY_CMS_vrsn);
+	  MSG::ERROR($object);
+	  MSG::ERROR(b_debug::__().' is not ready for drupal-'.HOSTED_BY_CMS_vrsn);
 	}
 	break;
 	
@@ -236,7 +237,7 @@ $(document).ready(function() {
 	}
       }
       b_cache_file::CMS(__METHOD__,array($objectP,$root));
-      if (!file_exists($f=b_os::url2path($object))) myPear::ERROR(b_debug::__()." $f doesn't exist",$this);
+      if (!file_exists($f=b_os::url2path($object))) MSG::ERROR(b_debug::__()." $f doesn't exist",$this);
       switch(HOSTED_BY_CMS){
       case 'drupal':
 	switch(HOSTED_BY_CMS_vrsn){
@@ -251,8 +252,8 @@ $(document).ready(function() {
 	  break;
 	case 9:
 	default: 
-	  myPear::ERROR($object);
-	  myPear::ERROR(b_debug::__().' is not ready for drupal-'.HOSTED_BY_CMS_vrsn);
+	  MSG::ERROR($object);
+	  MSG::ERROR(b_debug::__().' is not ready for drupal-'.HOSTED_BY_CMS_vrsn);
 	}
 	break;
 	
@@ -311,11 +312,11 @@ $(document).ready(function() {
 	  $fn = drupal_get_path('module','myPear')."/myPear.inline.js";
 	  if (!$n_entry++){
 	    $ok = (file_exists($fn) ? unlink($fn) : True);
-	    if (!$ok) myPear::ERROR("Can't create file $fn");
+	    if (!$ok) MSG::ERROR("Can't create file $fn");
 	  }
 	  $file = @fopen($fn,"a");
 	  if (empty($file)){
-	    myPear::ERROR("Can't write to file $fn");
+	    MSG::ERROR("Can't write to file $fn");
 	  }else{
 	    fwrite($file,$js_code."\n");
 	    fclose($file);
@@ -325,7 +326,7 @@ $(document).ready(function() {
 	  break;
 	case 9:
 	default:
-	  myPear::ERROR(b_debug::__().' is not ready for drupal-'.HOSTED_BY_CMS_vrsn);
+	  MSG::ERROR(b_debug::__().' is not ready for drupal-'.HOSTED_BY_CMS_vrsn);
 	}
 	break;
 	
@@ -363,6 +364,8 @@ $(document).ready(function() {
 	$url = str_ireplace('http:/','https:/',($x=$url));
 	b_debug::xxx("!!! change url: <br>&nbsp;was: $x<br>&nbsp;now: $url");
       }
+    }else{
+      //?
     }
 
     $reply = $this->popup($title, $url, $mightBeModal, __FUNCTION__, $description, $galery);
@@ -441,7 +444,7 @@ $(document).ready(function() {
       $url = $this->modal_engine($url, $title, $description, $galery, $engine);
     }else{ 
       if (strpos('?',$url) !== False) $url = b_url::same(b_crypt::parse_query_string($url));
-      $url = "<a href='$url'>$title</a>";
+      $url = "<a href='$url' target='_blank'>$title</a>";
     }
     return $url; 
   }
@@ -520,7 +523,7 @@ $(document).ready(function() {
       if (strpos($url,'http') !== 0){
 	$url = b_url::repack($url,array(b_crypt_no          => 1,
 					'modal_once'        => $this->modal_once($type),
-					'doTranslation_once'=> (string)bText::$doTranslation));
+					'doTranslation_once'=> (string)b_t::$doTranslation));
       }else{
 	$url = str_replace('#content','',$url) . '#content';
       }

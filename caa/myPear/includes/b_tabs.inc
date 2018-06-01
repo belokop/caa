@@ -75,7 +75,7 @@ class b_tabs_myPear extends myPear_base{
    */
   private $cnf_bTabs = 0;
   function __construct($tabs=array(),$selected=0){
-
+   
     print "\n<!-- ".__method__." start -->\n";
 
     // Load the styles
@@ -111,6 +111,7 @@ class b_tabs_myPear extends myPear_base{
       if ($updated) b_debug::print_r($_SESSION[__CLASS__],sprintf($fmt,'updated',''));
     }
     
+    $this->dbg('');
 
     // Variable which keeps the current tab
     self::$myPearTabs_depth++;
@@ -158,7 +159,7 @@ class b_tabs_myPear extends myPear_base{
   private $tab_counter=0;
   private $body_content = '';
   function body(){      
-    $this->dbg("tab ".$this->tab_counter);
+    $this->dbg("tab ".$this->tab_counter,cnf_dev);
     self::$inside = $this->isActive(0);
     $this->body_close();
     return self::$inside;
@@ -168,17 +169,21 @@ class b_tabs_myPear extends myPear_base{
    *
    */
   private function body_close($closing=False){
+    $this->dbg(starting);
     print "<!-- ".__method__." start -->\n";
     if ($this->tab_counter > 0){
       $body_content = ob_get_contents();
       ob_end_clean();
+      $this->dbg('ob_end_clean',cnf_dev);
       if ($this->isActive(-1))	$this->body_content = $this->body_prefix . $body_content;
     }
     if (!$closing){
+      $this->dbg('ob_start',cnf_dev);
       ob_start();
       $this->tab_counter++;
     }
     print "<!-- ".__method__." end -->\n";
+    $this->dbg(exiting);
   }
 
   /*
@@ -195,7 +200,7 @@ class b_tabs_myPear extends myPear_base{
       elseif (($t=array_search($tab,$this->tabs)) !== False) $tab = $t;
       $reply = ($tab == $this->_GET_b_tab);
     }
-    $this->dbg($this->tabs[$tab].' - '.($reply?'YES':'NO'));
+    $this->dbg($this->tabs[$tab].' - '.($reply?'YES':'NO'),cnf_dev);
     return $reply; 
   }
 
@@ -219,7 +224,7 @@ class b_tabs_myPear extends myPear_base{
    * Show the collected tab. 
    */
   public function close(){
-    $this->dbg();
+    $this->dbg('',cnf_dev);
     $this->body_close(True);
 
     self::$inside = False;
@@ -237,23 +242,27 @@ class b_tabs_myPear extends myPear_base{
 		 ? (int)($margin * $this->n_symbols_ok / $this->n_symbols)
 		 : $margin);
       $style = " style='margin-left:${margin}px;'";
+      $style = 'b_tabs_margin';
       // Show tabs as <li> tags
       foreach ($this->tabs as $hash=>$tab){
 	$drop = array();
-	$href = b_url::same("?".$this->cnf_bTabs."=$hash",$drop,'keepAllBut');
-	$li[] = x("li$style".($this->isActive($hash)?" class='b_tabs_current'":""),x("a href='$href'",$tab));
+	$href = b_url::same("?".$this->cnf_bTabs."=$hash&clean_once=function",$drop,'keepAllBut');
+	$li[] = x("li class='$style".($this->isActive($hash)?" b_tabs_current'":"'"),x("a href='$href'",$tab));
 	$style = '';
       }
-      
+      $this->dbg('Output multytab text',cnf_dev);
       print implode("\n",array('',
+			       '<!-- '.__method__.' ----------------------------- -->',
 			       x("div style='clear:both'",''),
 			       x("div id='b_tabs".(self::$myPearTabs_depth+1)."'",
 				 join("\n",array(x("div class='b_tabs_menu'",join("\n",array(x('ul class="form-submit" style="margin-bottom:0;"',join("\n",$li))))),
 						 x("div style='clear:both'",''),
 						 x("div class='b_tabs_body'",$this->body_content)))),
 			       x("div style='clear:both'",''),
+			       '<!-- '.__method__.' ----------------------------- -->',
 			       ''));
     }else{
+      $this->dbg('Output single tab text',cnf_dev);
       print implode("\n",array('',
 			       x("div style='clear:both'",''),
 			       x("div id='b_tabs'",

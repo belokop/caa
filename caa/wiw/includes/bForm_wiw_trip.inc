@@ -9,7 +9,7 @@ locateAndInclude('bForm_Avatar_wiw');
  */
 if (!empty($_REQUEST['d_once']) && in_array($_REQUEST['form'],array('wiw_trip','bForm_wiw_trip'))){
   $trip = new bForm_wiw_trip($_REQUEST['id']);
-  myPear::WARNING($trip->name($trip->av->ID != bAuth::$av->ID).' is cancelled');
+  MSG::WARNING($trip->name($trip->av->ID != bAuth::$av->ID).' is cancelled');
   myPear_db()->qquery("DELETE FROM wiw_trips WHERE t_id = '".$_REQUEST['id']."'",cnf_dev);
   b_url::header(b_url::same('?av_id='.$trip->av->ID.'&q='.join('/',array(WIW_MODULE,APImenu::tab_code(tab_wiw_myTrips)))));
 }
@@ -182,7 +182,7 @@ class bForm_wiw_trip extends bForm{
    */
   protected function getValue_validate_empty($name,&$value=Null){
     $err_msg = '';
-    if (myPear::is_empty($value)){
+    if (b_posix::is_empty($value)){
       $err_msg = parent::getValue_validate_empty($name,$value);
       switch($name){
       case 't_orgid':
@@ -210,7 +210,7 @@ class bForm_wiw_trip extends bForm{
       // The manager mode.
       // Ask who is the trip owner
       
-      myPear::MESSAGE("You are the manager of the \"WhoIsWhere\" database, ".
+      MSG::MESSAGE("You are the manager of the \"WhoIsWhere\" database, ".
 		      "hence may submit the travel request on behalf of any group member");
       
       // get the group members list
@@ -235,7 +235,7 @@ class bForm_wiw_trip extends bForm{
       // Embed the Avatar
       if (!$this->getValue('t_avid')) $this->getValue_reset('t_avid',bAuth::$av->ID);
       $av = new bForm_Avatar_wiw($this->getValue('t_avid'));
-      myPear::H1($av->fmtName('fl'));
+      MSG::H1($av->fmtName('fl'));
       
       // Show the owner contact information
       $av->defineVariables();

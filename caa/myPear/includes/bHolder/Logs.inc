@@ -30,7 +30,7 @@ class bHolder_Logs extends bHolder{
     if (cnf_CLI || !myPear_db()->columnExists('log_org','zzz_logs')) return;
 
     $_GET['doing_once'] = CONST_wic;
-    myPear::H1('Who is connected','reset');
+    MSG::H1('Who is connected','reset');
 
     locateAndInclude('b_tabs');
     $b_tabs = new b_tabs_JQ(array('Now','Last hour','Since 24 hours'));
@@ -68,10 +68,10 @@ class bHolder_Logs extends bHolder{
       return;
     }
 
-    if ($log_avid===Null){
-      if (is_object(bAuth::$av_authenticated))  $log_avid = bAuth::$av_authenticated->ID;
-      else                             $log_avid = 0;
-    }
+    if (!defined('myOrg_ID')) myOrg();
+    if ($log_avid===Null) $log_avid = (is_object(bAuth::$av_authenticated)
+				       ? $log_avid = bAuth::$av_authenticated->ID
+				       : 0);
 
     foreach (array('log_ip'    => @$_SERVER['REMOTE_ADDR'],
 		   'log_avid'  => $log_avid,
@@ -82,7 +82,7 @@ class bHolder_Logs extends bHolder{
 		   'log_org'   => myOrg_ID,
 		   'log_comment'=>$log_comment,
 		   ) as $k=>$v){
-      if (myPear::is_empty($v)) continue;
+      if (b_posix::is_empty($v)) continue;
       $set[] = myPear_db()->quote($v,1,$k);
       if (in_array($k,array('log_type','log_form','log_comment'))) $where[] = myPear_db()->quote($v,1,$k);
     }
@@ -91,7 +91,7 @@ class bHolder_Logs extends bHolder{
     if ($unique){
       $q = myPear_db()->query("SELECT log_id FROM zzz_logs WHERE ".($m=b_fmt::joinX(' AND ',$where,"'")));
       if (myPear_db()->num_rows($q)){
-	myPear::WARNING_T("SKIP LOG RECORD \"$m\"");
+	MSG::WARNING_T("SKIP LOG RECORD \"$m\"");
 	return;
       }
     }
@@ -194,10 +194,10 @@ class bHolder_Logs extends bHolder{
    */
   function listEntries(){
     $this->init_logs();
-    $sv = bText::$acceptNewEntries;
-    bText::$acceptNewEntries = False;
+    $sv = b_t::$acceptNewEntries;
+    b_t::$acceptNewEntries = False;
     return parent::listEntries();
-    bText::$acceptNewEntries = $sv;
+    b_t::$acceptNewEntries = $sv;
   }
 
   /*
@@ -218,7 +218,7 @@ class bHolder_Logs extends bHolder{
       
     case 'syslog':
       if (!empty($_GET['av_id'])){
-	$this->av = myPear::getInstance_new(bForm_Avatar::$bForm_Avatar, $_GET['av_id'],array('nocache','strict'));
+	$this->av = loader::getInstance_new(bForm_Avatar::$bForm_Avatar, $_GET['av_id'],array('nocache','strict'));
       }else{
 	locateAndInclude('b_checkBox');
 	
@@ -278,7 +278,7 @@ class bHolder_Logs extends bHolder{
 
     if (!bAuth::authenticated()){
       $where[] = '0';
-    }elseif (is_object($this->av) || !myPear::is_empty($av_id = @$_GET['av_id'])){
+    }elseif (is_object($this->av) || !b_posix::is_empty($av_id = @$_GET['av_id'])){
       if (empty($av_id)) $av_id = $this->av->ID;
       $where[] = " ( log_avid = '$av_id' OR log_form = '$av_id' ) ";
     }elseif (!empty($this->where)){
@@ -355,9 +355,9 @@ class bHolder_Logs extends bHolder{
     /*
     // carefull with the modules which are not initialised
     if (b_reg::$current_module == $this->rec['log_api'] && !empty($this->rec['log_form'])){
-      $form = myPear::getClassFromID(($id=$this->rec['log_form']),False,True);
+      $form = loader::getClassFromID(($id=$this->rec['log_form']),False,True);
       if (stripos($form,'bForm') !== False){
-	$class = myPear::getInstance_new($form,$id,'fatal');
+	$class = loader::getInstance_new($form,$id,'fatal');
 	$name = x('em',str_replace('bForm_','',$class->name('Lf')));
 	$this->rec['log_form'] = ($form == 'bForm_vm_Lease'
 				  ? $name
@@ -371,14 +371,14 @@ class bHolder_Logs extends bHolder{
 */
 
     b_reg::load_module($this->rec['log_api']);
-    $form = myPear::getClassFromID(($id=$this->rec['log_form']),False,True);
+    $form = loader::getClassFromID(($id=$this->rec['log_form']),False,True);
     if (stripos($form,'bForm') !== False){
-      $class = myPear::getInstance_new($form,$id,'fatal');
+      $class = loader::getInstance_new($form,$id,'fatal');
       $name = x('em',str_replace('bForm_','',$class->name('Lf')));
       $this->rec['log_form'] = ($form == 'bForm_vm_Lease'
 				? $name
 				: bJS()->popup($name,"?".b_crypt_no."=1&info=yes&mode=RO&form=$form&id=$id"));
-    }elseif(myPear::is_int($f=$this->rec['log_form'])){
+    }elseif(b_posix::is_int($f=$this->rec['log_form'])){
       $this->rec['log_form'] = x('em',"${form}_${f}");
     }else{
       $this->rec['log_form'] = x('em',preg_replace('/ from=.*/',' ',str_replace('to=','',$this->rec['log_comment'])));

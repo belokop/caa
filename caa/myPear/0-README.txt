@@ -562,7 +562,7 @@ D       myPear/mm2mm.php
 
 2010-08-20  version 3.6
  - clean-up release
- - 2010-09-15 3.6.2: * Introduce the long-awaited 'nocache' attribute in myPear::getInstance
+ - 2010-09-15 3.6.2: * Introduce the long-awaited 'nocache' attribute in loader::getInstance
  - 2010-09-22 3.6.3: * Introduce class 'cc' for the country codes
                      * Remove isMBS attribute 
                      * Fix getValue that string '0' is not considered as empty value

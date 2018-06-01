@@ -19,7 +19,6 @@ class agenda_vm extends agenda{
   private $e_start, $e_end, $r_start, $r_end;
 
   function __construct(){
-    $this->agenda_url = sprintf('http://%s/',VM_agenda_host);
     define('dummy_OA',$GLOBALS['LODGING_FINDER'][LODGING_OA]);
     parent::__construct();
   }
@@ -28,14 +27,14 @@ class agenda_vm extends agenda{
     *
     */
    public function getCategoryURL($categId){
-     return $this->agenda_url."/categoryDisplay.py?categId=$categId";
+     return AGENDA_URL."/categoryDisplay.py?categId=$categId";
    }
 
    /*
     *
     */
    public function getCatInfoURL($categId){
-     $reply = $this->agenda_url."/tools/getConf.py?catinfo=".$categId;
+     $reply = AGENDA_URL."/tools/getConf.py?catinfo=".$categId;
      $this->dbg($reply,True);
      return $reply;
    }
@@ -44,7 +43,7 @@ class agenda_vm extends agenda{
     *
     */
    public function getEventURL($confId){
-     return $this->agenda_url."/conferenceDisplay.py?confId=$confId";
+     return AGENDA_URL."/conferenceDisplay.py?confId=$confId";
    }
    
    /*
@@ -52,7 +51,7 @@ class agenda_vm extends agenda{
     */
    public function getRegistrantURL($confId,$registrantId=Null){
      if (empty($registrantId)) return $this->getEventURL($confId);
-     else return $this->agenda_url."/confModifRegistrants.py/modification?registrantId=$registrantId&confId=$confId";
+     else return AGENDA_URL."/confModifRegistrants.py/modification?registrantId=$registrantId&confId=$confId";
    }
    
   /*
@@ -74,7 +73,7 @@ class agenda_vm extends agenda{
     bTiming()->cpu(__function__);
     set_time_limit(0);
     $this->dbg(starting);
-    myPear::H1("Syncing visitors database with Agenda");
+    MSG::H1("Syncing visitors database with Agenda");
 
     // Update list of events
     VM_agendaEvents()->syncEventsInCategories(False);
@@ -95,9 +94,9 @@ class agenda_vm extends agenda{
 	  foreach ($this->parser($a) as $ev_id=>$program) {
 	    if ($p_id = @$program['id']){
 	      if (b_time::txt2unix($program['end']) + $this->lookBackFor * 3600*24 < b_time::noon()){ // ignore the past
-		if (empty($_GET['refresh_once']) && myPear::getInstance_new('bForm_vm_Event',array('e_code'=>$p_id),array('nocache','strict'))) continue;
+		if (empty($_GET['refresh_once']) && loader::getInstance_new('bForm_vm_Event',array('e_code'=>$p_id),array('nocache','strict'))) continue;
 	      }elseif(b_time::txt2unix($program['end']) < b_time::noon(2009,11,1)){ // ignore the pre-ABS era...
-		if (empty($_GET['refresh_once']) && myPear::getInstance_new('bForm_vm_Event',array('e_code'=>$p_id),array('nocache','strict'))) continue;
+		if (empty($_GET['refresh_once']) && loader::getInstance_new('bForm_vm_Event',array('e_code'=>$p_id),array('nocache','strict'))) continue;
 	      }
 	      $conferences_to_sync[] = join('&',array("conf=$p_id",
 						      "show_reg=all"));
@@ -117,7 +116,7 @@ class agenda_vm extends agenda{
       foreach ($this->parser($args) as $ev_id=>$program) {
 	$this->dbg(starting);
 	$program['title'] = strip_tags($program['title']);
-	if (count($conferences_to_sync) == 1) myPear::MESSAGE(x('h3',"Syncing ".x('em',$program['title'])));
+	if (count($conferences_to_sync) == 1) MSG::MESSAGE(x('h3',"Syncing ".x('em',$program['title'])));
 
 	$allRegistrants = array();
 
@@ -130,7 +129,7 @@ class agenda_vm extends agenda{
 	$this->r_end   = b_time::txt2unix($program['regend']);
 	
 	// update or create the Event instance 
-	$this->e = myPear::getInstance_new('bForm_vm_Event',array('e_code'=>$program['id']));
+	$this->e = loader::getInstance_new('bForm_vm_Event',array('e_code'=>$program['id']));
 	$this->newE = !$this->e->getValue('e_orgid');
 	$this->e->defineVariables();
 	$this->e->updateDB(array('e_orgid'    => myOrg_ID,
@@ -156,13 +155,13 @@ class agenda_vm extends agenda{
 	if (empty($program['chairs']))   $program['chairs'] = array();
 	foreach($program['chairs'] as $chair) {
 	  $name = bForm_Avatar::_fmtName('sfl',$chair);
-	  if (myPear::is_empty($email = @$chair['av_email'])){
+	  if (b_posix::is_empty($email = @$chair['av_email'])){
 	    $email=$chair['av_email'] = bForm_Avatar::generate_email($chair['av_firstname'],$chair['av_lastname']);
-	    myPear::WARNING(sprintf("%s<br>E-mail missing for organizer %s, impose %s",
+	    MSG::WARNING(sprintf("%s<br>E-mail missing for organizer %s, impose %s",
 				    $program['title'],$name,$email));
 	  }
 	  if (empty($email)){
-	    myPear::WARNING("??? empty email for '$name'");
+	    MSG::WARNING("??? empty email for '$name'");
 	  }else{
  	    $av = bForm_Avatar::hook($chair);
 	    VM_organizers($this->e->ID)->add_unitMember($av,$verbose='if_new');
@@ -226,7 +225,7 @@ class agenda_vm extends agenda{
 	  $this->av->updateDB($upd);
 	  
 	  $_POST['v_avid'] = $this->av->ID; // interface with 'bForm_vm_Visit'
-	  $this->v = myPear::getInstance_new('bForm_vm_Visit',array('v_code'=>$v_code),'nocache');
+	  $this->v = loader::getInstance_new('bForm_vm_Visit',array('v_code'=>$v_code),'nocache');
 	  $this->v->isVITAL = array();
 	  $this->v->defineVariables();
 	  if (0){
@@ -270,7 +269,7 @@ class agenda_vm extends agenda{
 
 	  $this->dbg($this->v,'v_start','v_end');
 	  if (!b_time::inInterval($time1,$time2,$this->e_start,$this->e_end)){
-	    myPear::WARNING($program['title'].' '.b_time::period($this->e_start,$this->e_end).
+	    MSG::WARNING($program['title'].' '.b_time::period($this->e_start,$this->e_end).
 			    ": application <i>$reg[familyname] ".b_time::period($time1,$time2)." is outside the event dates</i>");
 	  }
 
@@ -295,7 +294,7 @@ class agenda_vm extends agenda{
 	  $accommodation_now = $this->v->hut_codes();
 	  if ($accommodation_now !== $accommodation_wish){
 	    $verbose = True;
-	    if (cnf_dev)myPear::DEBUG("$reg[familyname]: \"$reg[accommodation]\" now=".join(',',$accommodation_now)." wish=".join(',',$accommodation_wish));
+	    if (cnf_dev)MSG::DEBUG("$reg[familyname]: \"$reg[accommodation]\" now=".join(',',$accommodation_now)." wish=".join(',',$accommodation_wish));
 	    if (empty($accommodation_wish)){
 	      if($accommodation_now === array(LODGING_OA)){
 		$this->printInfo('');
@@ -352,8 +351,11 @@ class agenda_vm extends agenda{
 	$q = myPear_db()->query("SELECT v_id,v_code FROM abs_visits WHERE v_eid=".$this->e->ID);
 	while ($r = myPear_db()->next_record($q)){
 	  if (!in_array($r['v_code'],$allRegistrants)) {
+	    if (!@$jghgjhgjhgjg++) b_debug::var_dump($allRegistrants,"allRegistrants");
+	    b_debug::var_dump($r,"Removed from Agenda");
+	    continue;
 	    $this->nUpdates++;
-	    $v = myPear::getInstance_new('bForm_vm_Visit',$r['v_id'],array('fatal','nocache'));
+	    $v = loader::getInstance_new('bForm_vm_Visit',$r['v_id'],array('fatal','nocache'));
 	    $v->defineVariables();
 	    $v->hookAvatar();
 	    $this->av = $v->av;
@@ -362,6 +364,7 @@ class agenda_vm extends agenda{
 	    $v->delete();
 	  }
 	}
+	continue; //////////////////////////////////////////////
 
 	/* remove from the database the organizers who are not any more in agenda */
 	$q = myPear_db()->query("SELECT um_id,um_avid FROM zzz_unit_members LEFT JOIN zzz_units ON u_id=um_uid WHERE u_parent=".$this->e->ID);
@@ -376,7 +379,7 @@ class agenda_vm extends agenda{
       }
       myPear_db()->noAutoCommit('end');
     }
-    myPear::MESSAGE_close();
+    MSG::MESSAGE_close();
     
     if (!$this->nUpdates && !empty($events)) print x('h2','The accommodation database is up to date').
 					       x('em','No updates from the agenda system at this time.');
@@ -402,15 +405,15 @@ class agenda_vm extends agenda{
    */
   private function printInfo($txt){
     static $av = 0;
-    if ($t=$this->title)  myPear::MESSAGE_open("$t<br/>".
+    if ($t=$this->title)  MSG::MESSAGE_open("$t<br/>".
 					       "Application: ".b_time::period($this->r_start,$this->r_end).'<br/>'.
 					       "Event: ".b_time::period($this->e_start,$this->e_end));
     $this->title = '';
     
     $av_id = is_object($av) ? $av->ID : 0;
-    if (is_object($this->av) && ($this->av->ID != $av_id)) myPear::MESSAGE_add('<br/>'.x('strong',$this->av->name()));
+    if (is_object($this->av) && ($this->av->ID != $av_id)) MSG::MESSAGE_add('<br/>'.x('strong',$this->av->name()));
     $av = $this->av;
-    if (!empty($txt)) myPear::MESSAGE_add($txt);
+    if (!empty($txt)) MSG::MESSAGE_add($txt);
   }
 
   private function updateIfChanged($newData,$v_code){
@@ -419,7 +422,7 @@ class agenda_vm extends agenda{
 
     $r = array();
     foreach(array_keys($newData) as $k){
-      if (!myPear::is_empty($vv=@$this->v->formDB[$k])) $r[$k] = $vv;
+      if (!b_posix::is_empty($vv=@$this->v->formDB[$k])) $r[$k] = $vv;
     }
 
     if (empty($r)){
@@ -438,7 +441,7 @@ class agenda_vm extends agenda{
 						  ' ----> '.
 						  $this->unix2txt($k,$v));
 	   }
-	 }else myPear::WARNING("column '$k' does not exist in '$form'");
+	 }else MSG::WARNING("column '$k' does not exist in '$form'");
        }
      }
 
@@ -479,7 +482,7 @@ class agenda_vm extends agenda{
      sort($reply);
      if (empty($reply) && !$default_lodging){
        $msg = b_fmt::redText("Unexpected wish from applicant $familyname:<br/><em>$wish_string</em>");
-       myPear::WARNING($msg);
+       MSG::WARNING($msg);
      }
      return $reply; 
    }

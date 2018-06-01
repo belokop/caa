@@ -101,7 +101,7 @@ class bUnit_vm_bookers extends bUnit_vm{
     $rec = $this->getUnitMember($av_id);
     $rec['duties'] = $this->safe_explode(@$rec['duties']);
 
-    myPear::setPageHeader('Booker '.bForm_Avatar::_fmtName('fl',$rec,False));
+    MSG::setPageHeader('Booker '.bForm_Avatar::_fmtName('fl',$rec,False));
     
     $this->bForm(array());
     foreach($this->duties as $duty_code=>$descr){

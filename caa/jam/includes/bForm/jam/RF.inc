@@ -36,7 +36,7 @@ class bForm_jam_RF extends bForm_jam{
     if ($pos instanceof bForm_jam_Position){
       $this->pos = $pos;
     }else{
-      $this->pos = myPear::getInstance('bForm_jam_Position',
+      $this->pos = loader::getInstance('bForm_jam_Position',
 				       $this->getValue('rf_posid',1),
 				       array('strict','fatal'));
     }

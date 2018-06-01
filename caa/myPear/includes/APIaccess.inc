@@ -10,12 +10,14 @@ class APIaccess extends myPear_base{
 
     //    locateAndInclude('b_cache');
     //    APIaccess::$cache = new b_cache_S(get_class($this));
-    $this->who_is_here(array('EA_ORG_manager_here'  => array('rank'=> 'RANK__ea_org_manager',
-							     'def' => 'superUser_here'),
-                             'EA_administrator_here'=> array('rank'=> 'RANK__ea_admin',
-							     'def' => 'EA_ORG_manager_here'),
-			     // 'EA_member_here'       => array('IF'  => myOrg()->eaMembers()->isMember()),
-			     ));
+    if (defined('RANK__ea_org_manager')){
+      $this->who_is_here(array('EA_ORG_manager_here'  => array('rank'=> 'RANK__ea_org_manager',
+							       'def' => 'superUser_here'),
+			       'EA_administrator_here'=> array('rank'=> 'RANK__ea_admin',
+							       'def' => 'EA_ORG_manager_here'),
+			       // 'EA_member_here'       => array('IF'  => myOrg()->eaMembers()->isMember()),
+			       ));
+    }
   }
   
   /*
@@ -24,7 +26,7 @@ class APIaccess extends myPear_base{
   function who_is_here($WIH){
     foreach($WIH as $_here => $data){
       if (!defined($_here)){
-	if (is_object(bAuth::$av)){
+	if (bAuth::authenticated()){
 	  if (!empty($data['rank']) && !defined($data['rank'])) b_debug::internalError("$data[rank] is not defined yet");
 	  $rank = @constant($data['rank']);
 	  if (!defined($_here)){
@@ -93,6 +95,6 @@ class APIaccess extends myPear_base{
   
   public function show(){
     locateAndInclude('bUnit');
-    myPear::WARNING_T("TBD");
+    MSG::WARNING_T("TBD");
   }
 }

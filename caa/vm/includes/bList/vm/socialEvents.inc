@@ -65,7 +65,7 @@ class bList_vm_socialEvents extends bList_vm{
       $id  = (empty($r['lm_value']) && empty($ser['lm_key'])
 	     ? 'empty record'
 	     : "record ".x('em',"\"$r[lm_value] - $ser[lm_key]\""));
-      myPear::MESSAGE("Delete $this->message_deleteMember_custom $id from the ".$this->name(True));
+      MSG::MESSAGE("Delete $this->message_deleteMember_custom $id from the ".$this->name(True));
     }
   }
   
@@ -74,7 +74,7 @@ class bList_vm_socialEvents extends bList_vm{
    */
   private $budgetSource_exists = Null;
   private function budgetSource_exists(){
-    if ($this->budgetSource_exists === Null) $this->budgetSource_exists = (bool)!myPear::is_empty($this->e->budgetSource()->get_budgetSource());
+    if ($this->budgetSource_exists === Null) $this->budgetSource_exists = (bool)!b_posix::is_empty($this->e->budgetSource()->get_budgetSource());
     return $this->budgetSource_exists;
   }
   
@@ -109,7 +109,7 @@ class bList_vm_socialEvents extends bList_vm{
 	}
       }
     }else{
-      myPear::WARNING("Can't setup Social Events for ".x('em',x('"',$this->e->name())));
+      MSG::WARNING("Can't setup Social Events for ".x('em',x('"',$this->e->name())));
       bList::deleteList($this->ID,$membersOnly=True);
       $this->reset_cache();
       $this->MODE = 'RO';
@@ -170,20 +170,6 @@ class bList_vm_socialEvents extends bList_vm{
     return $reply;
   }
 
-  /*
-   * Create a member record.
-   * Note bList_vm_socialEvents class might have have "clashing records",
-   * i.e. duplicated lm_key/lm_value
-   */
-  private function createRecord(){
-    return $this->createMember();
-    $lm_id = bMaster()->reserve_masterCounter();
-    $set = array("lm_id=$lm_id",
-		 $this->hookParent());
-    myPear_db()->query("INserT INTO ".$this->TABLE_member." SET ".join(',',$set));
-    return $lm_id;
-  }
-
   //  return " LEFT JOIN zzz_lists ON $this->TABLEID = $this->TABLEID_member_p" ;
   protected function hookJOIN_ZZZ(){
     return join(' ',array(" LEFT JOIN abs_events ON e_id = lm_status ",
@@ -203,7 +189,7 @@ class bList_vm_socialEvents extends bList_vm{
 	$reply = False;
       }elseif ($date < date('Y-m-d',$this->e->getValue('e_start')) ||
 	       $date > date('Y-m-d',$this->e->getValue('e_end'))){
-	myPear::ERROR("Can't setup social event for $date".
+	MSG::ERROR("Can't setup social event for $date".
 				 ", which is is outside the conference period ".b_time::period($this->e->getValue('e_start'),$this->e->getValue('e_end')));
 	$reply = False;
       }
@@ -238,7 +224,7 @@ class bList_vm_socialEvents extends bList_vm{
     $this->show_gv=cnf_dev;
 
     $lm_id = $this->getValue('lm_id');
-    if (empty($lm_id))  $lm_id = $this->createRecord();
+    if (empty($lm_id))  $lm_id = $this->createMember();
 
     $lm_key = $this->getMemberValue($lm_id,'lm_key'); 
 
@@ -299,7 +285,7 @@ class bList_vm_socialEvents extends bList_vm{
    * Page header
    */
   protected function setPageHeader() {
-    myPear::H1($this->e->name(),'reset');
+    MSG::H1($this->e->name(),'reset');
   }
 
 
@@ -323,7 +309,7 @@ class bList_vm_socialEvents extends bList_vm{
       $price = VM_socialEventRates($this->e)->get_ser_price($this->r['lm_key'],@$this->r['s_price'],$n_attenders);
       $what  = VM_socialEventRates($this->e)->getMemberValue($this->r['lm_key'],'lm_key');
       if ($n_attenders > 0 && (empty($price) || empty($what))){
-	myPear::WARNING_T("??? price='$price' what=''$what'");
+	MSG::WARNING_T("??? price='$price' what=''$what'");
 	if (cnf_dev) b_debug::print_r($this->r,"??? price='$price' what=''$what'");
 	$this->r = array();
       }else{       
@@ -383,7 +369,7 @@ class bList_vm_socialEvents extends bList_vm{
       if ($this->e->attenders(True)){
 	if ($this->budgetSource_exists()){
 	  $reply[] = ($this->isReady()
-		      ? b_btn::submit('add new social event',b_url::same("?function_form=VM_socialEventRates&arg_once=".$this->parent_ID))
+		      ? b_btn::submit('add new social event',b_url::same("?function_form=VM_socialEventRates&arg1_once=".$this->parent_ID))
 		      : b_btn::submit('initialize social events',b_url::same("?init_list_once=yes&resetcache_once=1")));
 	  if (VM_administrator_here && $this->isReady()) $reply[] = b_btn::submit('wipe all social events',
 										  b_url::same("?drop_list_once=".$this->ID),
@@ -392,7 +378,7 @@ class bList_vm_socialEvents extends bList_vm{
 	  print x('i',"There is no budget for social events");
 	}
       }else{
-	myPear::WARNING("There is no approved attenders for this event, can't initialize the Social events");
+	MSG::WARNING("There is no approved attenders for this event, can't initialize the Social events");
       }
     }
     return $reply;
@@ -401,12 +387,12 @@ class bList_vm_socialEvents extends bList_vm{
   /*
    *
    */
-  function draw_summary() {
+  protected function draw_summary() {
     if ($this->isReady()){
       $this->t->prt(array('_budget'=>'<hr/>'));
       $this->t->prt(array('_budget'=>x('strong',b_fmt::escape(b_fmt::money($this->total)))));
     }else{
-      myPear::WARNING("'Social events' are not yet initialized");
+      MSG::WARNING("'Social events' are not yet initialized");
     }
   }
 }

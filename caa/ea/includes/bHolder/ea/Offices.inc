@@ -25,7 +25,7 @@ class bHolder_ea_Offices extends bHolder_ea{
     
     // Delete the office if requested
     if ($o_id = @$_GET['delete_once']){
-      myPear::getInstance_new('bForm_ea_Office',$o_id,'delete');
+      loader::getInstance_new('bForm_ea_Office',$o_id,'delete');
     }
 
     // Ask parents...
@@ -39,10 +39,10 @@ class bHolder_ea_Offices extends bHolder_ea{
    */  
   protected function init(){
     foreach(EA_members()->getMembers_byStatus() as $av_id=>$rec){
-      $av = myPear::getInstance_new('bForm_Avatar_'.b_reg::$current_module,$av_id,'fatal');
+      $av = loader::getInstance_new('bForm_Avatar_'.b_reg::$current_module,$av_id,'fatal');
       $o_name = $av->get_staffOffice();
       if (empty($o_name))	$o_name = ' No office';
-      else       myPear::getInstance_new('bForm_'.b_reg::$current_module.'_Office',array('o_name'=>$o_name));
+      else       loader::getInstance_new('bForm_'.b_reg::$current_module.'_Office',array('o_name'=>$o_name));
       $this->offices[$o_name][] = $av;
     }
     ksort($this->offices);
@@ -94,7 +94,7 @@ class bHolder_ea_Offices extends bHolder_ea{
 			       ? x('em style="font-size:smaller"',x('strong','Office for '.OFFICE_AUTO_ALLOCATABLE))
 			       : x('em style="font-size:smaller"','Office for '.$this->rec['o_status']));
 
-    $o = myPear::getInstance_new('bForm_'.b_reg::$current_module.'_Office',$this->rec['o_id'],'fatal');
+    $o = loader::getInstance_new('bForm_'.b_reg::$current_module.'_Office',$this->rec['o_id'],'fatal');
     $name = explode(':',$o_name = $o->getValue('o_name'),2);
     $building = substr($name[0],0,strlen($name[0])-1);
     if ($building != $this->building_was){
@@ -132,7 +132,7 @@ class bHolder_ea_Offices extends bHolder_ea{
     case 'doorLabels':
       $rec = $this->rec;
       if (empty($this->offices[$this->rec['o_name']])){
-	myPear::MESSAGE("No tenants for $rec[o_name]");
+	MSG::MESSAGE("No tenants for $rec[o_name]");
 	$this->offices[$this->rec['o_name']] = array();
       }
       foreach($this->offices[$this->rec['o_name']] as $av){

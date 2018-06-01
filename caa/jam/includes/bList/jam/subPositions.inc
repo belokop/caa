@@ -19,7 +19,7 @@ class bList_jam_subPositions extends bList_jam{
 
     // Hook the position
     if (empty($pos_id))  $pos_id = JAM_posID();
-    $this->pos = myPear::getInstance('bForm_jam_Position',$pos_id,array('fatal','strict'));
+    $this->pos = loader::getInstance('bForm_jam_Position',$pos_id,array('fatal','strict'));
 
     // Execute the bList constructor
     parent::__construct($this->pos->ID);
@@ -76,7 +76,7 @@ class bList_jam_subPositions extends bList_jam{
   }
 
   protected function getFormAdd(){
-    myPear::MESSAGE("Research fields within the position");
+    MSG::MESSAGE("Research fields within the position");
     $this->bForm($this->list_quering,True);
     $this->f->textField('lm_key');
     $this->f->closeForm();
@@ -103,17 +103,17 @@ function fix_subPositions(){
   if (!cnf_CLI && myPear_db()->columnExists('rf_name','jam_rf')){
     set_time_limit(0);
     locateAndInclude('jam_functions.inc');
-    myPear::DEBUG(x('h1',__FUNCTION__.' started ---------------------------------'));
+    MSG::DEBUG(x('h1',__FUNCTION__.' started ---------------------------------'));
     fix_subPositions_1();
     fix_subPositions_2();
     fix_subPositions_3();
-    myPear::DEBUG(x('h1',__FUNCTION__.' completed ---------------------------------'));
+    MSG::DEBUG(x('h1',__FUNCTION__.' completed ---------------------------------'));
   }
 }
 
 // Remove unused columns from the database & add the new ones
 function fix_subPositions_1(){
-  myPear::DEBUG(x('h2',__FUNCTION__));
+  MSG::DEBUG(x('h2',__FUNCTION__));
   myPear_db()->reset_cache();
   if (myPear_db()->tableExists('jam_old_posfields')){
     myPear_db()->qquery('DROP TABLE `jam_old_posfields`',1);
@@ -134,7 +134,7 @@ function fix_subPositions_1(){
 function fix_subPositions_2(){
 
   $debug = False;
-  myPear::DEBUG(x('h2',__FUNCTION__));
+  MSG::DEBUG(x('h2',__FUNCTION__));
   $t = new b_table_zebra(array('pos'  =>' ',
 			       'rf_id'=>' ',
 			       'rf'   =>' ',
@@ -148,7 +148,7 @@ function fix_subPositions_2(){
 
   $rf_to_drop = array();
   while ($rr = myPear_db()->next_record($qq)){
-    myPear::DEBUG(x('h3',"==============================================$rr[pos_name]"));
+    MSG::DEBUG(x('h3',"==============================================$rr[pos_name]"));
     if (!preg_match('/(yes|on)/i',$rr['pos_type'])) $rr['pos_type'] = bIcons()->get('ok');
     else                                            $rr['pos_type'] = '';   
     $q = myPear_db()->qquery("SELECT *,COUNT(ap_id) AS n  FROM jam_rf ".
@@ -163,7 +163,7 @@ function fix_subPositions_2(){
 	  $t->extraTD[] = bIcons()->get('drop');
 	}
 	
-	if (!empty($r['rf_name'])) myPear::DEBUG(x('h4',"-----------------------------$r[rf_name]"));
+	if (!empty($r['rf_name'])) MSG::DEBUG(x('h4',"-----------------------------$r[rf_name]"));
 	$t->prt(array('pos'  =>$rr['pos_name'],
 		      't'    =>$rr['pos_type'],
 		      'rf'   =>$r['rf_name'],
@@ -174,8 +174,8 @@ function fix_subPositions_2(){
 	 * Start processing
 	 */
 	if (!$drop && (int)$r['rf_id']){
-	  if (myPear::is_empty($name = trim($r['rf_name'])))  $name = CONST_noname;
-	  $rf = myPear::getInstance('bForm_jam_RF',$r['rf_id'],array('fatal','strict'));
+	  if (b_posix::is_empty($name = trim($r['rf_name'])))  $name = CONST_noname;
+	  $rf = loader::getInstance('bForm_jam_RF',$r['rf_id'],array('fatal','strict'));
 	  $jpf= JAM_subPositions($rr['pos_id']);
 	  $rf->updateDB(array('rf_lmid'=>$jpf->addMember(array('lm_key'=>$name))));
 	}
@@ -189,13 +189,13 @@ function fix_subPositions_2(){
   $t->close();
 
   // drop spurious records
-  myPear::DEBUG("------------ drop spurious records");
+  MSG::DEBUG("------------ drop spurious records");
   foreach($rf_to_drop as $rf_id){
     myPear_db()->qquery("DELETE FROM jam_rf WHERE rf_id = $rf_id",$debug);
   }
 
   // drop field 'rf_name'
-  myPear::DEBUG("------------ drop field 'rf_name'");
+  MSG::DEBUG("------------ drop field 'rf_name'");
   if (myPear_db()->columnExists('rf_name','jam_rf')){
     myPear_db()->qquery('ALTER TABLE `jam_rf` DROP `rf_name`',$debug);
     myPear_db()->reset_cache();
@@ -206,7 +206,7 @@ function fix_subPositions_2(){
 function fix_subPositions_3(){
 
   $debug = True;
-  myPear::DEBUG(x('h2',__FUNCTION__));
+  MSG::DEBUG(x('h2',__FUNCTION__));
   myPear_db()->qquery("UPDATE zzz_list_members SET lm_key   = '".CONST_noname."' WHERE lm_key = 'dummy'",$debug);
   myPear_db()->qquery("UPDATE zzz_list_members SET lm_value = '".CONST_noname."' WHERE lm_value = 'dummy'",$debug);
   

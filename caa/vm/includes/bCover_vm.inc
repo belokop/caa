@@ -27,7 +27,7 @@ class bCover_vm extends bCover_2010 {
 			'Cotenants' => '??');
     // Remove all office allocations for the event 
     myPear_db()->qquery("UPDATE abs_visits SET ".$ids[$whatToWipe]." = NULL WHERE v_eid = ".$event->ID,cnf_dev);
-    myPear::MESSAGE("Wipe office allocations for ".x('"',x('em',$event->name(True,40))));
+    MSG::MESSAGE("Wipe office allocations for ".x('"',x('em',$event->name(True,40))));
     
     // Force automatic office assignment for the staff members
     if ($whatToWipe == 'Offices') self::allocateOfficesForStaff($event->ID);
@@ -75,7 +75,7 @@ class bCover_vm extends bCover_2010 {
   private static function allocateOfficesForStaff($e_id){
     foreach(EA_members()->getMembers_byStatus() as $av_id=>$rec){
       // b_debug::print_r($rec);
-      myPear::getInstance_new('bForm_vm_Visit',array('v_avid'=>$av_id,'v_eid'=>$e_id),'strict');
+      loader::getInstance_new('bForm_vm_Visit',array('v_avid'=>$av_id,'v_eid'=>$e_id),'strict');
     }
   }
       
@@ -240,12 +240,12 @@ class bCover_vm extends bCover_2010 {
       foreach ($this->solution as $sol_id=>$visits){
 	switch($this->whatToAllocate){
 	case 'Offices':
-	  $sol = myPear::getInstance_new('bForm_vm_Office',(int)($sol_id/100),'strict');
+	  $sol = loader::getInstance_new('bForm_vm_Office',(int)($sol_id/100),'strict');
 	  if ($sol && ($sol->getValue('o_capacity') < ($sol_id%100))) $sol = 0;
 	  break;
 	  
 	case 'Apartment':
-	  $sol = myPear::getInstance_new('bForm_vm_Room',$sol_id,'fatal');
+	  $sol = loader::getInstance_new('bForm_vm_Room',$sol_id,'fatal');
 	  break;
 	  
 	case 'Cotenants':
@@ -278,7 +278,7 @@ class bCover_vm extends bCover_2010 {
      * draw solution matrix
      */
     if ($this->showMatrix) {
-      if (!empty($clochards))myPear::H2('Allocation for '.b_time::period($this->timeMn,$this->timeMx));
+      if (!empty($clochards))MSG::H2('Allocation for '.b_time::period($this->timeMn,$this->timeMx));
       locateAndInclude('bIcal_matrix_offices');
       $m = new bIcal_matrix_offices();
       $m->noNavig_arrows = $m->noNavig_months = True;
@@ -292,7 +292,7 @@ class bCover_vm extends bCover_2010 {
   private function getVisit($v_id){
     if (!empty($v_id)){
       switch($this->whatToAllocate){
-      case 'Offices':   return myPear::getInstance_new('bForm_vm_Visit',$v_id,array('nocache','fatal'));
+      case 'Offices':   return loader::getInstance_new('bForm_vm_Visit',$v_id,array('nocache','fatal'));
       case 'Apartment': return bForm_vm_Lease::visit($v_id);
       case 'Cotenants': b_debug::internalError("should not come here");
       }
@@ -309,11 +309,11 @@ class bCover_vm extends bCover_2010 {
 	$n = count($v);
 	foreach ($v as $x_id) {
 	  if ((int)$x_id){
-	    $o = myPear::getInstance_new(Null,$x_id,array('nocache','fatal'));
+	    $o = loader::getInstance_new(Null,$x_id,array('nocache','fatal'));
 	    $period = method_exists($o,'period') ? $o->period() : ' ';
 	    $o_name = '';
 	    if ($xx_id = $o->getValue('v_oid',True,True)){
-	      $off = myPear::getInstance_new(Null,$xx_id,'fatal');
+	      $off = loader::getInstance_new(Null,$xx_id,'fatal');
 	      $o_name = $off->name();
 	    }
 	    $t->tro(); 
@@ -343,10 +343,10 @@ class bCover_vm extends bCover_2010 {
       ksort($aps);
       $h = count(array_keys($aps))." $header";
       foreach($aps as $x_id=>$visits){
-	$o = myPear::getInstance_new(Null,$x_id,'fatal');
+	$o = loader::getInstance_new(Null,$x_id,'fatal');
 	$o_name = $o->name(); 
 	foreach($visits as $v_id){
-	  $v = myPear::getInstance_new(Null,$v_id,array('nocache','fatal'));
+	  $v = loader::getInstance_new(Null,$v_id,array('nocache','fatal'));
 	  $t->tr(array($h,
 		       $o_name,
 		       $v->name(),
@@ -463,7 +463,7 @@ class bCover_vm extends bCover_2010 {
       // $this->timeMx = $this->e->getValue('e_end');
 
       foreach ($this->constraints as $o_id=>$constraint){
-	$o = myPear::getInstance_new('bForm_vm_Office',$o_id,'fatal');
+	$o = loader::getInstance_new('bForm_vm_Office',$o_id,'fatal');
 	for($n=1; $n<=$o->getValue('o_capacity'); $n++) $this->constraints[$o_id*100 + $n] = $constraint;
 	unset($this->constraints[$o_id]);
 	b_debug::_('bCover_vm',$o->name(),$o->getValue('o_capacity').' constraints');

@@ -106,9 +106,9 @@ function vm_colorLegend($r){
 function vm_cancel_visit($v_id=Null){
   if (empty($v_id)) $v_id = @$_GET['v_id'];
   if (empty($v_id)){
-    myPear::WARNING('Ignoring request to cancel the visit');
+    MSG::WARNING('Ignoring request to cancel the visit');
   }else{
-    $v = myPear::getInstance_new('bForm_vm_Visit',$v_id,'fatal');
+    $v = loader::getInstance_new('bForm_vm_Visit',$v_id,'fatal');
     $v->delete();
   }
 }
@@ -119,7 +119,7 @@ function vm_cancel_visit($v_id=Null){
 function vm_edit_accommodation($v_id=Null){
   if (empty($v_id)) $v_id = @$_GET['v_id'];
   if (empty($v_id)){
-    myPear::WARNING('Ignoring request to edit the accommodation');
+    MSG::WARNING('Ignoring request to edit the accommodation');
   }else{
     require_once dirname(__FILE__).'/vm_editAccommodation.inc';
   }

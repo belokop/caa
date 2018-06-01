@@ -50,7 +50,7 @@ class bDB_myPear extends bDB{
         $n_column = 0;
         foreach($this->getTables() as $tb){
 	  // Skip the tables which do not use a unique ID
-          if (in_array($tb,array('zzz_master','zzz_semaphore','zzz_logs','zzz_templates','zzz_bugs'))) continue;
+          if (in_array($tb,array('zzz_master','zzz_semaphore','zzz_logs','zzz_templates','zzz_bugs','zzz_tt'))) continue;
 	  if (strpos($tb,'lic_')  === 0)            continue;
 	  
 	  $q = myPear_db()->query("SHOW KEYS FROM $tb WHERE Key_name = 'PRIMARY'");

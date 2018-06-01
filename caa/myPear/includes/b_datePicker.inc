@@ -107,7 +107,7 @@ class b_datePicker{
       elseif($reply<1900 || $reply>CONST_eternity_year)$reply = date('Y-m-d',$reply);
       break;
     default:
-      myPear::ERROR("Please upgrade ".__METHOD__." to deal with '".CONST_dp_format."' datepicker format");
+      MSG::ERROR("Please upgrade ".__METHOD__." to deal with '".CONST_dp_format."' datepicker format");
       $reply = Null;
     }
     if (cnf_show_dp) b_debug::xxx($reply);

@@ -50,7 +50,7 @@ class bList_vm_agendaEvents extends bList_vm{
       $json= json_encode($xml);
 
       if (!is_array(json_decode($json,True))){
-	myPear::ERROR("Can't contact agenda system...");
+	MSG::ERROR("Can't contact agenda system...");
 	b_debug::var_dump($json,"Can't contact agenda system...");
 	return array(Null,null);
       } 
@@ -151,15 +151,15 @@ class bList_vm_agendaEvents extends bList_vm{
     // Add & Remove the events
     if ($c = count($toRemove)) $act[] = "$c event(s) to be removed";
     if ($c = count($toAdd))    $act[] = "$c event(s) to be added";
-    if (!empty($act)) myPear::MESSAGE(join(' and ',$act).' in the Agenda-sync list');
+    if (!empty($act)) MSG::MESSAGE(join(' and ',$act).' in the Agenda-sync list');
  
     foreach($toAdd as $args){
-      myPear::MESSAGE("Adding event \"".$args['a_name']."\"");
+      MSG::MESSAGE("Adding event \"".$args['a_name']."\"");
       $this->addMember($args);
     }
 
     foreach ($toRemove as $lm_id=>$title){
-      myPear::MESSAGE("Removing protected event \"$title\" from VM");
+      MSG::MESSAGE("Removing protected event \"$title\" from the sync list");
       $this->deleteMember($lm_id);
     }
   }
@@ -167,7 +167,7 @@ class bList_vm_agendaEvents extends bList_vm{
   private $new_item = array('new event');
   protected function message_addMember($r){
     if(@$r['lm_key'] === 'cat') $this->new_item = array('category',$r['lm_value']);
-    myPear::MESSAGE('Adding '.join(' ',$this->new_item).' to the Agenda-sync list"');
+    MSG::MESSAGE('Adding '.join(' ',$this->new_item).' to the Agenda-sync list"');
   }
 
   protected function defaultTabForListing($tabs){
@@ -185,7 +185,7 @@ class bList_vm_agendaEvents extends bList_vm{
       }elseif(@$_POST['lm_key'] === 'conf'){
 	$confId = $_POST['lm_value'];
 	VM_agenda()->sync(array("conf=$confId&show_reg=all"));
-	if (is_object($ev = myPear::getInstance_new('bForm_vm_Event',array('e_code'=>$confId),'strict'))){
+	if (is_object($ev = loader::getInstance_new('bForm_vm_Event',array('e_code'=>$confId),'strict'))){
 	  $_POST['a_name'] = $ev->name();
 	  $this->new_item = array(x('"',$_POST['a_name']));
 	}elseif(cnf_dev){
@@ -212,7 +212,7 @@ class bList_vm_agendaEvents extends bList_vm{
     if (empty($r)) $r = $this->r;
     $to_show = b_cnf::get('VM_show_old_events') || ($r['lm_key'] == 'cat');
     if (!$to_show && $this->is_ourEvent($r)){
-      if (is_object($e = myPear::getInstance_new('bForm_vm_Event',array('e_code'=>$r['lm_value']),'strict'))){
+      if (is_object($e = loader::getInstance_new('bForm_vm_Event',array('e_code'=>$r['lm_value']),'strict'))){
 	if (date('Y',$e->getValue('e_start',1)) > date('Y',time()) - VM_OLD_PROJECTS) $to_show = True;
       }
     }
@@ -264,7 +264,7 @@ class bList_vm_agendaEvents extends bList_vm{
     foreach($this->getMembers() as $id=>$r){
       if($r['lm_key']=='cat'){
 	$tab = self::$cat;
-      }elseif($e=myPear::getInstance_new('bForm_vm_Event',array('e_code'=>$r['lm_value']),'strict')){
+      }elseif($e=loader::getInstance_new('bForm_vm_Event',array('e_code'=>$r['lm_value']),'strict')){
 	if ($this->record_rejected($r)) continue;
 	$tab = date('Y',$e->getValue('e_start'));
       }elseif(cnf_dev){
@@ -313,7 +313,7 @@ class bList_vm_agendaEvents extends bList_vm{
       }
       $this->r['_event'] = bJS()->modal_iframe(VM_agenda()->getCategoryURL($this->r['lm_value']),
 					       x('strong',"Category \"".$this->r['a_name']."\""));
-    }elseif($e=myPear::getInstance_new('bForm_vm_Event',array('e_code'=>$this->r['lm_value']),'strict')){
+    }elseif($e=loader::getInstance_new('bForm_vm_Event',array('e_code'=>$this->r['lm_value']),'strict')){
       $this->r['_event']    = bJS()->modal_iframe(VM_agenda()->getEventURL($e->getValue('e_code')),$e->name(True,80));
       $this->r['_lm_status']= ($this->is_ourEvent($this->r)
 			       ? bIcons()->get('i-ok')

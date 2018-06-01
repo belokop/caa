@@ -7,8 +7,8 @@ function jam_tablesForRenumber(){
     b_debug::print_r($reply,__FUNCTION__);
 
     //
-    // Populate myPear::$sql_identities_extra with the old tables to get the right master_ID
-    myPear::$sql_identities_extra['jam_old_avatars'] = array('t'=>'jam_old_avatars',
+    // Populate loader::$sql_identities_extra with the old tables to get the right master_ID
+    loader::$sql_identities_extra['jam_old_avatars'] = array('t'=>'jam_old_avatars',
 							     'i'=>'av_id');
     $q=myPear_db()->qquery("SELECT COUNT(*),av_id FROM jam_old_avatars GROUP BY av_id HAVING COUNT(*)>1 ORDER BY COUNT(*) DESC",True);
     while ($r = myPear_db()->next_record($q))       b_debug::print_r($r,'jam_old_avatars');
@@ -19,19 +19,19 @@ function jam_tablesForRenumber(){
     foreach($reply as $old_table){
       $table = str_replace('_old','',$old_table);
       if (!myPear_db()->tableExists($table)) continue;
-      foreach(myPear::$sql_identities as $class=>$id){ 
+      foreach(loader::$sql_identities as $class=>$id){ 
 	if ($id['t'] != $table) continue;
 
 	$q=myPear_db()->qquery("SELECT COUNT(*),$id[i]  FROM $old_table GROUP BY $id[i]  HAVING COUNT(*)>1 ORDER BY COUNT(*) DESC",True);
 	while ($r = myPear_db()->next_record($q))       b_debug::print_r($r,$old_table);
 
-	myPear::$sql_identities_extra[$old_table] = array('t'=>$old_table,
+	loader::$sql_identities_extra[$old_table] = array('t'=>$old_table,
 							  'i'=>$id['i']);
 	if (!in_array('PRIMARY',myPear_db()->showIndex($old_table))) myPear_db()->qquery("ALTER TABLE `$old_table` ADD PRIMARY KEY ( `$id[i]` )",True);
 	myPear_db()->qquery("OPTIMIZE TABLE `$old_table`",True);
       }
     }
-    b_debug::print_r(myPear::$sql_identities_extra,'identities_extra');
+    b_debug::print_r(loader::$sql_identities_extra,'identities_extra');
   }
   return $reply;
 }
@@ -99,7 +99,7 @@ function create_unitsSC(){
     open_dbg_file(__METHOD__,__FILE__);
     $qq = $db->qquery('SELECT sc_posid FROM jam_old_sc GROUP BY sc_posid ORDER BY sc_posid',1);
     while ($rr = $db->next_record($qq)) {
-      if (!($pos = myPear::getInstance('bForm_jam_Position',$rr['sc_posid']))){
+      if (!($pos = loader::getInstance('bForm_jam_Position',$rr['sc_posid']))){
 	print_r($rr);
 	//b_debug::internalError("pos == 0");
 	continue;
@@ -112,10 +112,10 @@ function create_unitsSC(){
 	    $rank != RANK_jam_SC2 &&
 	    $rank != RANK_jam_SC1) b_debug::internalError("unexpected role $rank");
 	
-	if ($av= myPear::getInstance('bForm_Avatar_jam',$r['scmember_avid'],array('nocache','strict'))){
+	if ($av= loader::getInstance('bForm_Avatar_jam',$r['scmember_avid'],array('nocache','strict'))){
 	  JAM_unit($rank,$pos->ID)->add_unitMember($av->ID);
 	}else{
-	  myPear::WARNING("Can't hook scmember_avid '$r[scmember_avid]'");
+	  MSG::WARNING("Can't hook scmember_avid '$r[scmember_avid]'");
 	}
       }
     }
@@ -137,7 +137,7 @@ function convert_comma_Lists_unit(){
     foreach(explode("\n",`cat /tmp/jam_old_positions|grep ','`) as $item){
       if (trim($item)){
 	list($pos_id,$f,$cm) = explode(',',trim($item),3);
-	$pos = myPear::getInstance('bForm_jam_Position',$pos_id);
+	$pos = loader::getInstance('bForm_jam_Position',$pos_id);
 	JAM_posID($pos->ID);
 	if ($pos_id != $pos_id_o)	print "<h2>$pos->ID --------------------------------------".$pos->name()."</h2>\n";
 	$pos_id_o = $pos_id;
@@ -147,7 +147,7 @@ function convert_comma_Lists_unit(){
 	  $login = str_replace('stefan', 'shofm',$login);
 	  $av = bForm_Avatar::hook(array('av_identity'=>$login),True);
 	  if (@$av->ID) JAM_unit($rank,$pos->ID)->add_unitMember($av);
-	  else myPear::WARNING("Can't hook login '$login'");
+	  else MSG::WARNING("Can't hook login '$login'");
 	}
       }
     }
@@ -286,14 +286,14 @@ function fixLogs($dryRun=False){
       $record_id = '';
       $drop_this_record = False;
       if ($log_form > 0){
-	switch($log_form_name=myPear::getClassFromID($log_form,$noFormPrefix=True)){
+	switch($log_form_name=loader::getClassFromID($log_form,$noFormPrefix=True)){
 	case 'jam_Applicant':
 	  $qz = $db->qquery("SELECT * FROM jam_applicants WHERE ap_id = $log_form",$dryRun);
 	  if ($db->num_rows($qz)){
 	    while($rz = $db->next_record($qz)){
 	      foreach(array('ap_posid','ap_avid') as $id) $_REQUEST[$id] = $_GET[$id] = $rz[$id];
 	    }
-	    $log_form_class = myPear::getClassFromID($log_form,'class');
+	    $log_form_class = loader::getClassFromID($log_form,'class');
 	    if (($av = $log_form_class->av) instanceof bForm_Avatar){
 	      $log_type = 'application';
 	      $record_id = "av=$av->ID log_type=$log_type log_form=$log_form";
@@ -320,7 +320,7 @@ function fixLogs($dryRun=False){
 	  while($rz = $db->next_record($qz)){
 	    foreach(array('r_apid','r_avid') as $id) $_REQUEST[$id] = $_GET[$id] = $rz[$id];
 	  }
-	  $log_form_class = myPear::getClassFromID($log_form,'class');
+	  $log_form_class = loader::getClassFromID($log_form,'class');
 	  $av = $log_form_class->av;
 	  $log_type = 'review';
 	  // However...
@@ -355,18 +355,18 @@ function fixLogs($dryRun=False){
 	    while($rz = $db->next_record($qz)){
 	      foreach(array('rec_apid','rec_avid') as $id) $_REQUEST[$id] = $_GET[$id] = $rz[$id];
 	    }
-	    $log_form_class = myPear::getClassFromID($log_form,'class');
-	    //$log_form_class->ap = myPear::getInstance('bForm_jam_Applicant',$_GET['rec_apid'],array('nocache','strict'));
-	    $log_form_class->av = myPear::getInstance('bForm_Avatar',$_GET['rec_avid'],array('nocache','strict'));
+	    $log_form_class = loader::getClassFromID($log_form,'class');
+	    //$log_form_class->ap = loader::getInstance('bForm_jam_Applicant',$_GET['rec_apid'],array('nocache','strict'));
+	    $log_form_class->av = loader::getInstance('bForm_Avatar',$_GET['rec_avid'],array('nocache','strict'));
 	    $av = $log_form_class->av;
 	    $log_type = 'recommendation';
 	  }
 	  break;
 	  
 	case 'Avatar':            // =================================================================
-	  $av = $log_form_class = myPear::getClassFromID($log_form,'class');
+	  $av = $log_form_class = loader::getClassFromID($log_form,'class');
 	  $record_id = "av=$av->ID log_type=$log_type";
-	  if (!myPear::is_empty($log_comment = $r['log_text'])) 	  $record_id .= " log_comment=$log_comment";
+	  if (!b_posix::is_empty($log_comment = $r['log_text'])) 	  $record_id .= " log_comment=$log_comment";
 	  switch($log_type){
 	  case 'reminder':
 	    $log_form = $av;
@@ -391,14 +391,14 @@ function fixLogs($dryRun=False){
 	    $user = preg_replace('/ \(.*/','',$r['log_text']);
 	    $log_form_class = $av = bForm_Avatar::hook($user);
 	  }
-	  if (empty($log_form_class)) b_debug::print_r($r,"unexpected myPear::getClassFromID($log_form) = $log_form_name");
+	  if (empty($log_form_class)) b_debug::print_r($r,"unexpected loader::getClassFromID($log_form) = $log_form_name");
 	}
 	
-	if (empty($log_form_class)) $log_form_class = myPear::getClassFromID($log_form,'class');
+	if (empty($log_form_class)) $log_form_class = loader::getClassFromID($log_form,'class');
       }
 
       if (empty($log_form_class)){
-	print "myPear::getClassFromID($log_form,'class') = $log_form_name<br>\n";
+	print "loader::getClassFromID($log_form,'class') = $log_form_name<br>\n";
 	$match = search_for_ID($r['log_form']);
 	@$itog['x_total']['rejected-empty log_form']++;
 	@$itog[$log_type]['rejected-empty log_form']++;
@@ -415,11 +415,11 @@ function fixLogs($dryRun=False){
 	if (!($av = bForm_Avatar::hook($u,1))) $av = bForm_Avatar::hook(array('av_email' => $u));
       }
       if (empty($av) && $log_type=='login'       && (int)$r['log_form']>0 ){
-	$av = myPear::getInstance('bForm_Avatar',$r['log_form'],array('nocache','strict'));
+	$av = loader::getInstance('bForm_Avatar',$r['log_form'],array('nocache','strict'));
 	if (is_object($av))	$log_form = 0; // avoid duplicated entries
       }
       if (empty($av) && $log_type=='application' && (int)$r['log_form']>0 ){
-	if ($ap = myPear::getInstance('bForm_jam_Applicant',$r['log_form'],array('nocache','strict'))){
+	if ($ap = loader::getInstance('bForm_jam_Applicant',$r['log_form'],array('nocache','strict'))){
 	  $av = $ap->av;
 	  $log_form = $ap->ID;
 	}
@@ -489,19 +489,19 @@ function fixLogs($dryRun=False){
 }
 
 function showApplicantsStatistics(){  
-  myPear::WARNING('DOING showApplicantsStatistics');
+  MSG::WARNING('DOING showApplicantsStatistics');
   $db = myPear_db();
   $q  = $db->query('SELECT * FROM jam_applicants GROUP BY ap_avid ORDER BY ap_lastname');
   while ($r = $db->next_record($q)) {
-    $av = myPear::getInstance('bForm_Avatar',$r['ap_avid'],array('nocache'));
+    $av = loader::getInstance('bForm_Avatar',$r['ap_avid'],array('nocache'));
     $data = array($av->name());
     $qq = $db->query("SELECT * FROM jam_applicants WHERE ap_avid = $r[ap_avid] ORDER BY ap_submitdate");
     while ($rr = $db->next_record($qq)) {
-      $ap = myPear::getInstance('bForm_jam_Applicant',$rr['ap_id']);
+      $ap = loader::getInstance('bForm_jam_Applicant',$rr['ap_id']);
       $i = $counter[$av->ID.$ap->pos->ID]++ ? "span class='redText'" : 'i';
       $data[] = "<$i>".$ap->pos->name().($i=='i'?'':' ?????????????????????????????????? duplicated application')."</$i>\n";
     }
-    myPear::MESSAGE(join('<br/>',$data));
+    MSG::MESSAGE(join('<br/>',$data));
   }
 }
 
@@ -1034,7 +1034,7 @@ function ap2av_exec(&$r){
 	}else{
 	  $av_data[$k] = 0; 	  // "0" means "not set", TBD to the SQL "null"
 	  $av_data[$k] = 'NULL'; 
-	  myPear::DEBUG("TBD $k: $vo (now is set to '".$av_data[$k]."')");
+	  MSG::DEBUG("TBD $k: $vo (now is set to '".$av_data[$k]."')");
 	}
       }
       break;

@@ -231,8 +231,7 @@ class JAM extends myPear{
     return $reply;
   }
 
-//static public function j_MENU()                { start_JAM(); return myPear::_fromCache('APImenu_jam'); } 
-  static public function j_MENU()                { return myPear::_fromCache('APImenu_jam'); } 
+  static public function j_MENU() { return loader::_fromCache('APImenu_jam'); } 
 
 }
 
@@ -276,7 +275,7 @@ function JAM_mailer(){
     if (class_exists('bMailer_jam',0)){
       $mailer = new bMailer_jam();
     }else{
-      myPear::WARNING_T("????????????????????????????? Can't load bMailer_jam");
+      MSG::WARNING_T("????????????????????????????? Can't load bMailer_jam");
       b_debug::traceBack();
     }
   }
@@ -302,7 +301,7 @@ function JAM_pos($pos_id=Null) {
   start_JAM();
   if (!(int)$pos_id) $pos_id = JAM_posID();
   $reply = ((int)$pos_id
-	    ? myPear::getInstance('bForm_jam_Position',$pos_id,array('strict','fatal'))
+	    ? loader::getInstance('bForm_jam_Position',$pos_id,array('strict','fatal'))
 	    : Null);
   b_debug::xxx((is_object($reply)?$reply->name():$reply),array('limeText',2));
   return $reply;
@@ -315,7 +314,7 @@ function JAM_RF($rf_id=Null) {
   if (empty($rf_id)) $rf_id = b_cnf::get('jam_rf');
   if (($jam_rf=b_cnf::get('jam_rf')) != $rf_id) $jam_rf = b_cnf::get('jam_rf',($_GET['jam_rf']=$rf_id));
   if (!(int)$jam_rf)  b_debug::internalError("empty 'jam_rf'");
-  $rf = myPear::getInstance('bForm_jam_RF',$jam_rf); 
+  $rf = loader::getInstance('bForm_jam_RF',$jam_rf); 
   JAM::$rf_id = $rf->ID;
   return $rf;
 } 

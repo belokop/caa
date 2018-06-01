@@ -18,8 +18,8 @@ function wiw_init(){
  * Chanell the auto-learn translations
  */
 function wiw_t($text){
-  return t(bText::_(array('key' =>"WIW_MENU_$text",
-			   'item'=>$text)));
+  return t(b_t::_(array('key' =>"WIW_MENU_$text",
+			'item'=>$text)));
 }
 
 function _wiw_access_callback($tab){

@@ -8,7 +8,7 @@ class bHolder_vm_Huts extends bHolder_vm{
   public function __construct($title='All available buildings'){
     $this->dbg();
     parent::__construct();
-    $this->title = bText::_($title);
+    $this->title = b_t::_($title);
   }
   
   function query(){
@@ -69,7 +69,7 @@ class bHolder_vm_Huts extends bHolder_vm{
    */
   function format() {
     if (empty($this->rec['hut_name']))  $this->rec['hut_name'] = $this->rec['hut_street'];
-    $this->rec['hut_name'] = x(sprintf("a href='%s'",b_url::same("?function=bHolder_vm_Rooms::list_hut&arg_once=".$this->rec['hut_id'])),
+    $this->rec['hut_name'] = x(sprintf("a href='%s'",b_url::same("?function=bHolder_vm_Rooms::list_hut&arg1_once=".$this->rec['hut_id'])),
 			       $this->rec['hut_name']);
 
     $this->rec['hut_address'] = self::address($this->rec);
@@ -77,7 +77,7 @@ class bHolder_vm_Huts extends bHolder_vm{
 
     $this->rec['hut_status'] = (b_checkBox::isOff($this->rec['hut_status']) ? '' : bIcons()->get('ok'));
 
-    $hut = myPear::getInstance_new('bForm_vm_Hut',$this->rec['hut_id'],'fatal');
+    $hut = loader::getInstance_new('bForm_vm_Hut',$this->rec['hut_id'],'fatal');
     if (!empty($this->rec['hut_url'])) $this->rec['hut_url'] = bJS()->modal_iframe($this->rec['hut_url'],x('em',x('span style="text-size:smaller"','See web page')),'');
     $this->rec['_TR'] = $hut->name_total_rooms();
     

@@ -97,7 +97,7 @@ class myPear_Setup  extends bForm{
    */
   protected function getValue_validate_empty($name,&$value=Null){
     $err_msg = '';
-    if (myPear::is_empty($value)){
+    if (b_posix::is_empty($value)){
       $err_msg = parent::getValue_validate_empty($name,$value);
     }
     $err_msg = '';
@@ -187,7 +187,7 @@ class myPear_Setup  extends bForm{
     foreach($this->setup[$this->what] as $item=>$setup){
       list($k,$v) = array($this->_key($item),$this->getValue($item));
       if (!empty($v) && (b_cnf::variable_get($k) !== $v)){
-	myPear::MESSAGE("Saving $k = '$v'");
+	MSG::MESSAGE("Saving $k = '$v'");
 	b_cnf::variable_set($k, $v, 'db');
 	$this->show_final_form = True;
       }

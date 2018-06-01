@@ -327,7 +327,7 @@ function get_clean_url(){
 
     variable_set('clean_url',($clean_url ? 1 : 0));
     $msg = sprintf("Set 'clean_url' %s --> %s",var_export($drupal_clean_url,True),var_export($clean_url,True));
-    if (class_exists('myPear',False))  myPear::WARNING($msg);
+    if (class_exists('myPear',False))  MSG::WARNING($msg);
     else D8::dbg($msg);
   }
   return $clean_url;

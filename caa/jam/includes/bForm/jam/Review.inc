@@ -64,8 +64,8 @@ class bForm_jam_Review extends bForm_jam{
     if (empty($this->ap_id)) $this->ap_id = $this->getValue('r_apid',True,True);
     if (empty($this->av_id)) $this->av_id = $this->getValue('r_avid',True,True);
 
-    $this->ap = myPear::getInstance('bForm_jam_Applicant', $this->ap_id, array('fatal','strict'));
-    $this->av = myPear::getInstance('bForm_Avatar_jam',    $this->av_id, array('fatal','strict'));
+    $this->ap = loader::getInstance('bForm_jam_Applicant', $this->ap_id, array('fatal','strict'));
+    $this->av = loader::getInstance('bForm_Avatar_jam',    $this->av_id, array('fatal','strict'));
     
     $this->dbg($this->av);
     $this->dbg($this->ap);
@@ -85,7 +85,7 @@ class bForm_jam_Review extends bForm_jam{
    */
   function __clean_cache(){
     $this->av->__clean_cache();
-    myPear::getInstance(get_class($this), $this->ID, 'clean');
+    loader::getInstance(get_class($this), $this->ID, 'clean');
   }
 
   /*
@@ -173,7 +173,7 @@ class bForm_jam_Review extends bForm_jam{
   function getForm(){
 
     $this->embeddedRW_enabled = True;
-    myPear::H1($this->ap->av->fmtName());
+    MSG::H1($this->ap->av->fmtName());
     
     // When the form is opened, all the values are updated. Hence the time is to update the ratings    
     $this->getFormOpen();    

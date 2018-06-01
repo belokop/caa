@@ -36,7 +36,7 @@ class bForm_vm_Expenses extends bForm_vm{
    * Update the estimates (say, the rates are updated)
    */
   static public function _updateEstimates($parentID){
-    if (cnf_dev) myPear::DEBUG(__method__."($parentID)");
+    if (cnf_dev) MSG::DEBUG(__method__."($parentID)");
     foreach (($pay_items=array_diff(array_keys(self::$pay_items),array('exp_other'),array('_exp_totalExpenses'))) as $item) $set[] = "${item}_est = 0";
     if ($parentID == myOrg_ID){
       // Get all guest visits which are not yet reimbursed
@@ -69,7 +69,7 @@ class bForm_vm_Expenses extends bForm_vm{
   }
 
   function __clean_cache(){
-    myPear::getInstance_new(get_class($this),$this->ID,'clean');
+    loader::getInstance_new(get_class($this),$this->ID,'clean');
   }
   
   /*
@@ -136,7 +136,7 @@ class bForm_vm_Expenses extends bForm_vm{
 	if($tripCostFromResidentshipCountry = $this->visit->reimbursementRates()->tripCostFromResidentshipCountry){
 	  $formula = "$tripCostFromResidentshipCountry[country_name]-".b_fmt::money($tripCostFromResidentshipCountry['pay']);
 	}else{
-	  myPear::WARNING_T('empty  bList_vm_reimbursementRates::$tripCostFromResidentshipCountry');
+	  MSG::WARNING_T('empty  bList_vm_reimbursementRates::$tripCostFromResidentshipCountry');
 	}
       }
       break;
@@ -188,7 +188,7 @@ class bForm_vm_Expenses extends bForm_vm{
       $this->visit = $this->parentForm;
     }
     if (!($this->visit instanceof bForm_vm_Visit)){
-      if (!($this->visit = $this->parentForm)) $this->visit = myPear::getInstance_new('bForm_vm_Visit',$this->getValue('exp_vid'),'strict');
+      if (!($this->visit = $this->parentForm)) $this->visit = loader::getInstance_new('bForm_vm_Visit',$this->getValue('exp_vid'),'strict');
       if (! $this->visit) b_debug::internalError("no parent visit hooked for the bForm_vm_Expenses",$this);
       if (!(int)$this->ID){    
 	$q = myPear_db()->query("SELECT * FROM $this->TABLE WHERE exp_vid = ".$this->visit->ID);
@@ -414,7 +414,7 @@ class bForm_vm_Expenses extends bForm_vm{
     
 	foreach($this->blanks as $tpl=>$file){
 	  if (is_file($file = str_replace('//','/',$file)))
-	    myPear::MESSAGE("Click <a href='$file'>".bIcons()->get('i-m_pdf')."</a> to download '$tpl' blank for ".$this->visit->av->name());
+	    MSG::MESSAGE("Click <a href='$file'>".bIcons()->get('i-m_pdf')."</a> to download '$tpl' blank for ".$this->visit->av->name());
 	}	
       }	
       break;
@@ -447,7 +447,7 @@ class bForm_vm_Expenses extends bForm_vm{
     $this->defineVariables_est();
     
     $this->getFormOpen();    
-    myPear::H1($this->name());
+    MSG::H1($this->name());
     
     $this->createEstimates();
 
@@ -563,7 +563,7 @@ class bForm_vm_Expenses extends bForm_vm{
   }
   
   protected function _recordCreated() {
-    if ($this->myPost_bForm())    myPear::MESSAGE("Create \"Expenses\" record");
+    if ($this->myPost_bForm())    MSG::MESSAGE("Create \"Expenses\" record");
     $this->_recordUpdated();
   }
   
@@ -611,7 +611,7 @@ class bForm_vm_Expenses extends bForm_vm{
   public static function _exp_arePaid($formDB){
     $reply = (@$formDB['exp_closed'] === 'yes') || 
       ((@$formDB['exp_travel'] + @$formDB['exp_perdiem'] + @$formDB['exp_other']) > 0);
-    //    if (cnf_dev) myPear::DEBUG(@$formDB['id'].__function__.'() '.x('em',var_export($reply,True)));
+    //    if (cnf_dev) MSG::DEBUG(@$formDB['id'].__function__.'() '.x('em',var_export($reply,True)));
     return $reply;
   }
   
@@ -717,19 +717,19 @@ class bForm_vm_Expenses extends bForm_vm{
       // Fill the pdf form
       $fdf = array();
       foreach($template() as $code=>$a){
-	if (!myPear::is_empty($default = @$a['d']))    $fdf[$a['t']] = $default;
+	if (!b_posix::is_empty($default = @$a['d']))    $fdf[$a['t']] = $default;
 	if ($ref = @$a['c']){
-	  if (!myPear::is_empty($v=b_fmt::unEscape(@$this->formDB[$ref]))){
+	  if (!b_posix::is_empty($v=b_fmt::unEscape(@$this->formDB[$ref]))){
 	    $fdf[$a['t']] = $v;
 	  }else{
-	    if($verbose)  myPear::WARNING("Reimbursement form - missing ".$this->getDescr($ref));
+	    if($verbose)  MSG::WARNING("Reimbursement form - missing ".$this->getDescr($ref));
 	    $this->dbg("Missing '$ref' ".$this->getDescr($ref),cnf_dev);
 	  }
 	}
       }
       return pdf_form::fill($fdf,vm_root."templates/$template.pdf",$filename);
     }else{
-      myPear::ERROR("Can't find the pdf template for \"$template\"");
+      MSG::ERROR("Can't find the pdf template for \"$template\"");
     }
   }
 }

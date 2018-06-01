@@ -48,7 +48,7 @@ function jam_doSomething($id=Null,$action=Null){
     break;
 
   default:
-    myPear::WARNING("How to do '$action'?");
+    MSG::WARNING("How to do '$action'?");
   }
 }
 
@@ -63,7 +63,7 @@ function jam_giveRating(){
 				 $_GET['r_apid'],
 				 $_GET['r_avid']);
   $review->nodrupal = True;
-  myPear::WARNING_T('Invoked as widget');
+  MSG::WARNING_T('Invoked as widget');
   print $review->getWidget('none');
 }
 
@@ -95,26 +95,26 @@ function jam_mailRemindRecommendation($rec_id=Null) {
   $rec = new bForm_jam_Recommendation($rec_id);
   
   if (!cnf_inside_fb){
-    myPear::H1("Re-sending recommendation letter request");
+    MSG::H1("Re-sending recommendation letter request");
   }else{
-    myPear::H1('empty');
+    MSG::H1('empty');
   }
   
   if (@$_GET['sendmail_once'] === 'send'){
     JAM_mailer()->ask_for_recLetter($rec->av,$rec->ap,$no_preview=True);
     $rec->set_requested();
   }elseif ($f = $rec->isReceived()) {
-    myPear::MESSAGE(join('<br/>',array(bIcons()->get('32-modify').
-				       bText::_('We have got already the Letter of Recommendation for you from').' '.bForm_Avatar::_fmtName('sfl',$rec->av->formDB).', '.
-				       bText::_('the letter timestamp is').' "'.b_time::medium_date_time($f).'"','',
-				       bText::_("There is no need to remind..."))));
+    MSG::MESSAGE(join('<br/>',array(bIcons()->get('32-modify').
+				       b_t::_('We have got already the Letter of Recommendation for you from').' '.bForm_Avatar::_fmtName('sfl',$rec->av->formDB).', '.
+				       b_t::_('the letter timestamp is').' "'.b_time::medium_date_time($f).'"','',
+				       b_t::_("There is no need to remind..."))));
     //  }elseif ((time()-($f=$rec->is_requested())) < 24*3600){
   }elseif (!$rec->is_reminderNeeded()){
     $f = $rec->is_requested();
-    myPear::MESSAGE(join('<br/>',array(//bIcons()->get('32-modify').
-				       bText::_('The Letter of Recommendation from').' '.$rec->av->name().' '.bText::_('has being recently requested,'),
-				       bText::_('the letter timestamp is').' "'.b_time::medium_date_time($f).'"','',
-				       bText::_("There is no need to remind now..."),'')));
+    MSG::MESSAGE(join('<br/>',array(//bIcons()->get('32-modify').
+				       b_t::_('The Letter of Recommendation from').' '.$rec->av->name().' '.b_t::_('has being recently requested,'),
+				       b_t::_('the letter timestamp is').' "'.b_time::medium_date_time($f).'"','',
+				       b_t::_("There is no need to remind now..."),'')));
   }else{
     JAM_mailer()->ask_for_recLetter($rec->av,$rec->ap,$no_preview=False);
   }

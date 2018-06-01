@@ -227,15 +227,15 @@ class bForm_vm_Lease extends bForm_vm{
 	  $_leaseInfo = self::_leaseInfo($l_id);
 	  self::set_lease_options($_leaseInfo,array(VM_room_is_full=>1),True);
 	  if (cnf_dev){
-	    $room = myPear::getInstance_new('bForm_vm_Room',$_leaseInfo['lease_aid'],'strict');
-	    myPear::WARNING("Impose VM_room_is_full ".$room->name(True));
+	    $room = loader::getInstance_new('bForm_vm_Room',$_leaseInfo['lease_aid'],'strict');
+	    MSG::WARNING("Impose VM_room_is_full ".$room->name(True));
 	  }
 	  if (bForm_vm_Room::_mightBeSharable($_leaseInfo)){
 	    if (($n = count(VM_cotenants()->get_cotenants($l_id,True,'names'))) && !self::get_lease_options($_leaseInfo,VM_no_cotenants)){
 	      self::set_lease_options($_leaseInfo,array(VM_no_cotenants=>1),True);
 	      if (cnf_dev){
-		$room = myPear::getInstance_new('bForm_vm_Room',$_leaseInfo['lease_aid'],'strict');
-		myPear::WARNING("Impose VM_no_cotenants  $n/$_leaseInfo[a_capacity]".$room->name(True));
+		$room = loader::getInstance_new('bForm_vm_Room',$_leaseInfo['lease_aid'],'strict');
+		MSG::WARNING("Impose VM_no_cotenants  $n/$_leaseInfo[a_capacity]".$room->name(True));
 	      }
 	    }
 	  }
@@ -370,7 +370,7 @@ class bForm_vm_Lease extends bForm_vm{
    * Check all the leases and (re)set flag VM_room_is_full
    */
   public static function update_fullRoomFlag($leases=array()){
-    myPear::WARNING_T("Ignoring ".__function__.x('(',join(',',$leases)));    return;
+    MSG::WARNING_T("Ignoring ".__function__.x('(',join(',',$leases)));    return;
     // Get the list of leases
     if (empty($leases)){
 	$q = myPear_db()->qquery("SELECT lease_id,lease_option,a_capacity ".
@@ -387,7 +387,7 @@ class bForm_vm_Lease extends bForm_vm{
   }
 
   private static function update_fullRoomFlag_exec($lease_id,$r=array()){
-    myPear::WARNING("Ignoring ".__function__."($lease_id)"); return;
+    MSG::WARNING("Ignoring ".__function__."($lease_id)"); return;
     if (empty($r)) $r = self::_leaseInfo($lease_id);
     foreach(VM_cotenants()->get_cotenants($lease_id,True) as $lm_id=>$cotenants){
       $n_cotenants = count($cotenants);
@@ -397,7 +397,7 @@ class bForm_vm_Lease extends bForm_vm{
       }elseif($n_cotenants < $r['a_capacity']){
 	if ( $VM_room_is_full) self::get_lease_options($r,'reset',VM_room_is_full);
       }else{
-	myPear::ERROR(sprintf("a_capacity=%s but %s cotenants",$r['a_capacity'],$n_cotenants));
+	MSG::ERROR(sprintf("a_capacity=%s but %s cotenants",$r['a_capacity'],$n_cotenants));
       }
     }
   }
@@ -461,9 +461,9 @@ class bForm_vm_Lease extends bForm_vm{
 
       if ($changes > 0 || $changesN > 0) $toReportChanges = True; 
       if (cnf_dev && !$returnMessage){
-	if ($changes)  myPear::DEBUG($leases[$n]->  _periodToString("lease-".($n  )));
-	if ($changesN) myPear::DEBUG($leases[$n+1]->_periodToString("lease-".($n+1)));
-	myPear::MESSAGE($lease->_periodToString("lease-$n ($lease->ID)"));
+	if ($changes)  MSG::DEBUG($leases[$n]->  _periodToString("lease-".($n  )));
+	if ($changesN) MSG::DEBUG($leases[$n+1]->_periodToString("lease-".($n+1)));
+	MSG::MESSAGE($lease->_periodToString("lease-$n ($lease->ID)"));
       }
     }
 
@@ -513,8 +513,8 @@ class bForm_vm_Lease extends bForm_vm{
 	if (!is_numeric($r['lease_id'])) b_debug::internalError('?????????????? '.__method__,$r);
 	$leases[$r['lease_id']] = self::_hut_code($r);
 	// Sanity. Huge performance overhead...
-	//      if (cnf_dev && (($l=@myPear::getClassFromID($r['lease_id']),True,True)){
-	//     	myPear::WARNING_T("Bogus lease $l($r[lease_id]), not 'bForm_vm_Lease'");
+	//      if (cnf_dev && (($l=@loader::getClassFromID($r['lease_id']),True,True)){
+	//     	MSG::WARNING_T("Bogus lease $l($r[lease_id]), not 'bForm_vm_Lease'");
 	//      }
       }
       
@@ -655,7 +655,7 @@ class bForm_vm_Lease extends bForm_vm{
 	$this->hookRoom($lease_aid,$verbose=True);
 	
 	// assign cotenant(s) to the lease
-	if (is_numeric($lease_aid) && ($a = myPear::getInstance_new('bForm_vm_Room',$lease_aid,'strict'))){
+	if (is_numeric($lease_aid) && ($a = loader::getInstance_new('bForm_vm_Room',$lease_aid,'strict'))){
 	  $cotenants = array();
 	  foreach(preg_grep('/cotenant\d+$/',array_keys($_POST)) as $k){
 	    if ($_POST[$k] === VM_no_cotenants){
@@ -787,10 +787,10 @@ function __clean_cache(){}
     if (!($this->parentForm instanceof bForm_vm_Visit)){
       $this->parentForm = ($visit instanceof bForm_vm_Visit
 			   ? $visit
-			   : myPear::getInstance_new('bForm_vm_Visit',$this->getValue('lease_vid',1),'strict'));
+			   : loader::getInstance_new('bForm_vm_Visit',$this->getValue('lease_vid',1),'strict'));
       /*
       if (!$this->embedded && is_object($visit)) $this->isEmbedded($visit);
-      if (!$this->embedded)   $this->isEmbedded(myPear::getInstance_new('bForm_vm_Visit',$this->getValue('lease_vid',1)),'strict');
+      if (!$this->embedded)   $this->isEmbedded(loader::getInstance_new('bForm_vm_Visit',$this->getValue('lease_vid',1)),'strict');
       if (!$this->embedded)   b_debug::internalError("visit is not set",$this);
       */      
       // Create a default lease if not yet done
@@ -1099,7 +1099,7 @@ function __clean_cache(){}
     if (!empty($updates)){  
       $this->isVITAL = array();
       $this->updateDB($updates);
-      if ($verbose) myPear::MESSAGE_add($this->_periodToString("Set lease ".(cnf_dev?$this->ID:'')." for"));
+      if ($verbose) MSG::MESSAGE_add($this->_periodToString("Set lease ".(cnf_dev?$this->ID:'')." for"));
     }
     return count($updates);
   }
@@ -1113,7 +1113,7 @@ function __clean_cache(){}
       $this->dbg("lm_id=$lm_id leases=".join(', ',$leases) ,cnf_dev);
       foreach($leases as $lease_id){
 	$_leaseInfo = self::_leaseInfo($lease_id,array('lease_id','lease_option'));
-	myPear::MESSAGE("Removing cotenant ".bForm_Avatar::_fmtName('Lf',$_leaseInfo));
+	MSG::MESSAGE("Removing cotenant ".bForm_Avatar::_fmtName('Lf',$_leaseInfo));
 	self::get_lease_options($lease_id,'reset');
       }
       VM_cotenants()->deleteMember($lm_id);
@@ -1131,13 +1131,13 @@ function __clean_cache(){}
 
       // clean the cotenants list (if any) since the apartment is changed  
       $this->clean_cotenants();
-      if ($verbose) myPear::MESSAGE_add($this->_periodToString('Remove accommodation for'));
+      if ($verbose) MSG::MESSAGE_add($this->_periodToString('Remove accommodation for'));
       $this->getValue_reset('lease_aid',0);
       $this->hookVisit();
       self::get_lease_options($this->ID,'reset');
     }elseif (is_numeric($lease_aid) && (($old_aid=@$this->formDB['lease_aid']) != $lease_aid)){
       // sanity
-      $room = myPear::getInstance_new('bForm_vm_Room',$lease_aid,'strict');
+      $room = loader::getInstance_new('bForm_vm_Room',$lease_aid,'strict');
       if (!($room instanceof bForm_vm_Room)) {
 	b_debug::internalError("$lease_aid is not bForm_vm_Room",$this);
       }
@@ -1146,7 +1146,7 @@ function __clean_cache(){}
       // clean the cotenants list (if any) since the apartment is changed  
       $this->clean_cotenants();
 
-      if ($verbose) myPear::MESSAGE_add($this->_periodToString(($old_aid?'Change':'Set').' accommodation for',$old_aid));
+      if ($verbose) MSG::MESSAGE_add($this->_periodToString(($old_aid?'Change':'Set').' accommodation for',$old_aid));
       $this->getValue_reset_forced('lease_aid',$lease_aid);
       $this->readDefRecord();
 
@@ -1167,11 +1167,11 @@ function __clean_cache(){}
   public static function _v_accompaning($rec){
     if ($reply=(!empty($rec['lease_aid']) && ($n = $rec['v_accompaning']) && ($n+1 >= $rec['a_capacity']))){
       if (self::get_lease_options($rec,'get_pay')===VM_default_lease_pay){
-	myPear::WARNING_T("Impose Nordita pays for one ".($n+1).'/'.$rec['a_capacity']);
+	MSG::WARNING_T("Impose Nordita pays for one ".($n+1).'/'.$rec['a_capacity']);
 	self::set_lease_options($rec,array('pay'=>VM_pay_something));
       }
       if (!self::get_lease_options($rec,VM_room_is_full)){
-	myPear::WARNING(__function__."($rec[lease_id]): impose VM_room_is_full ".($n+1).'/'.$rec['a_capacity']);
+	MSG::WARNING(__function__."($rec[lease_id]): impose VM_room_is_full ".($n+1).'/'.$rec['a_capacity']);
 	self::set_lease_options($rec,array(VM_room_is_full=>1));
       }
     }
@@ -1211,7 +1211,7 @@ function __clean_cache(){}
   function split($date=Null){
     $this->dbg(starting);
     $this->hookVisit(); 
-    myPear::MESSAGE($this->_periodToString('Split lease'));
+    MSG::MESSAGE($this->_periodToString('Split lease'));
     if (!$date) $date = (int)((($e=$this->getValue('lease_end'))+($s=$this->getValue('lease_start')))/2);
     $this->setDate(array('lease_end'  => $date),True);
 
@@ -1258,7 +1258,7 @@ function __clean_cache(){}
 		 'v_id'       =>$this->parentForm->ID,
 		 'v_eid'      =>@$this->parentForm->e->ID);
     if ($a_id = $this->getValue('lease_aid')){
-      $room = myPear::getInstance_new('bForm_vm_Room',$a_id,'strict');
+      $room = loader::getInstance_new('bForm_vm_Room',$a_id,'strict');
       $rec['lease_aid'] = $a_id;
       $rec['hut_name']  = $room->hut->getValue('hut_name');
       $rec['hut_code']  = $room->hut->getValue('hut_code');
@@ -1324,13 +1324,13 @@ function __clean_cache(){}
     if (0)    if (!empty($hut_id) && VM::_MENU()->context() == 'event'){
 	$a_quantity = VM_accommodationOptions(VM::$e)->get_a_value($a_id,$hut_id,'a_quantity');
 	if ($n_rooms == $a_quantity){
-	  myPear::WARNING("The last <em>$room_name</em> is booked");
+	  MSG::WARNING("The last <em>$room_name</em> is booked");
 	}elseif ($n_rooms > $a_quantity){
 	  if ($update_counters){
 	    VM_accommodationOptions(VM::$e)->set_a_value($n_rooms,$a_id,$hut_id,'a_quantity');
-	    myPear::WARNING("Number of available <em>$room_name</em> is set $a_quantity ==> $n_rooms");
+	    MSG::WARNING("Number of available <em>$room_name</em> is set $a_quantity ==> $n_rooms");
 	  }else{
-	    myPear::ERROR("Number of available <em>$room_name</em> is too small - used/available = $n_rooms/".max(0,$a_quantity).".<br>".
+	    MSG::ERROR("Number of available <em>$room_name</em> is too small - used/available = $n_rooms/".max(0,$a_quantity).".<br>".
 			  "Please update the accommodation options");
 	  }
 	}
@@ -1541,7 +1541,7 @@ function __clean_cache(){}
     }
     if (empty($n_populated)) $msg_overbooking = "WARNING, all the available rooms are booked, including those with shared accommodation.<br>".
 			       "You should contact the (hotels) administration in order to increase your quotas and/or reduce the number of participants.";
-    if (0)    if (!empty($msg_overbooking)) myPear::ERROR($msg_overbooking);
+    if (0)    if (!empty($msg_overbooking)) MSG::ERROR($msg_overbooking);
     
     if (!empty($reply)) $reply['*select_name*'] = 'accommodation';
 
@@ -1582,9 +1582,9 @@ function __clean_cache(){}
     if (is_object($this->parentForm)){ 
       $lease_aid = (int)$this->getValue('lease_aid',True);
       $this->parentForm->hookAvatar();
-      if ($ap = myPear::getInstance_new('bForm_vm_Room',$lease_aid,array('strict','nocache'))){ 
+      if ($ap = loader::getInstance_new('bForm_vm_Room',$lease_aid,array('strict','nocache'))){ 
 	if ($lease_aid_old){
-	  $ap_old = myPear::getInstance_new('bForm_vm_Room',$lease_aid_old,array('strict','nocache'));
+	  $ap_old = loader::getInstance_new('bForm_vm_Room',$lease_aid_old,array('strict','nocache'));
 	  $from = '"'.$ap_old->name().'" -> ';
 	}else{
 	  $from = '';

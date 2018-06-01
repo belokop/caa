@@ -18,7 +18,7 @@ class bIcal_matrix_visits extends bIcal_matrix{
   }
   
   function show($arg=0){    
-    myPear::H1('empty');
+    MSG::H1('empty');
     if (!empty($this->graphTitle)) print x('h3',$this->graphTitle);
     
     bTiming()->cpu(__function__);
@@ -62,7 +62,7 @@ class bIcal_matrix_visits extends bIcal_matrix{
 					      'clas' => $this->getRandomColor($r['e_name']),
 					      'styl' => 'strong',
 					      'url'  => 'em');
-      if ($n=$r['n']) $boxes[$r['e_id']] = sprintf("%s %d %s <i>%s</i>", bText::_('See'), $n, bText::_('attenders of'), $r['e_name']);
+      if ($n=$r['n']) $boxes[$r['e_id']] = sprintf("%s %d %s <i>%s</i>", b_t::_('See'), $n, b_t::_('attenders of'), $r['e_name']);
       if (b_checkBox::isOn($r['e_id'])) $where[] = "e_id = $r[e_id]";
     }
     if (empty($where) && !empty($n_visitors))  b_checkBox::set(seeVisitors,'on');
@@ -85,7 +85,7 @@ class bIcal_matrix_visits extends bIcal_matrix{
       }elseif ($n_visitors > 0){
 	$this->dbg("Selecting all visitors");
 	if (b_checkBox::isOn(seeVisitors))       $where[] = "( v_code <= 0 OR v_code IS NULL )";
-	$boxes[seeVisitors] = sprintf("%s %d %s", bText::_('See'), $n_visitors, bText::_('visitors'));
+	$boxes[seeVisitors] = sprintf("%s %d %s", b_t::_('See'), $n_visitors, b_t::_('visitors'));
       }
       
       // Show nothing if no visitors is selected for the view .
@@ -122,8 +122,8 @@ class bIcal_matrix_visits extends bIcal_matrix{
 
 	$mRegistrants[$displayName][] = $this->fillEntry($r,b_fmt::strcut(b_fmt::unescape($displayName),30,'...'));
 	if (empty($boxes) && !empty($e_id)){
-	  $boxes = array($e_id => sprintf("%s %d %s <i>%s</i>", bText::_('See'), 
-					  myPear_db()->num_rows($q), bText::_('attenders of'), b_fmt::strcut($r['e_name'],30,'...')));
+	  $boxes = array($e_id => sprintf("%s %d %s <i>%s</i>", b_t::_('See'), 
+					  myPear_db()->num_rows($q), b_t::_('attenders of'), b_fmt::strcut($r['e_name'],30,'...')));
 	  b_checkBox::set($e_id,'on');
 	}
       }

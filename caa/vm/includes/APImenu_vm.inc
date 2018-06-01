@@ -441,7 +441,7 @@ class APImenu_vm extends APImenu_ea{
 	if ($tab == tab_vm_end_omatrix) $policy = VM_E_provideOffice;
 	$reply = 
 	  is_object(bAuth::$av) &&
-	  !myPear::is_empty(bAuth::$av->eventsToEndorse()) &&
+	  !b_posix::is_empty(bAuth::$av->eventsToEndorse()) &&
        	  bAuth::$av->isEndorser(VISIT_TYPE_PROGRAM);
         if (!empty($policy) && !VM::$e->getPolicy($policy)) $reply = False;
 	break;
@@ -572,7 +572,7 @@ class APImenu_vm extends APImenu_ea{
     
     // There was an explicit request to send password. Do it
     if (isset($_GET['mo_once'])){
-      $e = myPear::getInstance_new('bForm_vm_Event',$_GET['e_id'],array('strict','fatal'));
+      $e = loader::getInstance_new('bForm_vm_Event',$_GET['e_id'],array('strict','fatal'));
       VM_mailer()->remind_organizer($_GET['av_id'],$e,'pwd','send_now');
     }
 
@@ -784,7 +784,7 @@ class APImenu_vm extends APImenu_ea{
 	$doing = 'show_mails_exchange';
 	if (VM::e_ID() && VM::$e->getValue('e_end',1) < time()){
 	  $this->eventSelector();
-	  myPear::WARNING("Sorry, the event is from the past, the mail exchange page is expired...");
+	  MSG::WARNING("Sorry, the event is from the past, the mail exchange page is expired...");
 	  return;
 	}
       }
@@ -853,7 +853,7 @@ class APImenu_vm extends APImenu_ea{
       if (empty($_GET['id']))   $_GET['id']   = 'new';
     case 'formTPL':
       if  (bAuth::authenticated()){
-	$f = myPear::getInstance_new(str_replace('bForm_bForm_','bForm_','bForm_'.$_GET['form']),$_GET['id'],array('strict','fatal'));
+	$f = loader::getInstance_new(str_replace('bForm_bForm_','bForm_','bForm_'.$_GET['form']),$_GET['id'],array('strict','fatal'));
 	$f->getForm();
       }else{ 
 	bAuth()->loginPrompt();
@@ -866,7 +866,7 @@ class APImenu_vm extends APImenu_ea{
       //ZZ  break;
       
     case tab_vm_guests_addVisit:
-      myPear::INFO_once(array(x('p','The person whom you want to invite might very well be already registered in our Database').
+      MSG::INFO_once(array(x('p','The person whom you want to invite might very well be already registered in our Database').
 			      x('p','Try first to search for the person using the name and/or e-mail address, <br>regular expressions are supported.'),
 			      x('p','Create the new entry for the visitor only if you can\'t find him/her in the database')),
 			'Tips for registering new visitors');
@@ -923,7 +923,7 @@ class APImenu_vm extends APImenu_ea{
 	  $list = bUnit_vm_organizers::getEvents(bAuth::$av->ID,array(),True);
 	  foreach(array_keys($list) as $e_id) $events[] = "conf=$e_id&show_reg=all";
 	  if (empty($events)) $events = array("conf=0");
-	  else myPear::MESSAGE('Synchronizing agenda entries:'.x('ul',b_fmt::joinMap('li',array_values($list))));
+	  else MSG::MESSAGE('Synchronizing agenda entries:'.x('ul',b_fmt::joinMap('li',array_values($list))));
 	}
 	VM_agenda()->sync($events);
 	break;
@@ -1003,7 +1003,7 @@ class APImenu_vm extends APImenu_ea{
       break;
       
     case tab_vm_adm_acl:
-      myPear::H1("Access Control List");
+      MSG::H1("Access Control List");
       VM_access()->show();
       if (b_cnf::get('merge')){ // checked, works... however lets wait a bit YB 2011-04-20 
 	$q = myPear_db()->query("SELECT av_id,av_firstname,av_lastname,av_email,CONCAT(av_firstname,av_lastname) AS fn  FROM zzz_avatars GROUP BY fn");
@@ -1014,8 +1014,8 @@ class APImenu_vm extends APImenu_ea{
 				   " av_id != '$r[av_id]'");
 	  $n = 0;
 	  while($rr=myPear_db()->next_record($qq)){
-	    if (!$n++)	  myPear::WARNING("$r[av_firstname] $r[av_lastname] $r[av_email] -----------------------------------------------------------------");
-	    myPear::WARNING("$rr[av_firstname] $rr[av_lastname] $rr[av_email]");
+	    if (!$n++)	  MSG::WARNING("$r[av_firstname] $r[av_lastname] $r[av_email] -----------------------------------------------------------------");
+	    MSG::WARNING("$rr[av_firstname] $rr[av_lastname] $rr[av_email]");
 	    if (True ||
 		stristr($r['av_email'],'gmail')   || stristr($rr['av_email'],'gmail') ||
 		stristr($r['av_email'],'nordita') || stristr($rr['av_email'],'nordita')){
@@ -1034,7 +1034,7 @@ class APImenu_vm extends APImenu_ea{
       break;
       
     default:
-      myPear::WARNING(sprintf('%s %s(%s) is not yet implemented, work in progress',
+      MSG::WARNING(sprintf('%s %s(%s) is not yet implemented, work in progress',
 			      bIcons()->get('32-p_pc'),$tab,APItabs::$tab_definition[$tab]));
     }
     
@@ -1061,10 +1061,10 @@ class APImenu_vm extends APImenu_ea{
 	$events = array_keys(self::list_of_events(True));
 	$e_id = array_shift($events);
 	if (empty($e_id)){
-	  myPear::WARNING_T('Empty reply from '.__CLASS__.'::list_of_events()');
+	  MSG::WARNING_T('Empty reply from '.__CLASS__.'::list_of_events()');
 	}else{
 	  VM::e_ID($e_id);
-	  myPear::WARNING_T("Impose ".VM::$e->name());
+	  MSG::WARNING_T("Impose ".VM::$e->name());
 	}
       }
     }
@@ -1105,7 +1105,7 @@ class APImenu_vm extends APImenu_ea{
 	  // The registrant sees only the events he is/was attending
 	  $visits = bAuth::$av->getVisits();
 	  foreach($visits as $v_id=>$name){
-	    $v = myPear::getInstance_new('bForm_vm_Visit',$v_id,array('strict','fatal'));
+	    $v = loader::getInstance_new('bForm_vm_Visit',$v_id,array('strict','fatal'));
 	    $v->hookEvent();
 	    if (is_object($v->e))  $events[$v->e->ID] = $v->e->name();
 	  }
@@ -1143,7 +1143,7 @@ class APImenu_vm extends APImenu_ea{
 	b_debug::xxx("Set vm_eventSelector=$vm_eventSelector");
 	b_cnf::set('vm_eventSelector',$vm_eventSelector);
 	locateAndInclude('bForm_vm_Event');
-	$e = myPear::getInstance_new('bForm_vm_Event',$vm_eventSelector,array('strict','fatal'));
+	$e = loader::getInstance_new('bForm_vm_Event',$vm_eventSelector,array('strict','fatal'));
 	//	self::$dates[$vm_eventSelector]  = array($e->getValue('e_start'),$e->getValue('e_end'));
 	//	VM::e_ID($e->ID);
 	$_SESSION['event_wish_list'][$vm_eventSelector] = b_fmt::strcut(strip_tags($e->name()),40,'...');
@@ -1222,13 +1222,13 @@ class APImenu_vm extends APImenu_ea{
 	}
 	VM::$formDummy->formDB['vm_eventSelector'] = b_cnf::get('vm_eventSelector');
 	VM::$formDummy->submitOnChange['vm_eventSelector'] = True;
-	$GLOBALS['myPear_custom_title'] = myPear::set_main_selector(array(VM::$formDummy->selectMenu_exec('vm_eventSelector',
+	$GLOBALS['myPear_custom_title'] = MSG::set_main_selector(array(VM::$formDummy->selectMenu_exec('vm_eventSelector',
 													  $events,
 													  "class='evHeader'",
 													  $onlyRW=True)),
 								    True);
       }else{
-	if (is_object(VM::$e)) myPear::H1(VM::$e->name(True),'reset');
+	if (is_object(VM::$e)) MSG::H1(VM::$e->name(True),'reset');
       }
     }
   }
@@ -1237,13 +1237,13 @@ class APImenu_vm extends APImenu_ea{
     static $allAvatars = array();
     
     if ($v_id = b_cnf::getValue('_selected_attender')){
-      $v = myPear::getInstance_new('bForm_vm_Visit',$v_id,array('strict','fatal'));
+      $v = loader::getInstance_new('bForm_vm_Visit',$v_id,array('strict','fatal'));
       $v->defineVariables();
-      print myPear::H1($v->name());
+      print MSG::H1($v->name());
       $v->getForm();
     }else{
 
-      print myPear::H1('Welcome');
+      print MSG::H1('Welcome');
       /*
        * Select the event
        */
@@ -1258,7 +1258,7 @@ class APImenu_vm extends APImenu_ea{
       while ($r = myPear_db()->next_record($q)){
 	$allAvatars[$r['v_id']] = mb_strToUpper($r['av_lastname']).' '.$r['av_firstname'];
       }
-      $e = myPear::getInstance_new('bForm_vm_Event',VM::e_ID(),array('strict','fatal'));
+      $e = loader::getInstance_new('bForm_vm_Event',VM::e_ID(),array('strict','fatal'));
       if (empty($allAvatars)) print x('h3','No attenders'.(is_object($e) ? ' for '.x('i',$e->nameSimple()) : ''));
       else print x("form action='".b_url::same()."' method='post'",
 		   x('strong','Select the attender').
@@ -1274,7 +1274,7 @@ function _vm_title_callback($tab, $dTab=Null,$returnText=False){
 		 : t($tab));
   }else{
     if(isset(APItabs::$tab_definition[$tab]))  $text = APItabs::$tab_definition[$tab];
-    else myPear::ERROR(sprintf("??? %s: undefined tab \"%s\"\n",__method__,$tab));
+    else MSG::ERROR(sprintf("??? %s: undefined tab \"%s\"\n",__method__,$tab));
     if (is_object(bAuth::$av)){
       
       if (VM_external_registrant_here){
@@ -1293,7 +1293,7 @@ function _vm_title_callback($tab, $dTab=Null,$returnText=False){
     }
     $menuItem = ($returnText
 		 ? $text
-		 : t(bText::_(array('key' => "MENU_$tab",'item'=> $text))));
+		 : t(b_t::_(array('key' => "MENU_$tab",'item'=> $text))));
   }
   return $menuItem;
 }

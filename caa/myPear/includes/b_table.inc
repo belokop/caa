@@ -133,7 +133,6 @@ class b_table{
   function trc($showPending=True){ 
     if ($showPending){
       if(($e=array_unique($this->pendingObject)) && !$this->n_pendingObjects){
-	//	if (!bForm::$inputToPDF) 
 	$this->td();
 	$this->td(str_replace("'",'"',join("<br/>",$e)),  // tcpdf does not like "'"...
 		  str_replace("'",'"'," rowspan='$this->nRowsForPendingObject' class='b_pending'"));
@@ -331,7 +330,7 @@ class b_table_zebra extends b_table {
       $this->headerPrinted = True;
       if (is_array($this->header)){
 	$this->thead_o($txt);
-
+	
 	// optional "pre-header" ... rather dark place...
 	foreach ($this->preHeaders as $h2){
 	  print "<tr><th></th>\n";
@@ -391,83 +390,84 @@ class b_table_zebra extends b_table {
    */
   private $CLI_buffer = array();
   function prt($row,$highlight='') { 
-    if (empty($row)) return;
-    bTiming()->cpu('b_table');
-
-    if (cnf_CLI){
-      foreach ($this->header as $k=>$v)  if (!empty($v)) $this->CLI_buffer[$k] = $v;
-    }else{    
-      if ($this->repetValuesCol1only) $this->keepRepetValues = True;
-      $this->getHeader();
+    if (!empty($row)){
+      bTiming()->cpu('b_table');
       
-      // do not print the same line twice
-      $test = '';
-      if ($this->skipDuplicatedLines) {
-	foreach ($this->header as $k=>$v)  $test .= preg_replace("/[\W]/",'',strip_tags($row[$k]));
-	$test .= serialize($this->extraTD);
-	if ($test == $this->justPrintedTableRow) {
-	  bTiming()->cpu();
-	  return;
-	}
-	$this->justPrintedTableRow = $test;
-      }
-      
-      print $this->anchor(); 
-
-      if ($this->BGcode == 1) $this->BGcode=2;
-      else                    $this->BGcode=1;
-      $this->tro(); 
-      $counterPrinted = 0;
-      $colspan = 1;
-      foreach ($this->header as $k=>$v) {
-	if (--$colspan > 0)              continue;
-	if (stripos($k,'hidden') === 0)  continue;
-	if (substr(@$row[$k],0,1)==='<') $data = $row[$k];
-	else	                         $data = str_replace("~","<br/>",@$row[$k]);
-	if (empty($data)) $data = '';
-
-	if     (@$this->afirst == $k)                        { $cell = $this->getIfChanged($k,$data); $cellF=$cell; }
-	elseif ( $this->repetValuesCol1only == $k)             $cell = $this->getIfChanged($k,$data);
-	elseif (!$this->keepRepetValues && !preg_match('/value/i',$k)) $cell = $this->getIfChanged($k,$data);
-	else                                                   $cell = $data;
+      if (cnf_CLI){
+	foreach ($this->header as $k=>$v)  if (!empty($v)) $this->CLI_buffer[$k] = $v;
+      }else{    
+	if ($this->repetValuesCol1only) $this->keepRepetValues = True;
+	$this->getHeader();
 	
-	if ($this->repetValuesCol1only == $k && $this->afirst && $cellF)  $cell = $data;
-	if (!$counterPrinted++){
-	  if ($cell && $this->showLineCounter) $c = (++$this->counter).'&nbsp;-&nbsp;';
-	  else                                 $c = '&nbsp;';
-	  $this->td($c,"class='align_right'");
+	// do not print the same line twice
+	$test = '';
+	if ($this->skipDuplicatedLines) {
+	  foreach ($this->header as $k=>$v)  $test .= preg_replace("/[\W]/",'',strip_tags($row[$k]));
+	  $test .= serialize($this->extraTD);
+	  if ($test == $this->justPrintedTableRow) {
+	    bTiming()->cpu();
+	    return;
+	  }
+	  $this->justPrintedTableRow = $test;
 	}
-	if (!($text_align = @$this->css[$k]['align'])){
-	  $text_align = (!preg_match(';\..*\.;',$data) &&  // strip out ip-addresses
-			 preg_match("/^[0-9\/\-\.\,\%]+$/",b_fmt::unEscape(strip_tags($data)))
-			 ? "align_right"
-			 : "align_left");
+	
+	print $this->anchor(); 
+	
+	if ($this->BGcode == 1) $this->BGcode=2;
+	else                    $this->BGcode=1;
+	$this->tro(); 
+	$counterPrinted = 0;
+	$colspan = 1;
+	foreach ($this->header as $k=>$v) {
+	  if (--$colspan > 0)              continue;
+	  if (stripos($k,'hidden') === 0)  continue;
+	  if (substr(@$row[$k],0,1)==='<') $data = $row[$k];
+	  else	                         $data = str_replace("~","<br/>",@$row[$k]);
+	  if (empty($data)) $data = '';
+	  
+	  if     (@$this->afirst == $k)                        { $cell = $this->getIfChanged($k,$data); $cellF=$cell; }
+	  elseif ( $this->repetValuesCol1only == $k)             $cell = $this->getIfChanged($k,$data);
+	  elseif (!$this->keepRepetValues && !preg_match('/value/i',$k)) $cell = $this->getIfChanged($k,$data);
+	  else                                                   $cell = $data;
+	  
+	  if ($this->repetValuesCol1only == $k && $this->afirst && $cellF)  $cell = $data;
+	  if (!$counterPrinted++){
+	    if ($cell && $this->showLineCounter) $c = (++$this->counter).'&nbsp;-&nbsp;';
+	    else                                 $c = '&nbsp;';
+	    $this->td($c,"class='align_right'");
+	  }
+	  if (!($text_align = @$this->css[$k]['align'])){
+	    $text_align = (!preg_match(';\..*\.;',$data) &&  // strip out ip-addresses
+			   preg_match("/^[0-9\/\-\.\,\%]+$/",b_fmt::unEscape(strip_tags($data)))
+			   ? "align_right"
+			   : "align_left");
+	  }
+	  //	if (is_array($this->class[$k])) 	var_dump($this->class[$k]);
+	  if (is_array(@$this->class[$k])) $this->class[$k] = join(' ',$this->class[$k]);
+	  $css_style = ($css=@$this->css[$k]['style']) ? " style='$css'" : '';
+	  $css_class = ($cls=@$this->class[$k])        ? " $cls" : '';
+	  
+	  // colspan
+	  if(($cs = @$this->colspan[$k]) > 0){
+	    $colspan = $cs;
+	    $cs = "colspan=$colspan";
+	    unset($this->colspan[$k]);
+	  }else{
+	    $cs = '';
+	  }
+	  $this->td($cell, "$cs class=b_table-zebra$this->BGcode $highlight ".$text_align.$css_class.$css_style);
 	}
-	//	if (is_array($this->class[$k])) 	var_dump($this->class[$k]);
-	if (is_array(@$this->class[$k])) $this->class[$k] = join(' ',$this->class[$k]);
-	$css_style = ($css=@$this->css[$k]['style']) ? " style='$css'" : '';
-	$css_class = ($cls=@$this->class[$k])        ? " $cls" : '';
-
-	// colspan
-	if(($cs = @$this->colspan[$k]) > 0){
-	  $colspan = $cs;
-	  $cs = "colspan=$colspan";
-	  unset($this->colspan[$k]);
-	}else{
-	  $cs = '';
+	
+	if (empty($this->extraTD))   $this->extraTD = array();
+	foreach($this->extraTD as $attr=>$td){
+	  $a = (is_numeric($attr) ? '' : $attr); 
+	  $this->td($td,'class="width0" '.$a); 
 	}
-	$this->td($cell, "$cs class=b_table-zebra$this->BGcode $highlight ".$text_align.$css_class.$css_style);
+	$this->trc(); 
       }
-
-      if (empty($this->extraTD))   $this->extraTD = array();
-      foreach($this->extraTD as $attr=>$td){
-	$a = (is_numeric($attr) ? '' : $attr); 
-	$this->td($td,'class="width0" '.$a); 
-      }
-      $this->trc(); 
+      bTiming()->cpu();
     }
     $this->extraTD = array();
-    bTiming()->cpu();
   }
 
   /*

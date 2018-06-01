@@ -60,7 +60,7 @@ function _hw_body() {
     require_once 'igor_hostel.inc';
     $reply = ob_get_contents();
     ob_end_clean();
-    myPear::H1('Hello CERN', 'reset');
+    MSG::H1('Hello CERN', 'reset');
     return $reply;
   }
 
@@ -104,11 +104,11 @@ function _hw_body() {
    * myPear messages
    */ 
   if (class_exists('myPear',0)){
-    myPear::DEBUG("This is myPear::DEBUG()$message");
-    myPear::MESSAGE("This is myPear::MESSAGE()$message");
-    myPear::WARNING("This is myPear::WARNING()$message");
-    myPear::ERROR("This is myPear::ERROR()$message");
-    myPear::INFO(strip_tags($message),"This is myPear::INFO()");
+    MSG::DEBUG("This is MSG::DEBUG()$message");
+    MSG::MESSAGE("This is MSG::MESSAGE()$message");
+    MSG::WARNING("This is MSG::WARNING()$message");
+    MSG::ERROR("This is MSG::ERROR()$message");
+    MSG::INFO(strip_tags($message),"This is MSG::INFO()");
   }
 
   
@@ -211,7 +211,7 @@ function _hw_body() {
   if (function_exists('locateAndInclude')){
     locateAndInclude('b_datePicker.inc');
     print "<h2>bDatePicker()->get2()</h2>";
-    myPear::set_main_selector(bDatePicker()->get2('from',0,'to',0,$returnResult=True));
+    MSG::set_main_selector(bDatePicker()->get2('from',0,'to',0,$returnResult=True));
   }
   
   /*

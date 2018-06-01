@@ -37,7 +37,7 @@ class bList_vm_hutCodes extends bList_vm{
    *
    */
   protected function message_addMember($r){
-    myPear::MESSAGE('Adding "'.$r['lm_value'].'" to the accommodation options');
+    MSG::MESSAGE('Adding "'.$r['lm_value'].'" to the accommodation options');
   }
   
   private $getFormAdd_OK = '?';  
@@ -49,7 +49,7 @@ class bList_vm_hutCodes extends bList_vm{
 	$members = $this->getMembers(array('lm_key'=>$lm_key));
 	unset($members[$this->member_ID]);
 	$this->getFormAdd_OK = empty($members);
-	if (!$this->getFormAdd_OK) myPear::ERROR("Accommodation option \"$lm_key\" is already used");
+	if (!$this->getFormAdd_OK) MSG::ERROR("Accommodation option \"$lm_key\" is already used");
       }
       $this->dbg($this->getFormAdd_OK);
     }
@@ -101,8 +101,8 @@ class bList_vm_hutCodes extends bList_vm{
 			   );
     
     $lm_id = $this->getValue('lm_id');
-    $args_ready = (!myPear::is_empty($this->getMemberValue($lm_id,'lm_key')) && 
-		   !myPear::is_empty($this->getMemberValue($lm_id,'lm_value')));
+    $args_ready = (!b_posix::is_empty($this->getMemberValue($lm_id,'lm_key')) && 
+		   !b_posix::is_empty($this->getMemberValue($lm_id,'lm_value')));
     
     $this->f->isRO['lm_key'] = $args_ready; //  && $this->getFormAdd_OK();
 

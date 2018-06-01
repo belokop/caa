@@ -16,7 +16,7 @@ function lic_updates_2(){
   while($r = myPear_db()->next_record($q)){
     list($y,$m,$d,$hh,$mm,$ss) = explode('-',($was=date('Y-n-j-H-i-s',$r['e_time'])));
     $newDate = mktime ($hh,$mm,$ss,$m,$d,$y+100);
-    myPear::DEBUG("$was -> ".date('Y-n-j-H-i-s',$newDate));
+    MSG::DEBUG("$was -> ".date('Y-n-j-H-i-s',$newDate));
   }
 }
 

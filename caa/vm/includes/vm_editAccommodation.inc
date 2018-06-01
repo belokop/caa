@@ -1,6 +1,6 @@
 <?php
 b_debug::_debug(__FILE__,cnf_dev);
-if (!empty($_REQUEST['id'])) myPear::WARNING_T("_GET[id] is not empty, but is ignored...");
+if (!empty($_REQUEST['id'])) MSG::WARNING_T("_GET[id] is not empty, but is ignored...");
 
 locateAndInclude('bIcal_matrix_abs');
 
@@ -13,11 +13,11 @@ $lease_id = (int)$_REQUEST['lease_id'];
 if (strpos(@$_GET['block_once'],VM_visit_lease)===0) $action=btn_edit_accommodation;
 else                                                 $action=@$_GET['action_once'];
 
-$v = myPear::getInstance_new('bForm_vm_Visit',(int)$_REQUEST['v_id'],'strict');
+$v = loader::getInstance_new('bForm_vm_Visit',(int)$_REQUEST['v_id'],'strict');
 $v->adjust_dates();
 
 if (!(int)$v->ID){
-  myPear::WARNING(bIcons()->get('32-noRight')."No visit to handle, please start again");
+  MSG::WARNING(bIcons()->get('32-noRight')."No visit to handle, please start again");
 }else{
   
   //
@@ -26,8 +26,8 @@ if (!(int)$v->ID){
   ob_start();
   if ($action){
     
-    myPear::WARNING_T(bIcons()->get('32-zoo')." Doing $action");
-    print myPear::H1($v->name(),'reset');
+    MSG::WARNING_T(bIcons()->get('32-zoo')." Doing $action");
+    print MSG::H1($v->name(),'reset');
     
     switch($action){
     case txt_deleteVisit:

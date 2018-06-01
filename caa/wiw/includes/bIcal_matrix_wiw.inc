@@ -69,7 +69,7 @@ class bIcal_matrix_wiw extends bIcal_matrix{
 
     // Show the selected entries
     if (empty($trips)){
-      myPear::INFO(EMPTY_SELECTION,'Thank you for your interest in '.myOrg_name);
+      MSG::INFO(EMPTY_SELECTION,'Thank you for your interest in '.myOrg_name);
     // bAuth()->loginPrompt();
   }else{
       parent::show($trips);

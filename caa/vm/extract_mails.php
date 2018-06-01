@@ -15,7 +15,7 @@ $q = myPear_db()->query("SELECT av_identity,v_start,v_end,av_lastname,av_email,a
 			  );
 $table = array();
 while ($r = myPear_db()->next_record($q)){
-  if (myPear::is_empty($m = b_fmt::RFC_2822($r['av_email']))){
+  if (b_posix::is_empty($m = b_fmt::RFC_2822($r['av_email']))){
     //    print $r['av_email'] . " ??? \n";
   }else{
     $r['av_email'] = $m[0];

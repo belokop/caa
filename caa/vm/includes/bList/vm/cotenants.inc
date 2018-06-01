@@ -68,7 +68,7 @@ class bList_vm_cotenants extends bList_vm{
 	  $this->dump();
 	  $msg = b_fmt::redText("damaged entry $lm_id - $message");
 	  b_debug::_debug($msg,True);
-	  myPear::ERROR($msg);
+	  MSG::ERROR($msg);
 	}	
 	//	$this->deleteMember($lm_id);
       }
@@ -110,11 +110,11 @@ class bList_vm_cotenants extends bList_vm{
   }
 
   protected function message_createList(){
-    myPear::MESSAGE('Creating new list "'.trim($this->name(True)).'" for '.myOrg_name);
+    MSG::MESSAGE('Creating new list "'.trim($this->name(True)).'" for '.myOrg_name);
   }
 
   protected function message_addMember($r=array()){
-    myPear::MESSAGE(x('em',join(' &amp; ',$this->names)).' share room'); //  at "'.$this->ap->name().'"');
+    MSG::MESSAGE(x('em',join(' &amp; ',$this->names)).' share room'); //  at "'.$this->ap->name().'"');
   }
 
   protected function message_deleteMember($args){
@@ -127,9 +127,9 @@ class bList_vm_cotenants extends bList_vm{
 	     ? Null
 	     : bForm_vm_Lease::_leaseInfo($lease_id,True));
     if (empty($name)){ 
-      myPear::WARNING_T("non-existing lease in the share ".b_fmt::joinX(',',$args)); 
+      MSG::WARNING_T("non-existing lease in the share ".b_fmt::joinX(',',$args)); 
     }else{ 
-      myPear::MESSAGE("drop sharing for <em>$name</em>"); 
+      MSG::MESSAGE("drop sharing for <em>$name</em>"); 
     }
   }
 
@@ -194,12 +194,12 @@ class bList_vm_cotenants extends bList_vm{
     }
 
     // How many rooms do we have?    
-    $room = myPear::getInstance_new('bForm_vm_Room',$rec['a_id'],'strict');
+    $room = loader::getInstance_new('bForm_vm_Room',$rec['a_id'],'strict');
     $a_quantity = (VM::_MENU()->context() == 'org'
 		   ? $rooms_occupied + 2
 		   : VM_accommodationOptions(VM::$e)->get_a_value($room->ID,$room->hut->ID,'a_quantity'));
     if ($rooms_occupied+1 > $a_quantity){
-      myPear::WARNING(join('<br>',array(x('strong',"Overbooking..."),
+      MSG::WARNING(join('<br>',array(x('strong',"Overbooking..."),
 					"No room available to accommodate ".x('strong',bForm_Avatar::_fmtName('Lf',$rec)),
 					"in ".x('em',bForm_vm_Room::_a_name($rec,True)))));
     }
@@ -300,7 +300,7 @@ class bList_vm_cotenants extends bList_vm{
       foreach($cache[$cache_id]['periods'] as $l_id=>$p){
 	if (!b_time::inInterval($period[0],$period[1], $p[0],$p[1])){
 	  $lease_ref = bForm_vm_Lease::_leaseInfo($rec['lease_id'],array('lease_id'));
-	  myPear::WARNING_T($lease_ref['lease_name'].' & '.$l['lease_name'].' are NOT cotenants for '.b_time::period($l['lease_start'],$l['lease_end']));
+	  MSG::WARNING_T($lease_ref['lease_name'].' & '.$l['lease_name'].' are NOT cotenants for '.b_time::period($l['lease_start'],$l['lease_end']));
 	  unset($names[$l_id]);
 	}
       }
@@ -355,7 +355,7 @@ class bList_vm_cotenants extends bList_vm{
       bForm_vm_Lease::set_lease_options($_leaseInfo,array(VM_no_cotenants=>1),True);
       if (($n = @$_leaseInfo['v_accompaning']) && !is_array(bForm_vm_Lease::get_lease_options($_leaseInfo,'get_pay'))){
 	bForm_vm_Lease::set_lease_options($_leaseInfo,array('pay'=>VM_pay_something),True);
-	myPear::WARNING_T(sprintf("Impose \"%s\" for %s",
+	MSG::WARNING_T(sprintf("Impose \"%s\" for %s",
 				  bForm_vm_Lease::get_lease_options($_leaseInfo,'pay_room',array(),True),
 				  bForm_Avatar::_fmtName('Lf',$_leaseInfo))); 
       }
@@ -439,7 +439,7 @@ class bList_vm_cotenants extends bList_vm{
     $reply = parent::getMember($args,$set_as_current_member);
     $reply['leases'] = $this->safe_explode(@$reply['leases']);
 
-    if (($n=count($reply['leases'])) != ($nu=count(array_unique($reply['leases'])))) myPear::WARNING_T("$n leases, but only $nu are unique"); 
+    if (($n=count($reply['leases'])) != ($nu=count(array_unique($reply['leases'])))) MSG::WARNING_T("$n leases, but only $nu are unique"); 
     return $reply;
   }
 

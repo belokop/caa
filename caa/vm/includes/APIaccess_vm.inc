@@ -85,7 +85,7 @@ class APIaccess_vm extends APIaccess{
     $reply = False;
     if (is_object(bAuth::$av)){
       if (empty($av_id)) $av = bAuth::$av;
-      else               $av = myPear::getInstance_new('bForm_Avatar_vm',$av_id,'fatal');
+      else               $av = loader::getInstance_new('bForm_Avatar_vm',$av_id,'fatal');
       $reply = superUser_here; //  || $av->isObserver();
     }
     $this->dbg($reply);

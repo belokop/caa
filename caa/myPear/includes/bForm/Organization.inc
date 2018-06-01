@@ -66,6 +66,7 @@ class bForm_Organization extends bForm {
     static $organizations = array();
     
     if (!myPear_db()->isReady())  return Null;
+    if (!myPear_db()->tableExists('zzz_organizations')) return Null;
     
     // Check the cache
     $org_id = self::org_code_2_org_id($org_id);
@@ -74,7 +75,7 @@ class bForm_Organization extends bForm {
 	// The database is empty, create a dummy Organization instance
 	$org = new bForm_Organization('empty');
 	$org->updateDB(self::$default_organization);
-	myPear::INFO("Creating example Organization \"".$org->getValue('org_name',1)."\"");
+	MSG::INFO("Creating example Organization \"".$org->getValue('org_name',1)."\"");
 	return self::get_myOrg($org->ID);
       }else{
 	// The database is not empty, but the organization does not exist.
@@ -88,7 +89,7 @@ class bForm_Organization extends bForm {
       $organizations[$org_id] = new bForm_Organization($org_id);
       b_debug::xxx("Organization \"".$organizations[$org_id]->getValue('org_name',1)."\"",array(cnf_dev));
     }
-    if ($arbitrary) myPear::INFO("Loading organization \"".$organizations[$org_id]->getValue('org_name',1)."\"",
+    if ($arbitrary) MSG::INFO_once("Loading organization \"".$organizations[$org_id]->getValue('org_name',1)."\"",
 				 "No organization declared, getting an arbitrary one");
     b_debug::xxx("Organization \"".$organizations[$org_id]->name()."\"",array(cnf_dev));
     return $organizations[$org_id];
@@ -98,7 +99,7 @@ class bForm_Organization extends bForm {
    *
    */
   private static function is_orgID_valid(&$org_id){
-    $reply  = (myPear::is_int($org_id) || (is_string($org_id) && preg_match('/^([a-zA-Z0-9]*)\b/',trim($org_id),$match)));
+    $reply  = (b_posix::is_int($org_id) || (is_string($org_id) && preg_match('/^([a-zA-Z0-9]*)\b/',trim($org_id),$match)));
     if ($reply){
       if (!empty($match[1])) $org_id = $match[1];
     }else{
@@ -333,7 +334,7 @@ class bForm_Organization extends bForm {
       if ($reply=parent::getValue('org_name_short',$asIs,$description_MBE)) return $reply;
       $reply = parent::getValue('org_name',$asIs,$description_MBE);
       $hint = 'n';
-      myPear::WARNING("Organization short name is not defined, using the full name '$reply'");
+      MSG::WARNING("Organization short name is not defined, using the full name '$reply'");
       break;
     case 'Z_org_signature_dir': 
       $hint = 's';
@@ -359,7 +360,7 @@ class bForm_Organization extends bForm {
     if (!$dejaVu++){ // protection against infinite loop, happens if the form is auto-created
       if (!(int)$this->ID) $this->MODE = 'RW'; 
 
-      myPear::H1('Organization description');
+      MSG::H1('Organization description');
 
       $submit = array();
       if (0) if ($this->MODE != 'RW' && $this->isWritable()) {
@@ -547,7 +548,7 @@ class bForm_Organization extends bForm {
    */
   protected function getValue_validate_value($k,&$v){
     $err_msg = '';
-    if (!myPear::is_empty($v)){
+    if (!b_posix::is_empty($v)){
       $err_msg_parent = $err_msg = parent::getValue_validate_value($k,$v);
 
       switch($k){

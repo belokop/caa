@@ -62,9 +62,9 @@ class PRP extends myPear{
 
   static public function _MANAGERS_UNIT(){ return myPear::_UNIT(RANK_prp_manager,PRP_MODULE); }
 
-  static public function _MENU()         { return self::_fromCache('APImenu_prp'); } 
+  static public function _MENU()         { return loader::_fromCache('APImenu_prp'); } 
 
-  static public function _HOLDER()       { return self::_fromCache('bHolder_prp_preprints'); } 
+  static public function _HOLDER()       { return loader::_fromCache('bHolder_prp_preprints'); } 
   
   static function valid_extension($name){
     static $valid_extensions = array('zip','tex','tar','ps','gz','pdf','doc','jpg');
@@ -72,7 +72,7 @@ class PRP extends myPear{
 	(stripos($name,'http:/')  !== False) ||
 	(stripos($name,'https:/') !== False)) return False;
     if (!($reply = preg_match('/\.('.join('|',$valid_extensions).')/i',trim($name)))){
-      myPear::WARNING("File name \"$name\" is not valid, ".
+      MSG::WARNING("File name \"$name\" is not valid, ".
 		      "valid file extensions are<br/>".join(', ',$valid_extensions));
     }
     return $reply;

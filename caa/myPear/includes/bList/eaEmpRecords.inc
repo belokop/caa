@@ -240,7 +240,7 @@ class bList_eaEmpRecords extends bList{
 		in_array($r['rec_type'],array_merge(self::$emp_groups[emp_major_pos],
 						    self::$emp_groups[emp_lt_visits])));
     }
-    if ($verbose)myPear::DEBUG(sprintf("%s(%s) - %s",__METHOD__,b_time::period($r['lm_key'],$r['lm_status']),var_export($reply,True)));
+    if ($verbose)MSG::DEBUG(sprintf("%s(%s) - %s",__METHOD__,b_time::period($r['lm_key'],$r['lm_status']),var_export($reply,True)));
     return $reply;
   }
 
@@ -333,7 +333,7 @@ class bList_eaEmpRecords extends bList{
 		    'lm_locale','lm_lid','lm_option',) as $f) unset($r[$f]);
       $l[] = x('td',b_debug::print_r($r,$rec_type,$doNotPrint=True));
     }
-    myPear::DEBUG(x("table class='align_left b_table' ",x('tr',join('',$l))));
+    MSG::DEBUG(x("table class='align_left b_table' ",x('tr',join('',$l))));
   }
   
   /*
@@ -341,7 +341,7 @@ class bList_eaEmpRecords extends bList{
    */
   protected function sanity_action($w){
     $q = myPear_db()->qquery("DELETE  FROM ".$this->TABLE_member." WHERE ".join(' AND ',$w),True);
-    myPear::ERROR(myPear_db()->num_rows($q).' deleted');
+    MSG::ERROR(myPear_db()->num_rows($q).' deleted');
     // restart sanity check after deleting the record(s)
     $this->sanity();
   }
@@ -395,8 +395,8 @@ class bList_eaEmpRecords extends bList{
    *
    */
   protected function message_createList(){
-    if (!cnf_CLI)  myPear::MESSAGE("Start ".$this->name(True)." for ".$this->av->name());
-    myPear::MESSAGE("Creating new employment record");
+    if (!cnf_CLI)  MSG::MESSAGE("Start ".$this->name(True)." for ".$this->av->name());
+    MSG::MESSAGE("Creating new employment record");
   }
 
   /*
@@ -406,14 +406,14 @@ class bList_eaEmpRecords extends bList{
     return $this->message_addMember();
   }
   protected function message_addMember($r=array()){
-    myPear::MESSAGE("New ".$this->name().(empty($r) ? "" : " for ".$this->av->name()));
+    MSG::MESSAGE("New ".$this->name().(empty($r) ? "" : " for ".$this->av->name()));
   }
 
   /*
    *
    */
   protected function message_deleteMember($args){
-    myPear::WARNING_T("Clean duplicated employment record");
+    MSG::WARNING_T("Clean duplicated employment record");
   }
   
 
@@ -449,7 +449,7 @@ class bList_eaEmpRecords extends bList{
    */
   protected function logIt(){
     if (!myPear_db()->num_rows(myPear_db()->qquery("SELECT lm_id FROM $this->TABLE_member ".$this->hookJOIN()." WHERE ".$this->hookParent(),cnf_dev))){
-      myPear::INFO("Start ".$this->av->name()."'s employment history");
+      MSG::INFO("Start ".$this->av->name()."'s employment history");
       myPear_logs()->add('ea',$this->av->ID);
     }
   }
@@ -595,7 +595,7 @@ class bList_eaEmpRecords extends bList{
   protected function getFormAdd(){
     // Create the record if it is empty
     $this->dbg("member_ID=".$this->member_ID,cnf_dev);
-    if (!myPear::is_int($this->member_ID)){
+    if (!b_posix::is_int($this->member_ID)){
       $this->logIt();
       $this->member_ID = $this->createMember();
       $this->getValue_reset('lm_id',$this->member_ID);
@@ -756,7 +756,7 @@ class bList_eaEmpRecords extends bList{
 	    myOrg()->eaMembers()->setMemberAccess($this->av->ID,EA_acl_public);
 	  }elseif (!$dejaVu++){
 	    $make_public = 'Make this information public';
-	    myPear::INFO("The information on this page is password protected, i.e. only the authorized persons might see it. ".
+	    MSG::INFO("The information on this page is password protected, i.e. only the authorized persons might see it. ".
 			 "<br/>".
 			 "You can make it public by pushing the button \"$make_public\"");
 	    $reply[] = b_btn::submit($make_public,
@@ -817,7 +817,7 @@ class bList_eaEmpRecords extends bList{
    * Page header
    */
   protected function getFormHeader(){
-    myPear::H1($this->av->name());
+    MSG::H1($this->av->name());
     return Null;
   }
   

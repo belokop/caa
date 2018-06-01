@@ -87,7 +87,7 @@ class bForm_jam_Position extends bForm_jam {
     if ($defineVariable_counter++ > 0) return;
    
     // Shortcut
-    $pos_email = (myPear::is_empty($e=$this->getValue('pos_email',True)) ? "" : '<br/>'.x('em',"($e)"));
+    $pos_email = (b_posix::is_empty($e=$this->getValue('pos_email',True)) ? "" : '<br/>'.x('em',"($e)"));
 
     // All variables
     $this->defineVariable(array('pos_ap_noreply'      => "Show the communication Email address to applicants?$pos_email",
@@ -333,9 +333,9 @@ class bForm_jam_Position extends bForm_jam {
   private function hookAvatar($av_id=Null){
     if (empty($av_id))                     $av = bAuth::$av;
     elseif($av_id instanceof bForm_Avatar) $av = $av_id;
-    else                                   $av = myPear::getInstance('bForm_Avatar_jam',$av_id,array('nocache','strict'));
+    else                                   $av = loader::getInstance('bForm_Avatar_jam',$av_id,array('nocache','strict'));
     if(($av instanceof bForm_Avatar) && !($av instanceof bForm_Avatar_jam)){
-      $av = myPear::getInstance('bForm_Avatar_jam',$av->ID,array('nocache','strict'));
+      $av = loader::getInstance('bForm_Avatar_jam',$av->ID,array('nocache','strict'));
     }
     return $av;
   }
@@ -400,7 +400,7 @@ class bForm_jam_Position extends bForm_jam {
 		    ? '[ update ]' // . bIcons()->get('i-edit')
 		    : '');
     
-    myPear::setPageHeader($this->name());
+    MSG::setPageHeader($this->name());
     
     //
     // Open the form with the status
@@ -560,7 +560,7 @@ class bForm_jam_Position extends bForm_jam {
    */
   private static function _require($what,$buffer=array()){
     if (empty($buffer[$what])){
-      myPear::WARNING_T("???empty '$what'");
+      MSG::WARNING_T("???empty '$what'");
       $reply = False;
     }else{
       $reply = ($buffer[$what] === JAM_yes) || ($buffer[$what] === JAM_yes_but);
@@ -589,7 +589,7 @@ class bForm_jam_Position extends bForm_jam {
       foreach(JAM::$SC_ranks as $rank){
 	if (mb_strToLower($this->SC_rank2name($rank)) == CONST_noname){
 	  if (JAM_unit($rank,$this->ID)->getUnitMemberIDs()){
-	    myPear::ERROR("Can't remove section <em>'".b_reg_bUnit::$_bUnits[JAM_MODULE][$rank]['d']."s'</em>");
+	    MSG::ERROR("Can't remove section <em>'".b_reg_bUnit::$_bUnits[JAM_MODULE][$rank]['d']."s'</em>");
 	    $this->errorsInTheForm[self::$ranks[$rank]] = 'not empty';
 	  }
 	}

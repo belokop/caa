@@ -75,7 +75,7 @@ function lic_tidySrv($string,$port=False) {
 
 class LIC extends myPear{
   static public function _MENU()  { 
-    return self::_fromCache('APImenu_lic'); 
+    return loader::_fromCache('APImenu_lic'); 
   }
 
 }

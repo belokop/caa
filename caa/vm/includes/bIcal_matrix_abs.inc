@@ -25,7 +25,7 @@ class bIcal_matrix_abs extends bIcal_matrix{
   
   function show($matrix=Null){    
 
-    myPear::H1("Who Lives Where");
+    MSG::H1("Who Lives Where");
     if (is_object(VM::$e))      print x('h3','Who lives where?');
     
     if (!b_checkBox::whatIsOn())    b_checkBox::set('seeAccodated','on');

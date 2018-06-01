@@ -18,9 +18,9 @@ class bHolder_jam_Recommendation extends bHolder_jam{
     if ($rf_id) JAM_RF($rf_id);
     parent::__construct();
     if ((bool)$av_id) {     /* list all the recommendations for the referee */
-      $this->av = myPear::getInstance('bForm_Avatar_jam',$av_id,array('fatal','strict'));
+      $this->av = loader::getInstance('bForm_Avatar_jam',$av_id,array('fatal','strict'));
       $this->where[] = "rec_avid = ".$this->av->ID;
-      $this->title = bText::_("Letters of recommendation");
+      $this->title = b_t::_("Letters of recommendation");
     }elseif ($this->rf_id = $rf_id){
       $this->title .= '<br/>'.JAM_RF()->name();
       $this->where[]= "ap_rfid = ".JAM::$rf_id;
@@ -71,14 +71,14 @@ class bHolder_jam_Recommendation extends bHolder_jam{
 
   protected function _open(){
     if (is_object(bAuth::$av) && ($this->av->ID != bAuth::$av->ID)){
-      myPear::MESSAGE($this->av->getWidget(bText::_('Referee').' '.$this->av->name()));
+      MSG::MESSAGE($this->av->getWidget(b_t::_('Referee').' '.$this->av->name()));
     }
   }
 
   protected function _close(){
     if (!$this->show_letters_for_old_positions){
       if ($this->nRejected || b_checkBox::isOn('see_old')){
-	print b_checkBox::create(array('see_old'=>bText::_('show the previous letters')));
+	print b_checkBox::create(array('see_old'=>b_t::_('show the previous letters')));
       }
     }
   }

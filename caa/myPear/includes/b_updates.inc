@@ -77,7 +77,7 @@ function myPear_updates(){
       myPear_update33();
     }
 
-    if (True){ // Fixes for the version "Easter 2017"
+    if (False){ // Fixes for the version "Easter 2017"
       myPear_update34();
       myPear_update35();
       myPear_update36();
@@ -159,8 +159,9 @@ function myPear_update35(){
  */
 myPear_update34();
 function myPear_update34($delete=True){
-  if (@$_SESSION[__function__]++) return;
 
+  if (@$_SESSION[__function__]++ || !myPear_db()->tableExists('zzz_lists')) return;
+  
   $q = myPear_db()->qquery("SELECT * FROM `zzz_lists` ".
 			   " LEFT JOIN zzz_list_members ON lm_lid = l_id WHERE ".
 			   ($where = join(' AND ',array('lm_key    IS NULL',
@@ -177,7 +178,7 @@ function myPear_update34($delete=True){
     }
     @$ts[str_replace('l_class=','',b_fmt::joinX(' ',$r))]++;
   }
-
+  
   $NN = 0;
   krsort($ts);
   foreach($ts as $txt=>$n){
@@ -185,11 +186,11 @@ function myPear_update34($delete=True){
     $txts[] = "$txt ($n case".($n>1 ? "s)" : ")");
   }
   if ($NN){
-    myPear::WARNING("Found $NN empty 'zzz_list_members' records (NOTE, <em>'Null'</em> VALUES ARE NOT SHOWN):<pre>".join('<br>',$txts).'</pre>'); 
+    MSG::WARNING("Found $NN empty 'zzz_list_members' records (NOTE, <em>'Null'</em> VALUES ARE NOT SHOWN):<pre>".join('<br>',$txts).'</pre>'); 
     if ($delete){
       $sql = "DELETE FROM zzz_list_members WHERE $where";
       $q = myPear_db()->qquery($sql,True);
-      $q = myPear::WARNING("Trying to </br><em>$sql</em>.<br>".myPear_db()->num_rows($q)." rows affected");
+      $q = MSG::WARNING("Trying to </br><em>$sql</em>.<br>".myPear_db()->num_rows($q)." rows affected");
     }
   }
 }
@@ -254,7 +255,6 @@ function myPear_update33(){
       }
       foreach($todrop as $var_name) myPear_db()->qquery("DELETE FROM zzz_variables WHERE var_name = '$var_name'",True);
     }
-    b_debug::var_dump($dejavu);
   }
 }
 
@@ -404,7 +404,7 @@ function myPear_update29(){
       $flag = 'xxxxx';
       myPear_db()->qquery("DELETE FROM zzz_logs WHERE log_id = $r[log_id]",True);
     }
-    myPear::DEBUG(sprintf("update %s %s %-15s\n",date('Y-m-d',$r['log_time']),$r['log_comment'],$flag));
+    MSG::DEBUG(sprintf("update %s %s %-15s\n",date('Y-m-d',$r['log_time']),$r['log_comment'],$flag));
   }
 
   // clean crontab avatars, those were replaced by "noreply@<domain>"
@@ -619,7 +619,7 @@ function myPear_update25(){
     $old_email = join(',',$old_mail_array);
 
     if (empty($tidy_email)){
-      myPear::WARNING("Can't parse '$old_email'");
+      MSG::WARNING("Can't parse '$old_email'");
     }else{
       myPear_db()->qquery("UPDATE zzz_avatars SET av_email='$tidy_email[av_email]', av_email2='$tidy_email[av_email2]' WHERE av_id=$r[av_id]",True);
       if (($tidy_email['av_email']  != $r['av_email']) 
@@ -691,12 +691,12 @@ function myPear_update23(){
       $n = myPear_db()->num_rows($q);
       myPear_db()->qquery("UPDATE zzz_lists SET l_class = '$l_class' WHERE l_name = '$l_name'",1);
 	
-      //      if (!$n && !cnf_CLI)    myPear::WARNING("no match for bList l_name='$l_name'");
+      //      if (!$n && !cnf_CLI)    MSG::WARNING("no match for bList l_name='$l_name'");
     }
   }
   $q = myPear_db()->qquery("SELECT * FROM zzz_lists WHERE l_class IS NULL OR l_class = ''",1);
   $n = myPear_db()->num_rows($q);
-  if ($n) myPear::ERROR("$n lists without class");
+  if ($n) MSG::ERROR("$n lists without class");
   while($r = myPear_db()->next_record($q)){
     print_r($r);
   }
@@ -919,15 +919,15 @@ function myPear_locate_duplicate_bLists(){
   $qqq = myPear_db()->qquery("SELECT l_class,l_name,l_id FROM zzz_lists ORDER BY l_class,l_name",True);
   while($rrr = myPear_db()->next_record($qqq)){
     
-    if (myPear::is_empty($l_class = $rrr['l_class'])){
-      if (!myPear::is_empty($l_class = @$table[$rrr['l_name']])){
-	myPear::DEBUG("recover l_class=\"$l_class\"");
+    if (b_posix::is_empty($l_class = $rrr['l_class'])){
+      if (!b_posix::is_empty($l_class = @$table[$rrr['l_name']])){
+	MSG::DEBUG("recover l_class=\"$l_class\"");
 	myPear_db()->qquery("UPDATE zzz_lists SET l_class='$l_class' WHERE l_id=$rrr[l_id]",True);
       }
     }
-    if (empty($l_class))   myPear::WARNING("missing l_class l_id=$rrr[l_id] l_name=\"$rrr[l_name]\"");
+    if (empty($l_class))   MSG::WARNING("missing l_class l_id=$rrr[l_id] l_name=\"$rrr[l_name]\"");
     if (empty($l_class) || @$dejaVu[$l_class]++) continue;
-      myPear::DEBUG("==================================================================== $l_class");
+      MSG::DEBUG("==================================================================== $l_class");
 
     $qq = myPear_db()->qquery("SELECT COUNT(*),av_firstname,av_lastname,l_class,l_name,l_parent,l_id FROM zzz_lists ".
 			       " LEFT JOIN zzz_avatars ON l_parent = av_id ".
@@ -939,7 +939,7 @@ function myPear_locate_duplicate_bLists(){
 				 " WHERE l_class = '$l_class' AND l_parent = '$rr[l_parent]' ");
       $id = bForm_Avatar::_fmtName('Lf',$rr);
       if (empty($id)) $id = "$rr[l_name]_$rr[l_parent]";
-      myPear::DEBUG("&nbsp; ------------------------------ $id");
+      MSG::DEBUG("&nbsp; ------------------------------ $id");
       print x('h2',$id);
       while($r = myPear_db()->next_record($q)){
 	print x('h3',$r['l_id']);
@@ -1021,7 +1021,7 @@ function myPear_update10(){
 	  elseif ($m[4]=='0000')                      $ssn = '';
 	  elseif ($m[4]=='P1234')                     $ssn = '';
 	  elseif (is_numeric($m[4]))                  $ssn = sprintf('%02d%02d%02d-%s',$m[1],$m[2],$m[3],$m[4]);
-	  myPear::WARNING_T("$r[av_birthdate] - ".($day==''?'':date('Y-m-d',$day))." $ssn");
+	  MSG::WARNING_T("$r[av_birthdate] - ".($day==''?'':date('Y-m-d',$day))." $ssn");
 	  myPear_db()->qquery("UPDATE zzz_avatars SET av_ssn = '$ssn', av_birthdate = '$day' WHERE av_id=$r[av_id]");
 	}
       }
@@ -1033,7 +1033,7 @@ function myPear_update10(){
 	$day = b_time::txt2unix(sprintf('%02d-%02d-%02d',$m[1],$m[2],$m[3]));
 	if ((int)$m[2] > 12)  $day = '';
 	if ((int)$m[3] > 31)  $day = '';
-	myPear::WARNING_T("$field: ".$r[$field]." -> ".($day==''?'?':date('Y-m-d',$day)));
+	MSG::WARNING_T("$field: ".$r[$field]." -> ".($day==''?'?':date('Y-m-d',$day)));
 	myPear_db()->qquery("UPDATE zzz_avatars SET $field = '$day' WHERE av_id=$r[av_id]");
       }
       
@@ -1043,7 +1043,7 @@ function myPear_update10(){
 	preg_match('/^([0-9]?[0-9]?[0-9][0-9]).([0-9][0-9]).([0-9][0-9][0-9]?[0-9]?)$/',$r[$field],$m);
 	if ((int)$m[3] > 31)  {$x=$m[3]; $m[3]=$m[1]; $m[1] = $x; }
 	$day = b_time::txt2unix(sprintf('%02d-%02d-%02d',$m[1],$m[2],$m[3]));
-	myPear::WARNING_T("$field: ".$r[$field]." - ".($day==''?'?':date('Y-m-d',$day)));
+	MSG::WARNING_T("$field: ".$r[$field]." - ".($day==''?'?':date('Y-m-d',$day)));
 	myPear_db()->qquery("UPDATE zzz_avatars SET $field = '$day' WHERE av_id=$r[av_id]");
       }
       
@@ -1058,7 +1058,7 @@ function myPear_update10(){
 	$q = myPear_db()->qquery("SELECT * FROM zzz_avatars WHERE ($field != '' ) AND $field REGEXP '$f'");
 	while($r = myPear_db()->next_record($q)){  
 	  $day = (empty($t) ? '' : b_time::txt2unix($t));
-	  myPear::WARNING_T("$field: ".$r[$field]." - ".($day==''?'?':date('Y-m-d',$day)));
+	  MSG::WARNING_T("$field: ".$r[$field]." - ".($day==''?'?':date('Y-m-d',$day)));
 	  myPear_db()->qquery("UPDATE zzz_avatars SET $field = '$day' WHERE av_id=$r[av_id]");
 	}
       }
@@ -1071,12 +1071,12 @@ function myPear_update10(){
 	if (!(is_numeric($r[$field]))){
 	  if (preg_match('/\b(\d\d\d\d)\b/', $r[$field],$m) && $m[1]>1900 && $m[1]<=CONST_eternity_year){
 	    $new_value = $m[1];
-	    myPear::WARNING_T("$field = '".$r[$field]."' -> $new_value");
+	    MSG::WARNING_T("$field = '".$r[$field]."' -> $new_value");
 	    myPear_db()->qquery("UPDATE zzz_avatars SET $field = '$new_value' WHERE av_id=$r[av_id]");
 	  }else
-	    myPear::WARNING_T("$field ? '".$r[$field]."'");
+	    MSG::WARNING_T("$field ? '".$r[$field]."'");
 	}else{
-	  if (!(date('Y',$r[$field]) > 1900 && date('Y',$r[$field]) <= CONST_eternity_year)) myPear::WARNING_T("$field ? '".$r[$field]."' ".date('Y-m-d',$r[$field]));
+	  if (!(date('Y',$r[$field]) > 1900 && date('Y',$r[$field]) <= CONST_eternity_year)) MSG::WARNING_T("$field ? '".$r[$field]."' ".date('Y-m-d',$r[$field]));
 	}
       }
     }

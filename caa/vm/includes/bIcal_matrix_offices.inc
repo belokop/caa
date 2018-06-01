@@ -17,9 +17,9 @@ class bIcal_matrix_offices extends bIcal_matrix{
    */
   function __construct(){
     parent::__construct();
-    if ($id=(int)b_cnf::getValue('lease_id') && ($class = myPear::getClassFromID($id)) && ($class === 'bForm_vm_Visit')){
+    if ($id=(int)b_cnf::getValue('lease_id') && ($class = loader::getClassFromID($id)) && ($class === 'bForm_vm_Visit')){
       // optionally show only 1 office
-      $v = myPear::getInstance_new($class,$id,'fatal');
+      $v = loader::getInstance_new($class,$id,'fatal');
       $this->o_id = array($v->getValue('v_oid',1)); 
     }else{
       $this->e = VM::$e;
@@ -28,7 +28,7 @@ class bIcal_matrix_offices extends bIcal_matrix{
   }
   
   function show($arg=Null){    
-    myPear::H1("Office space allocation");
+    MSG::H1("Office space allocation");
     $joinOffices = " LEFT JOIN abs_offices ON o_id = v_oid  LEFT JOIN abs_expenses ON v_id = exp_vid LEFT JOIN zzz_list_members ON v_projectid = lm_id ";
 
     $this->mUsers = $mPrograms = $onlyThoseOffices = array();
@@ -76,15 +76,15 @@ class bIcal_matrix_offices extends bIcal_matrix{
       $count["clochards"] = 0;
       while($r = myPear_db()->next_record($q)){
 	if (!bForm_vm_Visit::_getPolicy(VM_V_provideOffice,$r)){
-	  $v = myPear::getInstance_new('bForm_vm_Visit',$r['v_id'],array('nocache','fatal'));
+	  $v = loader::getInstance_new('bForm_vm_Visit',$r['v_id'],array('nocache','fatal'));
 	  if (!$v->getPolicy(VM_V_provideOffice)){
-	    myPear::WARNING("Office NOT to be provided for  ".$v->av->fmtName('fl'));
+	    MSG::WARNING("Office NOT to be provided for  ".$v->av->fmtName('fl'));
 	    continue;
 	  }
 	}else{
 	  $count["clochards"]++;
 	  $this->fillEntry($r);
-	  myPear::DEBUG($count["clochards"]." - clochard ".bForm_Avatar::_fmtName('fl',$r));
+	  MSG::DEBUG($count["clochards"]." - clochard ".bForm_Avatar::_fmtName('fl',$r));
 	}
       }
       if (empty($count["clochards"])) b_checkBox::set('seeClochards','off');

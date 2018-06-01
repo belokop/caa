@@ -72,12 +72,12 @@ class bHolder_ea extends bHolder{
       if ($condition && ($this->rec[$condition[0]] != $condition[1])) return;
       if (empty($o_id))   return;
 
-      $av = myPear::getInstance_new(bForm_Avatar::$bForm_Avatar,$this->rec['av_id'],array('nocache','fatal'));
+      $av = loader::getInstance_new(bForm_Avatar::$bForm_Avatar,$this->rec['av_id'],array('nocache','fatal'));
       $img = $av->getPhoto(True);
       if (empty($img)) $img = myPear_images."avatar.png";
 
       if (empty($this->labels[$o_id])){
-	$oc = myPear::getInstance_new(Null,$o_id,array('nocache','fatal'));
+	$oc = loader::getInstance_new(Null,$o_id,array('nocache','fatal'));
 	$this->labels[$o_id][] = x('h2',$oc->getValue('o_status').' - '.$oc->name(False));
       }
       $info = array(x('strong',$av->fmtName('fl',False)));

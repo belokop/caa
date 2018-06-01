@@ -26,9 +26,9 @@ class bList_vm extends bList{
     if($parent_ID_p instanceof bForm_vm_Event){
       $parent_ID = $parent_ID_p->ID;
       if (!is_object($this->e) || ($this->e->ID != $parent_ID)) $this->e = $parent_ID_p;
-    }elseif(!myPear::is_equal($parent_ID_p,myOrg_ID) && is_numeric($parent_ID_p)){
+    }elseif(!b_posix::is_equal($parent_ID_p,myOrg_ID) && is_numeric($parent_ID_p)){
       $parent_ID = $parent_ID_p;
-      if (!is_object($this->e) || ($this->e->ID != $parent_ID)) $this->e = myPear::getInstance_new('bForm_vm_Event',$parent_ID,array('strict','fatal'));
+      if (!is_object($this->e) || ($this->e->ID != $parent_ID)) $this->e = loader::getInstance_new('bForm_vm_Event',$parent_ID,array('strict','fatal'));
     }elseif($parent_ID_p == myOrg_ID){
       $parent_ID = myOrg_ID;
       $this->e = Null;
@@ -59,11 +59,6 @@ class bList_vm extends bList{
   function isAdmin(){
     return VM_prg_coordinator_here;
   }
-
-  /*
-   *
-   */
-  function draw_summary() {}
 
   /*
    *

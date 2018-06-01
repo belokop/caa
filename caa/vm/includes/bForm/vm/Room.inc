@@ -87,7 +87,7 @@ class bForm_vm_Room extends bForm_vm {
     // Hook the hut
   private function hookHut(){
     if (empty($this->hut) && $a_hutid=parent::getValue('a_hutid',1,1)){
-      $this->hut = myPear::getInstance_new('bForm_vm_Hut',$a_hutid,array('strict','fatal'));
+      $this->hut = loader::getInstance_new('bForm_vm_Hut',$a_hutid,array('strict','fatal'));
       $this->dbg('hook '.$this->hut->__toString());
     }
     return $this->hut;
@@ -171,7 +171,7 @@ class bForm_vm_Room extends bForm_vm {
       $reply = False;
     }else{
       if ((empty($rec['lease_start']) || empty($rec['lease_end']) || empty($rec['lease_aid'])) && !empty($lease)){
-	if (is_numeric($lease)) $lease = myPear::getInstance_new('bForm_vm_Lease',$lease);
+	if (is_numeric($lease)) $lease = loader::getInstance_new('bForm_vm_Lease',$lease);
 	foreach(array('lease_start','lease_end','lease_aid') as $f) $rec[$f] = $lease->getValue($f,1,1);
 	if (empty($rec['lease_id'])) $rec['lease_id'] = $lease->ID;
       }
@@ -251,7 +251,7 @@ class bForm_vm_Room extends bForm_vm {
     $extraApFee = 0;
     $e = (empty($formDB['v_eid'])
 	  ? Null
-	  : myPear::getInstance_new('bForm_vm_Event',$formDB['v_eid'],array('strict','fatal')));
+	  : loader::getInstance_new('bForm_vm_Event',$formDB['v_eid'],array('strict','fatal')));
     if ($a_id == VM::$OA->ID){
       self::$receiptFormula  = '('.LODGING_OA_TXT.')';
       return 0;
@@ -302,7 +302,7 @@ class bForm_vm_Room extends bForm_vm {
 		    : count($get_pay));
 	if (empty($pay_for)) {
 	  //	  b_debug::internalError("No cotenants,but pay_for=".var_export($get_pay));
-	  myPear::WARNING_T("No cotenants,but get_pay=".var_export($get_pay,True));
+	  MSG::WARNING_T("No cotenants,but get_pay=".var_export($get_pay,True));
 	}
 	b_debug::_debug("We pay for $pay_for, look for the appropriate room",cnf_dev);
 	$q = myPear_db()->qquery("SELECT a_id,a_name,a_price,a_capacity FROM abs_rooms WHERE a_hutid=$rec[hut_id] AND a_capacity = $pay_for",cnf_dev);
@@ -376,7 +376,7 @@ class bForm_vm_Room extends bForm_vm {
     bIcons()->toggleExplainIcons(False);
     if (strpos($this->getValue('a_price'),'=') !== False) $this->defineVariable('Daily rent formula','a_price');
 
-    myPear::H1($this->name());
+    MSG::H1($this->name());
     if ((bool)$this->e)      print x('h3',$this->e->name());
 
     $this->getFormOpen();    
@@ -434,7 +434,7 @@ class bForm_vm_Room extends bForm_vm {
     $submit= array();
     if ($this->MODE=='RO'){
       // $submit['continue'] = b_url::getReferrer();
-      $submit['see all rooms in '.$this->hut->name()] = b_url::same('?function=bHolder_vm_Rooms::list_hut&arg_once='.$this->hut->ID);
+      $submit['see all rooms in '.$this->hut->name()] = b_url::same('?function=bHolder_vm_Rooms::list_hut&arg1_once='.$this->hut->ID);
     }
     // test... if (!empty($this->e))  $submit['reset to default'] = b_url::same('?reset_once=y');
     $this->closeForm('submit',$submit);
@@ -463,7 +463,7 @@ class bForm_vm_Room extends bForm_vm {
 
   public function name($includeHut=False){
     $this->hookHut();
-    return (myPear::is_int($this->ID)
+    return (b_posix::is_int($this->ID)
 	    ? self::_a_name(array('a_name'    =>$this->getValue('a_name'),
 				  'a_capacity'=>$this->getValue('a_capacity'),
 				  'hut_code'  =>$this->hut->getValue('hut_code'),

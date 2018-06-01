@@ -1,10 +1,10 @@
 <?php
 
 function myPear_update(){
-  myPear::H1('Checking for updates');
+  MSG::H1('Checking for updates');
 
   if ($path = @$_GET['update_once']){
-    myPear::MESSAGE(x('pre',`svn up $path 2>&1`));
+    MSG::MESSAGE(x('pre',`svn up $path 2>&1`));
   }
 
 

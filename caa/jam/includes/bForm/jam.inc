@@ -92,7 +92,7 @@ class bForm_jam extends bForm{
     }
 
     $reply = in_array($id,self::$__statuses);
-    // myPear::DEBUG(__METHOD__."($id, statuses=(".join(',',self::$__statuses).")) = ".(int)$reply);
+    // MSG::DEBUG(__METHOD__."($id, statuses=(".join(',',self::$__statuses).")) = ".(int)$reply);
     return $reply;
   }
 
@@ -117,7 +117,7 @@ class bForm_jam extends bForm{
     }
     array_unshift($icons,$mainStatus_icon);
     
-    // myPear::DEBUG(__METHOD__."($status_field) = ".join('',$icons));
+    // MSG::DEBUG(__METHOD__."($status_field) = ".join('',$icons));
     return $icons;
   }
 

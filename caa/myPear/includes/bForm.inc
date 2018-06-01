@@ -13,7 +13,7 @@ class bForm extends myPear_getValue{
   public static function loadWidget($href){
     $_GETsv = $_GET;
     $_GET = b_crypt::parse_query_string($href);
-    $f = myPear::getInstance_new(str_replace('bForm_bForm_','bForm_','bForm_'.$_GET['form']),$_GET['id'],array('nocache','fatal'));
+    $f = loader::getInstance_new(str_replace('bForm_bForm_','bForm_','bForm_'.$_GET['form']),$_GET['id'],array('nocache','fatal'));
     $widget = $f->getWidget();
     $_GET = $_GETsv;
     return $widget;
@@ -106,6 +106,7 @@ class bForm extends myPear_getValue{
     }else{
       $this->ID = $id;
     }
+
     
     /*
      * Set the class mode $this->MODE 
@@ -115,9 +116,9 @@ class bForm extends myPear_getValue{
     // Maximum size for the class uploads 
     if (!$MAX_FILE_SIZE){
       // save the max file size
-      $MAX_FILE_SIZE = min(b_os::max_upload_size(),5*1024*1024);
-      self::$upload_errors[UPLOAD_ERR_FORM_SIZE]['m'] .= " of ".($MAX_FILE_SIZE/1024/1024)."MB"; 
-      self::$upload_errors[UPLOAD_ERR_INI_SIZE]['m']  .= " of ".($MAX_FILE_SIZE/1024/1024)."MB"; 
+      $MAX_FILE_SIZE = b_os::max_upload_size();
+      self::$upload_errors[UPLOAD_ERR_FORM_SIZE]['m'] .= " of ".(int)($MAX_FILE_SIZE/1024/1024)."MB"; 
+      self::$upload_errors[UPLOAD_ERR_INI_SIZE]['m']  .= " of ".(int)($MAX_FILE_SIZE/1024/1024)."MB"; 
       foreach(self::$upload_errors as $k=>$v) if (!is_array($v)) {
 	unset(self::$upload_errors[$k]);
 	self::$upload_errors[$k]['p'] = self::$upload_errors[$k]['m'] = $v;
@@ -130,8 +131,8 @@ class bForm extends myPear_getValue{
 
     if ($this->SQL_backend = $SQL_backend){
       $c = get_class($this);
-      if (empty($this->TABLE))   $this->TABLE   = @myPear::$sql_identities[$c]['t'];
-      if (empty($this->TABLEID)) $this->TABLEID = @myPear::$sql_identities[$c]['i'];
+      if (empty($this->TABLE))   $this->TABLE   = @loader::$sql_identities[$c]['t'];
+      if (empty($this->TABLEID)) $this->TABLEID = @loader::$sql_identities[$c]['i'];
       if (empty($this->TABLE)){
 	$this->SQL_backend = False;
 	if (empty($id)) $this->ID = $id = 'empty';
@@ -139,11 +140,8 @@ class bForm extends myPear_getValue{
     }
 
     // Sanity
-    if (!$this->SQL_backend){
-      $this->dbg("_SESSION backend");
-      if ((int)$this->ID) b_debug::print_r("_SESSION backend, ID='$this->ID");
-    }
-
+    if (!$this->SQL_backend) $this->dbg("_SESSION backend ID=".var_export($this->ID,True));
+    
     // Sanity 2
     if (empty($this->ID) || !in_array($this->MODE,array('RW','RO'))) {
       b_debug::internalError(__METHOD__."(ID=$id,mode=$this->MODE) called with empty '$this->TABLEID'");
@@ -158,9 +156,14 @@ class bForm extends myPear_getValue{
     foreach ($_POST as $k=>$v){
       if ($v === @$this->IDV[$k]) 	unset($_POST[$k]);
     }
-    $this->isReady(True);
 
     if (@$_GET['mode_once'] == 'RO') $this->isLocked(True);
+
+    // Define variables
+    $this->defineVariables();
+
+    // Done...
+    $this->isReady(True);
   }
 
   /*
@@ -199,7 +202,7 @@ class bForm extends myPear_getValue{
 
 
   /*
-   * Clean the instances cache, see myPear::getInstance
+   * Clean the instances cache, see loader::getInstance
    */
   function __clean_cache(){}
 
@@ -215,7 +218,6 @@ class bForm extends myPear_getValue{
     }else{
       if ($s = @$_SESSION['DB_'.get_class($this)]) $this->formDB = $s;
     }
-    // if (@$this->formDB['av_lastname'] == 'Luther')    b_debug::print_r($this->formDB,$this->__toString());
     $this->dbg('done');
   }
   
@@ -418,9 +420,6 @@ class bForm extends myPear_getValue{
     locateAndInclude('b_table');
     bTiming()->cpu(get_class($this).'.doForm');
 
-    // Define variables
-    $this->defineVariables();
-
     // The serialized fields are never writable during the bForm dialog,
     // those are updated with the bList editor
     foreach ($this->isUL as $k=>$v){
@@ -467,6 +466,8 @@ class bForm extends myPear_getValue{
   /*
    * Close the form
    */
+  private $buttons_line = array();
+  public $buttons_line_embedded_in_table = True;
   function closeForm($submit_button=btn_update,$extraButtons=array()){
     
     bTiming()->cpu();
@@ -517,15 +518,18 @@ class bForm extends myPear_getValue{
       if ($this->isWritable()){
 	if     (empty($submit_button))  $submit_button = array();
 	if (!is_array($submit_button))  $submit_button = array($submit_button);
-	foreach(array_values($submit_button) as $name){
+	foreach(array_values($submit_button) as $button_text){
 	  if (empty(bForm::$formOpened)) b_debug::internalError('form is not opened');
 	  if ($this->MODE == 'RO'){
-	    $name = preg_replace('/submit|update|continue/',btn_update,$name);
+	    $button_text = preg_replace('/submit|update|continue/',btn_update,$button_text);
 	    $this->textHidden('_post_bForm_RW_once','RW');
 	  }else{
-	    $name = preg_replace('/submit|update|continue/',$this->closeForm_continue,$name);
+	    $button_text = preg_replace('/submit|update|continue/',$this->closeForm_continue,$button_text);
 	  }
-	  $buttons[] = b_btn::submit($name);
+	  //	 	 MSG::DEBUG(b_fmt::escape($button_text,'url'),cnf_dev);
+	  $buttons[] = ($this->buttons_line_embedded_in_table
+			? b_btn::submit($button_text)
+			: b_btn::big_button_grey($button_text));
 	}
       }
       
@@ -550,27 +554,32 @@ class bForm extends myPear_getValue{
 	$this->cancelButton($extraButtons);
       }
       
-      // Merge the remain buttons
+      // Merge the remaining buttons
       foreach ($extraButtons as $name=>$href) {
-	if (!empty($href)) $buttons[] = b_btn::submit($name,$href);
+	if (!empty($href)) $buttons[] = ($this->buttons_line_embedded_in_table
+					 ? b_btn::submit($name,$href)
+					 : b_btn::big_button_grey($name,$href));
       }
       
       if ($toPrint){
-	// Remove an useless "update" button on the bottom if there are "edit block" icons
+	// Remove an useless "update" button if there are "edit block" icons
 	$ok_to_drop = (self::$editableBlocks_counter && (count($buttons) == 1) && preg_match('/value.*update/i',$buttons[0]));
 	if ($ok_to_drop && 
 	    (self::$editableBlocks_counter == 1) &&
 	    (self::$ROskipedBlocks_counter > 0)) $ok_to_drop = False;
 	if ($ok_to_drop) 	  $buttons = array();
 
-	$margin = (cnf_inside_fb ? 30 : 2);
-	$this->t->highlightRows = False;
-	$this->t->tro();
-	$this->t->td(array(''));
-	$this->t->td(x("div style='margin:${margin}px;text-align:center'",
-		       b_btn::UL_buttons($this->closeForm_buttons($buttons))),'colspan=5');
-	$this->t->trc();
-	//	b_debug::traceBack(b_fmt::escape($buttons[0]));
+	$this->buttons_line = $this->closeForm_buttons($buttons);
+	if ($this->buttons_line_embedded_in_table){
+	  $this->t->highlightRows = False;
+	  $this->t->tro();
+	  $this->t->td(array(''));
+	  $this->t->td(x("div style='margin:".(cnf_inside_fb?30:2)."px;text-align:center'",
+			 b_btn::UL_buttons($this->buttons_line)),
+		       'colspan=5');
+	  $this->t->trc();
+	  $this->buttons_line = array();
+	}
       }
     }
 
@@ -584,7 +593,7 @@ class bForm extends myPear_getValue{
   /*
    * Helper - "cancel" button
    */
-  protected function cancelButton(&$buttons,$text='cancel'){
+  protected function cancelButton(&$extraButtons,$text='cancel'){
 
     // Pre-compute arguments for the later use
     $_once = '';
@@ -604,9 +613,7 @@ class bForm extends myPear_getValue{
     }else{
       $reply = $this->sameURL_but("?$_once",$drop);
     }
-    if (!empty($reply)) $buttons[$text] = $reply;
-    if (0) if (!empty($reply)) b_debug::print_r(b_crypt::parse_query_string($reply),
-						get_class($this).'::'.__FUNCTION__."()");
+    if (!empty($reply)) $extraButtons[$text] = $reply;
   }
 
   /*
@@ -628,7 +635,9 @@ class bForm extends myPear_getValue{
       $reply = $this->bForm_action_custom;
     }
 
-    $repack = array('_after_create'=>b_cnf::get('_after_create')); 
+    $repack = (($_after_create=b_cnf::get('_after_create'))
+	       ? array('_after_create'=>$_after_create)
+	       : array());
     if (cnf_inside_fb) $repack['modal_once'] = bJS()->modal_once();
     $reply = b_url::repack($reply,$repack,$drop);
     return $reply;
@@ -678,12 +687,12 @@ class bForm extends myPear_getValue{
       switch($this->MODE){
       case 'RO':
 	bForm::$formOpened    = 'preliminary';
-	bText::$dropAfterSKIP = True;
+	b_t::$dropAfterSKIP = True;
 	break;
 
       case 'RW':
 	bForm::$formOpened    = $this->ID;
-	bText::$dropAfterSKIP = False;
+	b_t::$dropAfterSKIP = False;
 	break;
       }
 
@@ -703,7 +712,7 @@ class bForm extends myPear_getValue{
 			       : 'RW'),
 		     'resetcache_once'=>1);
       foreach(array('modal_once') as $keep){
-	if (!myPear::is_empty($g=@$_GET[$keep])) $myGet[$keep] = $g;
+	if (!b_posix::is_empty($g=@$_GET[$keep])) $myGet[$keep] = $g;
       }
 
       printf("\n<form action='%s' method='post' enctype='multipart/form-data' name='%s'>\n  <!-- form(%s) %s -->\n",
@@ -731,7 +740,7 @@ class bForm extends myPear_getValue{
       // This should never happen (two or more bForms have MODE == 'RW'), 
       // may be the MODE of the "secondary bForm's" must then be set to RO ??
       $this->MODE = 'RO'; 	  //  to be tested, but look OK 
-      myPear::WARNING_T($msg="??? form is already open with ID=".bForm::$formOpened.", set MODE=RO",$this);
+      MSG::WARNING_T($msg="??? form is already open with ID=".bForm::$formOpened.", set MODE=RO",$this);
     }else{
       $this->dbg("MODE = ".$this->MODE);
     }
@@ -740,7 +749,7 @@ class bForm extends myPear_getValue{
   /*
    * Helper to "closeForm"
    */
-  private function closeForm_execute($closeTable=True,$closeForm=False){
+  protected function closeForm_execute($closeTable=True,$closeForm=False){
 
     if ($closeForm || !$this->isEmbedded()){
       if ($closeTable){
@@ -759,6 +768,11 @@ class bForm extends myPear_getValue{
 
 	// Send the hiden fields, close the form
 	foreach(array_keys(self::$textHidden_fields) as $field) print $field; 
+
+	// Print the "buttons line" AFTER closing the table and BEFORE closing the form...
+	if ($this->buttons_line) b_btn::buttons_line($this->buttons_line);
+	$this->buttons_line = array();
+
         print "</form> <!-- end $this->formName -->\n";
 
 	// Clean the buffers
@@ -792,12 +806,13 @@ class bForm extends myPear_getValue{
 	$this->updateDB($this->formDB_modified);    
 	
 	//
-	// Finally change the state to read-only if possible
+	// Finally set RO mode if possible
 	$r1 = !empty($this->keepRW_changed); 
 	$r2 = (@$_POST['_post_bForm_RW_once'] === 'RW');
 	$r3 = (!$this->errorless() && $this->isOwner());
 	$stay_RW = $r1 || $r2 || $r3;
-	$this->dbg("stay_RW = ".($stay_RW?"YES (keepRW_changed='$r1' _post_bForm_RW_once='$r2' errors+owner='$r3')":'NO'),cnf_dev);
+	if (cnf_dev) $this->dbg(sprintf("stay_RW = %s (keepRW_changed='%s', _post_bForm_RW_once='%s', errors+owner='%s')",
+					var_export($stay_RW,True),var_export($r1,True),var_export($r2,True),var_export($r3,True)),True);
 	if ($r3 && ($this->MODE !== 'RW')){
 	  $this->dbg("reinforce RW mode for the owner");
 	  $this->MODE = 'RW';
@@ -881,14 +896,14 @@ class bForm extends myPear_getValue{
 	if (is_int($key)){
 	  $display[] = $err;
 	}else{
-	  $var = x('em',x('"',(myPear::is_empty($v=$this->vars[$key]) 
+	  $var = x('em',x('"',(b_posix::is_empty($v=$this->vars[$key]) 
 			       ? x('strong',$key) 
 			       : $v)));
 	  $display[] = str_replace('-BR-','<br/>',preg_replace('/-SKIP-.*/','"',"$err for $var"));
 	}
       }
       if (!empty($display)){
-	myPear::MESSAGE(x('ul',b_fmt::joinMap('li',$display)),  // same as myPear::ERROR, almost...
+	MSG::MESSAGE(x('ul',b_fmt::joinMap('li',$display)),  // same as MSG::ERROR, almost...
 			(cnf_dev ? $this : Null),
 			'error',
 			$this->displayErrors_heading);
@@ -988,7 +1003,7 @@ class bForm extends myPear_getValue{
       }else{
 	$msg = sprintf('The required method "%s->%s" does not exist', get_class($this), $method);
 	if ($fatal) throw new Exception($msg);
-	else        myPear::ERROR($msg);
+	else        MSG::ERROR($msg);
 	$reply = False;
       }
     }
@@ -1041,7 +1056,7 @@ class bForm extends myPear_getValue{
     $select = array();
     foreach ($validStatuses as $k=>$descr){
       if ($this->MODE == 'RO' && $this->getValue($name)==$k) @$this->isIcon[$name] = $k;
-      $select[$k] = bText::_(array('key'=>$name.'_'.$k,'item'=>$descr['d']));
+      $select[$k] = b_t::_(array('key'=>$name.'_'.$k,'item'=>$descr['d']));
     }
     return $select;
   }
@@ -1050,7 +1065,7 @@ class bForm extends myPear_getValue{
     $options = array();
     $bList->getMembers_where = $getMembers_where;
     foreach ($bList->getMembers() as $id=>$r){
-      $options[$r['lm_id']] = $r[$column]; // bText::_($r[$column],True,$r['lm_locale']);
+      $options[$r['lm_id']] = $r[$column]; // b_t::_($r[$column],True,$r['lm_locale']);
     }
     asort($options);
     $this->getFormRow($name, $this->selectMenu_exec($name,$options));
@@ -1073,7 +1088,7 @@ class bForm extends myPear_getValue{
     // Apparently var_dump(333=='333,444') IS TRUE !!!!                                         ********************
     // i.e. cast before comparison is done in a strange way - (int)'333,444', and not (string)111 ******************
     //
-    if (!myPear::is_empty($selected) && is_numeric($selected)) $selected = (int)$selected;
+    if (!b_posix::is_empty($selected) && is_numeric($selected)) $selected = (int)$selected;
 
     $select_what = (empty($values['*select_name*'])
 		    ? ''
@@ -1096,11 +1111,11 @@ class bForm extends myPear_getValue{
       }else{
 	$class = 'shadow-box form-submit'; // Firefox gets crasy...
       }
-      // The "spiining wait page" is very annoying in the pop-up selection. 
+      // The "spinning wait page" is very annoying in the pop-up selection. 
       // Let's try to invent 30 seconds delay before the spiing starts.
       // May be better to cancel it it all...
       $reply = preg_replace('/(form-submit|page-load-progress)/','\\1'.'-30',x("select name='$name' $extras ".$this->submit_onchange($name,'change',$class),join("\n",$s)));
-      //      if (cnf_dev && strpos($reply,'-30')) myPear::WARNING_T("'$name' is (form-submit|page-load-progress)",$this);
+      //      if (cnf_dev && strpos($reply,'-30')) MSG::WARNING_T("'$name' is (form-submit|page-load-progress)",$this);
     }elseif($selected){
       $reply = @$values[$selected] . $this->textHidden($name,$selected);
     }else{ 
@@ -1121,12 +1136,14 @@ class bForm extends myPear_getValue{
   public $uploadsURL = Null;
   public $uploadsDir = Null;
   function uploadInit(){
-    if (($this->uploadsURL === Null) && (int)$this->ID){
+    if (empty($this->uploadsURL)){
+      $this->dbg(starting);
       $this->uploadsURL = $this->uploadInit_path();
       $this->dbg("uploadsURL=".$this->uploadsURL);
-
+      
       $this->uploadsDir = b_os::realpath($this->uploadsURL);
       $this->dbg("uploadsDir=".$this->uploadsDir);
+      $this->dbg(exiting);
     }
   }
   
@@ -1143,7 +1160,7 @@ class bForm extends myPear_getValue{
     $path = '';
     foreach(array_merge(array(myPear_root_files,
 			      $module,
-			      sprintf("%06d",myOrg_ID)),
+			      sprintf("%06d",abs(myOrg_ID))),
 			$module_path) as $element){
       $path .= $element . DIRECTORY_SEPARATOR;
       if (!is_dir($path) && !is_dir(getcwd().$path)){
@@ -1153,6 +1170,7 @@ class bForm extends myPear_getValue{
 	$this->uploadsDir_protect($path);
       }
     }
+    $this->dbg($path,cnf_dev);
     return $path;
   }
 
@@ -1219,7 +1237,7 @@ class bForm extends myPear_getValue{
       if (stripos($k,'mail')!==False) $v = mb_strToLower($v);
       if ($this->SQL_backend){
 	$oldValue = @$this->formDB[$k];
-	if (!myPear::is_equal($v,$oldValue)){
+	if (!b_posix::is_equal($v,$oldValue)){
 	  if (myPear_db()->columnExists($k,$this->TABLE)) {
 	    if (empty($v) && (strToUpper(myPear_db()->getColumnType($this->TABLE,$k,'Null')) === 'YES')) $v = Null;
 	    $this->getValue_reset($k,$v); // reset the cache for this variable
@@ -1267,13 +1285,16 @@ class bForm extends myPear_getValue{
   function updateDB_createRecord($pars=array()){
     $this->dbg("Creating ".$this->__toString(),cnf_show_db);
     $this->bForm_isJustCreated = True;
-    $this->formDB[$this->TABLEID] = $this->formDB_modified[$this->TABLEID] = $_GET['id'] = $this->ID = bMaster()->reserve_masterCounter();
+    $this->formDB[$this->TABLEID] = $this->formDB_modified[$this->TABLEID] = $this->ID = bMaster()->reserve_masterCounter();
+    // ???? Not sure that this is correct and/or needed...
+    if (!isset($_GET['id'])) $_GET['id'] = $this->ID;
+
     $pars[] = myPear_db()->quote($this->ID,True,$this->TABLEID);
     
     // Reset the "my POST" if it was not this a new record
     if ($this->myPost_bForm()) $this->myPost_bForm($this->ID);
     
-    myPear_db()->qquery("INSERT INTO $this->TABLE SET ".join(', ',$pars),cnf_show_db);
+    myPear_db()->qquery("INSERT INTO $this->TABLE SET ".join(', ',$pars),cnf_dev);
     $this->dbg('New record is created',True);
   }
   
@@ -1285,14 +1306,14 @@ class bForm extends myPear_getValue{
    */
   function updateDB_preflight(&$updates=array()){
 
-    $this->defineVariables();
+    // $this->defineVariables();
 
     // Sanity
     foreach($updates as $name=>$value){
       $msg = $this->getValue_validate_value($name,$value);
       if (!empty($msg)){
 	$this->dbg("Cancel non-valid \"$name\" = ".$updates[$name],True);
-	myPear::ERROR('"'.$updates[$name].'" is not a valid value for the '.x('em',$this->vars[$name]));
+	MSG::ERROR('"'.$updates[$name].'" is not a valid value for the '.x('em',$this->vars[$name]));
 	unset($updates[$name]);
       }
     }
@@ -1302,10 +1323,10 @@ class bForm extends myPear_getValue{
       if (!myPear_db()->columnExists($k,$this->TABLE)) unset($vf[$k]);
     }
 
-    if (myPear::is_empty($f=join(', ',array_values($vf)))){
+    if (b_posix::is_empty($f=join(', ',array_values($vf)))){
       return True;
     }else{
-      myPear::WARNING_T("'$f' vital fields missing, abandon ".__FUNCTION__,$this);
+      MSG::WARNING_T("'$f' vital fields missing, abandon ".__FUNCTION__,$this);
       return False;
     }
   }
@@ -1317,16 +1338,15 @@ class bForm extends myPear_getValue{
   function errorless(){
     if ($this->inside_errorless++){
       if (cnf_dev) b_debug::traceBack("recursion $this->inside_errorless");
-      $reply = False;
+      $reply = 'recursion in '.__method__;
     }else{
       $this->check_formDB(False);
       $this->clean_outOfScopeMissingValues();
       $reply = empty($this->errorsInTheForm);
     }
     $this->inside_errorless--;
-
-    $this->dbg($reply,True);
-    return $reply;
+    $this->dbg(var_export($reply,True),cnf_dev);
+    return (bool)$reply;
   }
 
   /*
@@ -1344,7 +1364,7 @@ class bForm extends myPear_getValue{
       foreach($arg as $field=>$msg){
 	//	if ($msg != missing_value) continue;
 	if (!in_array($field,array_keys($_POST))){
-	  if (cnf_dev) myPear::DEBUG(sprintf(" - Cancel error '%s' for %s[%s]",$msg,$type,$field),$this);
+	  if (cnf_dev) MSG::DEBUG(sprintf(" - Cancel error '%s' for %s[%s]",$msg,$type,$field),$this);
 	  if ($type == 'errorsInTheForm') unset($this->errorsInTheForm[$field]);
 	  else                            unset($errors_list[$field]);
 	}
@@ -1364,12 +1384,12 @@ class bForm extends myPear_getValue{
       foreach($_FILES as $name=>$x)            $v=$this->getValue($name,True,True);
     }
     foreach(array_keys($this->isVITAL) as $vf) $v=$this->getValue($vf,True,9);
-
     // Take into account the coming updates. Cancel errors if the updates are coming
     foreach($updates as $name=>$value){
       $err1 = $this->getValue_validate_value($name,$value);
       $err2 = $this->getValue_validate_empty($name,$value);
       if (empty($err1) && empty($err2))  unset($this->errorsInTheForm[$name]);
+      //      b_debug::var_dump($this->errorsInTheForm,"$name--$value err1/err2 $err1/$err2");
     }
     
     // Check if the form was auto-submitted, cancel errors if yes  - the form will anyway stay in the RW mode
@@ -1382,7 +1402,7 @@ class bForm extends myPear_getValue{
 
     $reply = array();
     foreach ($this->isVITAL as $vf=>$isVITAL){
-      if ((bool)$isVITAL && !myPear::is_empty(@$this->errorsInTheForm[$vf])){
+      if ((bool)$isVITAL && !b_posix::is_empty(@$this->errorsInTheForm[$vf])){
 	$reply[] = $vf;
       }
     }
@@ -1487,7 +1507,7 @@ class bForm extends myPear_getValue{
 	$c = (($currentValue==$v) || ($currentValue==$k) ? "checked='checked'" : ''); 
 	if ($translate){
 	  $textKey = (preg_match('/^(yes|no|bonus)$/i',trim($v))) ? '_RADIO_'.$v : $name.'_'.$v;
-	  $vv = bText::_(array('key'=>$textKey,'item'=>$v));
+	  $vv = b_t::_(array('key'=>$textKey,'item'=>$v));
 	}else{
 	  $vv = $v;
 	}
@@ -1503,9 +1523,11 @@ class bForm extends myPear_getValue{
   
   function textArea($name,$rows=3,$cols=40) {
     $value = $this->getValue($name,True);
+    $rows = max(3,$rows,(int)(strlen($value) / $cols));
     $this->getFormRow($name, ($this->isRO($name)
 			      ? str_replace("\n","<br/>",preg_replace('/([\.\,])/',"\\1 ", $value))
-			      : "<textarea name='$name' rows='$rows' cols='$cols'>$value</textarea>"));
+			      //: "<textarea name='$name' rows='$rows' cols='$cols'>$value</textarea>"));
+			      : "<textarea name='$name'>$value</textarea>"));
   }
   
   function commentField($text){
@@ -1580,7 +1602,7 @@ class bForm extends myPear_getValue{
     }
 
     if ($this->_visible($name,$data) && !self::nameCounter($name)){
-      if ((strpos($name,b_rawData)===0) && $this->isRO($name)){
+      if ($this->isRO($name)){
 	if (preg_match("/^https?:/",$data))$data = bJS()->modal_iframe($data,$data); // $data = "<a href='$data'>$data</a>";
 	elseif(  @$this->isPRE[$name])   $data = "<pre>$data</pre>";
 	elseif(! @$this->isUL[$name])    $data = b_fmt::longString($data,$this->normalLine);
@@ -1951,6 +1973,10 @@ class bForm extends myPear_getValue{
 	}
 	break;
 	
+      case 'image':
+	$reply = $this->isImage($file_path);
+	break;
+
       default:
 	if (empty($ext) || (stripos($file_name,$ext) !== False)){
 	  $this->valid_fileType_error = '';
@@ -1981,27 +2007,9 @@ class bForm extends myPear_getValue{
     $this->timestamp = filemtime($file_path);
     error_reporting($error_reporting);
     
-    if ($this->timestamp) {
-      /*
-      // Add flag "file exists, but is not a valid file"
-      if ($this->valid_fileType($name,$this->expected_ext[$name],$this->getDescr_file($name),file_path)){
-	$this->getValue_reset($name,$this->uploadedFile_name($name));
-      }else{
-	myPear::WARNING($this->valid_fileType_error);
-	$this->timestamp = -1; 
-      }
-      */
-    }else{     
-      $this->timestamp = 0;
-    }
+    if (empty($this->timestamp))      $this->timestamp = 0;
     if ($onlyIfExists && ($this->timestamp <= 0))      $file_path = False;
-    $this->dbg($file_path);
-    /*
-    if    ($this->timestamp === False)                   $this->dbg('file missing',cnf_dev);
-    elseif($this->timestamp === 0)                       $this->dbg('file missing',cnf_dev);
-    elseif($this->timestamp ===-1)                       $this->dbg('file not PDF',cnf_dev);
-    else       $this->dbg(date(' Y-m-d ',$this->timestamp).basename($file_path),cnf_dev);
-    */
+    $this->dbg($file_path,cnf_dev);
     return $file_path;
   }
   
@@ -2021,8 +2029,8 @@ class bForm extends myPear_getValue{
    * The default file name is always lower case
    */
   function uploadedFile_name($name,$args=array(),$ext=True){
-    if (myPear::is_empty($fn = $this->getValue($name))){
-    $this->dbg($this->expected_ext,cnf_dev);
+    if (b_posix::is_empty($fn = $this->getValue($name))){
+      $this->dbg($this->expected_ext,cnf_dev);
       $fn = strToLower(join('_',array_merge(array($name),$args)) . ($ext ? $this->expected_ext[$name] : ''));
     }
     $this->dbg($fn,cnf_dev);
@@ -2034,7 +2042,7 @@ class bForm extends myPear_getValue{
    */
   function uploadFile($name){
     
-    $this->dbg(' ');
+    $this->dbg(starting);
     $this->uploadInit();
 
     // Upload the file and acknowledge the upload
@@ -2055,23 +2063,25 @@ class bForm extends myPear_getValue{
     if ($url = $this->uploadedFile_url($name,True)){
       // The file was already uploaded
       if (self::$inputToPDF){ // text file
-	$data = x('em','('.bText::_('included').')');
+	$data = x('em','('.b_t::_('included').')');
       }else{  // web dialog
-	$data = $seeIt = x("a class='only_online' href='$url'",'[ '.bText::_('Click to see it').' ]');
+	$data = $seeIt = x("a class='only_online' href='$url'",'[ Click to see it ]');
 	if ($this->isRO($name) || !$this->isWritable()){
 	  $data = $seeIt;
 	}elseif ($this->MODE == 'RW'){
 	  $this->varsModified[$name] = $this->vars[$name].'<br/>'.$seeIt;
-	  $data = x('em',bText::_('You can replace it by uploading a new '.$this->expected_ext[$name].' file')) .'<br/>'. $input;
+	  $data = x('em',b_t::_('You can replace it by uploading a new '.$this->expected_ext[$name].' file')) .'<br/>'. $input;
+	  $data = $input;
 	}
       }
     }elseif(self::$inputToPDF){
       // Not uploaded, just report it if in PDF mode
-      $data = x('em','('.bText::_('missing').')');
+      $data = x('em',x('(',b_t::_('missing')));
     }elseif($this->MODE == 'RW'){
       // Not yet uploaded, prompt for it
       $data = $input;
-      $this->varsModified[$name] = $this->vars[$name].'<br/><em>Please select '.@$this->expected_ext[$name].' file</em>';
+      //$this->varsModified[$name] = $this->vars[$name].'<br/><em>Please select '.@$this->expected_ext[$name].' file</em>';
+      $this->varsModified[$name] = $this->vars[$name];
     }else{
       $data = $this->getValue($name);
     }
@@ -2081,6 +2091,7 @@ class bForm extends myPear_getValue{
     if(is_object($this->t) && !(($this->MODE == 'RO') && @$this->isMBE[$name] && empty($file) && empty($url))) { 
       $this->getFormRow($name, $data);
     }
+    $this->dbg(exiting);
   }
   
   protected $_FILES_uploaded = array();
@@ -2107,9 +2118,9 @@ class bForm extends myPear_getValue{
       }elseif ($this->valid_fileType($name,	// Save the valid file OR return the error
 				     @$this->expected_ext[$name],
 				     $this->getDescr_file($name))){
-	if (!($reply = $this->saveFile_destination($name))) $error_message = "Can't copy ".$_FILES[$name]['tmp_name']." -> $destination";
+	if (!($reply = $this->saveFile_destination($name))) $error_message = "Can't copy ".$_FILES[$name]['tmp_name']." -> destination";
       }else{
-	myPear::ERROR($error_message = $this->valid_fileType_error);
+	MSG::ERROR($error_message = $this->valid_fileType_error);
       }
       break;
       
@@ -2139,14 +2150,16 @@ class bForm extends myPear_getValue{
     $original_file = $_FILES[$name]['name'];
     $fileName = $this->uploadedFile_name($name,array(),False);
     $fileExtension = bFile_file_name_extension($original_file);
-    $destination = str_ireplace('.pdf.pdf','.pdf',b_os::join(array($this->uploadsDir,$fileName.$fileExtension)));
+    $destination = str_ireplace(".$fileExtension.$fileExtension",
+				".$fileExtension",
+				b_os::join(array($this->uploadsDir,$fileName.$fileExtension)));
     if (copy($_FILES[$name]['tmp_name'], $destination)){            
       $this->dbg("OK $original_file -> $destination",cnf_dev);
       $reply = $this->_FILES_uploaded[$name] = $fileName.$fileExtension;
     }else{
       $reply = False;
     }
-    $this->dbg($reply);
+    $this->dbg($reply,cnf_dev);
     return $reply;
   }
 
@@ -2168,27 +2181,36 @@ class bForm extends myPear_getValue{
     }
   }
   
+  /*
+   *
+   */
   private function fSpacer($txt='&nbsp;&nbsp;&nbsp;&nbsp;'){
     if (!self::$inputToPDF){
       $this->t->td(array($txt,$txt),$this->style('transp'));
     }
   }
 
+  /*
+   *
+   */
   private function fDescr($name,$descr=Null){
-    if (empty($descr))    $descr = $this->getDescr($name);
+
     $tip = @$this->tips_byMode[$this->MODE][$name];
     if(empty($tip)) $tip = @$this->tips[$name];
     if(empty($tip)) $tip = '';
     else            $tip = bJS()->tip(bIcons()->get('i-info'),$tip);
+
+    if (empty($descr))    $descr = $this->getDescr($name);
+    //    $descr = b_t::_(array('key'=>$name,'item'=>$descr));
     if (self::$inputToPDF) $this->t->td($descr,
 					" width='25%' style='text-align:right'");
     else                   $this->t->td($this->fDescrEdit($name).
 					$this->colorized($name,$descr).$tip,
 					$this->style("desc"));
   }
-
+  
   /*
-   * I forgot what is that for... YB
+   * I forgot what this is for... YB
    */
   private function fDescrEdit($name){
     if (is_object($this->formDescription) && $this->isManager()){
@@ -2226,27 +2248,31 @@ class bForm extends myPear_getValue{
 	b_debug::traceBack();
       }
     }
-    if ($i=@$this->isIcon[$name]) $i = bIcons()->get($i);
-    else                          $i = '';
-    
+
+    $i = (@$this->isIcon[$name]
+	  ? bIcons()->get($this->isIcon[$name])
+	  :'');
+    // if ($name=='d_comment')    var_dump(explode('_;;_',$data));
     $data = $this->colorized($name,$data);
+    if (($this->MODE == 'RO') && (stripos($name,'_debug_')===False)) $data = b_t::_(array($this,$name,$data)); // YB ZZZ new
     if (self::$inputToPDF) $this->t->td(x('em',$data)," 'width=36%'");
     else                   $this->t->td($i . $data,
 					$this->style('data','',@$this->cellStyle[$name]));
-    self::$fData_fields[$name][] = $this->getValue($name,True);
+    self::$fData_fields[$name][] = $data;
   }
 
   /*
    * Show the missing fields in red color
    */
   private function colorized($name,$value){
-    if (myPear::is_empty($value)) $value = $this->getValue($name,True);
+    if (b_posix::is_empty($value)) $value = $this->getValue($name,True);
+    //    $value = b_t::_(array($this,$name,$value));
     foreach(array('-BR-'=>'<br/>',
 		  '-BS-'=>"<strong>",
 		  '-BE-'=>"</strong>") as $f=>$t)      $value = str_replace($f,$t,$value);
     if ((int)$this->ID){
-      if (!empty($this->isVITAL[$name]) && myPear::is_empty($value)) $this->colorCode[$name] = 'redText';
-      if (!empty($this->errorsInTheForm[$name]))                     $this->colorCode[$name] = 'redText';
+      if (!empty($this->isVITAL[$name]) && b_posix::is_empty($value)) $this->colorCode[$name] = 'redText';
+      if (!empty($this->errorsInTheForm[$name]))                      $this->colorCode[$name] = 'redText';
       if ($c=@$this->colorCode[$name]) $value = "<span class='$c'>$value</span>";
     }
     return $value;
@@ -2279,6 +2305,12 @@ class bForm extends myPear_getValue{
    * Check is the field visible
    */
   protected function _visible($field,$value=Null){
+    // Hidden fields
+    if (in_array($field,$this->isHidden) || !empty($this->isHidden[$field])){
+      $this->dbg("false - isHidden",cnf_dev);
+      return False;
+    }
+    // Admin fields
     if ($reply  = ($this->MODE == 'RW' && ($this->isAdmin() || $this->isOwner()))){
       b_debug::xxx("true - Admin/Owner",cnf_show_v);
     }else{
@@ -2338,21 +2370,21 @@ class bForm extends myPear_getValue{
       locateAndInclude($list_name);
       if (!empty($a['arg3'])){
 	$list_class = new $list_name($a['arg1'],$a['arg2'],$a['arg3']);
-	$arg_once = array('arg1_once' => $a['arg1'],
-			  'arg2_once' => $a['arg2'],
-			  'arg3_once' => $a['arg3']);
+	$args_once = array('arg1_once' => $a['arg1'],
+			   'arg2_once' => $a['arg2'],
+			   'arg3_once' => $a['arg3']);
       }elseif (!empty($a['arg2'])){
 	$list_class = new $list_name($a['arg1'],$a['arg2']);
-	$arg_once = array('arg1_once' => $a['arg1'],
-			  'arg2_once' => $a['arg2']);
+	$args_once = array('arg1_once' => $a['arg1'],
+			   'arg2_once' => $a['arg2']);
       }else{
 	$list_class = new $list_name($a['arg1']);
-	$arg_once = array('arg1_once' => $a['arg1']);
+	$args_once = array('arg1_once' => $a['arg1']);
       }      
       
       // Get the list content
       $this->formDB[$a['field']] = serialize(array_values(call_user_func_array(array($list_class,$a['method']),array())));
-      if (myPear::is_empty(unserialize($this->formDB[$a['field']]))) $this->formDB[$a['field']] = serialize(array(b_fmt::redText('&lt;empty&gt;')));
+      if (b_posix::is_empty(unserialize($this->formDB[$a['field']]))) $this->formDB[$a['field']] = serialize(array(b_fmt::redText('&lt;empty&gt;')));
       
       // Field description
       $descr = $this->getDescr($a['field']);
@@ -2361,7 +2393,7 @@ class bForm extends myPear_getValue{
 		? preg_replace('/\(.*/','',$descr)
 		: $a['btit']);   
       // URL to see/update the list
-      $url = b_url::same("?ed_bList=$list_name&".b_fmt::joinX('&',$arg_once), array('form','id'));
+      $url = b_url::same("?ed_bList=$list_name&".b_fmt::joinX('&',$args_once), array('form','id'));
       
       // Show the block
       $this->isRO[$a['field']] = True;
@@ -2404,7 +2436,7 @@ class bForm extends myPear_getValue{
     }
   }
 
-  function formBlock($block_ID,$blockTitle, $fields, $button=array(),$extraTD=''){
+  function formBlock($block_ID,$blockTitle, $fields=array(), $button=array(),$extraTD=''){
     $this->dbg();
     if (!empty($block_ID) && @$this->dejaVu_formBlock[$block_ID]++) return;
     
@@ -2425,7 +2457,7 @@ class bForm extends myPear_getValue{
       foreach($fields as $k=>$data){
         if (@$this->isRW_ifMissing[$k] && $this->MODE == 'RW'){
 	  $v = $this->getValue($k,True);
-          $RO = (!myPear::is_empty($v) && myPear::is_empty($this->getValue_validate_value($k,$v)));
+          $RO = (!b_posix::is_empty($v) && b_posix::is_empty($this->getValue_validate_value($k,$v)));
         }else{
           $RO = True;
         }
@@ -2584,7 +2616,7 @@ class bForm extends myPear_getValue{
       // and the button description is not used - it is auto-generated
       if (@$_GET['mode_once'] == 'RO')	unset($button['l']);
       if (!cnf_inside_fb && !$this->isWritable() && isset($button['l'])){
-	if (cnf_dev) myPear::DEBUG("$this: not writable form, cancel button '".@$button['d']."'");
+	if (cnf_dev) MSG::DEBUG("$this: not writable form, cancel button '".@$button['d']."'");
 	unset($button['l']);
       }
       
@@ -2592,7 +2624,7 @@ class bForm extends myPear_getValue{
 	$buttonImg = '';
 	if ($this->isWritable()){	
 	  // The 'action buttons' are converted to "submit" in the RW mode
-	  $button['d'] = preg_replace('/\(.*/','',"update $text");
+	  $button['d'] = preg_replace('/\(.*/','',b_t::_(array('key'=>"bt;".($x="update $text"),'item'=>$x)));
 	  if(stripos($url,'ed_bList')===False)
 	    $url_updateBlock=b_url::repack($url,array('block_once'=>$this->block_ID,'action_once'=>@$button['d']));
 	  else
@@ -2601,13 +2633,13 @@ class bForm extends myPear_getValue{
 	  if($this->MODE == 'RO'){
 	    self::$editableBlocks_counter++;
 	    $buttonImg = x("a href='$url_updateBlock'",bIcons()->get(array('i'=>'i-edit',
-										   'd'=>$button['d'],
-										   'X'=>1)));
+									   'd'=>$button['d'],
+									   'X'=>1)));
 	  }elseif (bForm::$formOpened == $this->ID){
 	    $buttonImg = bIcons()->get($button,'submit');
 	  }
 	}elseif(isset($button['i'])){
-	  $button['d'] = $text;
+	  $button['d'] = b_t::_(array('key'=>"bt;$text",'item'=>$text));
 	  $buttonImg = bIcons()->getButton($button);  
 	  if (@self::$dejaVuButton[md5($text)]++)     $text = '';
 	  if (@self::$previous_icon === $button['i'])$buttonImg = '';
@@ -2625,7 +2657,7 @@ class bForm extends myPear_getValue{
       if (!self::$inputToPDF) $this->t->td((cnf_show_st ? "$this " : "").$buttonImg,$this->style('transp','align_right'));
       if ( self::$inputToPDF && !empty($textP)) array_unshift($action_buttons,'<br/>');
 
-      $this->t->th(join('',$action_buttons) . x('strong',$textP),"colspan=4");
+      $this->t->th(join('',$action_buttons) . x('strong',b_t::_(array('key'=>"bt;$textP",'item'=>$textP))),"colspan=4");
       $this->t->trc(False);
       if ($this->t->highlightRows) $this->t->thead_c();
     }
@@ -2642,7 +2674,7 @@ class bForm extends myPear_getValue{
    * Build the url based on the current one.
    * Used for "update" & "cancel" buttons
    */
-  public function sameURL_but($args=array(),$asArray=False){
+  public function sameURL_but($args=array(),$asArray=False,$returnArgs=False){
 
     if($args === 'RW')       $args = array('mode'=>$args);
     elseif(is_string($args)) $args = b_crypt::parse_query_string($args);
@@ -2657,7 +2689,9 @@ class bForm extends myPear_getValue{
       if (empty($args['form']))      $args['form']= get_class($this);
       $drop = array();
     }
-    $reply = b_url::same($args,$drop,$asArray);
+    $reply = ($returnArgs
+	      ? $args
+	      : b_url::same($args,$drop,$asArray));
     return $reply;
   }
 

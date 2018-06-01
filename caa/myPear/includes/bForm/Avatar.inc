@@ -7,141 +7,6 @@
  *  - alumnus (i.e. ex-employee) of an organization
  */
 
-/*
- * Social security Number treatment
- */
-class SSN{
-  
-  /* Year */
-//static private $yymmdd   =       '(\d\d)([01]\d)([0123]\d)'; // y m d
-  static private $yymmdd   =       '(\d\d)(0[1-9]|1[012])([012]\d|3[01])'; // y m d
-  static private $yyyymmdd = '([12]\d\d\d)([01]\d)([0123]\d)'; // Y m d
-
-  /* Number */
-  static private $n = '\w\d\d\d';
-  
-  /*
-   * We know about the Swedish SSN only.
-   */
-  public static function known(){
-    $reply = array('SE' => array('/^'.self::$yymmdd         .self::$n.'$/', 
-				 '/^'.self::$yymmdd  .'[-+]'.self::$n.'$/', 
-				 '/^'.self::$yyyymmdd       .self::$n.'$/',  
-				 '/^'.self::$yyyymmdd. '-'  .self::$n.'$/',  
-				 ));
-    return $reply;
-  }
-
-  /*
-   * Fix known mistakes when filling SSN
-   */ 
-  public static function fix($ssn){
-    $pattern = '/^('.self::$yymmdd.')('.self::$n.')$/';
-    if (preg_match($pattern,$ssn,$m)){
-      $ssn = $m[1] .'-'. strToUpper($m[5]);
-    }
-
-    $pattern = '/^('.self::$yymmdd.')-('.self::$n.')\d*$/';
-    if (preg_match($pattern,$ssn,$m)){
-      $reply = $m[1] .'-'. strToUpper($m[5]);
-    }else{
-      $reply = $ssn;
-    }
-    if ($ssn !== $reply) myPear::WARNING_T("SSN '$ssn' ==> '$reply'");
-    return $reply;
-  }
-  
-  /*
-   * SE checksum, taken "from Google" as the official algorith
-   * Modified however...
-   */
-  private static function checkPnr10($pnr) {
-    if (strlen($pnr) == 12){
-      $pnr = substr($pnr, 2);
-    }elseif(strlen($pnr) != 11){
-      return False;
-    }else{
-      $pnr = str_replace(array('-','+'), '', (string)$pnr);
-      if(strlen($pnr) != 10) return False;
-    }
-    if (!preg_match('/^'.self::$yymmdd.'/',$pnr,self::$matches)) return False;
-
-    $n = 2;
-    $sum = 0;
-    for ($i=0; $i<9; $i++) {
-      $tmp = $pnr[$i] * $n;
-      ($tmp > 9) ? $sum += 1 + ($tmp % 10) : $sum += $tmp; ($n == 2) ? $n = 1 : $n = 2;
-    }
-    $reply = (bool)(!(($sum + $pnr[9]) % 10));
-    //    if($reply)    var_dump($pnr,self::$matches);
-    return (bool)$reply;
-  }
-
-  /*
-   * SSN can't contain string "0000"
-   */
-  public static  $matches = array();
-  public static  $ssn_country = '?';
-  public  static function is_valid($ssn,$verbose=False){
-
-    self::$ssn_country = 'SE';
-    $ssn = preg_replace('/^(......)-[pP0]000$/','\\1'.'-P123',(string)$ssn);
-    $reply = !empty($ssn) && (strpos((string)$ssn,'000') === False) && (self::checkPnr10($ssn) || preg_match('/^(\d\d)?\d\d\d\d\d\d-[pP]\d\d\d$/',$ssn));
-  
-  /*						  
-    $reply = False;
-    if (strpos((string)$ssn,'000') === False){
-      foreach(self::known() as $country=>$patterns){
-	foreach($patterns as $pattern){
-	  if (preg_match($pattern, (string)$ssn,self::$matches)){
-	    
-	    // Carefull if the age is > 100 years
-	    if (strpos($ssn,'+') == 6)   self::$matches[1] -= 100;
-	    
-	    // Guess the century...
-	    if(self::$matches[1] < 1900) self::$matches[1] += 1900;
-	    
-	    // static $ccc=0; if (++$ccc < 8) b_debug::print_r(self::$matches);
-	    self::$ssn_country = $country;
-	    $reply = True;
-	    break 2;
-	    }
-	  }
-	}
-      } 
-    */
-
-    // Print a warning if the SSN is not valid & the record is editable
-    if ($verbose === 'check_only') $verbose = False;
-    if (!$reply && !empty($ssn)){
-      $msg = "\"$ssn\" is not a valid Social Security Number";
-      if (is_object($av=$verbose)){
-	$msg .= ' for '.$av->fmtName('fl');
-	if (!$av->isWritable()) unset($verbose);
-      }
-      if (!empty($verbose) && !empty($msg)) myPear::ERROR($msg);
-      // if (cnf_dev) b_debug::xxx($reply ? "Yes, ".self::$ssn_country : "No");
-    }
-    return $reply;
-  }
-  
-  /*
-   * The birthdate is packed to the SSN
-   * @param return 
-   *   - Null if SSN is not valid
-   *   - unix time if SSN is ok
-   */
-  public static function ssn2birthDate($ssn,$av=False){
-    $reply = (self::is_valid($ssn,$av)
-	      ? b_time::noon(self::$matches[1],self::$matches[2],self::$matches[3])
-	      : False);
-    return $reply;
-  }
-}
-
-/*
- * Avatar
- */
 locateAndInclude('bForm');
 class bForm_Avatar extends bForm {
 
@@ -227,8 +92,8 @@ class bForm_Avatar extends bForm {
     
     $n_duplicates = 0;
     while ($r=myPear_db()->next_record($q)){
-      if (myPear::is_empty($av_lastname =preg_replace('/\W/','.*',$r['av_lastname'])) ||
-	  myPear::is_empty($av_firstname=preg_replace('/\W/','.*',$r['av_firstname']))){
+      if (b_posix::is_empty($av_lastname =preg_replace('/\W/','.*',$r['av_lastname'])) ||
+	  b_posix::is_empty($av_firstname=preg_replace('/\W/','.*',$r['av_firstname']))){
 	if (cnf_dev) b_debug::var_dump($av_firstname,__METHOD__."(av_id=$r[av_id] av_firstname)");
 	if (cnf_dev) b_debug::var_dump($av_lastname, __METHOD__."(av_id=$r[av_id] av_lastname)");
 	continue;
@@ -314,12 +179,12 @@ class bForm_Avatar extends bForm {
 				 $zzz_avatars = 'zzz_avatars',
 				 $domain='somewhere.earth', $user='unknown'){
     $name = array();
-    $av_firstname = str_replace(' ','.',b_crypt::urlize($av_firstname,' '));
-    $av_lastname  = str_replace(' ','.',b_crypt::urlize($av_lastname, ' '));
+    $av_firstname = str_replace(' ','.',b_fmt::translit($av_firstname));
+    $av_lastname  = str_replace(' ','.',b_fmt::translit($av_lastname));
     if (!empty($av_firstname)) $name[] = $av_firstname;
     if (!empty($av_lastname))  $name[] = $av_lastname;
     if ( empty($name))         $name[] = $user;
-
+    
     $recipient = join('.',$name);
     $counter = 0;
 
@@ -404,7 +269,7 @@ class bForm_Avatar extends bForm {
       if ($av_pivot === Null)  $av_pivot = array_shift($avs);
       while(count($avs)){
 	if ($avs[0]->ID != $av_pivot->ID){
-	  if (cnf_show_hook) myPear::DEBUG($avs[0]->getEmail().' >> '.$av_pivot->getEmail());
+	  if (cnf_show_hook) MSG::DEBUG($avs[0]->getEmail().' >> '.$av_pivot->getEmail());
 	  self::merge($avs[0]->ID,$av_pivot->ID);
 	}
 	array_shift($avs);
@@ -441,9 +306,9 @@ class bForm_Avatar extends bForm {
     foreach ($mails as $email){
       foreach(array(" av_email = '$email'",
 		    ' av_email2 REGEXP \'[[:<:]]'.$email.'[[:>:]]\'') as $query){
-	if (!empty($reply))  continue;
 	bDB::$_debug = cnf_show_hook;
-	$q = myPear_db()->query("SELECT av_id,av_email,av_email2,av_firstname,av_lastname FROM zzz_avatars WHERE ".$query);
+	myPear_db()->tableExists('zzz_avatars');
+	$q = myPear_db()->query("SELECT av_id,av_email,av_email2,av_firstname,av_lastname FROM `zzz_avatars` WHERE ".$query);
 	bDB::$_debug = False;
 	while ($r=myPear_db()->next_record($q)){
 	  if (!empty($reply[$r['av_id']]))  continue;
@@ -458,6 +323,7 @@ class bForm_Avatar extends bForm {
 	    else                     $reply[$r['av_id']] = new self::$bForm_Avatar($r['av_id']);
 	  }
 	}
+	if (!empty($reply)) break 2;
       }
     }
     self::$basic_Avatar = False;
@@ -602,7 +468,7 @@ class bForm_Avatar extends bForm {
 	      $av->updateDB($av_data);
 	      locateAndInclude('APIaccess');
 	      if (is_object(APIaccess::$cache))  APIaccess::$cache->reset();
-	      if (cnf_show_hook) myPear::DEBUG(@$localAccount . ' ' . b_fmt::joinX(',',$dataDbg)." ==> $av");
+	      if (cnf_show_hook) MSG::DEBUG(@$localAccount . ' ' . b_fmt::joinX(',',$dataDbg)." ==> $av");
 	      $reply[$av->ID] = $av;
 	    }
 	  }
@@ -612,7 +478,7 @@ class bForm_Avatar extends bForm {
     // Print a warning if the answer is ambigious
     if (($n=count($reply)) > 1){
       if (is_array($data)) $data = b_fmt::joinX(',',$data);
-      myPear::WARNING_T('??? '.__METHOD__."($data) gives back $n answers");
+      MSG::WARNING_T('??? '.__METHOD__."($data) gives back $n answers");
       if (cnf_dev) foreach($reply as $k=>$av) b_debug::xxx("??? reply-$k = $av");
     }
     return array_values($reply);
@@ -627,7 +493,7 @@ class bForm_Avatar extends bForm {
     }else{
       $n = 0;
       $q = myPear_db()->query("SELECT av_firstname,av_lastname FROM zzz_avatars WHERE $where");
-      while($r=myPear_db()->next_record($q)) myPear::MESSAGE_forced(sprintf(__METHOD__."(%s) <em>%d</em>",self::_fmtName('Lf',$r),(++$n)));
+      while($r=myPear_db()->next_record($q)) MSG::MESSAGE_forced(sprintf(__METHOD__."(%s) <em>%d</em>",self::_fmtName('Lf',$r),(++$n)));
       
       // Invoke the module specific function
       foreach(bMaster()->get_masterModules() as $module){
@@ -657,7 +523,7 @@ class bForm_Avatar extends bForm {
       $avDrop_formDB = $avDrop_ID;
       $avDrop_ID     = $avDrop_formDB['av_id'];
       $toDelete = 0;
-    }elseif (is_object($avKeep) && is_object($av = myPear::getInstance(bForm_Avatar::$bForm_Avatar,$avDrop_ID,array('strict','nocache')))){
+    }elseif (is_object($avKeep) && is_object($av = loader::getInstance(bForm_Avatar::$bForm_Avatar,$avDrop_ID,array('strict','nocache')))){
       $avDrop_formDB = $av->formDB;
       $avDrop_ID = $toDelete = $av->ID;
     }else{
@@ -672,7 +538,7 @@ class bForm_Avatar extends bForm {
 		    @$avDrop_formDB[$f.'2'],
 		    @$avKeep->formDB[$f],
 		    @$avKeep->formDB[$f.'2']) as $v){
-	if (myPear::is_empty($v = trim($v))){
+	if (b_posix::is_empty($v = trim($v))){
 	  $values = array_merge($values,preg_split('/[ ,;]+/',$v));
 	}
       }
@@ -680,7 +546,7 @@ class bForm_Avatar extends bForm {
       if ($msg = myPear_db()->dataDoesNotFit('zzz_avatars',$f.'2',$value)) $dataNotFit[] = $msg;
     }
     if (!empty($dataNotFit)){
-      myPear::WARNING("Sorry, but it is not possible to merge Avatars $avDrop_ID & $avKeep_ID, the merged data does not fit the database".
+      MSG::WARNING("Sorry, but it is not possible to merge Avatars $avDrop_ID & $avKeep_ID, the merged data does not fit the database".
 		      x("ul",b_fmt::joinMap("li",$dataNotFit)));
       return;
     }
@@ -733,7 +599,7 @@ class bForm_Avatar extends bForm {
     $msg = "Merging avatars:".
       "<br/>keep $avKeep:".$avKeep->getEmail()." ".$avKeep->fmtName('fl').
       "<br/>drop $avDrop_ID:".$avDrop_formDB['av_email']." ".$avDrop_formDB['av_firstname']." ".$avDrop_formDB['av_lastname'];
-    if ($changes) myPear::MESSAGE((cnf_CLI 
+    if ($changes) MSG::MESSAGE((cnf_CLI 
 				   ? "Merging avatars $avDrop_ID -> $avKeep_ID" 
 				   : "$msg<ul>".join('',$changes)."</ul>"));
     
@@ -988,7 +854,7 @@ class bForm_Avatar extends bForm {
 	  if ((int)$av_id !== (int)$this->ID){
 	    $errors[] = ($msg="Email '$email' is already used by ".x('em',self::_fmtName('fL',$r)));
 	    if (cnf_CLI) print "$msg\n";
-	    else         myPear::ERROR($msg,$this);
+	    else         MSG::ERROR($msg,$this);
 	  }
 	}
       }
@@ -1006,7 +872,7 @@ class bForm_Avatar extends bForm {
       $reply = False;
     }elseif((int)$this->ID){
       $url = bJS()->modal_ajax(b_url::same("?form=".self::$bForm_Avatar."&id=$this->ID&mode=RO"),'[see]');
-      myPear::WARNING_T("non-valid email '".join(',',array_values($tidy_emails))."' $url",$this);
+      MSG::WARNING_T("non-valid email '".join(',',array_values($tidy_emails))."' $url",$this);
     }
     return $reply;
   }
@@ -1016,7 +882,7 @@ class bForm_Avatar extends bForm {
    */
   protected function getValue_validate_empty($k,&$v){
     $err_msg = '';
-    if (myPear::is_empty($v)){
+    if (b_posix::is_empty($v)){
       switch($k){
       case 'av_photo':
 	// No new photo means "keep the existing photo",
@@ -1039,7 +905,7 @@ class bForm_Avatar extends bForm {
   protected $bad_SSN = False;
   protected function getValue_validate_value($k,&$v){
     $err_msg = '';
-    if (!myPear::is_empty($v)){
+    if (!b_posix::is_empty($v)){
       $err_msg_parent = $err_msg = parent::getValue_validate_value($k,$v);
       
       switch($k){
@@ -1050,7 +916,7 @@ class bForm_Avatar extends bForm {
 	}else{
 	  $img = $this->getPhoto(array('av_photo'=>$v));
 	  if (empty($img)){
-	    myPear::WARNING_T("'$v' is not a valid image file");
+	    MSG::WARNING_T("'$v' is not a valid image file");
 	    $this->getValue_reset($k,'');
 	  }
 	  $err_msg = '';
@@ -1085,7 +951,7 @@ class bForm_Avatar extends bForm {
    *
    */
   function __clean_cache(){
-    myPear::getInstance(get_class($this),$this->ID,'clean');
+    loader::getInstance(get_class($this),$this->ID,'clean');
   }
 
   /*
@@ -1117,7 +983,7 @@ class bForm_Avatar extends bForm {
     $rec['av_lastname']  = trim(strip_tags($rec['av_lastname']));
     for($n=0; $n<strlen($format); $n++){
       switch($item=substr($format,$n,1)){
-      case 's': if ($s=@$rec['av_salutation'])$reply[] = bText::_(array('item'=>$s,'key'=>"_$s")); break;
+      case 's': if ($s=@$rec['av_salutation'])$reply[] = b_t::_(array('item'=>$s,'key'=>"_$s")); break;
       case ',': $reply[] = ',';                                          break;
       case 'i': $reply[] =          'id='.$rec['av_id'];                 break;
       case 'f': $reply[] = b_fmt::ucWords($rec['av_firstname']);         break;
@@ -1237,7 +1103,7 @@ class bForm_Avatar extends bForm {
     $args_ok = False;
     foreach($identity as $login) if (posix_getpwnam($login) !== False) $args_ok = True;
     if (!$args_ok){
-      myPear::WARNING_T("Refuse to set the identity ".x('"',join(',',$identity)));
+      MSG::WARNING_T("Refuse to set the identity ".x('"',join(',',$identity)));
       return;
     }
 
@@ -1247,7 +1113,7 @@ class bForm_Avatar extends bForm {
     
     if (($old_identity=$this->getIdentity()) != $identity){
       $reply = $this->updateDB(array('av_identity'=>implode(',',$identity)));
-      if (cnf_dev || $verbose) myPear::MESSAGE($this->fmtName().": av_identity '".implode(',',$old_identity)."'->'".implode(',',$identity)."'");
+      if (cnf_dev || $verbose) MSG::MESSAGE($this->fmtName().": av_identity '".implode(',',$old_identity)."'->'".implode(',',$identity)."'");
     }
     return $old_identity;
   }
@@ -1262,7 +1128,7 @@ class bForm_Avatar extends bForm {
 
   function remind_password(){
     if ($msg=bAuth()->remind_password($this->getEmail())){
-      myPear::ERROR($msg);
+      MSG::ERROR($msg);
     }
   }
   
@@ -1281,10 +1147,10 @@ class bForm_Avatar extends bForm {
       $this->defineTypes(array('isRW_ifMissing'=>array('av_ssn'      => $this->ask_av_SSN(),
 						       'av_birthdate'=>!$this->ask_av_SSN(),
 						       'av_photo'    => True),
-			       'isRO'          =>array('av_birthdate'=>!myPear::is_empty($this->getValue('av_ssn'))),
+			       'isRO'          =>array('av_birthdate'=>!b_posix::is_empty($this->getValue('av_ssn'))),
 			       ));
       if (!$this->isEmbedded()){
-	myPear::H1($this->name(),array('noTranslate','reset'));
+	MSG::H1($this->name(),array('noTranslate','reset'));
       }
     }
   }
@@ -1461,12 +1327,12 @@ class bForm_Avatar extends bForm {
 		    );
 
     // Fine tuning...
-    if (!EA_ORG_manager_here && $this->MODE == 'RW') unset($whoAmI['av_ddate']);
+    if (defined('EA_ORG_manager_here') && !EA_ORG_manager_here && $this->MODE == 'RW') unset($whoAmI['av_ddate']);
     $passed_away = $this->passed_away($whoAmI);
 
     if (!$this->isWritable() || $this->MODE == 'RO'){
       foreach(array('av_salutation','av_firstname','av_lastname','av_von') as $f){
-	if (myPear::is_empty($v=$this->getValue($f,1,1)) && @$this->isVITAL[$f]) continue;
+	if (b_posix::is_empty($v=$this->getValue($f,1,1)) && @$this->isVITAL[$f]) continue;
 	unset($whoAmI[$f]);
       }
     }
@@ -1476,7 +1342,7 @@ class bForm_Avatar extends bForm {
     //    if (!$this->isOwner() && !$this->isManager()) unset($whoAmI['av_sex']);
     
     $this->formBlock('av_birth_block',
-		     ($passed_away ? '&nbsp;' : 'Who Am I'),
+		     $this->av_birth_block_title($passed_away),
 		     $whoAmI,
 		     array('d'=>'update birth info',
 			   'i'=>'i-stork',
@@ -1493,7 +1359,11 @@ class bForm_Avatar extends bForm {
 				? $thumbs[$s] 
 				: $thumbs['X']); 
   }
-   
+
+  protected function av_birth_block_title($passed_away){
+    return ($passed_away ? '&nbsp;' : 'Who Am I');
+  }
+  
   /*
    *
    */ 
@@ -1600,7 +1470,7 @@ class bForm_Avatar extends bForm {
 
     // well...
     if (@$this->getValue_recursion2[$name]++){
-      myPear::WARNING_T("Recursion ".$this->getValue_recursion2[$name]);
+      MSG::WARNING_T("Recursion ".$this->getValue_recursion2[$name]);
       b_debug::traceBack();
       return Null;
     }
@@ -1706,7 +1576,7 @@ class bForm_Avatar extends bForm {
     if ($this->MODE == 'RW' && !@$this->isRO[$name]){
       $this->defineVariable(empty($img) ? 'Photo' : 'Replace the photo',  $name);
       $this->getFormRow($name, 
-			"<input type='hidden' name='MAX_FILE_SIZE' value='3000000'/>".
+			"<input type='hidden' name='MAX_FILE_SIZE' value='".b_os::max_upload_size()."'/>".
 			"<input type='file' name='$name' />");
     }
   }

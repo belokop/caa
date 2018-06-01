@@ -1,7 +1,7 @@
 <?php
 
 define('use_memberInfo_SESSION',False);
-if (cnf_show_acl) myPear::DEBUG('bUnit_memberInfo_SESSION (old slow cache): '.(use_memberInfo_SESSION ? 'YES' : 'NO'));
+if (cnf_show_acl) MSG::DEBUG('bUnit_memberInfo_SESSION (old slow cache): '.(use_memberInfo_SESSION ? 'YES' : 'NO'));
 
 /*
  * Unit is a list of avatars united for a dedicated task
@@ -66,7 +66,7 @@ class bUnit extends bList{
 	$parent_name = ($parent_ID == myOrg_ID
 		      ? ' ('.myOrg_name.')'
 		      : '');
-	myPear::WARNING("module \"$module\" does not have any bUnit for parent_ID=$parent_ID $parent_name");
+	MSG::WARNING("module \"$module\" does not have any bUnit for parent_ID=$parent_ID $parent_name");
 	b_debug::print_r($rank_unused,'rank_unused');
 	$modules = array_diff($modules,array($module));
       }
@@ -614,7 +614,7 @@ class bUnit extends bList{
     elseif(is_numeric($av))$av_id = (int)$av; 
     $reply = (empty($av_id)
 	      ? False
-	      : !myPear::is_empty($this->get_memberInfo($av_id))); // Check against the cache    
+	      : !b_posix::is_empty($this->get_memberInfo($av_id))); // Check against the cache    
     $this->dbg($reply,True);
     return $reply;
   }
@@ -697,14 +697,14 @@ class bUnit extends bList{
       switch($current_role){
       case 'dejaVu':
 	$unit = $this->name();
-	myPear::MESSAGE(trim("$name is already a member of $unit ".$this->message_url($av_id)));
+	MSG::MESSAGE(trim("$name is already a member of $unit ".$this->message_url($av_id)));
 	break;
 
       case 'av_justAdded':
 	$current_role = '';
       default:
 	if ($current_role) $current_role = " (previously $current_role)"; 
-	myPear::WARNING_T(trim("Appointing $name as $role $current_role ".$this->message_url($av_id)));
+	MSG::WARNING_T(trim("Appointing $name as $role $current_role ".$this->message_url($av_id)));
 	break;
       }
     }
@@ -795,7 +795,7 @@ class bUnit extends bList{
       else             $answer = 'yes';
       if ($answer == 'yes'){
 	myPear_db()->query("DELETE FROM ".$this->TABLE_member." WHERE um_avid='$av_id' AND um_uid='$this->ID'");
-	myPear::MESSAGE($remove_msg);
+	MSG::MESSAGE($remove_msg);
 	$this->get_memberInfo($av_id,Null,'reset');
 	myPear_logs()->add('rem_member',$av_id,str_ireplace(myOrg_name,'',$this->name())); 
      }elseif(empty($answer)){
@@ -902,8 +902,8 @@ class bUnit extends bList{
 	  // Duplication might appear after merging avatars and should be removed
 	  if (cnf_dev){
 	    $msg = "Duplicated membership <i>".bForm_Avatar::_fmtName('sfl',$r)."</i> in ".$this->name()." (u_id=".$this->ID.",um_id=$r[um_id]) is REMOVED";
-	    if ($this->isWritable()) myPear::WARNING($msg);
-	    myPear::DEBUG(sprintf("%s(%s,%s,%s)->".__FUNCTION__."(%s,%s) %s",
+	    if ($this->isWritable()) MSG::WARNING($msg);
+	    MSG::DEBUG(sprintf("%s(%s,%s,%s)->".__FUNCTION__."(%s,%s) %s",
 				  get_class($this),
 				  $this->parent_ID,
 				  $this->rank,
@@ -960,7 +960,7 @@ class bUnit extends bList{
 	      if (is_array($new_value)) $new_value = 'Array('.join(',',$new_value).')';
 	      if (is_array($old_value)) $old_value = 'Array('.join(',',$old_value).')';
 	      //if (!empty($new_value) && !is_string($new_value)) b_debug::var_dump($new_value,"$k - new_value");
-	      myPear::DEBUG(sprintf("%s(%s,%s,%s)->".__FUNCTION__."(%s,%s) %s",
+	      MSG::DEBUG(sprintf("%s(%s,%s,%s)->".__FUNCTION__."(%s,%s) %s",
 				    get_class($this),$this->parent_ID,$this->rank,$this->MODE,(is_numeric($av_id) ? $av_id : ''),(is_string($column)?$column:'Array'),
 				    x('em',(empty($old_value)
 					    ? "add $k: '$new_value'"
@@ -1076,7 +1076,7 @@ class bUnit extends bList{
       $u = new bUnit($r['u_parent'],$r['u_rank']);
       print "<ol>";
       foreach ($u->getUnitMemberIDs() as $av_id){
-	$av = myPear::getInstance_new('bForm_Avatar',$av_id,'nocache');
+	$av = loader::getInstance_new('bForm_Avatar',$av_id,'nocache');
 	if (is_object($av)){
 	  $av->defineVariables();
 	  print "<li>".$av->name()."</li>";

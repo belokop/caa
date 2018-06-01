@@ -138,7 +138,7 @@ function jam_update09(){
 	if ((int)$r['av_ssn'] > 1900 && (int)$r['av_ssn'] < 2000) $r['av_birthdate'] = $r['av_ssn'];
       }
       if (!(int)$av_birthdate) $av_birthdate = 'NULL';
-      myPear::DEBUG(sprintf("ssn: '%s' <== '%s', av_birthdate: '%s'",$ssn,$r['av_ssn'],$r['av_birthdate']));
+      MSG::DEBUG(sprintf("ssn: '%s' <== '%s', av_birthdate: '%s'",$ssn,$r['av_ssn'],$r['av_birthdate']));
       myPear_db()->qquery("UPDATE zzz_avatars SET  av_ssn=$ssn,av_birthdate=$av_birthdate WHERE av_ssn = '$r[av_ssn]'",1);
     }
   }

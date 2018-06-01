@@ -59,7 +59,7 @@ class bList_jam_requiredDocs extends bList_jam{
       if (!$compulsory_only || ($r['lm_status'] === JAM_compulsory_doc)) $reply[$r['lm_id']] = $r['lm_key'];
     }
     if (is_object(JAM_pos($this->pos_id))){
-      if (empty($reply)) myPear::WARNING("Can't get the list of required documents for ".x('em',JAM_pos($this->pos_id)->name()));
+      if (empty($reply)) MSG::WARNING("Can't get the list of required documents for ".x('em',JAM_pos($this->pos_id)->name()));
     }else{
       b_debug::traceBack("? empty position");
     }
@@ -71,7 +71,7 @@ class bList_jam_requiredDocs extends bList_jam{
    *
    */
   protected function getFormAdd(){
-    if (!cnf_inside_fb)  myPear::MESSAGE("documents required by the position");
+    if (!cnf_inside_fb)  MSG::MESSAGE("documents required by the position");
     $this->bForm($this->list_quering,True);
 
     // Filename
@@ -126,13 +126,13 @@ function fix_requiredDocs(){
 		'no "jam_documents"' => !myPear_db()->tableExists('jam_documents'),
 		'no "pos_req_rp"'    => !myPear_db()->columnExists('pos_req_rp','jam_positions')) as $txt=>$c){
     if ($c){
-      if (cnf_dev)  myPear::DEBUG(__FUNCTION__."() exiting... ".x('em',$txt));
+      if (cnf_dev)  MSG::DEBUG(__FUNCTION__."() exiting... ".x('em',$txt));
       return;
     }
   }
   
   $debug = True;
-  myPear::DEBUG(x('h1',__FUNCTION__ .' start'));
+  MSG::DEBUG(x('h1',__FUNCTION__ .' start'));
   
   locateAndInclude('bForm_jam_Applicant');
   
@@ -155,8 +155,8 @@ function fix_requiredDocs(){
   locateAndInclude('bForm_jam_Position');
   locateAndInclude('jam_functions.inc');
   foreach(array_keys(bForm_jam_Position::getPositions()) as $pos_id){
-    $pos = myPear::getInstance('bForm_jam_Position',$pos_id,array('strict'));
-    myPear::DEBUG("============================== ".$pos->name());
+    $pos = loader::getInstance('bForm_jam_Position',$pos_id,array('strict'));
+    MSG::DEBUG("============================== ".$pos->name());
     if (preg_match('/PhD in Solar Activity/i',$pos->name())){
       $list = array('pos_req_rp' =>array('ap_rp_file','Motivation statement: why to pursue studies at Nordita'),
 		    'pos_req_cv' =>array('ap_cv_file','Curriculum vitae with List of publications'),
@@ -252,5 +252,5 @@ function fix_requiredDocs(){
       }
     }
   }
-  myPear::DEBUG(x('h1',__FUNCTION__ .' end'));
+  MSG::DEBUG(x('h1',__FUNCTION__ .' end'));
 }

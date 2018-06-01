@@ -25,7 +25,7 @@ function VM_mailer_render($what,$args=array(),$preview=False){
   
   $v = $av = $e = Null;
   foreach ($args as $key=>$id){
-    $o = myPear::getClassFromID($id,'class');
+    $o = loader::getClassFromID($id,'class');
     if ($o instanceof bForm_vm_Visit) { $v = $o; $av = $v->av; $e = $v->e; }
     if ($o instanceof bForm_vm_Event) { $e = $o; }
     if ($o instanceof bForm_Avatar)   {$av = $o; }
@@ -152,7 +152,7 @@ class bMailer_vm extends bMailer{
     default:
       if (!($error_message = @bForm::$upload_errors[$ue_code]['m'])) $error_message = "An unknown error occurred during file upload";
     }
-    if (!empty($error_message)) myPear::ERROR($error_message."<br>Can't upload the attachement, please try again");
+    if (!empty($error_message)) MSG::ERROR($error_message."<br>Can't upload the attachement, please try again");
   }
 
 
@@ -177,7 +177,7 @@ class bMailer_vm extends bMailer{
     case VM_V_rdlMailSent:
       if (empty($policyQ)) $policyQ = VM_V_rdlMailQueued;
 
-      $v = myPear::getInstance_new('bForm_vm_Visit',$arg,'fatal');
+      $v = loader::getInstance_new('bForm_vm_Visit',$arg,'fatal');
       return ($v->getPolicy($policyQ)
 	      ? in_queue
 	      : $v->getPolicy($code));
@@ -185,7 +185,7 @@ class bMailer_vm extends bMailer{
     case VM_E_endorsmentSent:
     case VM_V_guestAcceptSent:
     defailt:
-      b_debug::internalError(myPear::getClassFromID($arg)."($code)");
+      b_debug::internalError(loader::getClassFromID($arg)."($code)");
     }
   }
 
@@ -217,7 +217,7 @@ class bMailer_vm extends bMailer{
 	if (($n=($e_start - $e_reg_end)) > 365*24*3600){
 	  $n = (int)($n/30/24/3600);
 	  $info_body[] = "??? Strange time of $n months between reg.end / ev.start";
-	  myPear::WARNING_T("??? Strange time of $n months between reg.end & ev.start.<br/>".
+	  MSG::WARNING_T("??? Strange time of $n months between reg.end & ev.start.<br/>".
 			    b_time::period($e_reg_end,$e_start).'<br/>'.
 			    $e->name());
 	}else{
@@ -232,14 +232,14 @@ class bMailer_vm extends bMailer{
 	      }
 	    }elseif(VM_manager_here){
 	      $av = new bForm_Avatar_vm($av_id);
-	      myPear::WARNING($msg = 'Organizer '.$av->fmtName('fl').' has not yet registered for his event '.$e->name());
+	      MSG::WARNING($msg = 'Organizer '.$av->fmtName('fl').' has not yet registered for his event '.$e->name());
 	      $info_body[] = $msg;
 	      $mode = 'reg';
 	      if (!@$_SESSION[__method__.$mode]++)  $this->remind_organizer($av,$e,$mode,True);
 	    }
 	  }
 	}
-	if ($verbose) myPear::INFO($info_body,$info_title);
+	if ($verbose) MSG::INFO($info_body,$info_title);
       }
     }
   }
@@ -261,10 +261,10 @@ class bMailer_vm extends bMailer{
       $v  = $av_id;
       $av = $v->av;
     }else{
-      if ($v = myPear::getInstance_new('bForm_vm_Visit',$av_id,'strict')){
+      if ($v = loader::getInstance_new('bForm_vm_Visit',$av_id,'strict')){
 	$av = $v->av;
       }else{
-	$av = myPear::getInstance_new('bForm_Avatar_vm',$av_id,'fatal');
+	$av = loader::getInstance_new('bForm_Avatar_vm',$av_id,'fatal');
       }
     }
 
@@ -276,12 +276,12 @@ class bMailer_vm extends bMailer{
     }
 
     // Parse "event" argument
-    if (!($e instanceof bForm_vm_Event)) $e = myPear::getInstance_new('bForm_vm_Event',$e,'fatal');
+    if (!($e instanceof bForm_vm_Event)) $e = loader::getInstance_new('bForm_vm_Event',$e,'fatal');
     
     // Guess the visit if not given explicitly
     if (empty($v) && ($mode !== 'reg')){
       if (!($v_id = $e->getVisit_ID($av->ID))){
-	myPear::WARNING($av->fmtName('fl').' is not yet registered for "'.$e->name().'"<br>No mail sent');
+	MSG::WARNING($av->fmtName('fl').' is not yet registered for "'.$e->name().'"<br>No mail sent');
 	$this->dbg(exiting);
 	return False;
       }
@@ -310,7 +310,7 @@ class bMailer_vm extends bMailer{
     $fqn  = $av->fmtName('sfl',0);
     if (!myPear_taskManager()->exec_request && $no_preview && ($no_preview !== 'send_now')){
       $this->dbg("Queue the request"); 
-      myPear::MESSAGE(sprintf("E-mail to %s is send to the mail queue",$fqn));
+      MSG::MESSAGE(sprintf("E-mail to %s is send to the mail queue",$fqn));
       myPear_taskManager()->addTask(get_class($this),__function__,array($av->ID,$e->ID,$mode,$no_preview));
       if (!empty($v)) $v->setPolicy($policyQ,1);
       $this->dbg(exiting);
@@ -429,8 +429,8 @@ Remember to save this mail or book-mark the web page to facilitate later access 
     // Might be called from the queue...
     $rec = b_fmt::safe_decode($rec);
 
-    $av = myPear::getInstance_new('bForm_Avatar',$av_id,array('strict','fatal'));
-    if (VM_administrator_here || cnf_dev) myPear::MESSAGE("Reminding ".$av->name()." to approve visit of ".bForm_Avatar::_fmtName('Lf',$rec));
+    $av = loader::getInstance_new('bForm_Avatar',$av_id,array('strict','fatal'));
+    if (VM_administrator_here || cnf_dev) MSG::MESSAGE("Reminding ".$av->name()." to approve visit of ".bForm_Avatar::_fmtName('Lf',$rec));
     
     if ($ok = $this->send(array($av,
 				array('form'=>'vm_Visit',
@@ -509,7 +509,7 @@ to approve or deny the request.
     //       Request owner
     $owner = 'Unknown';
     if (($date = $v->getValue('v_created',1)) && ($v_owner_avid=$v->getValue('v_owner_avid',1))){
-      if ($av = myPear::getInstance_new('bForm_Avatar_vm',$v_owner_avid,'fatal')){
+      if ($av = loader::getInstance_new('bForm_Avatar_vm',$v_owner_avid,'fatal')){
 	$all_recepients[] = $av;
 	$owner = $av->fmtName('fl').' '.b_time::medium_date($date);
       }
@@ -518,7 +518,7 @@ to approve or deny the request.
     $ok = 0;
     foreach(array_unique($all_recepients) as $av){
       
-      myPear::MESSAGE("Informing ".$av->name()." about visit of ".$v->av->fmtName('Lf'));
+      MSG::MESSAGE("Informing ".$av->name()." about visit of ".$v->av->fmtName('Lf'));
       
       // Mail text
       $subject = "Visit of ".$v->av->fmtName('fl',0).' is '.($accepted ? 'APPROVED' : 'CANCELED');
@@ -574,7 +574,7 @@ Visit information:
     // Return if the visitor "is not concerned"
     $this->visit = ($v_id instanceof bForm_vm_Visit
 		    ? $v_id
-		    : myPear::getInstance_new('bForm_vm_Visit',$v_id,'fatal'));
+		    : loader::getInstance_new('bForm_vm_Visit',$v_id,'fatal'));
     
     // Not concerned
     if($this->visit->getValue('v_type',1) !== VISIT_TYPE_PROGRAM){
@@ -666,7 +666,7 @@ Organizing committee for \"<event/>\".
 			 $no_preview)){
       $this->visit->setPolicy(VM_V_infoMailSent,1,True,True);
       $this->visit->setPolicy(VM_V_infoMailQueued,0);
-      myPear::MESSAGE(sprintf('Info mail is sent to %s',$this->visit->av->name()));
+      MSG::MESSAGE(sprintf('Info mail is sent to %s',$this->visit->av->name()));
     }
     $msg = sprintf('%s(%s) %s',__function__,$this->visit->av->getEmail(),($ok ? 'OK' : 'NOT sent ...'));
     $this->dbg($msg, cnf_dev||cnf_CLI);
@@ -682,7 +682,7 @@ Organizing committee for \"<event/>\".
   public function m_applicant_deny($v_id,$no_preview=False,$v_status=Null,$bcc=array()){
     
     $this->dbg('',True);
-    $this->visit = myPear::getInstance_new('bForm_vm_Visit',$v_id,'fatal');
+    $this->visit = loader::getInstance_new('bForm_vm_Visit',$v_id,'fatal');
 
     //
     // Check is the visitor subject of getting the "denial Email" 
@@ -709,7 +709,7 @@ Organizing committee for \"<event/>\".
     }
     
     // Is it just an enquiry?
-    if (empty($this->visit)) $this->visit = myPear::getInstance_new('bForm_vm_Visit',$v_id,'fatal');
+    if (empty($this->visit)) $this->visit = loader::getInstance_new('bForm_vm_Visit',$v_id,'fatal');
     $VM_V_denialMailSent = (bool)$this->visit->getPolicy(VM_V_denialMailSent);
     if ($no_preview === 'status'){
       $this->m_applicant_info_mail($this->visit,'status',False);
@@ -770,7 +770,7 @@ Organizing committee for \"<event/>\"."));
       $this->visit->setPolicy(VM_V_denialMailSent,1,True,True);
       $this->visit->setPolicy(VM_V_denialMailQueued,0);
       $this->m_applicant_info_mail($this->visit,'status',False);
-      myPear::MESSAGE(sprintf('Denial mail is sent to %s',$this->visit->av->name()));
+      MSG::MESSAGE(sprintf('Denial mail is sent to %s',$this->visit->av->name()));
     }
     $this->dbg('Mail to '.$this->visit->av->fmtName('fl').' is '.($ok ? 'OK' : 'NOT sent ...'),cnf_dev);
     return (bool)$ok;
@@ -781,9 +781,9 @@ Organizing committee for \"<event/>\"."));
    */
   public function welcome_applicant($v_id,$lease_id,$no_preview=False,$v_status=Null,$bcc=array()){
 
-    if ($lease_id != 'status') $lease = myPear::getInstance_new('bForm_vm_Lease',$lease_id,array('strict'));
+    if ($lease_id != 'status') $lease = loader::getInstance_new('bForm_vm_Lease',$lease_id,array('strict'));
     $this->visit = (empty($lease) || empty($lease->parentForm)
-		    ? myPear::getInstance_new('bForm_vm_Visit',$v_id,'fatal')
+		    ? loader::getInstance_new('bForm_vm_Visit',$v_id,'fatal')
 		    : $lease->parentForm);
 
     //
@@ -856,7 +856,7 @@ Organizing committee for \"<event/>\"."));
       foreach($this->attachmentFile($this->visit->ID,0,'hotel_confirmation') as $file) $this->attachments[(int)preg_replace('/[a-zA-Z_]*/','',basename($file))] = $file; 
       if (!empty($this->attachments)) $this->dbg($this->attachments);
 
-      $a = myPear::getInstance_new('bForm_vm_Room',$lease->getValue('lease_aid'),array('strict'));
+      $a = loader::getInstance_new('bForm_vm_Room',$lease->getValue('lease_aid'),array('strict'));
       $a_name = bForm_vm_Room::_a_name($lease->formDB,'for_applicant');      
       if (strpos($a_name,'[Shared] ')) $a_name = str_replace('[Shared] ','',str_replace('Room ','Shared room ',$a_name));
       $billedTo = (empty($a_name)
@@ -991,7 +991,7 @@ Organizing committee for "'.$this->visit->e->name(False).'".'
       $this->visit->setPolicy(VM_V_welcomeMailSent,1,True,True);
       $this->visit->setPolicy(VM_V_welcomeMailQueued,0);
       $this->m_applicant_info_mail($this->visit,'status',False);
-      myPear::MESSAGE(sprintf('Confirmation mail is sent to %s',$this->visit->av->name()));
+      MSG::MESSAGE(sprintf('Confirmation mail is sent to %s',$this->visit->av->name()));
     }
     $this->dbg('Mail to '.$this->visit->av->fmtName('fl').' is '.($ok ? 'OK' : 'NOT sent ...'),cnf_dev);
     return $ok;
@@ -1005,7 +1005,7 @@ Organizing committee for "'.$this->visit->e->name(False).'".'
     $this->dbg();
     $secretaries = VM_administrators()->membersOnDuty($duty);
     if (empty($secretaries)){
-      myPear::WARNING("Please update the administrators list and nominate a person responsible for the claims reimbursement");
+      MSG::WARNING("Please update the administrators list and nominate a person responsible for the claims reimbursement");
     }
     return array(array_values($secretaries),  // emails
 		 array_keys($secretaries));   // names

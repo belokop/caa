@@ -3,6 +3,22 @@
  * a holder class to keep & manage the forms
  */
 
+/*
+ *
+ */
+function bHolder_listEntries($engine,$arg1=Null,$arg2=Null){
+  locateAndInclude($engine);
+  if (class_exists($engine,False)){
+    $h = new $engine();
+    $h->subheader = $arg2;
+    $h->listEntries($arg1);
+  }else{
+    b_debug::traceBack($engine);
+    MSG::ERROR("??? class '$engine' does not exist");
+  }
+}
+
+
 class bHolder extends myPear_base{
 
   protected $css = array();
@@ -132,7 +148,7 @@ class bHolder extends myPear_base{
       if (!empty($this->t)) $this_t = $this->t;
       $header = $this->header();  // sets also title
       if ($setTitle){
-	if (!empty($this->title)) myPear::H1($this->title,'noTranslate');
+	if (!empty($this->title)) MSG::H1($this->title,'noTranslate');
 	print $this->title2;
       }
       $this->t = new b_table_zebra($header,$this->styles);
@@ -164,6 +180,9 @@ class bHolder extends myPear_base{
     else                              return array();
   }
 
+  /*
+   *
+   */
   function listEntries(){
     bTiming()->cpu(__FUNCTION__);
     $this->_open();
@@ -186,7 +205,7 @@ class bHolder extends myPear_base{
 	    if (!empty($this->rec)){	  
 	      $this->t->prt($this->rec);    
 	      if (++$nLine > $this->maxLines){
-		myPear::WARNING("$this->maxLines \"".str_replace('bHolder_','',get_class($this))."\" lines printed... Output stops");
+		MSG::WARNING("$this->maxLines \"".str_replace('bHolder_','',get_class($this))."\" lines printed... Output stops");
 		break;
 	      }
 	    }
@@ -221,7 +240,7 @@ class bHolder extends myPear_base{
   }
   
   function _emptySelection(){
-    if ($this->report_emptySelection) myPear::INFO(EMPTY_SELECTION); 
+    if ($this->report_emptySelection) MSG::INFO(EMPTY_SELECTION); 
   }
 
   protected function _open()       {}

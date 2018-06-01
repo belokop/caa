@@ -30,7 +30,7 @@ class bToolBox{
     
     if (empty($this->action) && !isset($_GET['continue_once'])){
       b_url::setReferrer('bToolBox','reset');
-      myPear::H1('Tool Box');
+      MSG::H1('Tool Box');
       foreach ($this->tools as $module=>$tools){
 
 	print x('h2',"$module toolbox");
@@ -49,7 +49,7 @@ class bToolBox{
       b_url::setReferrer('bToolBox');
       foreach ($this->tools as $module=>$tools){
 	if (isset($tools[$this->action])){
-	  myPear::H1($tools[$this->action]['t']);
+	  MSG::H1($tools[$this->action]['t']);
 	  set_time_limit(0);
 	  call_user_func(array($this, "execute_$this->action"));
 	  break;
@@ -99,16 +99,16 @@ class bToolBox{
 	    $updates['av_salutation']= myPear_db()->quote($av_salutation,True);
 	  }
 	  if (!empty($updates)){
-	    if ($n++ == 0)	      myPear::MESSAGE(x('h3',"Cleaning $table"));
+	    if ($n++ == 0)	      MSG::MESSAGE(x('h3',"Cleaning $table"));
 	    foreach($updates as $key=>$value) $changes[$key] = myPear_db()->quote($r[$key],True);
 	    myPear_db()->query("UPDATE $table SET ".b_fmt::joinX(',',$updates)." WHERE av_id = $r[av_id]");
-	    myPear::MESSAGE(join(', ',$changes).' ==> '.join(', ',$updates));
+	    MSG::MESSAGE(join(', ',$changes).' ==> '.join(', ',$updates));
 	    $something_done = True;
 	  }
 	}
       }
     }
-    if (!$something_done) myPear::MESSAGE("No update needed, the names are already correct");
+    if (!$something_done) MSG::MESSAGE("No update needed, the names are already correct");
   }
 }
   

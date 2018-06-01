@@ -6,9 +6,9 @@ require_once '../myPear/config.inc';
 require_once '../vm/config.inc';
 locateAndInclude('pdf_form');
 
-#$v = myPear::getInstance('bForm_vm_Visit',45878,'fatal');
-#$v = myPear::getInstance('bForm_vm_Visit',45654,'fatal');
-$v = myPear::getInstance('bForm_vm_Visit',45422);
+#$v = loader::getInstance('bForm_vm_Visit',45878,'fatal');
+#$v = loader::getInstance('bForm_vm_Visit',45654,'fatal');
+$v = loader::getInstance('bForm_vm_Visit',45422);
 var_dump($v);
 die("???\n");
 $exp = $v->getExp();

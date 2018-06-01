@@ -51,7 +51,7 @@ class bList_orgGroups extends bList{
     $nMembers = count($this->get_groupMembers($this->r['lm_key'],True));
     if (empty($this->r['g_name'])) $this->r['g_name'] = $noname;
     $compalsary_groups = in_array($this->r['lm_key'],$this->compalsary_groups);
-    //    if ($nMembers && $this->isWritable()) myPear::MESSAGE("$nMembers members in \"".$this->r['g_name']."\"");
+    //    if ($nMembers && $this->isWritable()) MSG::MESSAGE("$nMembers members in \"".$this->r['g_name']."\"");
     return b_cnf::check_conditions(array(True =>array('empty' => empty($this->r['lm_key'])),      
 					 False=>array('ROx'   => $compalsary_groups,
 						      'RO'    => !$this->isWritable(),
@@ -86,7 +86,7 @@ class bList_orgGroups extends bList{
    * Input form
    */
   protected function getFormAdd(){
-    myPear::H1('Updating groups/departments');
+    MSG::H1('Updating groups/departments');
 
     // Create the record if it is empty
     if (empty($this->member_ID))      $this->updateMember();
@@ -172,8 +172,8 @@ class bList_orgGroups extends bList{
 	      if ($this->isWritable()){
 		$msg = "Unknown group \"$gid\" for ";
 		// Modal or not? Some people hate modal windows...
-		if($modal)myPear::WARNING($msg . bJS()->modal_iframe($url," [ $name ]"));
-		else      myPear::WARNING($msg . b_btn::link($name,b_url::same($url)));
+		if($modal)MSG::WARNING($msg . bJS()->modal_iframe($url," [ $name ]"));
+		else      MSG::WARNING($msg . b_btn::link($name,b_url::same($url)));
 	      }
 	    }
 	    $not_defined = False;
@@ -183,8 +183,8 @@ class bList_orgGroups extends bList{
 	  $this->groupMembers[(int)$for_HTML][$unk][$av_id] = $name;
 	  if ($this->isWritable()){
 	    $msg = "Group is not set for ";
-	    if($modal)myPear::WARNING($msg . bJS()->modal_iframe($url," [ $name ]"));
-	    else      myPear::WARNING($msg . b_btn::link($name,b_url::same($url)));
+	    if($modal)MSG::WARNING($msg . bJS()->modal_iframe($url," [ $name ]"));
+	    else      MSG::WARNING($msg . b_btn::link($name,b_url::same($url)));
 	  }
 	}
       }

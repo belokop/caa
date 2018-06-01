@@ -48,8 +48,8 @@ function _lic_title_callback($text,$arg=Null,$returnText=False){
   return $text; 
  // do not translate software name 
   switch($text){
-  case 'title':  return bText::_(array('key' =>"LIC_MENU_1",   'item'=>'FLEXlm usage'));
-  case 'ALL':    return bText::_(array('key' =>"LIC_MENU_ALL", 'item'=>'ALL'));
+  case 'title':  return b_t::_(array('key' =>"LIC_MENU_1",   'item'=>'FLEXlm usage'));
+  case 'ALL':    return b_t::_(array('key' =>"LIC_MENU_ALL", 'item'=>'ALL'));
   default:       return $text;
   }
 }

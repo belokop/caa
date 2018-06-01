@@ -41,7 +41,7 @@ class bIcons{
     if (is_array($country_code)) $flag = $country_code;
     else                         $flag = array('i' => $country_code);
     $flag['r'] = 'flag'.($as_input_field ? 's' : '');
-    $flag['d'] = bText::getLangName($country_code);
+    $flag['d'] = b_t::getLangName($country_code);
     $flag['i'] = preg_replace('/.*[_-]/','',mb_strToLower($flag['i']));
     return $this->getButton($flag);
   }
@@ -161,7 +161,7 @@ class bIcons{
 	}
       }
       if (cnf_show_ic) {
-	if (empty($reply)) myPear::WARNING_T("missing icon ".var_export($icon,True),$this);
+	if (empty($reply)) MSG::WARNING_T("missing icon ".var_export($icon,True),$this);
 	else               b_debug::xxx(b_fmt::escape($reply),array(2,True,'blueText'));
       }
     }
@@ -178,6 +178,7 @@ class bIcons{
    */
   function getThumbnail($av_emailP,$srcOnly=False){
     if (is_string($av_emailP)){
+      locateAndInclude('bForm_Avatar');
       return bForm_Avatar::_getPhoto(array('av_email'=>$av_emailP),'','',8);
     }else{
       return '';
@@ -219,7 +220,7 @@ class bIcons{
 	  return $f;
 	}
       }
-      //myPear::WARNING_T("no icon '$icon' in ".myPear_images,$this);
+      //MSG::WARNING_T("no icon '$icon' in ".myPear_images,$this);
     }
     return Null;
   }
@@ -264,7 +265,7 @@ class bIcons{
     if ($n < 6) $nColumns = 3;
     $save = $this->showToolTips;   $this->showToolTips = False;
     if ($this->hide_explainIcons || !$this->explainIconButtons) $this->toExplain = array();
-    $legend = x('strong',bText::_($this->legendTitle).':');
+    $legend = x('strong',$this->legendTitle.':');
     $lPrinted = 0;
     foreach (array_unique($this->toExplain) as $icon){
       if ($descr = @self::$iconsPool[$icon]['d']){
@@ -273,7 +274,7 @@ class bIcons{
 	if (!$t->tr)  $t->tro(); 
 	$t->td(array($legend,
 		     x($a,$this->get($icon)),
-		     x($a,bText::_($descr)))); 
+		     x($a,b_t::_($descr)))); 
 	$legend = ''; 
 	if (++$lPrinted == $nColumns) { $lPrinted = 0; $t->trc(); } 
       }

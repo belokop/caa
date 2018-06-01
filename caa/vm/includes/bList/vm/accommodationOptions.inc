@@ -45,8 +45,8 @@ class bList_vm_accommodationOptions extends bList_vm{
     //    (however, the code supports it)
     if ($parent_ID == myOrg_ID){
       if (cnf_localhost) b_debug::internalError("Think twice, ".__class__."(myOrg) does not really make sense...");
-      for ($n=1;$n<10;$n++) myPear::WARNING(str_repeat('?',$n)." Think twice, ".__class__."(myOrg) does not really make sense...");
-      for ($n=10;$n>0;$n--) myPear::WARNING(str_repeat('!',$n)." Think twice, ".__class__."(myOrg) does not really make sense...");
+      for ($n=1;$n<10;$n++) MSG::WARNING(str_repeat('?',$n)." Think twice, ".__class__."(myOrg) does not really make sense...");
+      for ($n=10;$n>0;$n--) MSG::WARNING(str_repeat('!',$n)." Think twice, ".__class__."(myOrg) does not really make sense...");
       b_debug::traceBack();
     }
 
@@ -131,7 +131,7 @@ class bList_vm_accommodationOptions extends bList_vm{
    *
    */
   protected function message_createList(){
-    myPear::MESSAGE("Creating ".$this->name(True).' for '.$this->title);
+    MSG::MESSAGE("Creating ".$this->name(True).' for '.$this->title);
   }
   
   /*
@@ -141,7 +141,7 @@ class bList_vm_accommodationOptions extends bList_vm{
     if ($this->parent_ID != myOrg_ID){
       
       $see_here = '';
-      static $dejaVu=0; if (!$dejaVu++) myPear::INFO(["Select the accommodation option, click <em>\"continue ...\"</em>, after that select the desired hotel.",
+      static $dejaVu=0; if (!$dejaVu++) MSG::INFO(["Select the accommodation option, click <em>\"continue ...\"</em>, after that select the desired hotel.",
 						      "Note, you can select only hotels defined by the ".myOrg_name." accommodation $see_here, ".
 						      "so a new building should be first added to the  ".myOrg_name." list."]);
     }
@@ -260,7 +260,7 @@ class bList_vm_accommodationOptions extends bList_vm{
     if (empty($hut_id)){
       $reply = '';
     }else{
-      if (empty($this->hut[$hut_id])) $this->hut[$hut_id] = myPear::getInstance_new('bForm_vm_Hut',$hut_id,'fatal');
+      if (empty($this->hut[$hut_id])) $this->hut[$hut_id] = loader::getInstance_new('bForm_vm_Hut',$hut_id,'fatal');
       switch($what){
       case 'name':    $reply = $this->hut[$hut_id]->name();               break;
       case 'hut_code':$reply = $this->hut[$hut_id]->getValue('hut_code'); break;
@@ -318,7 +318,7 @@ class bList_vm_accommodationOptions extends bList_vm{
       if(($n = count($this->get_occupiedRooms($r['lm_key'],$lease_start,$lease_end,$v_host_avid))) == 0) continue;
       if($hut_code != $this->getHutInfo($r['lm_key'],'hut_code'))   continue;
       
-      $hut = myPear::getInstance_new('bForm_vm_Hut',$r['lm_key'],'fatal');
+      $hut = loader::getInstance_new('bForm_vm_Hut',$r['lm_key'],'fatal');
       if ($hut_code != $hut->getValue('hut_code')) continue;
       
       if (empty($t)){
@@ -350,7 +350,7 @@ class bList_vm_accommodationOptions extends bList_vm{
   protected function setPageHeader(){
     if (!$this->setPageHeader_dejaVu++){
       $header = b_fmt::unescape($this->title.' usage');
-      myPear::setPageHeader($header);
+      MSG::setPageHeader($header);
       $this->dbg($header,cnf_dev);
     }
   }
@@ -374,10 +374,10 @@ class bList_vm_accommodationOptions extends bList_vm{
       $ao_was = $ao_now;
     }
     
-    $hut = myPear::getInstance_new('bForm_vm_Hut',$this->r['hut_id'],'fatal');
+    $hut = loader::getInstance_new('bForm_vm_Hut',$this->r['hut_id'],'fatal');
     $this->r['_TR'] = $hut->name_total_rooms($this);
     
-    $this->r['_hut_id'] = x(sprintf("a href='%s'",b_url::same(sprintf("?function=bHolder_vm_Rooms::list_hut&arg_once=%s&arg2_once=%s",$this->r['lm_key'],$this->e->ID))),
+    $this->r['_hut_id'] = x(sprintf("a href='%s'",b_url::same(sprintf("?function=bHolder_vm_Rooms::list_hut&arg1_once=%s&arg2_once=%s",$this->r['lm_key'],$this->e->ID))),
 			    $this->getHutInfo($this->r['lm_key']));
     
     $_number  = count($this->get_occupiedRooms($this->r['lm_key']));

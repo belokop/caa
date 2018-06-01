@@ -112,7 +112,7 @@ class bForm_vm_Visit extends bForm_vm {
 	if (($v_status != STATUS_NO) && ($v_status != STATUS_YES)){
 	  $this->hookAvatar();
 	  $this->getValue_reset_forced('v_status',STATUS_YES);
-	  if (cnf_dev) myPear::MESSAGE("Visit of ".$this->av->fmtName('fL')." is auto-accepted");
+	  if (cnf_dev) MSG::MESSAGE("Visit of ".$this->av->fmtName('fL')." is auto-accepted");
 	  b_debug::traceBack('resetting v_status to STATUS_YES');
 	}
       }
@@ -128,7 +128,7 @@ class bForm_vm_Visit extends bForm_vm {
     if (is_object($this->av))          $this->av->__clean_cache(); 
     if (is_object($this->exp))         $this->exp->__clean_cache(); 
     foreach($this->get_allLeases(True) as $l) $l->__clean_cache();
-    myPear::getInstance_new(get_class($this),$this->ID,'clean');
+    loader::getInstance_new(get_class($this),$this->ID,'clean');
   }
 
   /*
@@ -156,7 +156,7 @@ class bForm_vm_Visit extends bForm_vm {
       while($r = myPear_db()->next_record($q)) $reply = $r[$column];
       return @$reply;
     }else{
-      myPear::WARNING_T('does not exist');
+      MSG::WARNING_T('does not exist');
       return Null;
     }
   }
@@ -345,7 +345,7 @@ class bForm_vm_Visit extends bForm_vm {
 	if ($policy == VM_V_payAccommodation){
 	  if(0)	  if (cnf_dev) b_debug::traceBack();
 	}else{
-	  myPear::MESSAGE_add(VM::$v_policies[$policy]['d']." ".x('em',($value?'YES':'NO')." for ".$this->av->fmtName()));
+	  MSG::MESSAGE_add(VM::$v_policies[$policy]['d']." ".x('em',($value?'YES':'NO')." for ".$this->av->fmtName()));
 	}
       }
     }
@@ -356,7 +356,7 @@ class bForm_vm_Visit extends bForm_vm {
    * Set the status
    */
   public function setStatus($v_status=Null,$forced=False){
-    if (!myPear::is_int($this->ID)) return;
+    if (!b_posix::is_int($this->ID)) return;
     
     $was = $this->getValue('v_status');
     if (!$forced && ($was === $v_status)){
@@ -385,7 +385,7 @@ class bForm_vm_Visit extends bForm_vm {
       break;
       
     default:
-      myPear::WARNING_T("Unexpected status '$v_status'",$this);
+      MSG::WARNING_T("Unexpected status '$v_status'",$this);
     }
    }
 
@@ -581,7 +581,7 @@ class bForm_vm_Visit extends bForm_vm {
 	 $reply = False;
        }else{
 	 $reply = (int)$this->ID; //  && $this->isApproved();
-	 if (!$this->getClashingVisits(0) && (int)$this->ID && $this->isPending()) myPear::WARNING("The visit is NOT yet approved");
+	 if (!$this->getClashingVisits(0) && (int)$this->ID && $this->isPending()) MSG::WARNING("The visit is NOT yet approved");
        }
        break;
 
@@ -650,7 +650,7 @@ class bForm_vm_Visit extends bForm_vm {
 
      default:
        $reply = parent::formBlock_isVisible($block_ID,$fields);
-       if (!empty($block_ID)) myPear::WARNING_T("Unexpected block '$block_ID'");
+       if (!empty($block_ID)) MSG::WARNING_T("Unexpected block '$block_ID'");
      }
 
      $this->dbg($reply,cnf_show_st);
@@ -664,7 +664,7 @@ class bForm_vm_Visit extends bForm_vm {
      if ($this->isVisitType_program() &&
 	 ($v_eid = $this->getValue('v_eid', True)) &&
 	 !($this->e instanceof bForm_vm_Event)){
-       $this->e = myPear::getInstance_new('bForm_vm_Event',$v_eid,'fatal');
+       $this->e = loader::getInstance_new('bForm_vm_Event',$v_eid,'fatal');
 
        // Force the project id if known       
        locateAndInclude('bList_vm_projects');
@@ -732,7 +732,7 @@ class bForm_vm_Visit extends bForm_vm {
 					    !$this->exp->getValue('exp_travel_est',True));
        $this->dbg("need_av_residentship? ".var_export($this->need_av_residentship,True));
        if ($this->need_av_residentship){
-	 if ($this->av->isWritable()) myPear::ERROR("Missing residentship for ".$this->av->fmtName('fL').", can't estimate the travel cost.");
+	 if ($this->av->isWritable()) MSG::ERROR("Missing residentship for ".$this->av->fmtName('fL').", can't estimate the travel cost.");
 	 $this->av->need_av_residentship();
 	 $this->mergeDefinitions($this->av);
        }
@@ -771,7 +771,7 @@ class bForm_vm_Visit extends bForm_vm {
 			       $s2=$leases[$n+1]->getValue('lease_start'),
 			       $e2=$leases[$n+1]->getValue('lease_end'))){
 	  $this->adjust_dates = False;
-	  myPear::WARNING(sprintf("Clashing leases <br/>".
+	  MSG::WARNING(sprintf("Clashing leases <br/>".
 				  "lease %d: %s<br/>" . 
 				  "lease %d: %s",
 				  $leases[$n]->ID,
@@ -820,7 +820,7 @@ class bForm_vm_Visit extends bForm_vm {
 				'lease_aid'           => 'Accommodation',
 				),True);
 
-    $this->defineTypes(array('submitOnChange'=>array('v_group' => !myPear::is_empty($this->getValue('v_group',1))),
+    $this->defineTypes(array('submitOnChange'=>array('v_group' => !b_posix::is_empty($this->getValue('v_group',1))),
 			     'isADMIN'       =>array('v_comment'),
 			     'isMBE'         =>array('v_projectid', 
 						     'v_acc_wish',
@@ -927,7 +927,7 @@ class bForm_vm_Visit extends bForm_vm {
       if (empty($buffer['v_eid'])){
 	$reply = array();
       }else{
-	$e = myPear::getInstance_new('bForm_vm_Event',$buffer['v_eid'],'fatal');
+	$e = loader::getInstance_new('bForm_vm_Event',$buffer['v_eid'],'fatal');
 	$reply = array_diff($reply,array(HUT_BI),array_values(bForm_vm_Lease::_get_BI(True)));
       }
     }
@@ -1053,11 +1053,11 @@ class bForm_vm_Visit extends bForm_vm {
 	if ($this->av->isE(True)){
 	  $office = $this->av->get_staffOffice();
 	  if (!empty($office)){
-	    $o = myPear::getInstance_new('bForm_vm_Office',array('o_name'=>$office),'nocache');
+	    $o = loader::getInstance_new('bForm_vm_Office',array('o_name'=>$office),'nocache');
 	    if ($this->getValue('v_oid') != $o->ID){
 	      $this->setPolicy(VM_V_provideOffice,1);
 	      $this->getValue_reset_forced('v_oid',$o->ID);
-	      myPear::MESSAGE("Office ".x('em',$office).' - '.$this->av->fmtName('fl'));
+	      MSG::MESSAGE("Office ".x('em',$office).' - '.$this->av->fmtName('fl'));
 	    }
 	  }
 	}	
@@ -1094,7 +1094,7 @@ class bForm_vm_Visit extends bForm_vm {
    */
   protected function getValue_validate_value($name,&$value=Null){
     $err_msg = '';
-    if (!myPear::is_empty($value)){
+    if (!b_posix::is_empty($value)){
       $err_msg = parent::getValue_validate_value($name,$value);
     }
     return $err_msg;
@@ -1105,7 +1105,7 @@ class bForm_vm_Visit extends bForm_vm {
    */
   protected function getValue_validate_empty($name,&$value=Null){
     $err_msg = '';
-    if (myPear::is_empty($value)){
+    if (b_posix::is_empty($value)){
       $err_msg = parent::getValue_validate_empty($name,$value);
       switch($name){
 	/*
@@ -1291,7 +1291,7 @@ class bForm_vm_Visit extends bForm_vm {
 	locateAndInclude('bForm_vm_Office');
 	$v_oid = $this->getValue('v_oid');
 	$this->isRO['_o_name'] = $this->av->isE(True) && !empty($v_oid);
-	if ($o = myPear::getInstance_new('bForm_vm_Office',$v_oid,array('strict','nocache'))){
+	if ($o = loader::getInstance_new('bForm_vm_Office',$v_oid,array('strict','nocache'))){
 	  $this->formDB['_o_name'] = $o->name(False);
 	}elseif($this->MODE == 'RO'){
 	  $this->formDB['_o_name'] = b_fmt::redText('not allocated yet');
@@ -1318,12 +1318,12 @@ class bForm_vm_Visit extends bForm_vm {
 	 ($this->getValue('v_end') > time()-AUTO_EXPIRATION*86400) &&
 	 ($this->isWritable())){
 	if(is_object($this->e) && !VM_projects()->getProjectID($this->e->ID)){
-	  myPear::WARNING("<br/><em>\"".$this->e->name(False)."\"</em> has NO budget code assigned. ".
+	  MSG::WARNING("<br/><em>\"".$this->e->name(False)."\"</em> has NO budget code assigned. ".
 			  "<br/>Payment is not possible.");
 	}
 	if (VM::hasRightTo('select_budget',$this) && 
 	    (!$this->hookEvent() || VM_projects()->getProjectID($this->e->ID))){
-	  myPear::WARNING("Please select the budget source for the visit (<em>\"".$this->vars['v_projectid']."\"</em> below)");
+	  MSG::WARNING("Please select the budget source for the visit (<em>\"".$this->vars['v_projectid']."\"</em> below)");
 	  // Force the project selection
 	  $this->MODE = 'RW';
 	}
@@ -1356,7 +1356,7 @@ class bForm_vm_Visit extends bForm_vm {
 
     if (($v_host_avid = $this->getValue('v_host_avid')) && empty($valid_hosts[$v_host_avid])){
       if ((int)$v_host_avid){
-	$av = myPear::getInstance_new('bForm_Avatar',$v_host_avid,array('nocache','strict'));
+	$av = loader::getInstance_new('bForm_Avatar',$v_host_avid,array('nocache','strict'));
 	if (is_object($av)) $valid_hosts[$av->ID] = $av->fmtName();
       }else{
 	$this->getValue_reset('v_host_avid');
@@ -1388,7 +1388,7 @@ class bForm_vm_Visit extends bForm_vm {
    * Small helper
    */
   function virt_updated_by(){
-    if ($av = myPear::getInstance_new('bForm_Avatar_vm',$this->getValue('v_admin_avid',1,1),'strict')){
+    if ($av = loader::getInstance_new('bForm_Avatar_vm',$this->getValue('v_admin_avid',1,1),'strict')){
       $this->formDB['_virt_updated_by'] = $av->fmtName('fl',0).', '.b_time::medium_date($this->getValue('v_timestamp'));
       $this->textField('_virt_updated_by');
     }
@@ -1425,7 +1425,7 @@ class bForm_vm_Visit extends bForm_vm {
     }
     
     if (!$this->isEmbedded()) {
-      myPear::H1($this->av->fmtName('sfL'),array('noTranslate','reset'));
+      MSG::H1($this->av->fmtName('sfL'),array('noTranslate','reset'));
       bForm::nameCounter();
     }
 
@@ -1471,7 +1471,7 @@ class bForm_vm_Visit extends bForm_vm {
       }
 	
       if (($date = $this->getValue('v_created',1)) && ($host=$this->getValue('v_owner_avid',1))){
-	if ($av = myPear::getInstance_new('bForm_Avatar_vm',$host,'fatal')){
+	if ($av = loader::getInstance_new('bForm_Avatar_vm',$host,'fatal')){
 	  $this->formDB['_virt_owner'] = $av->fmtName('fl').' '.b_time::medium_date($date);
 	}
       }
@@ -1589,7 +1589,7 @@ class bForm_vm_Visit extends bForm_vm {
       }
     }
     if (($o_id=$this->formDB['v_oid']) && empty($list[$o_id])){
-      if ($o = myPear::getInstance_new('bForm_vm_Office',$o_id,'strict')) $list[$o_id] = $o->name();
+      if ($o = loader::getInstance_new('bForm_vm_Office',$o_id,'strict')) $list[$o_id] = $o->name();
     }
     return $list;
   }
@@ -1669,7 +1669,7 @@ class bForm_vm_Visit extends bForm_vm {
    */
   function delete(){
     $this->dbg($this->av->name(),cnf_dev);
-    myPear::MESSAGE_add(b_fmt::redText("Delete visit ".$this->_periodToString()));    
+    MSG::MESSAGE_add(b_fmt::redText("Delete visit ".$this->_periodToString()));    
     $this->deleteBooking();
     myPear_db()->query("DELETE FROM $this->TABLE WHERE $this->TABLEID = '$this->ID'");
     unset($this->formDB);
@@ -1688,10 +1688,10 @@ class bForm_vm_Visit extends bForm_vm {
       //
       // Delete the specified lease
       //
-      if ($l = myPear::getInstance_new('bForm_vm_Lease',$lease_id,'strict')){
+      if ($l = loader::getInstance_new('bForm_vm_Lease',$lease_id,'strict')){
 	$lease_start_day = b_time::_($l->getValue('lease_start'));
 	$lease_end_day   = b_time::_($l->getValue('lease_end'));
-	if ($verbose) myPear::MESSAGE_add('Delete lease '.$l->_periodToString());
+	if ($verbose) MSG::MESSAGE_add('Delete lease '.$l->_periodToString());
 	$l->delete();
 	
 	// Extend the neighboring lease period
@@ -1701,17 +1701,17 @@ class bForm_vm_Visit extends bForm_vm {
 	  if(($ls == $lease_start_day) && ($le == $lease_end_day)) continue;
 	  if ($le == $lease_start_day) {
 	    if ($verbose) $l->updateDB(array('lease_end'  =>b_time::check_out($lease_end_day)));
-	    myPear::MESSAGE_add("Modify lease end ".$l->_periodToString());
+	    MSG::MESSAGE_add("Modify lease end ".$l->_periodToString());
 	    break; 
 	  }
 	  if ($ls == $lease_end_day)   {
 	    $l->updateDB(array('lease_start'=>b_time::check_in($lease_start_day)));
-	    if ($verbose) myPear::MESSAGE_add("Modify lease start ".$l->_periodToString());
+	    if ($verbose) MSG::MESSAGE_add("Modify lease start ".$l->_periodToString());
 	    break;
 	  }
 	}
       }else{
-	myPear::WARNING_T("Cant find the lease",$this);
+	MSG::WARNING_T("Cant find the lease",$this);
       }
     }else{
       //
@@ -1725,7 +1725,7 @@ class bForm_vm_Visit extends bForm_vm {
 	  $l::$_debug = self::$_debug;
 	  $msg = $l->_periodToString();
 	  $this->dbg($l->__toString().' '.$msg,cnf_dev);
-	  if ($verbose && $msg) myPear::MESSAGE_add(b_fmt::redText("Delete lease $msg"));
+	  if ($verbose && $msg) MSG::MESSAGE_add(b_fmt::redText("Delete lease $msg"));
 	  $l->delete();
 	}
       }
@@ -1754,7 +1754,7 @@ class bForm_vm_Visit extends bForm_vm {
   function setBooking($lease=array(),$verbose=True){
     if (empty($lease)) return;
     if (!is_array($lease)){ // hence $lease is the apartment ID
-      $a = myPear::getInstance_new('bForm_vm_Room',$lease,'fatal');
+      $a = loader::getInstance_new('bForm_vm_Room',$lease,'fatal');
       $lease = array('lease_aid'  =>$a->ID,
 		     'lease_start'=>$this->getValue('v_start'),
 		     'lease_end'  =>$this->getValue('v_end'));
@@ -1763,7 +1763,7 @@ class bForm_vm_Visit extends bForm_vm {
     
     // Sanity
     if (cnf_dev){
-      if (myPear::getClassFromID($lease['lease_aid'])!='bForm_vm_Room') b_debug::internalError("setBooking($lease) is not bForm_vm_Room",$this); // sanity
+      if (loader::getClassFromID($lease['lease_aid'])!='bForm_vm_Room') b_debug::internalError("setBooking($lease) is not bForm_vm_Room",$this); // sanity
       if (!$lease['lease_start'] ||!$lease['lease_end'])                b_debug::internalError("setBooking($lease) no start/end time") ;           
     }
     
@@ -1785,7 +1785,7 @@ class bForm_vm_Visit extends bForm_vm {
       
       // Sanity
       if (!$this->leaseExists($lease)){
-	myPear::MESSAGE_add(b_fmt::redText("Can't set lease '".b_fmt::joinX(', ',$lease)."' for ".$this->_periodToString()));
+	MSG::MESSAGE_add(b_fmt::redText("Can't set lease '".b_fmt::joinX(', ',$lease)."' for ".$this->_periodToString()));
       }
     }
   }
@@ -1908,7 +1908,7 @@ class bForm_vm_Visit extends bForm_vm {
 
     // print the messages, but only once
     if ($verbose && !empty($clashes[$v_id]['msg'])){
-      myPear::WARNING(join('<br/>',$clashes[$v_id]['msg']));
+      MSG::WARNING(join('<br/>',$clashes[$v_id]['msg']));
       $clashes[$v_id]['msg'] = array();
     }
 
@@ -1938,7 +1938,7 @@ class bForm_vm_Visit extends bForm_vm {
       self::$savedQuery = $holder->query();
       while ($r=myPear_db()->next_record(self::$savedQuery)) $clashes[] = $r['v_id'];
       if (empty($clashes))           self::$savedQuery = Null;
-      elseif (!empty($avSelect))     myPear::WARNING_T($avSelect);
+      elseif (!empty($avSelect))     MSG::WARNING_T($avSelect);
     }
     return    $clashes;
   }
@@ -1988,12 +1988,12 @@ class bForm_vm_Visit extends bForm_vm {
     switch ($what){
     case 'Apartment':
       foreach ($this->get_allLeases() as $l){
-	if ($ap = myPear::getInstance_new('bForm_vm_Room',$l->getValue('lease_aid',1),'strict')) return $ap->name();
+	if ($ap = loader::getInstance_new('bForm_vm_Room',$l->getValue('lease_aid',1),'strict')) return $ap->name();
       }
       break;
       
     case 'Office': 
-      if ($o=myPear::getInstance_new('bForm_vm_Office',$this->formDB['v_oid'],'strict')) return $o->name();
+      if ($o=loader::getInstance_new('bForm_vm_Office',$this->formDB['v_oid'],'strict')) return $o->name();
       break;
     }
   }  
@@ -2111,13 +2111,13 @@ class bForm_vm_Visit extends bForm_vm {
 
     // Update office number
     if ($_o_name = $this->getValue('_o_name',1,1)){
-      $o = myPear::getInstance_new('bForm_vm_Office',array('o_name'=>$_o_name),array('strict','nocache'));
+      $o = loader::getInstance_new('bForm_vm_Office',array('o_name'=>$_o_name),array('strict','nocache'));
       if (is_object($o)){
 	$this->getValue_reset('v_oid',$o->ID);
       }else{
 	$this->getValue_reset_forced('v_oid');
 	$this->getValue_reset('_o_name');
-	myPear::ERROR(sprintf("Office <em>%s</em> is not known",$_o_name));
+	MSG::ERROR(sprintf("Office <em>%s</em> is not known",$_o_name));
       }
     }
     

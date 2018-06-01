@@ -220,7 +220,7 @@ function ea_update18(){
     function nameIt(&$r,&$name_printed){
       if (!$name_printed) { 
 	$name_printed=1; 
-	myPear::DEBUG('======================================================================'.$r['av_firstname'].' '.$r['av_lastname']); 
+	MSG::DEBUG('======================================================================'.$r['av_firstname'].' '.$r['av_lastname']); 
       }
     }
   }
@@ -243,7 +243,7 @@ function ea_update18(){
 	keepIt($to);
 	nameIt($rr,$name_printed);
 	$to = b_fmt::ucwords($to);
-	myPear::DEBUG('&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'.b_time::period($r['lm_key'],$r['lm_status'])." $from =====> $to");
+	MSG::DEBUG('&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'.b_time::period($r['lm_key'],$r['lm_status'])." $from =====> $to");
 	//myPear_db()->qquery("UPDATE zzz_list_members SET lm_value = '$to' WHERE lm_id = ".$r['lm_id'],True);
       }
       return $to;
@@ -292,7 +292,7 @@ function ea_update18(){
 	  $to = replaceIt($rr,$r,$name_printed,$title,$replaces[$title]);
 	}elseif (!in_array($title,$with_prefix)){        // -------------------Catch an unknown title
 	  nameIt($rr,$name_printed);
-	  myPear::DEBUG('&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'.b_time::period($r['lm_key'],$r['lm_status'])." ??? $title");
+	  MSG::DEBUG('&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'.b_time::period($r['lm_key'],$r['lm_status'])." ??? $title");
 	  keepIt("??? $title");
 	}
       }
@@ -419,7 +419,7 @@ function ea_update15_offices(){
 
     myPear_db()->qquery("UPDATE abs_offices SET o_status = 'staff'",cnf_dev);
     foreach($off_visitors as $o_name=>$data){
-      $o = myPear::getInstance_new('bForm_vm_Office',array('o_name'=>$o_name),'nocache',array('abs_offices','o_id'));
+      $o = loader::getInstance_new('bForm_vm_Office',array('o_name'=>$o_name),'nocache',array('abs_offices','o_id'));
       $o->isVITAL = array();
       $o->updateDB($data);
     }
@@ -468,9 +468,9 @@ function ea_update13(){
     foreach(array('acc2ea.php','ssn2ea.php','cv2ea.php') as $script){
       $f = dirname(__FILE__)."/../$script";
       if (file_exists($f)){
-	myPear::WARNING_T("Executing $f");
+	MSG::WARNING_T("Executing $f");
 	$cmd = "export PATH=/usr/local/php5/bin:/usr/local/bin/:/usr/pkg/php/pro/bin:\$PATH; cd ".dirname($f)."; php $f 2>&1";
-	myPear::WARNING_T(x('pre',`$cmd`));
+	MSG::WARNING_T(x('pre',`$cmd`));
       }
     }
   }

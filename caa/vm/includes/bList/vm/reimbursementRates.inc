@@ -63,7 +63,7 @@ class bList_vm_reimbursementRates extends bList_vm{
       foreach(VM_reimbursable_visits() as $v_type){
 	foreach(VM::$reimbursements as $s_plc=>$d){
 	  if (@$d['t'] === auto_maintained){
-	    myPear::MESSAGE("Skip auto-maintained ".x('em',$d['d']));
+	    MSG::MESSAGE("Skip auto-maintained ".x('em',$d['d']));
 	  }else{
 	    $this->addMember(array('lm_status'=>'ok',
 				   'lm_key'   => $d['d'],
@@ -87,7 +87,7 @@ class bList_vm_reimbursementRates extends bList_vm{
       // (the budget code might be missing for the "out of scope" events or when it was not yet assigned)
       //
       if (!$this->e->budgetSource()->get_budgetSource()){
-	myPear::ERROR("!! No budget for \"".$this->e->name()."\"");
+	MSG::ERROR("!! No budget for \"".$this->e->name()."\"");
       }else{
 	foreach(bList::getListInstance(myOrg_ID,get_class($this))->getMembers() as $lm_id=>$r){
 	  if (in_array($r['lm_value'],array(VISIT_TYPE_COLLABORATION,
@@ -140,7 +140,7 @@ class bList_vm_reimbursementRates extends bList_vm{
 	$reimbursementRates = bList::getListInstance(myOrg_ID,'bList_vm_reimbursementRates');
 	$visit_types = VM_reimbursable_visits();
       }else{
-	$e = myPear::getInstance_new('bForm_vm_Event',$parent_ID,'fatal');
+	$e = loader::getInstance_new('bForm_vm_Event',$parent_ID,'fatal');
 	$reimbursementRates = $e->reimbursementRates();
 	$visit_types = array(VISIT_TYPE_PROGRAM);
       }
@@ -169,7 +169,7 @@ class bList_vm_reimbursementRates extends bList_vm{
 	  
 	  if ($add = array_diff($now_p,$was_p)) $changes[] = "Added:".x('ul',  join("\n",$add));
 	  if ($rem = array_diff($was_p,$now_p)) $changes[] = "Removed:".x('ul',join("\n",$rem));
-	  myPear::INFO($changes,VM::$description[$type]['d'].' visits policy is changed for '.$reimbursementRates->title);
+	  MSG::INFO($changes,VM::$description[$type]['d'].' visits policy is changed for '.$reimbursementRates->title);
 	}
       }
     }
@@ -195,7 +195,7 @@ class bList_vm_reimbursementRates extends bList_vm{
    */
   protected function message_createList(){
     if ($this->name(True)  == 'list Null') b_debug::internalError('list Null');
-    myPear::MESSAGE("Creating ".$this->name(True).' for '.$this->title);
+    MSG::MESSAGE("Creating ".$this->name(True).' for '.$this->title);
   }
 
   /*
@@ -242,7 +242,7 @@ class bList_vm_reimbursementRates extends bList_vm{
       $this->tripCostFromResidentshipCountry = array('country_name' => 'Unknown country',
 						     'zone'         => 'Unknown country',
 						     'pay'          => '');
-      // myPear::ERROR("Missing residentship for ".bForm_Avatar::_fmtName('fL',$rec).", can't estimate the travel cost.");
+      // MSG::ERROR("Missing residentship for ".bForm_Avatar::_fmtName('fL',$rec).", can't estimate the travel cost.");
     }
     
     $reply = empty($rec['v_type'])
@@ -274,7 +274,7 @@ class bList_vm_reimbursementRates extends bList_vm{
       $this->init();
       $members = $this->getMembers(array('lm_key'=>'travel'));
     }
-    if (empty($members)) myPear::WARNING_T("??? empty getMembers(array('lm_key'=>'travel'))",$this);
+    if (empty($members)) MSG::WARNING_T("??? empty getMembers(array('lm_key'=>'travel'))",$this);
 
     $reply = $nowhere;
     if (!empty($cc)){
@@ -285,7 +285,7 @@ class bList_vm_reimbursementRates extends bList_vm{
 		   : b_cc::getContinent($cc));
 	  $countries = explode(',',$r['s_cc']);
 	  if (in_array($code,$countries)){
-	    if (empty($r['s_rate'])) myPear::WARNING_T("Missing rates for $cc / ".$r['lm_value']);
+	    if (empty($r['s_rate'])) MSG::WARNING_T("Missing rates for $cc / ".$r['lm_value']);
 	    $reply = array('country_name' => b_cc::getName($cc),
 			   'zone'         => $r['lm_value'],
 			   'pay'          => $r['s_rate']);
@@ -293,7 +293,7 @@ class bList_vm_reimbursementRates extends bList_vm{
 	  }
 	}
       }
-      if ($reply === $nowhere) myPear::WARNING_T("Unknown country name/code ".var_export($cc,True).var_export($members,True));
+      if ($reply === $nowhere) MSG::WARNING_T("Unknown country name/code ".var_export($cc,True).var_export($members,True));
     }      
     return $reply;
   }
@@ -378,7 +378,7 @@ class bList_vm_reimbursementRates extends bList_vm{
       if ($_POST['lm_key'] == VM_wordPerdiem){
 	if (@$_POST['s_rate']>VM_maxPerdiemAmount){
 	  $reply = False;
-	  myPear::ERROR("Per Diem can't be more then ".VM_maxPerdiemAmount.CONST_currency);
+	  MSG::ERROR("Per Diem can't be more then ".VM_maxPerdiemAmount.CONST_currency);
 	}elseif(@$_POST['s_rate'] <= 0){
 	  $reply = True;
 	  $_POST['s_rate'] = 0;

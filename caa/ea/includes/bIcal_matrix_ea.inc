@@ -30,7 +30,7 @@ class bIcal_matrix_ea extends bIcal_matrix{
     $f->formDB['ea_year'] = ea_year;
     $f->submitOnChange['ea_year'] = True;
     $s = $f->selectMenu_exec('ea_year',$years,"class='ea-year-select'",$onlyRW=True);
-    myPear::setPageHeader(myPear::set_main_selector(array(myOrg_name.' in '=>$s),True),
+    MSG::setPageHeader(MSG::set_main_selector(array(myOrg_name.' in '=>$s),True),
 			  $strip_tags = False);
     if (empty($_REQUEST['ea_year'])) $_REQUEST['ea_year'] = $_POST['ea_year'] = date('Y',time());
   }
@@ -135,7 +135,7 @@ class bIcal_matrix_ea extends bIcal_matrix{
     foreach ($t1 as $pos=>$t)  if (stristr($position,$pos)) $rate = $t;
     foreach ($t2 as $pos=>$t)  if (stristr($position,$pos)) $rate = $t;
     if (empty($rate))                                       $rate = strToLower($position);
-    if ($rate !== $rateN)    myPear::WARNING_T("rate '$rateN' ==> '$rate'");
+    if ($rate !== $rateN)    MSG::WARNING_T("rate '$rateN' ==> '$rate'");
     b_debug::xxx($rate);
     return $rate;
   }

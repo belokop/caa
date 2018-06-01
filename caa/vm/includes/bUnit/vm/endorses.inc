@@ -64,7 +64,7 @@ class bUnit_vm_endorses extends bUnit_vm{
     $rec = $this->getUnitMember($av_id);
     $rec['v_types'] = $this->safe_explode(@$rec['v_types']);
 
-    myPear::setPageHeader('Endorser '.bForm_Avatar::_fmtName('fl',$rec,False));
+    MSG::setPageHeader('Endorser '.bForm_Avatar::_fmtName('fl',$rec,False));
 
     $this->bForm(array());
     foreach(VM::$endorsements as $v_type=>$groups){
@@ -124,7 +124,7 @@ class bUnit_vm_endorses extends bUnit_vm{
     
     // Complain if the unit is not yet populated
     if ($verbose && empty($reply) && !empty($subject)){
-      myPear::WARNING('No endorser appointed for visits of type "'.VM::$description[$subject]['d'].'"'); 
+      MSG::WARNING('No endorser appointed for visits of type "'.VM::$description[$subject]['d'].'"'); 
     }
     return $reply;
   }

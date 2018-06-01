@@ -340,7 +340,7 @@ function _ea_title_callback($tab, $dTab=Null,$returnText=False){
     }
     $menuItem = ($returnText
 		 ? $menuItem
-		 : t(bText::_(array('key' => "MENU_$tab",
+		 : t(b_t::_(array('key' => "MENU_$tab",
 				    'item'=> $menuItem))));
   }
   return $menuItem;

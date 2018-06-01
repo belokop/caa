@@ -48,7 +48,7 @@ class bUnit_ea_contacts extends bUnit{
   protected function edit_unitMember($av_id){
     $rec = $this->getUnitMember($av_id);
     $cp = bForm_Avatar::_fmtName('fl',$rec,False);
-    myPear::setPageHeader("Contact person $cp");
+    MSG::setPageHeader("Contact person $cp");
     
     $this->bForm(array());
     

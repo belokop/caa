@@ -18,7 +18,7 @@ class bMasterClass{
   private $cms_id = '';
 
   private static $__constructs = 0;
-  public  $debug   = False;
+  public  $debug   = cnf_dev;
 
   function __construct(){
     // Create the unique module ID
@@ -56,7 +56,7 @@ class bMasterClass{
       // Check that the database was not imported from another server
       if (!in_array(myPear_db()->Host,($cv=$this->_getValues('masterHost')))){
 	$fr = (empty($cv) ? '' : "'".join(',',$cv)."' -> ");
-	myPear::MESSAGE(sprintf("Truncate master table for %s'%s'",$fr,myPear_db()->Host));
+	MSG::MESSAGE(sprintf("Truncate master table for %s'%s'",$fr,myPear_db()->Host));
 	myPear_db()->truncateTable('zzz_master');
 	$this->_addValue('masterHost',myPear_db()->Host);
       }
@@ -179,9 +179,11 @@ class bMasterClass{
 	// since the pdates might be CLI-mode-depandant
 	if ($reply && !cnf_CLI){
 	  $this->addOption('masterUpdate',$update_script,$mtime);
-	  myPear::MESSAGE('Applying update script "'.basename($update_script).'".'.
-			  ($registered > 333333 ? ' Previous update from '.b_time::short_date_time($registered).', i.e. '.b_time::delta($mtime,$registered).' ago.' : ''));
-	  myPear_logs()->add('update','',"$module $version",myPear_cronjob()->ID,$module,True);
+	  $msg = 'Applying update script "'.basename($update_script).'".'.
+	    ($registered > 333333 ? ' Previous update from '.b_time::short_date_time($registered).', i.e. '.b_time::delta($mtime,$registered).' ago.' : '');
+	  MSG::MESSAGE($msg);
+	  $cronID = myPear_cronjob()->ID;
+	  myPear_logs()->add('update','',"$module $version",$cronID,$module,True);
 	}
       }
       $_SESSION[$id] = $reply;
@@ -231,10 +233,10 @@ class bMasterClass{
 	$this->dbg('init',"maxID=$maxID");
 	if (!empty($this->masterCounter)){
 	  $msg = "non-zero this->masterCounter < maxID:  $this->masterCounter < ".($maxID+1);
-	  myPear::WARNING_T($msg);
+	  MSG::WARNING_T($msg);
 	  // b_debug::report_bug($msg);
 	}                                                                                               
-	myPear::WARNING_T("set $this->masterCounter -> ".($maxID+1),$this);
+	MSG::WARNING_T("set $this->masterCounter -> ".($maxID+1),$this);
 	$this->masterCounter = $maxID;
 	$this->_update_masterCounter();
       }elseif($maxID == $this->masterCounter) {
@@ -243,8 +245,8 @@ class bMasterClass{
 	// Something is wrong, the counter value in the database 
 	// is smaller then the the previous value
 	$msg = "??? maxID = $maxID, but \$this->masterCounter = $this->masterCounter";
-	myPear::WARNING_T($msg,$this);
-	myPear::DEBUG($msg);
+	MSG::WARNING_T($msg,$this);
+	MSG::DEBUG($msg);
       }
     }catch (Exception $e) {
       b_debug::internalError(x('pre',$e->xdebug_message));
@@ -325,7 +327,7 @@ class bMasterClass{
 	$where = "master_object='$object' AND master_value='$value'";
 	$q = $this->query("SELECT master_option FROM zzz_master WHERE $where");
 	while($r = myPear_db()->next_record($q)){
-	  if (myPear::is_equal($option,$r['master_option'])) $is_equal = True;
+	  if (b_posix::is_equal($option,$r['master_option'])) $is_equal = True;
 	}
 	if (!@$is_equal) $this->query("UPDATE zzz_master SET master_option='$option' WHERE $where");
       }

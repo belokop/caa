@@ -52,7 +52,7 @@ class legacy_maildb extends myPear_base{
    */
   function __construct(&$parent_AV){
 
-    if (maildb_RO) myPear::WARNING("DEMO version, maildb command is in read-only mode");
+    if (maildb_RO) MSG::WARNING("DEMO version, maildb command is in read-only mode");
 
     // Include accounts into possible hooks
     foreach(array_keys($this->possible_logins) as $acc){
@@ -129,7 +129,7 @@ class legacy_maildb extends myPear_base{
     }
 
     if (empty($_SESSION[__class__])){
-      myPear::ERROR("Can't read the maildb, no maildb updates possible");
+      MSG::ERROR("Can't read the maildb, no maildb updates possible");
       return Null;
     }
     
@@ -167,7 +167,7 @@ class legacy_maildb extends myPear_base{
 	}
       }
       if (empty($user)){
-	myPear::WARNING("No hook for av_id=$av_id, can't get maildb data");
+	MSG::WARNING("No hook for av_id=$av_id, can't get maildb data");
 	return Null;
       }
     }
@@ -180,7 +180,7 @@ class legacy_maildb extends myPear_base{
     }else{
       // update maildb
       if (!isset($old_value)) $old_value = @$_SESSION[__class__][$user][$key];
-      if ($new_value === '_RESET_' || myPear::is_empty($new_value)){
+      if ($new_value === '_RESET_' || b_posix::is_empty($new_value)){
 	$new_value = '';
 	$_SESSION[__class__][$user][$key] = $new_value;
 	$this->parent_AV->getValue_reset_forced($key,$new_value);
@@ -190,7 +190,7 @@ class legacy_maildb extends myPear_base{
 	$reply = $old_value;
       }elseif (strToLower($new_value) != strToLower($old_value)){
 	$msg = "maildb($user): " . (empty($new_value) ? x('em',"Unset $key") : x('em',"$key: $old_value --> $new_value"));
-	myPear::MESSAGE($msg);
+	MSG::MESSAGE($msg);
 	$this->dbg($msg);
       }
       
@@ -201,7 +201,7 @@ class legacy_maildb extends myPear_base{
 									: "-set $key=".str_replace(' ','#',$new_value)));
       if ($update_maildb){
 	$this->dbg($cmd_add);
-	if (maildb_RO || empty($_SESSION[__class__])) myPear::WARNING("Command to be executed:</br><code>$cmd_human_readable</code>");
+	if (maildb_RO || empty($_SESSION[__class__])) MSG::WARNING("Command to be executed:</br><code>$cmd_human_readable</code>");
 	else	                                      b_os::exec($cmd_add,'>>>');
       }else{
 	$this->dbg("Command ignored: $cmd_human_readable",cnf_dev);
@@ -235,7 +235,7 @@ class legacy_maildb extends myPear_base{
 	  $this->maildb($this->parent_AV->ID,$f,$new_value);
 	}else{
 	  $this->maildb($this->parent_AV->ID,$f,'_RESET_');
-	  myPear::ERROR("\"$new_value\" is not a valid ".$data['d']);
+	  MSG::ERROR("\"$new_value\" is not a valid ".$data['d']);
 	}
       }
 
@@ -262,7 +262,7 @@ class legacy_maildb extends myPear_base{
       list($user,$domain) = explode('@',bForm_Avatar::generate_email($this->parent_AV->getValue('av_firstname',True),
 								     $this->parent_AV->getValue('av_lastname',True)));
       $this->maildb($this->parent_AV->ID,'m_myorg',$user);
-      myPear::MESSAGE("No hook for the maildb record \"".$this->parent_AV->name()."\" , create a new maildb entry as \"$user\"");
+      MSG::MESSAGE("No hook for the maildb record \"".$this->parent_AV->name()."\" , create a new maildb entry as \"$user\"");
     }
     $this->avatar2maildb($user);
 
@@ -292,7 +292,7 @@ class legacy_maildb extends myPear_base{
 		     $acc_kth,
 		     $this->parent_AV->fmtName('f'),
 		     $this->parent_AV->fmtName('l'));
-      if (maildb_RO) myPear::WARNING("Script to be executed:<br/><code>$cmd</code>");
+      if (maildb_RO) MSG::WARNING("Script to be executed:<br/><code>$cmd</code>");
       else           b_os::exec($exec);
     }
   }
@@ -388,7 +388,7 @@ class legacy_maildb extends myPear_base{
       case 'phone_mobile':
       case 'rating':
       default:
-	if (cnf_dev) myPear::DEBUG("?? unexpected field '$field'");
+	if (cnf_dev) MSG::DEBUG("?? unexpected field '$field'");
       }
     }
 
@@ -413,7 +413,7 @@ class legacy_maildb extends myPear_base{
 								    b_fmt::joinX(' ',$updates),
 								    join(' ',$unsets)));
       $this->dbg($cmd_human_readable);
-      if (maildb_RO || empty($_SESSION[__class__]))  myPear::WARNING("Command to be executed:</br><code>$cmd_human_readable</code>");
+      if (maildb_RO || empty($_SESSION[__class__]))  MSG::WARNING("Command to be executed:</br><code>$cmd_human_readable</code>");
       else                                           b_os::exec($cmd,'>>>');
     }
   }
@@ -431,7 +431,7 @@ class legacy_maildb extends myPear_base{
 		   join(' ',$what_to_do));
     $regexp = '/.HLO.*/i';
     $cmd_human_readable = trim(str_replace('#',' ',preg_replace($regexp,'<br/>&nbsp;',$cmd)));
-    if (cnf_dev|maildb_RO) myPear::DEBUG(__FUNCTION__."() ".str_replace('#',' ',$cmd));
+    if (cnf_dev|maildb_RO) MSG::DEBUG(__FUNCTION__."() ".str_replace('#',' ',$cmd));
     return array($cmd,$cmd_human_readable);
   }
 }

@@ -214,7 +214,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
     parent::__construct();
 
     // Catch the list of visits for a given person
-    if (isset($_GET['av_id'])) $this->av = myPear::getInstance_new('bForm_Avatar_vm',$_GET['av_id'],array('nocache','strict'));
+    if (isset($_GET['av_id'])) $this->av = loader::getInstance_new('bForm_Avatar_vm',$_GET['av_id'],array('nocache','strict'));
 
     // Define some useful shortcuts
     define('split_by_huts',(!is_object($this->av) &&
@@ -234,14 +234,14 @@ class bHolder_vm_Visitors extends bHolder_vm{
       // Warn if there is no applicants for the event
       $e_reg_end = VM::$e->getValue('e_reg_end',1);
       $e_start   = VM::$e->getValue('e_start',1);
-      if (!VM::$e->attenders()) myPear::MESSAGE_once(x('strong',"No applications yet for <em>".VM::$e->name()."</em>"));
+      if (!VM::$e->attenders()) MSG::MESSAGE_once(x('strong',"No applications yet for <em>".VM::$e->name()."</em>"));
 
       // Say (only once per session) when the event starts
       if ($e_start > time() && $e_start < time() + 365*24*3600){
-	myPear::MESSAGE_once(x('strong',b_time::delta(time(),$e_start).' before the event starts'));
-	if ($e_reg_end > time()) myPear::MESSAGE_once(x('strong',b_time::delta(time(),$e_reg_end).' before the applications deadline'));
+	MSG::MESSAGE_once(x('strong',b_time::delta(time(),$e_start).' before the event starts'));
+	if ($e_reg_end > time()) MSG::MESSAGE_once(x('strong',b_time::delta(time(),$e_reg_end).' before the applications deadline'));
       }
-      if (VM::outOfScope())	myPear::MESSAGE("This event is out of VM scope");
+      if (VM::outOfScope())	MSG::MESSAGE("This event is out of VM scope");
     }else{
       $this->bList_parent = myOrg_ID;
     }
@@ -255,7 +255,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
     //
     if (($lease_id  = @$_POST['_post_bForm_ID_once']) &&
 	($pay_option= @$_POST['_virt_pay']) &&
-	(myPear::getInstance_new("bForm_vm_Lease",$lease_id,array('nocache','strict')))){
+	(loader::getInstance_new("bForm_vm_Lease",$lease_id,array('nocache','strict')))){
       bForm_vm_Lease::_set_who_pays($lease_id,$pay_option);
     } 
 
@@ -274,7 +274,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
 	foreach(array('exp_'   => '',
 		      'travel' => 'travel reimbursement',
 		      'perdiem'=> VM_wordPerdiem,) as $f=>$t) $msg = str_replace($f,$t,$msg); 
-	myPear::MESSAGE($msg);
+	MSG::MESSAGE($msg);
       }
     }
 
@@ -314,10 +314,10 @@ class bHolder_vm_Visitors extends bHolder_vm{
 	  myPear_logs()->add('endorse',VM::$e->ID);
 	  foreach($this->organizers as $av_id){
 	    // Send the e-mails to organizers if not yet done
-	    $v = myPear::getInstance_new("bForm_vm_Visit",array('v_avid'=>$av_id,'v_eid'=>VM::$e->ID),array('nocache','strict'));
+	    $v = loader::getInstance_new("bForm_vm_Visit",array('v_avid'=>$av_id,'v_eid'=>VM::$e->ID),array('nocache','strict'));
 	    if (empty($v)){
 	      $av = new bForm_Avatar_vm($av_id);
-	      myPear::WARNING(sprintf("Organizer <em>%s</em> is not registered for <em>%s</em>",$av->fmtName('Lf'),VM::$e->name()));
+	      MSG::WARNING(sprintf("Organizer <em>%s</em> is not registered for <em>%s</em>",$av->fmtName('Lf'),VM::$e->name()));
 	    }else{
 	      VM_mailer()->remind_organizer($v,VM::$e,'en');
 	    }
@@ -332,9 +332,9 @@ class bHolder_vm_Visitors extends bHolder_vm{
       b_url::setReferrer(); 
       
       if(is_object($this->av)){
-	myPear::H1($this->av->name());
+	MSG::H1($this->av->name());
       }elseif($doing != 'endorsing'){
-	myPear::H1('empty');
+	MSG::H1('empty');
 	if (empty($_GET['host_avid_once']) && 
 	    !preg_grep('/bList.*_once/i',array_keys($_GET)) && 
 	    !preg_grep('/_post.*_class/',array_keys($_POST))){
@@ -441,7 +441,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
 
     case 'myguests':
       // ????????????????????      VM::$e = Null;
-      myPear::H1('People I invite','reset');
+      MSG::H1('People I invite','reset');
       
     case 'show_mails_exchange':
     case 'endorsing':
@@ -465,7 +465,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
 
       }elseif(@$_GET['invoice_once']){
 
-	myPear::WARNING('Invoice NYI');
+	MSG::WARNING('Invoice NYI');
 
       }elseif($p = preg_grep('/_c_id:\d+$/',array_keys($_POST))){
 	// The co-tenant is selected, create an entry in bList_vm_cotenants
@@ -489,9 +489,9 @@ class bHolder_vm_Visitors extends bHolder_vm{
 
       }
       if ($this->doing=='endorsing'){
-	myPear::H1('Pending visit approvals','reset');
+	MSG::H1('Pending visit approvals','reset');
       }elseif(!VM::$e && $this->doing!='myguests'){
-	myPear::H1('Visitors outside conferences','reset');
+	MSG::H1('Visitors outside conferences','reset');
 	// print x('h4',b_time::period(vm_day1,vm_day9));
       }
       break;
@@ -518,12 +518,12 @@ class bHolder_vm_Visitors extends bHolder_vm{
 
     if (!$dejaVu++ && function_exists('drupal_add_css')) drupal_add_css('./'.drupal_get_path('module',EA_MODULE).'/css/doorlabel.css');
 
-    $av = myPear::getInstance_new('bForm_Avatar_vm',$this->rec['av_id'],array('nocache','fatal'));
+    $av = loader::getInstance_new('bForm_Avatar_vm',$this->rec['av_id'],array('nocache','fatal'));
     if ($av->get_staffOffice()){
       $this->rec = array();
       return;
     }
-    $o  = myPear::getInstance_new('bForm_vm_Office',$this->rec['o_id'],'fatal');
+    $o  = loader::getInstance_new('bForm_vm_Office',$this->rec['o_id'],'fatal');
     if (!($img = $av->getPhoto('','',2))) $img = ''; 
     
     if ($this->nLabelsPrinted == 0) print(x('style','@media print{ footer {page-break-after:always;}').
@@ -642,7 +642,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
 	  }else{
 	    // Guarantee the correct value of status&policy in the snapshot record
 	    if (empty($this->rec['v_status'])){
-	      $this->v = myPear::getInstance_new('bForm_vm_Visit',$this->rec['v_id'],'fatal');
+	      $this->v = loader::getInstance_new('bForm_vm_Visit',$this->rec['v_id'],'fatal');
 	      $this->rec['v_status'] = $this->v->getStatus();
 	      $this->rec['v_policy'] = $this->v->getValue('v_policy',True);
 	    }
@@ -715,9 +715,9 @@ class bHolder_vm_Visitors extends bHolder_vm{
 	// Endorsing guest invitations
 	$pendings = VM_endorsers()->toEndorse(bAuth::$av->ID);
 	if (empty($pendings)){
-	  myPear::MESSAGE(x('strong',"There is no pending requests for You, everything is now resolved"));
+	  MSG::MESSAGE(x('strong',"There is no pending requests for You, everything is now resolved"));
 	}else{
-	  myPear::MESSAGE("Please edit the visit request form and:".
+	  MSG::MESSAGE("Please edit the visit request form and:".
 			  "<br/>- approve or deny the visit request".(count($pendings)>1?'s':'').
 			  "<br/>- check the budget code assigned for this visit");
 	  // $this->t = new b_table_zebra($this->header());
@@ -848,7 +848,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
       }
     }
 
-    if ($this->bs) print x('h4',(!myPear::is_empty($b=b_fmt::money(VM::$e->budgetSource()->total))
+    if ($this->bs) print x('h4',(!b_posix::is_empty($b=b_fmt::money(VM::$e->budgetSource()->total))
 				 ? "Available budget $b".CONST_currency.
 				 ($this->something_was_paid
 				  ? ''
@@ -959,7 +959,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
     }
     
     if (empty($c) || empty($d)){
-      myPear::WARNING_T("Strange, c='$c' d='$d'...",$this);
+      MSG::WARNING_T("Strange, c='$c' d='$d'...",$this);
     }else{
       if ($this->highlight = @$this->highlights[$c][$d]['h']){
 	@$this->collected_highlights[$this->highlights[$c][$d]['z']][$this->highlight]++;
@@ -1147,7 +1147,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
     // Show button "Release lock"
     if (VM::$e->isEventEndorsed()){ 
       $to_show[] = bIcons()->get('b-approved-hor');
-      if (!empty($fnc_message)) myPear::WARNING($fnc_message);
+      if (!empty($fnc_message)) MSG::WARNING($fnc_message);
       if (VM::hasRightTo('endorse_event')||VM_unlocker_here) $to_show[] = b_btn::big_button('Unlock the budget & allow changes',array('e_endorse_once'=>0,
 																      'resetcache_once'=>1),'red');
       // Show button "Endorse the event and lock changes" 
@@ -1161,7 +1161,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
 								       'resetcache_once'=>1));
       // Warning message for the organizers
     }elseif (!empty($fnc_message)){
-      myPear::WARNING($fnc_message);
+      MSG::WARNING($fnc_message);
     }
     if (!empty($to_show)){
       $t = new b_table("style='width:100%'");
@@ -1316,7 +1316,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
       $this->rec['e_v_policy'] = VM_visit_policies($this->rec['v_type']);
     }else{
       if (empty($this->rec['e_v_policy'])){
-	$e = myPear::getInstance_new('bForm_vm_Event',$this->rec['v_eid'],'fatal');
+	$e = loader::getInstance_new('bForm_vm_Event',$this->rec['v_eid'],'fatal');
 	$this->rec['e_v_policy'] = $e->get_e_v_policy();
       }else{
 	$this->rec['e_v_policy'] = b_fmt::safe_decode($this->rec['e_v_policy']);
@@ -1423,7 +1423,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
        * --------------------------------------------------------------------------------- Collect photos
        */
       static $dejaVu = array();
-      $av = myPear::getInstance_new('bForm_Avatar_vm',$this->rec['av_id'],array('nocache','fatal'));
+      $av = loader::getInstance_new('bForm_Avatar_vm',$this->rec['av_id'],array('nocache','fatal'));
       if (!@$dejaVu[$av->ID]++){
 	if (!($img = $av->getPhoto())) $img = "<img src='".myPear_images."avatar.png'>"; 
 	$this->labels[] = array($img,
@@ -1645,7 +1645,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
       $rec_hut_name = '_REFUSED_applications'; 
       break; 
     case STATUS_YES: 
-      // if (empty($rec['hut_code']) && cnf_dev) myPear::DEBUG("?? Empty hut_code for ".$rec['av_lastname']);
+      // if (empty($rec['hut_code']) && cnf_dev) MSG::DEBUG("?? Empty hut_code for ".$rec['av_lastname']);
       if (empty($rec['hut_name'])) $rec['hut_name'] = '_missing accommodation';
       $rec_hut_name = (@$rec['hut_code']===HUT_BI ? $rec['a_name'] : $rec['hut_name']);
       break;
@@ -1809,11 +1809,11 @@ class bHolder_vm_Visitors extends bHolder_vm{
     }else{
       $this->dbg("Multiple records for v_id ".$this->visit_ID,True); 
       // b_debug::var_dump($this->rec_visit[$this->visit_ID],($err_msg="??? deja vu visit ".$this->visit_ID));
-      // myPear::WARNING_T($this->rec_visit[$this->visit_ID],"$err_msg<br>See b_debug::var_dump");
+      // MSG::WARNING_T($this->rec_visit[$this->visit_ID],"$err_msg<br>See b_debug::var_dump");
     }
     
     foreach ($this->rec as $k=>$v){
-      if (myPear::is_empty($v)) continue;
+      if (b_posix::is_empty($v)) continue;
       if (preg_match('/(living|scholarship)[A-Z]/',$k)){
 	if (empty($this->rec_visit[$this->visit_ID][$k])) $this->rec_visit[$this->visit_ID][$k] = 0;
 	if (is_numeric($v)){
@@ -1914,7 +1914,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
     }elseif ($this->rec['v_end'] < time()){
       $reply = b_fmt::redText('no accommodation'); 
     }elseif (is_object(VM::$e) && VM::hasRightTo('book_ah')){
-      if (myPear::is_empty($n_select=@$this->rec['lease_id']))  $n_select = $this->rec['v_id'];
+      if (b_posix::is_empty($n_select=@$this->rec['lease_id']))  $n_select = $this->rec['v_id'];
       VM::$formDummy->submitOnChange["_a_id:$n_select"] = True;
       $reply =  x("span class='only_online'",
 		  x("form action='".b_url::same('?',$this->anchor(True))."' method='post' enctype='multipart/form-data' name='ACC$n_select'",
@@ -2177,7 +2177,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
 	    
 	case VM_V_provideOffice:
 	  if (myOrg()->eaMembers()->isMember($this->rec['av_id'])){
-	    $av = myPear::getInstance_new('bForm_Avatar_vm',$this->rec['av_id'],array('fatal','nocache'));
+	    $av = loader::getInstance_new('bForm_Avatar_vm',$this->rec['av_id'],array('fatal','nocache'));
 	    if ($av->isE(True) && $av->get_staffOffice()) break;
 	  }
 	  $already_paid = '';
@@ -2340,7 +2340,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
     $this->total = array();
     foreach ($this->rec_visit as $v_id=>$rec){
       foreach($this->money as $item){
-	if (!($v = (myPear::is_int(@$rec[$item]) 
+	if (!($v = (b_posix::is_int(@$rec[$item]) 
 		    ? $rec[$item]
 		    : 0))) continue;
 	if ((strpos($item,'_r') == (strlen($item)-2)) && ($item != 'total_r')) $this->something_was_paid = True;
@@ -2390,8 +2390,8 @@ class bHolder_vm_Visitors extends bHolder_vm{
 	  print $body;
 	}
 	b_fmt::accordion('close');              
-	if ($type == 'message') myPear::MESSAGE(ob_get_contents());
-	else                    myPear::ERROR(ob_get_contents());
+	if ($type == 'message') MSG::MESSAGE(ob_get_contents());
+	else                    MSG::ERROR(ob_get_contents());
 	ob_end_clean();
       }
     }
@@ -2406,7 +2406,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
     case '2excel':
       if (!empty($_GET['e_excel_once'])){
 	if (empty($this->excel_input)){
-	  myPear::WARNING("There is no accommodation assigned yet");
+	  MSG::WARNING("There is no accommodation assigned yet");
 	}else{
 	  foreach($this->excel_input as $hut=>$data){
 	    b_os::write_excel_file(b_crypt::urlize($hut).'_'.b_crypt::hash(VM::$e->name()).'.csv',$data);
@@ -2567,7 +2567,7 @@ class bHolder_vm_Visitors extends bHolder_vm{
 	  $c = VM::$e->budgetSource();
 	  if ($this->event_is_bankrupt){
 	    $_GET[$arg] = 'yes';
-	    myPear::WARNING('<br/>The event '.x('em',x('"',VM::$e->name())).'<br/> has no known budget source.'.
+	    MSG::WARNING('<br/>The event '.x('em',x('"',VM::$e->name())).'<br/> has no known budget source.'.
 			    '<br/><br/>Please check the budget code with '.myOrg_name.
 			    ' administration and/or indicate other budget source using the dialog below');
 	  }

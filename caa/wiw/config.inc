@@ -51,7 +51,7 @@ class WIW extends myPear{
    */
   static public function _TT($org_id=Null){ 
     if (empty($org_id))  $org_id = myOrg_ID;
-    return self::_fromCache('bList_wiw_tripTypes',$org_id); 
+    return loader::_fromCache('bList_wiw_tripTypes',$org_id); 
   }
   
   /* Menu anker

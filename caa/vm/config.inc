@@ -8,11 +8,6 @@ define('VM_MODULE'   , 'vm');
 define('VM_VERSION','5.13.53');
 
 //
-// The Indico (agenda) host name
-//
-define('VM_agenda_host',(cnf_localhost ? 'agenda.nordita.org' : 'agenda.albanova.se'));
-
-//
 // transition problems...
 //
 if (function_exists('drupal_get_path') && is_file($f=drupal_get_path('module','myPear').'/includes/drupal8_compat.inc')) require_once $f;
@@ -241,7 +236,6 @@ define('STATUS_NO',      'STATUS_NO');
 define('STATUS_CLASH',   'STATUS_CLASH'); 
 
 define('REG_INVOICE', 3);          
-define('REG_NYI',     0);          
 
 define('btn_ok', 'OK');            
 define('btn_edit_accommodation' , 'modify accommodation');
@@ -610,7 +604,7 @@ class VM extends myPear{
   
   static public function _MENU(){
     if (b_reg::$current_module == VM_MODULE) start_VM();
-    return self::_fromCache('APImenu_vm'); 
+    return loader::_fromCache('APImenu_vm'); 
   } 
 
   static function start(){
@@ -785,10 +779,10 @@ class VM extends myPear{
       if ($e_ID===Null) $e_ID = (int)b_cnf::get('vm_eventSelector');
       
       if ((int)$e_ID > 0){
-	if (!is_object(self::$e))	self::$e = myPear::getInstance_new('bForm_vm_Event',$e_ID,'strict');
+	if (!is_object(self::$e))	self::$e = loader::getInstance_new('bForm_vm_Event',$e_ID,'strict');
 	if ($e_ID != ($id=@self::$e->ID)){
-	  self::$e = myPear::getInstance_new('bForm_vm_Event',$e_ID,'strict');
-	  myPear::WARNING_T("Change VM::e_ID $id -> $e_ID ");
+	  self::$e = loader::getInstance_new('bForm_vm_Event',$e_ID,'strict');
+	  MSG::WARNING_T("Change VM::e_ID $id -> $e_ID ");
 	}
       }
       
@@ -1205,7 +1199,7 @@ function VM_tooLate($recP,$cotenants=Null,$e=Null,$verbose=False,$what='email'){
   $tooLate = False;  
   foreach($matrix as $w){
     if ($tooLate = $w['c']){
-      if ($verbose && !@$dejaVu[$w['t']]++) myPear::WARNING("Too late for $what - ".$w['t']);
+      if ($verbose && !@$dejaVu[$w['t']]++) MSG::WARNING("Too late for $what - ".$w['t']);
       b_debug::_debug($tooLate,$verbose||True);
       break;
     }

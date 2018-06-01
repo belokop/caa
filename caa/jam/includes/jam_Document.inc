@@ -76,7 +76,7 @@ class jam_Document{
     if (!empty($errors)){
       foreach($errors as $error){
 	$msg = sprintf($error,$this->name());
-	myPear::WARNING($msg);
+	MSG::WARNING($msg);
 	b_debug::report_bug($msg . $formDB,__METHOD__);
       }
     }
@@ -101,7 +101,7 @@ class jam_Document{
       while($r=myPear_db()->next_record($q))     $this->formDB = $r;
       
       if (empty($this->formDB)){
-	if (cnf_dev) myPear::MESSAGE("Creating documents folder for ".$this->ap->name());
+	if (cnf_dev) MSG::MESSAGE("Creating documents folder for ".$this->ap->name());
 	$w[] = myPear_db()->quote(bMaster()->reserve_masterCounter(),True,'doc_id');
 	myPear_db()->qquery($cmd="INSERT INTO jam_documents SET ".join(',',$w),self::$_debug);
 	$this->_init();
@@ -109,7 +109,7 @@ class jam_Document{
 	$this->ID = $this->formDB['doc_id'];
       }
     }else{
-      myPear::WARNING_T('??? empty $this->member_ID');
+      MSG::WARNING_T('??? empty $this->member_ID');
     }
   }
 
@@ -118,7 +118,7 @@ class jam_Document{
    */
   function clean_uploadedFlag(){
     myPear_db()->query("UPDATE jam_documents SET doc_date=0,timestamp='".b_time::sql_timestamp()."' WHERE doc_id = '$this->ID'");
-    myPear::WARNING('CLEAN flag "uploaded" <i>"'.$this->name().'"</i> for '.$this->ap->name());
+    MSG::WARNING('CLEAN flag "uploaded" <i>"'.$this->name().'"</i> for '.$this->ap->name());
     $this->_init();
   }
 
@@ -129,8 +129,8 @@ class jam_Document{
       $this->_init();
       $msg = b_time::short_date($date).' upload '.$this->name().' for '.$this->ap->name();
       if ($date+3600 < time()) $verbose = False; // Do not report recovered files
-      if ($verbose) myPear::MESSAGE($msg);
-      else          myPear::WARNING_T($msg);
+      if ($verbose) MSG::MESSAGE($msg);
+      else          MSG::WARNING_T($msg);
     }
   }
   
@@ -222,7 +222,7 @@ class jam_Document{
     }
 
     if (empty($docs)){
-      if (cnf_dev) myPear::DEBUG("No documents supplied by av_id='$av'");
+      if (cnf_dev) MSG::DEBUG("No documents supplied by av_id='$av'");
     }else{
       ksort($docs);
       print x('h3','Uploaded files');

@@ -44,7 +44,7 @@ class bForm_vm_Event extends bForm_vm {
 	sort($names);
 	foreach($names as $a) $msg[] = x('em',$a);
       }
-      myPear::ERROR(join('<br>',$msg));
+      MSG::ERROR(join('<br>',$msg));
     }
     $this->dbg(exiting);
   }
@@ -97,7 +97,7 @@ class bForm_vm_Event extends bForm_vm {
 	$i_off = 'i-finger_down';
       }
       if (($policy !== VM_E_archived) && $this->isArchived()){
-	myPear::MESSAGE("This event is arhived");
+	MSG::MESSAGE("This event is arhived");
 	continue;
       }
 
@@ -236,7 +236,7 @@ class bForm_vm_Event extends bForm_vm {
       $this->attenders[$only_approved] = self::_attenders($this->ID,$only_approved);
     }
     $attenders = $this->attenders[$only_approved];
-    if (empty($attenders) && $warning_if_no) myPear::WARNING(x('strong',"Note, there is no applicants for this event yet..."));
+    if (empty($attenders) && $warning_if_no) MSG::WARNING(x('strong',"Note, there is no applicants for this event yet..."));
     $this->dbg($attenders,True);
     return $attenders; 
   }
@@ -315,7 +315,7 @@ class bForm_vm_Event extends bForm_vm {
       foreach(array('e_name','e_start','e_end','e_code','_virt_period','_virt_url') as $i) $this->isRO[$i] = True;
     }    
     
-    myPear::H1($this->nameSimple());
+    MSG::H1($this->nameSimple());
     $this->getFormOpen();    
     $this->formBlock("",' ',
 		     array('e_name'       => array('textField'),
@@ -419,7 +419,7 @@ class bForm_vm_Event extends bForm_vm {
     }
 
     $reply = b_mask::get($buffer['e_policy'], $policy);
-    if ($debug||cnf_show_pe) myPear::DEBUG(__method__."($policy) <em>".VM::$e_policies[$policy]['d'].($reply?' yes':' no').'</em>');
+    if ($debug||cnf_show_pe) MSG::DEBUG(__method__."($policy) <em>".VM::$e_policies[$policy]['d'].($reply?' yes':' no').'</em>');
     return  (bool)$reply;
   }
 
@@ -438,7 +438,7 @@ class bForm_vm_Event extends bForm_vm {
 
     case VM_E_provideOffice:
       if ($this->isEventEndorsed()){
-	myPear::WARNING(x('i',$this->name()."'s record is LOCKED, \"".VM::$e_policies[$policy]['d']."\" was not changed"));
+	MSG::WARNING(x('i',$this->name()."'s record is LOCKED, \"".VM::$e_policies[$policy]['d']."\" was not changed"));
 	return;
       }
     }
@@ -446,12 +446,12 @@ class bForm_vm_Event extends bForm_vm {
     $isChanged = $this->setBitMask($policy,'e_policy',$value);
 
     if ($isChanged){
-      if ($verbose) myPear::MESSAGE(x('i',$this->name().": ").VM::$e_policies[$policy]['d']."  ".($value?'YES':'NO'));
+      if ($verbose) MSG::MESSAGE(x('i',$this->name().": ").VM::$e_policies[$policy]['d']."  ".($value?'YES':'NO'));
       
       // Change the office policy for all visits
       if ($policy == VM_E_provideOffice){
 	foreach(self::_attenders($this->ID,'v_id') as $v_id){
-	  $v = myPear::getInstance_new('bForm_vm_Visit',$v_id,'fatal');
+	  $v = loader::getInstance_new('bForm_vm_Visit',$v_id,'fatal');
 	  $v->setPolicy(VM_V_provideOffice,$value,$verbose);
 	}
       }

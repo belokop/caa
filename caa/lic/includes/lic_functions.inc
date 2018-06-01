@@ -16,12 +16,12 @@ function lic_showDB($arg) {
 		  'h_name' => 'Host',
 		  'srv_name'=> 'Lic.server');
 
-  $h1 = sprintf('"%s" %s',$arg,bText::_('licenses usage'));
+  $h1 = sprintf('"%s" %s',$arg,b_t::_('licenses usage'));
   
   $where = array(1);
   //  if (!$show_all)
   foreach(array_keys($header) as $k){
-    if (!myPear::is_empty($v=@$_GET[$k]) && myPear_db()->columnExists($k)){
+    if (!b_posix::is_empty($v=@$_GET[$k]) && myPear_db()->columnExists($k)){
       $where[] = ($k == 'e_time'
 		  ? sprintf("$k > %s AND $k < %s",b_time::_($v,0),b_time::_($v,24))
 		  : myPear_DB()->quote($v,True,$k));
@@ -34,7 +34,7 @@ function lic_showDB($arg) {
   unset($header[$show_all||!empty($h1) ? 's_vrsn' : 'soft']);
   if (!$show_all && ($where===array(1)))    $where[] = myPear_DB()->quote($arg,True,'s_name');
   
-  print myPear::H1($h1,array('reset','noTranslate'));
+  print MSG::H1($h1,array('reset','noTranslate'));
 
   $considered_now = time() - 15*60; // last 15 minutes
   $requestToSort = !empty($_GET['sBy']);
@@ -177,7 +177,7 @@ function lic_fillDB($debug=False) {
 	  }
       }
       //yarevsky mollx52.fysik.su.se /dev/pts/0 (v2008.0213) (syslx17.fysik.su.se/28518 206), start Thu 1/15 6:36
-      //belokop norlxu01.albanova.se norlxu01.albanova.se/localhost:10 (v7.0) (syslx13.fysik.su.se/1700 772), start Fri 1/2 21:28, 6 licenses
+      //belokop norlxu01 norlxu01/localhost:10 (v7.0) (syslx13.fysik.su.se/1700 772), start Fri 1/2 21:28, 6 licenses
       //yb cnlx03.fysik.su.se /dev/pts/5 (v2007.0216) (syslx08.fysik.su.se/27000 337), start Sat 1/3 18:06
       if (preg_match('/^\s+(\S+) (\S+) .*start/',$l,$regs)){
 	if ($debug) print "$l\n       ------> $regs[1]\n";

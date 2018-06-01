@@ -149,7 +149,7 @@ class APImenu_prp extends APImenu{
 	if ($doing == 'managing')      $h->managingWhat = $tab;
 	$h->listEntries();
       }else{
-	myPear::WARNING('Please authenticate with your username and password');
+	MSG::WARNING('Please authenticate with your username and password');
       }
       break;
       
@@ -160,11 +160,11 @@ class APImenu_prp extends APImenu{
     case tab_prp_update:
       if (bAuth()->loginPrompt()){
 	locateAndInclude('bHolder_prp_preprints');
-	myPear::setPageHeader('Preprints management');
+	MSG::setPageHeader('Preprints management');
 	$h = new bHolder_prp_preprints('managing');
 	$h->listEntries();
       }else{
-	myPear::WARNING('Please authenticate with your username and password');
+	MSG::WARNING('Please authenticate with your username and password');
       }
       break;
       
@@ -174,7 +174,7 @@ class APImenu_prp extends APImenu{
 	$f = new bForm_prp('new');
 	$f->getForm();
       }else{
-	myPear::WARNING('Please authenticate with your username and password');
+	MSG::WARNING('Please authenticate with your username and password');
       }
       break;
       
@@ -194,7 +194,7 @@ function _prp_title_callback($tab, $dTab='',$returnText=False){
     if(isset(APItabs::$tab_definition[$tab]))  $tab = APItabs::$tab_definition[$tab];
     $menuItem = ($returnText
 		 ? $tab
-		 : t(bText::_(array('key' => "MENU_$tab",'item'=> $tab))));
+		 : t(b_t::_(array('key' => "MENU_$tab",'item'=> $tab))));
   }
   b_debug::xxx($menuItem,array('M',2));
   return $menuItem;

@@ -83,7 +83,7 @@ class bList_vm_socialEventRates extends bList_vm{
    *
    */
   protected function setPageHeader() {
-    myPear::H1($header=$this->getTabsHeader(),'reset');
+    MSG::H1($header=$this->getTabsHeader(),'reset');
   }
 
   /*
@@ -128,7 +128,7 @@ class bList_vm_socialEventRates extends bList_vm{
    */
   protected function message_deleteMember($args){
     $r = $this->getMember($args);
-    myPear::MESSAGE("Delete social event \"$r[lm_key]\"");
+    MSG::MESSAGE("Delete social event \"$r[lm_key]\"");
   }
 
   /*
@@ -151,9 +151,9 @@ class bList_vm_socialEventRates extends bList_vm{
     if (empty($args['lm_key'])){
       b_debug::print_r($args,'args');
       b_debug::traceBack("Missing social event name");
-      myPear::ERROR("Missing social event name");
+      MSG::ERROR("Missing social event name");
     }elseif($this->getMembers(array('lm_key'=>($n=$args['lm_key'])))){
-      myPear::ERROR("Record '$n' already exists");
+      MSG::ERROR("Record '$n' already exists");
     }else{
       unset($args['lm_id']); // Just in case...
       return parent::addMember($args);
@@ -328,7 +328,7 @@ class bList_vm_socialEventRates extends bList_vm{
 				     .x("'",$this->list_quering['p_isDD'])));
       $reply = False;
     }
-    if (!empty($errors)) myPear::ERROR(x('ul',join("\n",$errors)));
+    if (!empty($errors)) MSG::ERROR(x('ul',join("\n",$errors)));
     $this->dbg($reply);
     return $reply;
   }
@@ -405,7 +405,7 @@ class bList_vm_socialEventRates extends bList_vm{
    *
    */
   protected function format_radio(){
-    myPear::INFO_once(array(x('p','To select an event from the list click on "[ select ]"'),
+    MSG::INFO_once(array(x('p','To select an event from the list click on "[ select ]"'),
 			    x('p','Before the selection you might want to '.
 			      '<br/>&nbsp;- update the rates by clicking '.bIcons()->get('i-edit').
 			      '<br/>&nbsp;- remove an uninteresting event by clicking '.bIcons()->get('i-drop')),

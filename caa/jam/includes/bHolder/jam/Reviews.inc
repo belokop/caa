@@ -11,11 +11,10 @@ class bHolder_jam_Reviews extends bHolder_jam {
   public function __construct(){ // ($ap_id)
     if (empty($ap_id)) $ap_id = @$_GET['ap_id'];
     parent::__construct();
-    $this->ap = myPear::getInstance('bForm_jam_Applicant',$ap_id,array('strict','fatal'));
-    $this->title = '<h2>'.bText::_('Reviews for').' '.$this->ap->name().'</h2>';
+    $this->ap = loader::getInstance('bForm_jam_Applicant',$ap_id,array('strict','fatal'));
+    $this->title = '<h2>'.b_t::_('Reviews for').' '.$this->ap->name().'</h2>';
     $this->noSort = True;
     bIcons()->legendTitle = 'Comment';
-    b_debug::var_dump($_GET);
   }
   
   function header(){

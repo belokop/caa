@@ -14,7 +14,7 @@ class bUnit_vm_organizers extends bUnit_vm{
    */
   function  __construct($e_id,$rank=RANK_vm_organizer){
     parent::__construct($e_id,RANK_vm_organizer);
-    $this->e = myPear::getInstance_new('bForm_vm_Event',$e_id,'fatal');
+    $this->e = loader::getInstance_new('bForm_vm_Event',$e_id,'fatal');
   }
   
   /*
@@ -32,7 +32,7 @@ class bUnit_vm_organizers extends bUnit_vm{
   }
 
   function getForm(){
-    myPear::H1($this->getValue('l_name'),'reset');
+    MSG::H1($this->getValue('l_name'),'reset');
     print @$this->subtitle;
 
     $q = myPear_db()->qquery(sprintf("SELECT e_id,e_name,u_id,u_parent,u_rank,um_avid FROM %s ".
@@ -42,7 +42,7 @@ class bUnit_vm_organizers extends bUnit_vm{
 				     " ORDER BY e_end DESC",$this->TABLE_member,$this->TABLE,$this->parent_ID),
 			     cnf_dev);
     
-    myPear::H1($this->getValue('l_name'));
+    MSG::H1($this->getValue('l_name'));
 
     while ($r = myPear_db()->next_record($q)) {
       if ($r['e_id'] != @$e_id){
@@ -54,7 +54,7 @@ class bUnit_vm_organizers extends bUnit_vm{
 	$t->showLineCounter = False;
       }
       $e_id = $r['e_id'];
-      if ($av = myPear::getInstance_new('bForm_Avatar_vm',$r['um_avid'],array('fatal','strict'))){
+      if ($av = loader::getInstance_new('bForm_Avatar_vm',$r['um_avid'],array('fatal','strict'))){
 	$av->defineVariables();
 	$r['inst']  = x('i',b_fmt::strcut($av->getValue('av_institute',1),25));
 	$r['name']  = $av->fmtName('fl');

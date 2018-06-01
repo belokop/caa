@@ -23,7 +23,7 @@ class jamToolBox extends bToolBox{
 					  ),
 			      'RD'=>array('t'=>'(Re)create dossiers for '.x('em',(JAM_posID() ? JAM_pos()->name() : 'the current position')),
 					  'd'=>'<p>Refresh dossiers.</p><p>Note, this might take rather long time...</p>',
-					  'condition' => !myPear::is_empty(JAM_posID()),
+					  'condition' => !b_posix::is_empty(JAM_posID()),
 					  ),
 			      );
     parent::__construct();
@@ -39,7 +39,7 @@ class jamToolBox extends bToolBox{
     //
     //
     print x('h3','Check the non-completed applications');
-    if (myPear::is_empty(JAM::$bogusApplications)){
+    if (b_posix::is_empty(JAM::$bogusApplications)){
       print x('dl','No errors here');
     }else{
 
@@ -101,7 +101,7 @@ class jamToolBox extends bToolBox{
    */
   protected function execute_DA(){
     
-    switch (myPear::is_empty($id=@$_GET['continue_once'])){
+    switch (b_posix::is_empty($id=@$_GET['continue_once'])){
     case False:
       print x('h3',"Dropping recommendation letter record '$id'");
       //      $q = myPear_db()->qquery("DELETE FROM jam_recommendations WHERE rec_id = $id",True);
@@ -145,7 +145,7 @@ class jamToolBox extends bToolBox{
    */
   protected function execute_DR(){
     
-    switch (myPear::is_empty($id=@$_GET['continue_once'])){
+    switch (b_posix::is_empty($id=@$_GET['continue_once'])){
     case False:
       print x('h3',"Dropping recommendation letter record '$id'");
       $q = myPear_db()->qquery("DELETE FROM jam_recommendations WHERE rec_id = $id",True);
@@ -161,7 +161,7 @@ class jamToolBox extends bToolBox{
 				  " GROUP BY rec_avid,rec_apid ".
 				  " HAVING COUNT(*)>1 ORDER BY rec_apid DESC",cnf_dev);
       bDB::$_debug=False;
-      if (!myPear_db()->num_rows()) myPear::MESSAGE("There is no more duplicated request for the reference letter for this position");
+      if (!myPear_db()->num_rows()) MSG::MESSAGE("There is no more duplicated request for the reference letter for this position");
       
       while ($rr=myPear_db()->next_record($qq)){
 	$q = myPear_db()->qquery("SELECT * FROM jam_recommendations WHERE rec_apid = $rr[rec_apid] AND rec_avid = $rr[rec_avid] ORDER BY rec_submitdate DESC",False);
@@ -188,10 +188,10 @@ class jamToolBox extends bToolBox{
 	    }
 	    
 	    if($k=='rec_letter_file'){
-	      if  ($url = $rec->uploadedFile_url()) $url = x("a class='only_online' href='$url'",'[ '.bText::_('see it').' ]');
+	      if  ($url = $rec->uploadedFile_url()) $url = x("a class='only_online' href='$url'",'[ '.b_t::_('see it').' ]');
 	      else $url = b_fmt::redText('missing');
 	      $table[$k][$rec->ID] = $url;
-	    }elseif (!myPear::is_empty($v = $rec->getValue($k))){
+	    }elseif (!b_posix::is_empty($v = $rec->getValue($k))){
 	      if (strpos($k,'date') === False) $table[$k][$rec->ID] = $v;
 	      else                             $table[$k][$rec->ID] = x('tt',b_time::short_date($v));
 	    }else{

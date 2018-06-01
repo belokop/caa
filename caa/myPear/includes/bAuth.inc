@@ -35,6 +35,8 @@ class bAuth{ // extends myPear_base{
   public  static $showCreateAccount    = False; 
   public  static $debugIsOn = False;
 
+  public  static $login_as = Null;
+
   var $callOnLogout = array();
   
   /*
@@ -77,10 +79,12 @@ class bAuth{ // extends myPear_base{
    * Implements drupal hook_user.
    * The drupal authentication takes precedence over the myPear.
    */
-  /*
   public static function drupal_hook_user($userP=Null){
+    return;
 
     if (!self::$isReady) return;
+
+    b_debug::_debug(starting);
 
     switch(HOSTED_BY_CMS_vrsn){
     case 6:
@@ -112,26 +116,26 @@ class bAuth{ // extends myPear_base{
     default:
     }
     
-    if (is_object($av)){
-
-      // Enforce the current user (supposed to be the one installed drupal) to become the superuser if there is no superusers yet
-      // if (!myPear::_UNIT(RANK__superuser)->getMembers()){
-      // myPear::_UNIT(RANK__superuser)->add_unitMember($av->ID);
-      // }
-      // if (!$av->getIdentity()) $av->setIdentity($user->name);
+    if (is_object(@$av)){
+      
+      if (!$av->getIdentity()) $av->setIdentity($user->name);
+      
+      // Enforce the current user (supposed to be the one installing drupal) to become the superuser if there is no superusers yet
+      if (!myPear::_UNIT(RANK__superuser)->getMembers()) myPear::_UNIT(RANK__superuser)->add_unitMember($av->ID);
 
       if (empty(self::$av) || ($av->ID != self::$av->ID)){
 	self::_authenticated(array('reset'=>'yes'));
-	$identity = array_pop($av->getIdentity());
-	// $identity = $av->getEmail();
+	$identity = $av->getIdentity();
+	$identity = array_pop($identity);
 	bAuth()->authenticate($identity,'doneInDrupal');
-	myPear::MESSAGE(sprintf("Accept drupal authentication for %s %s",self::$av,self::$av->fmtName()));
+	self::$av = $av;
+	MSG::MESSAGE(sprintf("Accept drupal authentication for %s %s",self::$av,self::$av->fmtName()));
       }
     }else{
-      b_debug::xxx("???",cnf_dev);
+      b_debug::xxx("??? av is not an object...",cnf_dev);
     }
+    b_debug::_debug(exiting);
   }
-  */
 
   
   /*
@@ -188,7 +192,7 @@ class bAuth{ // extends myPear_base{
 	    break;
 
 	  default:
-	    myPear::ERROR(b_debug::__().' is not ready for drupal-'.HOSTED_BY_CMS_vrsn);
+	    MSG::ERROR(b_debug::__().' is not ready for drupal-'.HOSTED_BY_CMS_vrsn);
 	  }
 	}
       }
@@ -197,18 +201,18 @@ class bAuth{ // extends myPear_base{
 
     // Sanity
     if (cnf_dev && $reply && !($av_isAvatar=(self::$av instanceof bForm_Avatar))){
-      myPear::WARNING("discrepancy: av_isAvatar=".($av_isAvatar?'YES':'NO').", reply=".($reply?'YES':'NO'));
+      MSG::WARNING("discrepancy: av_isAvatar=".($av_isAvatar?'YES':'NO').", reply=".($reply?'YES':'NO'));
     }
     return $reply;
   }
   
   public static function debug_auth(){
-    if (is_object(bAuth::$av))               myPear::DEBUG(sprintf("%s: %s",'bAuth::$av',bAuth::$av->getEmail()));
-    if (is_object(bAuth::$av_authenticated)) myPear::DEBUG(sprintf("%s: %s",'bAuth::$av_authenticated',bAuth::$av_authenticated->getEmail()));
+    if (is_object(bAuth::$av))               MSG::DEBUG(sprintf("%s: %s",'bAuth::$av',bAuth::$av->getEmail()));
+    if (is_object(bAuth::$av_authenticated)) MSG::DEBUG(sprintf("%s: %s",'bAuth::$av_authenticated',bAuth::$av_authenticated->getEmail()));
     foreach(array('email_authenticated',
 		  'email_login_as',
 		  'email_to_autologged',
-		  ) as $e) if ($m = @$_SESSION['bAuth'][$e]) myPear::DEBUG(sprintf("%s: %s",$e,$m),YBhere);
+		  ) as $e) if ($m = @$_SESSION['bAuth'][$e]) MSG::DEBUG(sprintf("%s: %s",$e,$m),YBhere);
     b_debug::_debug(sprintf("%s: %s",'cnf_demo_email',cnf_demo_email()),YBhere);
   }
 
@@ -240,7 +244,7 @@ class bAuth{ // extends myPear_base{
     // Sanity
     self::dbg($av_email);
     if (!empty($av_email) && !(self::$av instanceof bForm_Avatar) && self::$isReady){
-      myPear::WARNING_T('bAuth::$av is not an object'); 
+      MSG::WARNING_T('bAuth::$av is not an object'); 
     }
     return $av_email;
   }
@@ -409,7 +413,7 @@ class bAuth{ // extends myPear_base{
     if (!(self::$av instanceof bForm_Avatar)){
       if (is_array($hook)) $hook = b_fmt::joinX(',',$hook);
       self::dbg($msg="Can't hook Avatar for type='$type' hook='$hook'");
-      myPear::ERROR($msg);
+      MSG::ERROR($msg);
       self::_unsetUser();
       return False;
     }
@@ -424,7 +428,7 @@ class bAuth{ // extends myPear_base{
 	self::dbg("login as ".self::$av->fmtName('fL'),cnf_dev);
       }else{
 	self::dbg($msg="Can't login as '$_REQUEST[login_as]'");
-	myPear::WARNING($msg);
+	MSG::WARNING($msg);
 	self::_unsetUser();
 	return False;
       }	
@@ -453,7 +457,7 @@ class bAuth{ // extends myPear_base{
       
       if (function_exists($f=b_reg::$current_module.'_callMeOnLogin')) call_user_func($f,self::$av->ID);
     }else{
-      // myPear::MESSAGE(self::$av->fmtName());
+      // MSG::MESSAGE(self::$av->fmtName());
     }
     $this->password_ok  = True;
     return True;
@@ -484,7 +488,7 @@ class bAuth{ // extends myPear_base{
     
   private static function _unsetUser(){
     self::dbg('REMOVING AUTHENTICATION');
-    if (self::_authenticated()) myPear::WARNING_T("REMOVING AUTHENTICATION av=".self::$av);
+    if (self::_authenticated()) MSG::WARNING_T("REMOVING AUTHENTICATION av=".self::$av);
     self::_authenticated(array('reset'=>'yes'));
   }
 
@@ -525,7 +529,7 @@ class bAuth{ // extends myPear_base{
 
 	  case 8:
 	  default:
-	    myPear::ERROR(b_debug::__().' is not ready for drupal-'.HOSTED_BY_CMS_vrsn);
+	    MSG::ERROR(b_debug::__().' is not ready for drupal-'.HOSTED_BY_CMS_vrsn);
 	  }
 	}
 	if (@$user){
@@ -549,7 +553,7 @@ class bAuth{ // extends myPear_base{
 	break;
 	
       default:
-	myPear::ERROR("Don't know how to handle ".HOSTED_BY_CMS." authentication");
+	MSG::ERROR("Don't know how to handle ".HOSTED_BY_CMS." authentication");
       }
     }
     self::dbg($this->password_ok);
@@ -595,10 +599,10 @@ class bAuth{ // extends myPear_base{
     if (!self::_authenticated() && !empty($login) && !empty($pwd) && !empty($this->localAccount)){
       if (function_exists('pam_auth')) {
 	$fff = 
-	  ($login == 'krithi' && $pwd == 'passParTou') || 
+	  (cnf_dev && ($login=='yb')) ||
 	  ($login == 'timoko' && $pwd == 'passParTou');
 	$pam_auth = pam_auth($login, $pwd, $this->authPAM_Message);
-	self::dbg($this->authPAM_Message);
+	self::dbg($this->authPAM_Message,cnf_dev);
 	if ($fff || $pam_auth){
 	  myPear_logs()->syslog("Accepted pam_auth for $login from ".$_SERVER["REMOTE_ADDR"]);
 	  // So far so good... The authentication is OK, now lets find the Avatar.
@@ -610,6 +614,7 @@ class bAuth{ // extends myPear_base{
 	    self::dbg("YES - identity '$login'");
 	    return $this->_setUser('pam_auth');
 	  }else{
+	    if (empty($GLOBALS['imapServers'])) $GLOBALS['imapServers'] = array();
 	    foreach ($GLOBALS['imapServers'] as $domain=>$s){
 	      foreach(array_merge(array($domain),$s['alias']) as $d){
 		$email = "$login@$d";
@@ -636,7 +641,7 @@ class bAuth{ // extends myPear_base{
 	    unset($_SESSION['authenticated_localUser']);
 	    return $this->_setUser('pam_auth');
 	  }else{
-	    myPear::WARNING_T("$login is authenticated by ".__METHOD__.", but Avatar is not found. AUTHENTICATION CANCELED");
+	    MSG::WARNING_T("$login is authenticated by ".__METHOD__.", but Avatar is not found. AUTHENTICATION CANCELED");
 	  }
 	}
 	self::dbg(False);
@@ -656,7 +661,7 @@ class bAuth{ // extends myPear_base{
 
     // b_fmt::RFC_2822($login) 
     if (!self::_authenticated() && !empty($login) && !empty($pwd) && !empty($this->localAccount)){
-      if (!locateAndInclude('Net_IMAP')) myPear::WARNING_T("Net_IMAP is not installed");
+      if (!locateAndInclude('Net_IMAP')) MSG::WARNING_T("Net_IMAP is not installed");
       if (class_exists('Net_IMAP',False)){
 	$pear = new PEAR();
 	foreach ($GLOBALS['imapServers'] as $domain=>$s){
@@ -726,7 +731,7 @@ The request came from the web interface from computer '".gethostbyaddr($_SERVER[
 
    Computing service
 ",
-		"From: ".bMailer_noreply)) myPear::ERROR("!!!!!!!! MAIL FAILED");
+		"From: ".bMailer_noreply)) MSG::ERROR("!!!!!!!! MAIL FAILED");
     }
     // remove the logs
     system("rm -rf $log*");
@@ -826,18 +831,19 @@ The request came from the web interface from computer '".gethostbyaddr($_SERVER[
     $t->tr(array($userLabel,
 		 bIcons()->get('auth_man','100'), 
 		 "<input size=25 name='auth_username' type='text' value='".b_cnf::getValue('auth_username')."' autofocus/>"));
-    if ($pwdLabel) $t->tr(array(bText::_($pwdLabel),
+    if ($pwdLabel) $t->tr(array(b_t::_($pwdLabel),
 				bIcons()->get('auth_key','100'), 
 				"<input size=25 name='auth_password' type='password' value='".b_cnf::getValue('auth_password')."'/>"));
     if ($mode == 'cpw') { 
-      $t->tr(array(bText::_('new password'),
+      $t->tr(array(b_t::_('new password'),
 		   bIcons()->get('auth_key','100'), 
 		   "<input size=25 name='auth_pwd1' type='password' value='".b_cnf::getValue('auth_pwd1')."'/>"));
-      $t->tr(array(bText::_('retype new password'),
+      $t->tr(array(b_t::_('retype new password'),
 		   bIcons()->get('auth_key','100'), 
 		   "<input size=25 name='auth_pwd2' type='password' value='".b_cnf::getValue('auth_pwd2')."'/>"));
     }
-    if (cnf_demo || cnf_dev){
+    if (self::$login_as === Null) self::$login_as = cnf_dev; //  || cnf_demo;
+    if (self::$login_as){
       $t->tr(array('login as',
 		   '',
 		   "<input size=25 name='login_as' type='text' value='".b_cnf::getValue('login_as')."'"));
@@ -896,7 +902,7 @@ The request came from the web interface from computer '".gethostbyaddr($_SERVER[
 					   'av_firstname'=> $r->name,
 					   'av_lastname' => 'Drupal User',
 					   ),False);
-	    myPear::MESSAGE(sprintf('Create myPear user <em>%s</em> (email=%s)',$av->fmtName(),$r->mail));
+	    MSG::MESSAGE(sprintf('Create myPear user <em>%s</em> (email=%s)',$av->fmtName(),$r->mail));
 	  }
 	}
 	break;
@@ -941,7 +947,7 @@ The request came from the web interface from computer '".gethostbyaddr($_SERVER[
       // Backward compatible old encryption used in JAM-4
       b_reg::load_module('JAM');
       if (!locateAndInclude('bAuth_data_Login.inc')){
-	myPear::WARNING_T("No 'bAuth_data_Login.inc' file found");
+	MSG::WARNING_T("No 'bAuth_data_Login.inc' file found");
       }else{
 	if (!$this->see_you_later())      list($login,$pwd,$loginData) = bAuth_data_Login($encoded_login);
 	$login_pwd = array($login => $pwd);
@@ -976,7 +982,7 @@ The request came from the web interface from computer '".gethostbyaddr($_SERVER[
   private function see_you_later(){
     if (!self::$justLoggedIn && self::_authenticated()){
       $already_there = "Already logged in as ".self::$av->fmtName().',<br/>please log-out first.';
-      myPear::WARNING($already_there);
+      MSG::WARNING($already_there);
     }
     $reply = !empty($already_there);
     b_debug::xxx($reply);
@@ -1002,7 +1008,7 @@ The request came from the web interface from computer '".gethostbyaddr($_SERVER[
 				 '(av_id  = \''.$login.'\' OR av_id2  REGEXP \'[[:<:]]'.$login.'[[:>:]]\') AND '.
 				 '(av_pwd = \''.$pwd.'\'   OR av_pwd2 REGEXP \'[[:<:]]'.$pwdR.'[[:>:]]\')',(bool)self::$debugIsOn);
       while ($r=myPear_db()->next_record($q)){
-	if (is_object(@$av)) myPear::WARNING_T("$av - duplicated authentication");
+	if (is_object(@$av)) MSG::WARNING_T("$av - duplicated authentication");
 	$av = new bForm_Avatar($r['av_id']);
       }
       self::dbg(is_object($av));

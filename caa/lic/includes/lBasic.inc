@@ -10,7 +10,7 @@ class lBasic {
   var $TABLEID= Null;
 
   function __construct() {
-    $id = myPear::$sql_identities[get_class($this)];
+    $id = loader::$sql_identities[get_class($this)];
     $this->TABLE  = $id['t'];
     $this->TABLEID= $id['i'];
   }

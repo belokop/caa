@@ -18,7 +18,7 @@ class bHolder_vm_Rooms extends bHolder_vm{
   private $current_hut = Null;
 
   public static function list_hut($hut_id,$e_id=Null){
-    if (empty($hut_id)) $hut_id = $_REQUEST['arg_once'];
+    if (empty($hut_id)) $hut_id = $_REQUEST['arg1_once'];
     if (!empty($e_id)) $_REQUEST['e_id_once'] = $_GET['e_id_once'] = $e_id;
     $holder = new bHolder_vm_Rooms('list_hut',$hut_id);
     $holder->listEntries();
@@ -27,21 +27,21 @@ class bHolder_vm_Rooms extends bHolder_vm{
   public function __construct($doing='list',$title='All apartments'){
     $this->dbg();
     parent::__construct();
-    $this->title = bText::_($title);
+    $this->title = b_t::_($title);
     $this->doing = $doing;
 
     // Delete a room if requested
     if ($a_id = @$_GET['delete_once']){
       $room = new bForm_vm_Room($a_id);
-      myPear::MESSAGE("Deleting unused room ".x('em',$room->name()));
-      myPear::getInstance_new('bForm_vm_Room',$a_id,'delete');
+      MSG::MESSAGE("Deleting unused room ".x('em',$room->name()));
+      loader::getInstance_new('bForm_vm_Room',$a_id,'delete');
       unset($room);
     }
 
     /*  
     // Hook the event if requested
     if (!empty($_GET['e_id_once'])){
-    $this->e = myPear::getInstance_new('bForm_vm_Event',$_GET['e_id_once']);
+    $this->e = loader::getInstance_new('bForm_vm_Event',$_GET['e_id_once']);
     print x('h3',$this->e->name());
     }
     */
@@ -101,7 +101,7 @@ class bHolder_vm_Rooms extends bHolder_vm{
 
       $this->current_hutID = $title;
       $this->current_hut = new bForm_vm_Hut($this->current_hutID);
-      myPear::H1($this->current_hut->name(),'noTranslate');
+      MSG::H1($this->current_hut->name(),'noTranslate');
     }
   }
   
@@ -179,9 +179,9 @@ class bHolder_vm_Rooms extends bHolder_vm{
     foreach($this->header() as $k=>$v) if ($k!=='a_name') $this->t->css[$k]['align'] = 'align_right';
     foreach(array('a_comment') as $k) $this->t->class[$k] = array('silverText');
 
-    $this->a = myPear::getInstance_new('bForm_vm_Room', @$this->rec['a_id'],array('strict'));
+    $this->a = loader::getInstance_new('bForm_vm_Room', @$this->rec['a_id'],array('strict'));
     if (empty($this->a)){
-      if (empty($ok)) myPear::ERROR("There is no rooms yet in \"".$this->rec['hut_name']."\", please add the first one");
+      if (empty($ok)) MSG::ERROR("There is no rooms yet in \"".$this->rec['hut_name']."\", please add the first one");
       $this->rec = array();
       return;
     }
@@ -266,7 +266,7 @@ class bHolder_vm_Rooms extends bHolder_vm{
       $q = self::_queryAps(" WHERE hut_id = ".$this->rec['hut_id']);
       while($r = myPear_db()->next_record($q)) {
 	$this->t->extraTD = array();
-	$this->a = myPear::getInstance_new('bForm_vm_Room',$r['a_id'],'fatal');
+	$this->a = loader::getInstance_new('bForm_vm_Room',$r['a_id'],'fatal');
 	$this->format_record_axi($r);
 	$this->t->prt($r);
       }

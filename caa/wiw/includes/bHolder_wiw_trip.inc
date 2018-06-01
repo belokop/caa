@@ -45,12 +45,12 @@ class bHolder_wiw_trip extends bHolder{
     }
     
     // Info message
-    myPear::INFO(array(wiw_acl_public. ' - '.wiw_acl_public_text,
+    MSG::INFO(array(wiw_acl_public. ' - '.wiw_acl_public_text,
 		       wiw_acl_protected.' - '.wiw_acl_protected_text),
 		 'The trip privacy might be "'.join('" OR "',array(wiw_acl_public,wiw_acl_protected)).
 		 '", the default is "'.wiw_acl_default.'"',
 		 $only_once=True);
-    myPear::INFO(array('all trips - click "Make all trips protected/public"',
+    MSG::INFO(array('all trips - click "Make all trips protected/public"',
 		       'one trip - click on the privacy value of the desired trip'),
 		 'You can change the privacy of your trips at any time:',
 		 $only_once=True);
@@ -80,7 +80,7 @@ class bHolder_wiw_trip extends bHolder{
     $old_value = $t->getValue('t_acl');
     if ($old_value != $new_value){
       $t->updateDB(array('t_acl'=>$new_value));
-      myPear::MESSAGE(sprintf($t->name(bAuth::$av->ID != $this->av_id).' is now "%s"',$new_value));
+      MSG::MESSAGE(sprintf($t->name(bAuth::$av->ID != $this->av_id).' is now "%s"',$new_value));
     }
   }
 

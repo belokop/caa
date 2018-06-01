@@ -29,7 +29,7 @@ class bForm_Avatar_jam extends bForm_Avatar{
 				"jam${old}_reviews"     =>'r_avid',
 				"jam${old}_recommendations" => 'rec_avid');
 	unset($table_affected['zzz_avatars']);
-	if ($avatars !== 'zzz_avatars') myPear::MESSAGE_forced(sprintf(__METHOD__."(AV %s) <em>%d</em>",self::_fmtName('Lf',$r),(++$n)));
+	if ($avatars !== 'zzz_avatars') MSG::MESSAGE_forced(sprintf(__METHOD__."(AV %s) <em>%d</em>",self::_fmtName('Lf',$r),(++$n)));
 	
 	// Delete the dependencies 
 	foreach($table_affected  as $table=>$id){
@@ -59,7 +59,7 @@ class bForm_Avatar_jam extends bForm_Avatar{
 	$query = "SELECT ap_id,ap_avid,ap_firstname,ap_lastname FROM jam${old}_applicants WHERE $where";
 	$qq = myPear_db()->qquery($query,True);
 	while ($r = myPear_db()->next_record($qq)){
-	  myPear::MESSAGE_forced(sprintf(__METHOD__."(AP %s %s) <em>%d</em>",strToUpper($r['ap_lastname']),$r['ap_firstname'],(++$n)));
+	  MSG::MESSAGE_forced(sprintf(__METHOD__."(AP %s %s) <em>%d</em>",strToUpper($r['ap_lastname']),$r['ap_firstname'],(++$n)));
 	}
 	$qq = myPear_db()->qquery($query,True);
 	while ($r = myPear_db()->next_record($qq)){
@@ -222,7 +222,7 @@ class bForm_Avatar_jam extends bForm_Avatar{
     if ($this->isReady() && !isset($this->ask_PhD_MS_cache[$what])){
       $reply = False;
       foreach($this->isApplicant(0,0,1) as $pos_id){
-	$pos = myPear::getInstance('bForm_jam_Position',$pos_id,'fatal');
+	$pos = loader::getInstance('bForm_jam_Position',$pos_id,'fatal');
 	$r_p = $pos->require_PhD();
 	$r_m = $pos->require_MS();	  
 	$r = (($what == 'PhD') ? $r_p : $r_m);
@@ -282,7 +282,7 @@ class bForm_Avatar_jam extends bForm_Avatar{
     foreach ($ranks as $rank){
       foreach($positions as $pos_id){
 	if ($pos_id instanceof bForm_jam_Position) { $pos = $pos_id; $pos_id = $pos->ID; }
-	else    $pos = myPear::getInstance('bForm_jam_Position',$pos_id);
+	else    $pos = loader::getInstance('bForm_jam_Position',$pos_id);
 	if ($pos->isConsidered()){
 	  foreach (bUnit_jam::getUnits($rank,$pos_id) as $r){
 	    if (JAM_unit($rank,$pos_id)->isMember($this->ID)) {

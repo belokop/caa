@@ -77,7 +77,7 @@ class bList_orgEmpTypes extends bList{
     static $noname = '???';
     $nMembers = bList_eaEmpRecords::countEmpByType($this->r['lm_key']);
     if (empty($this->r['lm_value'])) $this->r['lm_value'] = $noname;
-    //? if ($nMembers && $this->isWritable()) myPear::MESSAGE("$nMembers members in \"".$this->r['lm_value']."\"");
+    //? if ($nMembers && $this->isWritable()) MSG::MESSAGE("$nMembers members in \"".$this->r['lm_value']."\"");
     return b_cnf::check_conditions(array(True =>array('empty' => empty($this->r['lm_key'])),
 					 False=>array('RO'    => !$this->isWritable(),
 						      '!empty'=> ($nMembers > 0)),
@@ -145,7 +145,7 @@ class bList_orgEmpTypes extends bList{
    * Input form
    */
   protected function getFormAdd(){
-    myPear::H1('Updating '.$this->getValue('l_name'));
+    MSG::H1('Updating '.$this->getValue('l_name'));
     
     // Create the record if it is empty
     if (empty($this->member_ID))      $this->updateMember();
@@ -251,7 +251,7 @@ class bList_orgEmpTypes extends bList{
       if ($MBE){
 	$reply = $code; // Might Be Empty
       }else{
-	myPear::ERROR("Unknown employee code \"$code\"",$this);
+	MSG::ERROR("Unknown employee code \"$code\"",$this);
 	b_debug::traceBack();
       }
     }
@@ -269,7 +269,7 @@ class bList_orgEmpTypes extends bList{
       }else{
 	$msg = "";
       }
-      myPear::WARNING("Unknown employee type/title \"$text\"$msg");
+      MSG::WARNING("Unknown employee type/title \"$text\"$msg");
     }
     $this->dbg($reply,cnf_dev);
     return $reply;
@@ -281,7 +281,7 @@ class bList_orgEmpTypes extends bList{
 	      ? array()
 	      : unserialize($this->_code2tits[strToLower($code)]));
     if (empty($reply)){
-      myPear::ERROR("Unknown employee code \"$code\"",$this);
+      MSG::ERROR("Unknown employee code \"$code\"",$this);
       //b_debug::var_dump($this->getMembers(),"Unknown code \"$code\"");
     }
     $this->dbg($reply);
@@ -297,7 +297,7 @@ class bList_orgEmpTypes extends bList{
     if (empty($reply)){
       $reply = $this->get_defaultEmpType();
       if ($this->isWritable()){
-	myPear::WARNING("Unknown employee title \"$text\", set empType to \"".$this->code2text($reply)."\" for $id");
+	MSG::WARNING("Unknown employee title \"$text\", set empType to \"".$this->code2text($reply)."\" for $id");
 	b_debug::traceBack();
       }
     }
@@ -414,23 +414,23 @@ class bList_orgEmpTypes extends bList{
 	    b_debug::print_r($er,$msg.$name);
 	    b_debug::traceBack($msg.$name);
 	    // Modal or not? Some people hate modal windows...
-	    if($modal)myPear::WARNING($msg . bJS()->modal_iframe($url," [ $name ]"));
-	    else      myPear::WARNING($msg . b_btn::link($name,b_url::same($url)));
+	    if($modal)MSG::WARNING($msg . bJS()->modal_iframe($url," [ $name ]"));
+	    else      MSG::WARNING($msg . b_btn::link($name,b_url::same($url)));
 	  }
 	  $not_defined = False;
 	}
 	if ($not_defined){
 	  $this->empTypes[$unk][] = $av_id;
 	  $msg = "Employee Type is not set for ";
-	  if($modal)myPear::WARNING($msg . bJS()->modal_iframe($url," [ $name ]"));
-	  else      myPear::WARNING($msg . b_btn::link($name,b_url::same($url)));
+	  if($modal)MSG::WARNING($msg . bJS()->modal_iframe($url," [ $name ]"));
+	  else      MSG::WARNING($msg . b_btn::link($name,b_url::same($url)));
 	}
       }
       ksort($this->empTypes);
       static $ccc=0; b_debug::xxx(++$ccc);
     }
     if (empty($emp_type)) $emp_type = $unk;
-    if (!@$this->empTypes[$emp_type]) myPear::WARNING_T("No members in \"$emp_type\"");
+    if (!@$this->empTypes[$emp_type]) MSG::WARNING_T("No members in \"$emp_type\"");
     return @$this->empTypes[$emp_type];
   }
 }

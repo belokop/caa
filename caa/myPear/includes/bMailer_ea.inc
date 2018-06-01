@@ -19,7 +19,7 @@ class bMailer_ea extends bMailer{
     static $alumni_email = 'alumni@nordita.org';
 
     if ($av_id instanceof bForm_Avatar_ea) $av = $av_id;
-    else  $av = myPear::getInstance_new('bForm_Avatar_ea',$av_id,'fatal');
+    else  $av = loader::getInstance_new('bForm_Avatar_ea',$av_id,'fatal');
 
     switch($av->role()){
     case EA_role_alumnus:
@@ -71,7 +71,7 @@ The $org_name Alumni team";
       break;
 
     default:
-      myPear::WARNING_T("Cancel sending password to non-EA-member ".$av->name());
+      MSG::WARNING_T("Cancel sending password to non-EA-member ".$av->name());
       return;
     }
     

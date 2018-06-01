@@ -1,3 +1,9 @@
+form textarea{
+  min-height: 100%!important;
+  min-width: 350px; 
+  height: 200px;
+}
+
 /*
  * Drupal fixes
  */
@@ -114,9 +120,14 @@ tbody { border-top: 0 None; }
 /*
 .width0      { width: 2% ! important; padding: 0 ! important; }
 */
-.width0      { width:1px; padding-left: 1px ! important; padding-right: 1px ! important; white-space:nowrap ! important; }
+td           { width: auto; }
 
-.width100    { width: 100% ! important; min-width: 400px; max-width: 800px; }
+td.width0    { width:2%; padding-left: 1px ! important; padding-right: 1px ! important; white-space:nowrap ! important; }
+
+.width101    { width: 101%; }
+.width100    { width: 100% ! important; min-width: 400px; max-width: 2500px; }
+.width75     { width: 75%; }
+.width_auto  { width: auto; }
 
 .align_top   { vertical-align:top !important; }
 
@@ -148,6 +159,46 @@ tbody { border-top: 0 None; }
 .opacity_on  { opacity:0.3; }
 .opacity_off { opacity:0.7; }
 
+/*
+ * Buttons line start
+ */
+.buttons_line{
+    position: static;
+    width: 100%;
+    height: auto;
+    min-height: 15px;
+    margin-top: 20px;	
+}
+
+.buttons_line ul{
+    position: relative;
+    float: left;
+    top:  50%;
+    left: 25%;
+    transform: translate(-50%, -50%);
+    list-style: none;
+    text-align: center;
+    margin: 0;
+    padding: 0;
+}
+.buttons_line ul li{
+    display: block;
+    position: relative;
+    float: left;
+    text-align: center;
+    padding: 10px;
+    margin: 5px !important;
+    border: 1px;
+}
+.buttons_line ul li input,
+.buttons_line ul li button{
+    padding: 5px!important;
+}
+/*
+ * Buttons line end
+ */
+
+
 div.centralized{
 /*
     margin-left: auto;
@@ -155,6 +206,13 @@ div.centralized{
     width: 75%;
 */
     text-align:center ! important;
+}
+div.centralized2{
+    position: relative;
+    float: left;
+    top:  100%;
+    left: 50%;
+    transform: translate(-50%, -100%);
 }
 
 .badges{
@@ -222,6 +280,7 @@ div.archived{
 .lgreenText { color: #7fba00 ! important; }
 .dgreenText { color: #006400 ! important; }
 .limeText   { color: lime ! important; }
+.grText     { color: goldenrod ! important; }
 .maroonText { color: maroon ! important; }
 .navyText   { color: navy ! important; }
 .oliveText  { color: olive ! important; }
@@ -234,10 +293,10 @@ div.archived{
 .whiteText  { color: white ! important; }
 .yellowText { color: yellow ! important; }
 
-.bold-text   { font-weight:bold ! important; }
-.italic-text { font-style:italic ! important; }
-.bigger-text { font-size:120% ! important; }
-.smaller-text{ font-size:75% ! important; }
+.boldText,    .bold-text  { font-weight:bold ! important; }
+.italicText, .italic-text { font-style:italic ! important; }
+.biggerText, .bigger-text { font-size:120% ! important; }
+.smallerText,.smaller-text{ font-size:75% ! important; }
 
 .bg_grey     { background: none repeat scroll 0 0 #aaaaaa ! important; }
 .bg_red      { background: none repeat scroll 0 0 #bb0000 ! important; }
@@ -263,11 +322,11 @@ div.archived{
 .mdl_button{
    float: right;
 /* background: none repeat scroll 0 0 #00BB00 ! important; */
-   padding: 1px      ! important;
-   color: white      ! important;
-   font-weight: bold ! important;
-   font-size: large  ! important;
-   width: 200px;
+   padding: 1px;
+   color: white;
+   font-weight: bold;
+   font-size: large;
+   width: auto;
 }
 
 .big_button{
@@ -288,7 +347,7 @@ div.archived{
 .b_form       { color: #333;  vertical-align:top; }
 .b_form_desc  { background: #ddd; text-align:right; padding-right:5px; padding-left:5px; }
 .b_form_data  { background: #ddd; text-align:left;  padding-right:5px; padding-left:5px; font-style:italic;}
-.b_form_space { background: #ddd; color:#f00; padding:0; }
+.b_form_space { background: #ddd; color:#f00; padding:0; vertical-align: middle!important; }
 .b_form_transp{ background: transparent; color:#f00}
 
 /* 
@@ -296,6 +355,11 @@ div.archived{
  */
 div.login_prompt{
     width:333px;
+    background: transparent;
+}
+
+table{
+    margin-bottom: 0 !important;
 }
 
 table.login_prompt{
@@ -513,10 +577,11 @@ table.b_form,
 .b_table table,
 .b_table td,
 .b_table th{
-    vertical-align: top; 
-    border-right:  0 none;
-    border-bottom: 0 none;
-    border:        0 none;
+/* ????  2018-03-17 */
+/*    vertical-align: top; */  
+    padding-top: 3px;
+    padding-bottom: 3px;
+    border: 0 none;
 }
 
 .b_table th{

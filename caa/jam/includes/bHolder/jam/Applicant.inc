@@ -99,7 +99,7 @@ class bHolder_jam_Applicant extends bHolder_jam {
 	      $ngot[$name][$r['rec_id']]++;
 	    }
 	  }else{
-	    myPear::WARNING_T("??? empty rec_id for ap_id=$r[ap_id]");
+	    MSG::WARNING_T("??? empty rec_id for ap_id=$r[ap_id]");
 	    // b_debug::print_r($r,$r['ap_id']);
 	  }
 	}
@@ -214,8 +214,8 @@ class bHolder_jam_Applicant extends bHolder_jam {
   
   protected function _open(){
     if ($this->av_id){
-      $av = myPear::getInstance('bForm_Avatar_jam',$this->av_id);
-      myPear::MESSAGE($av->getWidget(bText::_('Applicant').' '.$av->name()));
+      $av = loader::getInstance('bForm_Avatar_jam',$this->av_id);
+      MSG::MESSAGE($av->getWidget(b_t::_('Applicant').' '.$av->name()));
     }
   }
 
@@ -273,7 +273,7 @@ class bHolder_jam_Applicant extends bHolder_jam {
 	      if (!JAM_access()->may_seePrivateReviews($av_id))    $all_reviewers_readable = False;
 	      $rec = JAM_unit($rank,$JAM_posID)->getUnitMember($av_id);
 	      $name = bForm_Avatar::_fmtName('sfl',$rec); 
-	      myPear::WARNING("The $n_reviews reviews of <em>$name</em> are private and not readable yet");
+	      MSG::WARNING("The $n_reviews reviews of <em>$name</em> are private and not readable yet");
 	    }
 	  }
 	}
@@ -360,7 +360,7 @@ class bHolder_jam_Applicant extends bHolder_jam {
 	if($this->ap_ids)$rec['_av_lastname']= bJS()->modal_ajax("?form=jam_Applicant&id=0&av_id=0&ap_id=$ap_id&id=$ap_id", $av_lastname);
 	else             $rec['_av_lastname']= x("a href=".x("'",b_url::same("?form=jam_Applicant&id=0&av_id=0&ap_id=$ap_id&id=$ap_id")),$av_lastname);
 
-	if (!is_object($this->pos) || ($this->pos->ID != $rec['pos_id'])) $this->pos = myPear::getInstance('bForm_jam_Position',$rec['pos_id']);
+	if (!is_object($this->pos) || ($this->pos->ID != $rec['pos_id'])) $this->pos = loader::getInstance('bForm_jam_Position',$rec['pos_id']);
 	if ($this->av_id && $this->pos) $rec['pos_logo'] = $this->pos->getLogo();
 
 	// Collect the application status as icons
@@ -373,7 +373,7 @@ class bHolder_jam_Applicant extends bHolder_jam {
 	
 	$rec['_av_phd_institute'] = $rec['av_phd_institute'];
 	if (!is_numeric($rec['av_phd_year'])){
-	  myPear::WARNING_T("av_phd_year='$rec[av_phd_year]'");
+	  MSG::WARNING_T("av_phd_year='$rec[av_phd_year]'");
 	}elseif (b_time::is_valid($rec['av_phd_year']) > 0){
 	  $rec['_av_phd_year'] = x('tt',b_time::_date('%b %Y',$rec['av_phd_year'])) .'&nbsp;&nbsp; '.b_fmt::escape(b_fmt::strcut($rec['av_phd_institute'],30));
 	  $rec['_av_phd_institute'] = '';

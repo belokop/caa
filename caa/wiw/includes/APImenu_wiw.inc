@@ -17,7 +17,7 @@ function _wiw_title_callback($tab, $dTab=Null,$returnText=False){
   if ($tab == WIW_MODULE) $tab = 'Who Is Where?';
   $menuItem = ($returnText
 	       ? $tab
-	       : t(bText::_(array('key' => "MENU_$tab",'item'=> $tab))));
+	       : t(b_t::_(array('key' => "MENU_$tab",'item'=> $tab))));
   return $menuItem;
 }
 
@@ -115,7 +115,7 @@ class APImenu_wiw extends APImenu{
     case tab_wiw_reg:
       if (bAuth()->loginPrompt()){
 	if (empty($_GET['id'])) $_GET['id'] = 'new';
-	$f = myPear::getInstance('bForm_wiw_trip',$_GET['id']);
+	$f = loader::getInstance('bForm_wiw_trip',$_GET['id']);
 	$f->av = bAuth::$av;
 	$f->getForm();
       }
@@ -124,14 +124,14 @@ class APImenu_wiw extends APImenu{
     case 'formTPL':
       $form = str_replace('bForm_','',$_GET['form']);
       if ($form == 'bForm') $f = new bForm($_GET['id'],'RO',False);
-      else                  $f = myPear::getInstance("bForm_$form",$_GET['id'],'strict');
+      else                  $f = loader::getInstance("bForm_$form",$_GET['id'],'strict');
       $f->getForm();
       break;
       
     default:
       $reply = $this->access_callback($tab);
       if ($reply === Null){
-	myPear::WARNING_T("'$tab' to be implemented...");
+	MSG::WARNING_T("'$tab' to be implemented...");
       }
       if (!bAuth::authenticated())	bAuth()->loginPrompt();
     }

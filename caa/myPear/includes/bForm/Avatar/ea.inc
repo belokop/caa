@@ -196,7 +196,7 @@ class bForm_Avatar_ea extends bForm_Avatar{
   }
 
   function __clean_cache(){
-    //    myPear::getInstance(get_class($this),$this->ID,'clean');
+    //    loader::getInstance(get_class($this),$this->ID,'clean');
     parent::__clean_cache();
   }
 
@@ -234,7 +234,7 @@ class bForm_Avatar_ea extends bForm_Avatar{
 	$this->dbg("$what=$currentItem_compressed");
 	if ($this->getValue($what,1) != $currentItem_compressed){
 	  $this->getValue_reset_forced($what,$currentItem_compressed);
-	  // myPear::MESSAGE_add($this->name()." - set current ".self::$av2er[$what]['d']." '$currentItem_compressed'");
+	  // MSG::MESSAGE_add($this->name()." - set current ".self::$av2er[$what]['d']." '$currentItem_compressed'");
 	}
 	break;
 	
@@ -242,7 +242,7 @@ class bForm_Avatar_ea extends bForm_Avatar{
 	$e_rate = myOrg()->orgEmpTypes()->code2text($currentItem);
 	$this->dbg($e_rate,True);
 	$this->getValue_reset($what,$e_rate);
-	// myPear::MESSAGE_add($this->name()." - set current ".self::$av2er[$what]['d']." '$_virt_e_rate'");
+	// MSG::MESSAGE_add($this->name()." - set current ".self::$av2er[$what]['d']." '$_virt_e_rate'");
 	break;
 	
       default:
@@ -271,7 +271,7 @@ class bForm_Avatar_ea extends bForm_Avatar{
 	
 	// Hook the bList_eaEmpRecords updates as if they come for the Avatar 
 	if ($this->eaEmpRecords->myPost_bList() && !isset($_POST['_post_bForm_ID_once'])){
-	  myPear::WARNING_T("Enforce _POST to be Avatar");
+	  MSG::WARNING_T("Enforce _POST to be Avatar");
 	  $_POST['_post_bForm_ID_once']    = $this->ID;
 	  $_POST['_post_bForm_class_once'] = get_class($this);
 	}
@@ -348,7 +348,7 @@ class bForm_Avatar_ea extends bForm_Avatar{
    */
   private function is($av_id=Null,$role=Null,$exact_match=True){
     $reply = False;
-    if (myPear::is_int($this->ID)){
+    if (b_posix::is_int($this->ID)){
       if(empty($av_id))  $av_id  = $this->ID;
       $reply = self::_is($av_id,$role,$exact_match);
     }
@@ -450,7 +450,7 @@ class bForm_Avatar_ea extends bForm_Avatar{
       
       $updates[$key] = $new_v;
       foreach(array($er['k'],$av) as $item) $this->getValue_reset($item,@$this->hook_employment()->formDB_member[$er['k']]);
-      if (cnf_dev) myPear::MESSAGE(__METHOD__.': updates='.b_fmt::joinX($updates));
+      if (cnf_dev) MSG::MESSAGE(__METHOD__.': updates='.b_fmt::joinX($updates));
       $this->hook_employment()->updateMember($updates,$lm_id);
     }
 
@@ -482,17 +482,17 @@ class bForm_Avatar_ea extends bForm_Avatar{
     $this->hook_employment()->sortArgs = ' ORDER BY '.self::$av2er['e_end']['k'].' ASC ';
     foreach($this->hook_employment()->getMembers(array('e_org' => myOrg_ID)) as $r_id=>$r){
       if (!($rec_type = @$r['rec_type'])){
-	myPear::WARNING("Missing 'Employment type'");
+	MSG::WARNING("Missing 'Employment type'");
 	continue;
       }
       // Set record type "Visiting appointment" if "major position" matches 'visit' 
       if (stripos($r['lm_value'],'visit') !== False){
 	$e = '40_va';
-	if ($rec_type != $e) myPear::WARNING_T(sprintf("Change rec_type '%s' -> '%s' for position '%s'",$rec_type,$e,$r['lm_value'])); 
+	if ($rec_type != $e) MSG::WARNING_T(sprintf("Change rec_type '%s' -> '%s' for position '%s'",$rec_type,$e,$r['lm_value'])); 
 	$rec_type = $e;
       }elseif($rec_type == '40_va'){
 	$e = '20_mp';
-	myPear::WARNING_T(sprintf("Change rec_type '$rec_type' -> '$e' for position '%s'",$r['lm_value'])); 
+	MSG::WARNING_T(sprintf("Change rec_type '$rec_type' -> '$e' for position '%s'",$r['lm_value'])); 
 	// ?? is it correct? Does the visiting position always contain word "visit"?
 	$rec_type = $e;
       }
@@ -555,7 +555,7 @@ class bForm_Avatar_ea extends bForm_Avatar{
    */
   protected function getValue_validate_empty($k,&$v){
     $err_msg = '';
-    if (myPear::is_empty($v)){
+    if (b_posix::is_empty($v)){
       $err_msg = parent::getValue_validate_empty($k,$v);
       switch($k){
       case 'av_office':
@@ -724,7 +724,7 @@ Seem to be useless....
       if ($reply){
 	$reply = (bool)(EA_ORG_manager_here && ($this->isE(True) || $this->isV(True)) && !$this->getValue('av_ddate',True,1));
       }else{
-	myPear::WARNING("LEGACY_MODULE is not active, can't communicate with 'maildb'"); 
+	MSG::WARNING("LEGACY_MODULE is not active, can't communicate with 'maildb'"); 
       }
     }
     return $reply;
@@ -802,7 +802,7 @@ Seem to be useless....
 								       : array()),
 								      $this->getValue('av_ddate',True));
     if (($n = count($records)) > 1){
-      myPear::WARNING_T("There are $n \"current employment\" records for ".
+      MSG::WARNING_T("There are $n \"current employment\" records for ".
 			$this->name().". The result might be ambiguous...");
     }
     

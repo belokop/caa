@@ -266,7 +266,7 @@ class bForm_jam_Applicant extends bForm_jam {
     switch($this->step()){
     case 1:
       if ($this->isOwner()){
-	myPear::INFO(array("Please complete the form below and click on the <em>\"continue\"</em> button at the end of the form.",
+	MSG::INFO(array("Please complete the form below and click on the <em>\"continue\"</em> button at the end of the form.",
 			   "DO NOT submit the application form more than once, you will get a chance to correct eventual errors.",
 			   "The fields marked with <span class='redText'>'*'</span> are required.",
 			   "Shortly after submitting the form you will receive an automated confirmation e-mail with the access code to your application."),
@@ -302,10 +302,10 @@ class bForm_jam_Applicant extends bForm_jam {
 	// Show the message
 	if (!empty($text)){
 	  // $text[] = x("li$m",x($b,"After completing the form click on the <i>\"continue\"</i> button at the end of the form."));
-	  myPear::MESSAGE(bText::_("<h1>Step 2:</h1> <ul>".join("\n",$text)."</ul>"));
+	  MSG::MESSAGE(b_t::_("<h1>Step 2:</h1> <ul>".join("\n",$text)."</ul>"));
 	}
       }elseif((int)$this->ID){
-	myPear::ERROR("<b><br/>".
+	MSG::ERROR("<b><br/>".
 		      "This application form was NOT completed by the applicant, and neither the confirmation e-mail nor the access code  was communicated.<br/>".
 		      "This might be a bogus application. </br/>".
 		      "Please request the applicant to complete the form if you think that this application is not a fake one.".
@@ -324,7 +324,7 @@ class bForm_jam_Applicant extends bForm_jam {
     self::$current = Null;
     foreach($this->my_recommendations() as $rec)      $rec->__clean_cache();
     if (is_object($this->av))  $this->av->__clean_cache();
-    myPear::getInstance(get_class($this), $this->ID, 'clean');
+    loader::getInstance(get_class($this), $this->ID, 'clean');
   }
 
   /*
@@ -385,7 +385,7 @@ class bForm_jam_Applicant extends bForm_jam {
 
     locateAndInclude('bForm_jam_RF');
     $msg = parent::getValue_validate_empty($name,$value);
-    if (myPear::is_empty($value)){
+    if (b_posix::is_empty($value)){
       switch($name){
       case 'ap_rfid':
 	locateAndInclude('bForm_jam_RF');
@@ -435,7 +435,7 @@ class bForm_jam_Applicant extends bForm_jam {
 
   function getInfo() {    
     if ($s=$this->isStatus(JAM_ap_revoked)) $s = bIcons()->get($s);
-    myPear::H1($s . $this->av->name(),array('reset','noTranslate'));
+    MSG::H1($s . $this->av->name(),array('reset','noTranslate'));
     $this->getFormOpen();
     $this->apPublicInfoBlock();
     $this->blockTimeStamp();
@@ -456,7 +456,7 @@ class bForm_jam_Applicant extends bForm_jam {
   protected function blockTimeStamp(){
     if ($sd=$this->application_submit_date()){  
       locateAndInclude('bText');
-      $this->formSignature(bText::_('Application submitted').' '.b_time::medium_date($sd));
+      $this->formSignature(b_t::_('Application submitted').' '.b_time::medium_date($sd));
     }
   }
   
@@ -512,7 +512,7 @@ class bForm_jam_Applicant extends bForm_jam {
     // Sanity & Superstition
     $this->dbg();
     if ($this->inside_getForm++){
-      myPear::WARNING_T("?? recursion ".$this->inside_getForm);
+      MSG::WARNING_T("?? recursion ".$this->inside_getForm);
       return;
     }
 
@@ -523,7 +523,7 @@ class bForm_jam_Applicant extends bForm_jam {
       // Ask for the "captcha" to protect against spammers
       $captcha = b_reCAPTCHA();
       if ($captcha !== True){
-	myPear::H1('Please type the text','reset');
+	MSG::H1('Please type the text','reset');
 	print $captcha;
 	return;
       }
@@ -550,12 +550,12 @@ class bForm_jam_Applicant extends bForm_jam {
       if (self::$inputToPDF){
 	print x('h1',$this->av->name());
       }elseif (cnf_inside_fb){
-	myPear::H1($this->av->name());
+	MSG::H1($this->av->name());
       }elseif($this->isOwner()){
-	myPear::H1($this->pos->name());
+	MSG::H1($this->pos->name());
 	print x('h3',$this->av->name());
       }else{
-	myPear::H1($this->av->name());
+	MSG::H1($this->av->name());
 	$message[] = x('h3',$this->pos->name());
 	$message[] = x('h4',$this->get_RFname());
 	// Build "next/previous candidate" buttons for the SC members
@@ -565,10 +565,10 @@ class bForm_jam_Applicant extends bForm_jam {
 	  if ($l=$this->getPrev())      $buttons[] = b_btn::link('previous applicant',$this->sameURL_but(array('id'=>$l)));
 	  if ($d)                       $buttons[] = b_btn::link('see the dossier',$d);
 	  if ($r=$this->getNext())      $buttons[] = b_btn::link('next applicant',    $this->sameURL_but(array('id'=>$r)));
-	  //	  if ($buttons) myPear::MESSAGE(x("div class='centralized'",join('&nbsp;&nbsp;',$buttons)));
+	  //	  if ($buttons) MSG::MESSAGE(x("div class='centralized'",join('&nbsp;&nbsp;',$buttons)));
 	  if (!empty($buttons)) $message[] = x("div class='centralized'",join('&nbsp;&nbsp;',$buttons));
 	}
-	if (!empty($message))  myPear::MESSAGE(join("\n",$message));
+	if (!empty($message))  MSG::MESSAGE(join("\n",$message));
       }
     }
     
@@ -626,7 +626,7 @@ class bForm_jam_Applicant extends bForm_jam {
 
     if (!$this->isConsidered() || (($this->step() < 3) && $this->isOwner())){
 
-      if($n = count($this->errorsInTheForm)) myPear::WARNING_T("Ignore ALL $n errors on step ".$this->step());
+      if($n = count($this->errorsInTheForm)) MSG::WARNING_T("Ignore ALL $n errors on step ".$this->step());
       $errors = array();
       
     }else{
@@ -640,7 +640,7 @@ class bForm_jam_Applicant extends bForm_jam {
       // Inform the applicant about missing referees and/or letters
       if ($this->isOwner()){
 	if ((($nw=($n_ask-$n_sent))>0) && ($d = $this->application_submit_date()) && ((time() - $d)/84600 > 3)){
-	  if ($n_sent < $n_need)  myPear::WARNING("Still waiting for $nw recommendation letter".($nw>1?'s':'')." to arrive"); 
+	  if ($n_sent < $n_need)  MSG::WARNING("Still waiting for $nw recommendation letter".($nw>1?'s':'')." to arrive"); 
 	}
       }
     }
@@ -767,7 +767,7 @@ class bForm_jam_Applicant extends bForm_jam {
 	
 	// Catch multiple recommendations from the same referee
 	if (empty($av_data['av_email2'])) {
-	  myPear::ERROR("'_virt_referee${n}_email' is not a valid e-mail address");
+	  MSG::ERROR("'_virt_referee${n}_email' is not a valid e-mail address");
 	  continue;
 	}
 	
@@ -775,7 +775,7 @@ class bForm_jam_Applicant extends bForm_jam {
 	$av = Null;
 	if ($avs = bForm_Avatar::hookByEmail($av_data['av_email2'])){
 	  $av = array_pop($avs);
-	  if (!empty($avs)) myPear::ERROR("Can't uniquely identify the referee with e-mail '".join(',',$av_data['av_email'])."', there are many...");
+	  if (!empty($avs)) MSG::ERROR("Can't uniquely identify the referee with e-mail '".join(',',$av_data['av_email'])."', there are many...");
 	}
 	
 	// Create the Avatar for referee if all the vital fields (email,name,etc.)  are there
@@ -790,7 +790,7 @@ class bForm_jam_Applicant extends bForm_jam {
 
 	  if ($recs = bForm_jam_Recommendation::getRecommendations($this->pos->ID,$av->ID,$this->ID)) {
 	    // Catch multiple recommendations from the same referee
-	    myPear::WARNING("You have already requested ".((($n=count($recs)) == 1) ? "a recommendation" : "$n recommendations").
+	    MSG::WARNING("You have already requested ".((($n=count($recs)) == 1) ? "a recommendation" : "$n recommendations").
 			    " from ".$av->fmtName('sfl')."<br/>This request is ignored"); 
 	  }else{
 	    $av::$_debug = self::$_debug;
@@ -838,16 +838,16 @@ class bForm_jam_Applicant extends bForm_jam {
 	case 1: // Got the letter?
 	  if ($date = $recClass->isReceived()){
 	    $this->formDB[$field] = (self::$inputToPDF ? '' : x('strong',"Referee replied ".b_time::medium_date($date)));
-	    if (!myPear::is_empty($this->formDB[$field])) $nRows++;
+	    if (!b_posix::is_empty($this->formDB[$field])) $nRows++;
 	  }else{ 
-	    $this->formDB[$field] = b_fmt::redText(x('strong',bText::_('No reply yet...')),'blueText');
+	    $this->formDB[$field] = b_fmt::redText(x('strong',b_t::_('No reply yet...')),'blueText');
 	    $nRows++;
 	  }
 	  break;
 	case 2: // Comment
 	  if ($recClass->isReadable()){
 	    $this->formDB[$field] = $recClass->getValue('rec_comment',1,1);
-	    if (myPear::is_empty(@$this->formDB[$field])){
+	    if (b_posix::is_empty(@$this->formDB[$field])){
 	      unset($dialog[$field]);
 	    }else{
 	      $nRows++;
@@ -1010,7 +1010,7 @@ class bForm_jam_Applicant extends bForm_jam {
        */
       if (!empty($toBeReplaced)){
 	$msg="Updating dossier of ".$this->av->fmtName('sLf');
-	if (!$silent) myPear::MESSAGE($msg);
+	if (!$silent) MSG::MESSAGE($msg);
 	if (cnf_dev) b_debug::print_r($toBeReplaced,$msg);
 
 	// check the files for validity
@@ -1066,7 +1066,7 @@ class bForm_jam_Applicant extends bForm_jam {
 
     if (!file_exists($dossier_url)){
       $this->updateDB(array('ap_dossier_url' => ''));
-      myPear::WARNING("Can't create dossier for ".$this->av->fmtName());
+      MSG::WARNING("Can't create dossier for ".$this->av->fmtName());
       $reply = Null;
     }else{
       $reply = $dossier_url;
@@ -1115,9 +1115,9 @@ class bForm_jam_Applicant extends bForm_jam {
     if (!empty($what)){
       $name = x('em',$this->av->fmtName('sfL'));
       if ($old_status = $this->getValue('ap_status',1,1)){
-	myPear::MESSAGE("$name - cancel status \"".JAM::status($old_status,'c2d','ap_status').'"');
+	MSG::MESSAGE("$name - cancel status \"".JAM::status($old_status,'c2d','ap_status').'"');
       }
-      myPear::MESSAGE("$name - set status \"".JAM::status($what,'d').'"');
+      MSG::MESSAGE("$name - set status \"".JAM::status($what,'d').'"');
       $this->getValue_reset('ap_status',JAM::status($what));
     }
   }
@@ -1331,7 +1331,7 @@ class bForm_jam_Applicant extends bForm_jam {
       case 1:    
 	$reply = isset($ids[$this->ID]);
 	if (!$reply){
-	  myPear::WARNING_T($this->av->name()." already applied for ".$this->pos->nickname());
+	  MSG::WARNING_T($this->av->name()." already applied for ".$this->pos->nickname());
 	  if (!isset($ids[$this->ID]))	$ids[$this->ID] = 'current';
 	}
 	break;
@@ -1340,7 +1340,7 @@ class bForm_jam_Applicant extends bForm_jam {
 	 * If there is more then 1 processed applications, that is presumably my fault
 	 */
       default:
-	myPear::WARNING_T($this->av->name()." $n tries for ".$this->pos->nickname());
+	MSG::WARNING_T($this->av->name()." $n tries for ".$this->pos->nickname());
 	if (!isset($ids[$this->ID]))	$ids[$this->ID] = 'current';
 	$reply = False;
       }
@@ -1357,7 +1357,7 @@ class bForm_jam_Applicant extends bForm_jam {
   private function hookPosition(){
     if (!is_object($this->pos)){
       if (!($ap_posid = $this->getValue('ap_posid',1)))     $ap_posid = JAM_posID();
-      $this->pos = myPear::getInstance('bForm_jam_Position',$ap_posid, 'strict');
+      $this->pos = loader::getInstance('bForm_jam_Position',$ap_posid, 'strict');
       if (!($this->pos instanceof bForm_jam_Position)) b_debug::internalError("'$this->pos' is not 'bForm_jam_Position($ap_posid)' class",$this);
       $this->dbg($this->pos->__toString());
       $this->isLocked($this->pos->isStatus(JAM_pos_archived));
@@ -1397,7 +1397,7 @@ class bForm_jam_Applicant extends bForm_jam {
 	
 	$updates = array();
 	foreach(self::$ap2av as $t=>$f){
-	  if (!myPear::is_empty($v=$this->getValue($f,True))) $updates[$t] = trim($v);
+	  if (!b_posix::is_empty($v=$this->getValue($f,True))) $updates[$t] = trim($v);
 	}
 	// Sick! Don't remove "if(...)" !
 	if (!empty($updates)) $this->av->updateDB($updates);
@@ -1436,7 +1436,7 @@ class bForm_jam_Applicant extends bForm_jam {
 						  'av_ms_institute' => !$this->pos->require_MS(),
 						  )));
       // dangerous trick...
-      myPear::replaceInstance($this);
+      loader::replaceInstance($this);
 
       return True;
       
@@ -1449,20 +1449,20 @@ class bForm_jam_Applicant extends bForm_jam {
   private  function already_got_the_application(){
     return True;
     if ($n=$this->messInTheDatabase()){
-      myPear::WARNING(x('div class="redText centralized"',
+      MSG::WARNING(x('div class="redText centralized"',
 			join('<br/>',
-			     array(bText::_('Dear').' '.$this->av->name().',',
+			     array(b_t::_('Dear').' '.$this->av->name().',',
 				   '',
-				   bText::_("We have already got an application from you"),
-				   '('.bText::_('i.e. from the e-mail address')." '".$this->av->getEmail()."')",
-				   bText::_('for').' '.$this->pos->name().'.',
+				   b_t::_("We have already got an application from you"),
+				   '('.b_t::_('i.e. from the e-mail address')." '".$this->av->getEmail()."')",
+				   b_t::_('for').' '.$this->pos->name().'.',
 				   '',
-				   bText::_('Please check your mailbox for the Email which we sent to you')." $date,",
-				   bText::_('this Email contains all the information to access your application via the Internet.'),
+				   b_t::_('Please check your mailbox for the Email which we sent to you')." $date,",
+				   b_t::_('this Email contains all the information to access your application via the Internet.'),
 				   '',
 				   "<div class='align_right'>".
-				   "<font size=-1>".bText::_(array('key'=>'_Sincerely','item'=>'Sincerely')).
-				   ",<br/><i>".$this->pos->name()."<br/>".bText::_('search committee')."</i></font>"))));
+				   "<font size=-1>".b_t::_(array('key'=>'_Sincerely','item'=>'Sincerely')).
+				   ",<br/><i>".$this->pos->name()."<br/>".b_t::_('search committee')."</i></font>"))));
     }
     return !$this->messInTheDatabase();
   }
@@ -1568,7 +1568,7 @@ class bForm_jam_Applicant extends bForm_jam {
 	// send mails to the applicant and admins
 	$this->updateDB(array('ap_submitdate' => $this->setSubmitDate(),
 			      'ap_ip'         => $_SERVER['REMOTE_ADDR']));
-	myPear::MESSAGE("Registering application from ".$this->av->name());
+	MSG::MESSAGE("Registering application from ".$this->av->name());
 	JAM_mailer()->acknowlegeApplication($this);
 	
 	myPear_logs()->add('application',$this->ID);
@@ -1641,7 +1641,7 @@ class bForm_jam_Applicant extends bForm_jam {
       // Remove all the error messages concerning the referees and replace that by just 1 line
      foreach($this->errorsInTheForm as $key=>$value){
 	if (stripos($key,'referee') !== False){
-	  myPear::WARNING_T("Cancel errors message '$value' for '$key'",$this);
+	  MSG::WARNING_T("Cancel errors message '$value' for '$key'",$this);
 	  unset($this->errorsInTheForm[$key]);
 	}
       }

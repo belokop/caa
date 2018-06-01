@@ -13,12 +13,12 @@ function myPear_doSomething($action=Null,$id=Null){
       $fn = b_fmt::unEscape(bForm_Avatar::_fmtName('f',$r));
       $ln = b_fmt::unEscape(bForm_Avatar::_fmtName('l',$r));
       if ($fn !== $r['av_firstname'] || $fn !== $r['av_firstname']){
-	myPear::DEBUG("$r[av_lastname], $r[av_firstname]<br/>$ln, $fn");
+	MSG::DEBUG("$r[av_lastname], $r[av_firstname]<br/>$ln, $fn");
       }
     }
 
     break;
   default:
-    myPear::WARNING("How to do '$action'?");
+    MSG::WARNING("How to do '$action'?");
   }
 }

@@ -2,6 +2,8 @@
 
 class myPear_base{
 
+  protected static $__class__ = __class__;
+
   public static $_debug= False;
   public static $_dbg_color = 'blackText';
 
@@ -10,7 +12,9 @@ class myPear_base{
   /*
    *
    */
-  function __construct() {}
+  function __construct() {
+    if (isset($this->debug)) MSG::WARNING('$this->debug IS IGNORED!');
+  }
 
   /*
    *
@@ -26,13 +30,13 @@ class myPear_base{
     //if (stripos(get_class($this),'bList') !== False)    b_debug::watchDog(@$this->TABLEID,$this);
     //b_debug::watchDog(@$this->isMBE['av_citizenship'],$this,True);
     //b_debug::watchDog(@$this->isRO['av_birthdate'],$this,True);
-    //b_debug::watchDog($this->MODE,$this,(stripos(get_class($this),'Lease')));
+    //    b_debug::watchDog($_GET['id'],$this,True);
     //b_debug::watchDog("$this->t",get_class($this),True);
     //if (stripos(get_class($this),'Visit') !== False)    b_debug::watchDog(@$this->isRO['v_status'],$this);
     //    b_debug::watchDog($_REQUEST['vm_eventSelector']);
     //    b_debug::watchDog($this->errorsInTheForm, $this);
     //    $x=b_cnf::get('from_bForm');  if (class_exists('b_debug',0)) b_debug::watchDog($x,'from_bForm');
-    //    $x=@$this->rec['lease_option'];  if (class_exists('b_debug',0)) b_debug::watchDog($x,'lease_option');
+    //    $x=$this->errorsInTheForm; if (class_exists('b_debug',0)) b_debug::watchDog($x,'errorsInTheForm');
 
     switch(func_num_args()){
     case 0: 
@@ -54,7 +58,7 @@ class myPear_base{
       if (empty($stringOK))  $arg1[] = static::$_dbg_color;
       if (empty($numericOK)) $arg1[] = 2+$arg3;
       if (empty($objectOK))  $arg1[] = $this;
-      //      if (is_string($arg0))if (trim(strip_tags($arg0)) === 'event 267906') var_dump(self::$_dbg_color,static::$_dbg_color);
+      //      if (is_string($arg0))if (trim(strip_tags($arg0)) === 'event 267906') var_dump(static::$_dbg_color,static::$_dbg_color);
       return b_debug::_debug($arg0,$arg1);
     default: 
       b_debug::internalError("unexpected arguments...");

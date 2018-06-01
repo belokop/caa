@@ -96,7 +96,7 @@ class bHolder_jam_rateReferees extends bHolder_jam{
   private $s_count = array();
   function format() {
     if ($this->rec['ap_status'] == JAM::status(JAM_ap_revoked)){
-      myPear::WARNING_T("Revoked application where referee is ".bForm_Avatar::_fmtName('Lf',$this->rec));
+      MSG::WARNING_T("Revoked application where referee is ".bForm_Avatar::_fmtName('Lf',$this->rec));
       $this->rec = array();
     }else{
       $av_id = $this->rec['av_id'];
@@ -116,7 +116,7 @@ class bHolder_jam_rateReferees extends bHolder_jam{
 	break;
 	
       default:
-	if (is_object($av = myPear::getInstance('bForm_Avatar_jam',$av_id,array('strict','nocache')))){
+	if (is_object($av = loader::getInstance('bForm_Avatar_jam',$av_id,array('strict','nocache')))){
 	  if (empty($this->rec['pos_nickname'])) $this->rec['pos_nickname'] = @$this->rec['pos_name'];
 	  $c = @$GLOBALS['counterS'][$this->rec['ap_id']]++;
 	  

@@ -18,7 +18,7 @@ class bHolder_jam_Referees extends bHolder_jam{
       $this->where[] = "ap_posid = ".JAM_posID();
       if (!JAM_access()->may_seeRevokedApplications()) $this->where[] = "ap_status != ".JAM::status(JAM_ap_revoked);
     }else{
-      myPear::WARNING('No position selected');
+      MSG::WARNING('No position selected');
       $this->where[] = 0;
     }
   }
@@ -87,7 +87,7 @@ class bHolder_jam_Referees extends bHolder_jam{
     if (@$dejaVu[$this->rec['ap_id']]++){
       unset($this->rec['ap_submitdate']);
     }
-    if (!@$this->dejaVuSt[$this->rec['ap_avid']]++ && !myPear::is_empty($status=$this->rec['ap_status'])){
+    if (!@$this->dejaVuSt[$this->rec['ap_avid']]++ && !b_posix::is_empty($status=$this->rec['ap_status'])){
       $this->t->extraTD = bForm_jam::_allStatusIcons($this->rec,'ap_status');
     }
   }

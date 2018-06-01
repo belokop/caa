@@ -89,17 +89,34 @@
 .b_tabs_menu a:hover {
     color: #3C5050 ! important;
 }
-.b_tabs_current #featured a:hover {
-    color: #7B7B7B ! important;
-}
-#specials a:hover {
-    color: #E1E1E1 ! important;
-}
+
 .b_tabs_menu .b_tabs_current {
     background: url("img/b_tabs-left-on-line.gif") no-repeat scroll left top transparent;
     padding-left: 8px;
     position: relative;
     top: -7px;
+}
+.b_tabs_current a {
+    background: url("img/b_tabs-right-on-line.gif") no-repeat scroll right top transparent;
+    color: #7B7B7B ! important;
+    height: 12px ! important;
+    padding: 16px 13px 3px 7px;
+}
+li#left-white {
+    background: url("img/b_tabs-left-white.gif") repeat scroll 0 0 transparent;
+    width: 225px;
+}
+li#left-white-support {
+    background: url("img/b_tabs-left-white.gif") repeat scroll 0 0 transparent;
+    width: 60px;
+}
+
+/*
+.b_tabs_current #featured a:hover {
+    color: #7B7B7B ! important;
+}
+#specials a:hover {
+    color: #E1E1E1 ! important;
 }
 .b_tabs_menu #specials {
     background: url("img/b_tabs-left-on-line-2.gif") no-repeat scroll left top transparent;
@@ -113,12 +130,6 @@ li#featured {
     position: relative;
     top: -4px;
 }
-.b_tabs_current a {
-    background: url("img/b_tabs-right-on-line.gif") no-repeat scroll right top transparent;
-    color: #7B7B7B ! important;
-    height: 12px ! important;
-    padding: 16px 13px 3px 7px;
-}
 #specials a {
     background: url("img/b_tabs-right-on-line-2.gif") no-repeat scroll right top transparent;
     color: #FFFFFF;
@@ -130,11 +141,4 @@ li#featured {
     color: #7B7B7B;
     padding: 13px 12px 6px 4px;
 }
-li#left-white {
-    background: url("img/b_tabs-left-white.gif") repeat scroll 0 0 transparent;
-    width: 225px;
-}
-li#left-white-support {
-    background: url("img/b_tabs-left-white.gif") repeat scroll 0 0 transparent;
-    width: 60px;
-}
+*/

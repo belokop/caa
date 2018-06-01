@@ -123,7 +123,7 @@ class APIaccess_jam  extends  APIaccess{
       $f->closeForm('confirm');   print "<br/><br/>";
       $formDB = ob_get_contents();
       ob_end_clean();
-      myPear::MESSAGE($formDB);
+      MSG::MESSAGE($formDB);
     }
   }
 

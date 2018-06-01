@@ -42,7 +42,7 @@ class bCover_2010{
       if ($this->end  !='day9' && empty($this->set[$k]['day9'])) $this->set[$k]['day9'] = $this->set[$k][$this->end];
       //      if (!$k) b_debug::var_dump($this->set[$k],"k=$k");
     }
-    if ($this->debug) myPear::DEBUG(sprintf("%s() length of the set = %s, %s",
+    if ($this->debug) MSG::DEBUG(sprintf("%s() length of the set = %s, %s",
 					    __METHOD__,count($this->set),b_time::period($this->timeMn,$this->timeMx)));
   }
   
@@ -137,7 +137,7 @@ class bCover_2010{
     foreach ($reply as $n=>$a){
       if (($n1=count($reply[$n])) != ($n2=count(@$this->constraints[$n]))){
 	//	$this->dump($a,'solution '.$n);
-	// myPear::DEBUG(sprintf('n=%s ??? count(reply)=%s != count(constraints)=%s',$n,$n1,$n2));
+	// MSG::DEBUG(sprintf('n=%s ??? count(reply)=%s != count(constraints)=%s',$n,$n1,$n2));
       }
     }
     return $reply;
@@ -160,7 +160,7 @@ class bCover_2010{
     print "</pre></div>";
     $reply = ob_get_contents();
     ob_end_clean();
-    if ($this->debug) myPear::DEBUG($reply);
+    if ($this->debug) MSG::DEBUG($reply);
   }
   
   function dumpAxi($ar,$text,$l=15){
@@ -183,7 +183,7 @@ class bCover_2010{
     }
     $this->timeMn = min($this->timeMn, $d1, $d9);
     $this->timeMx = max($this->timeMx, $d1, $d9);
-    //    if ($this->debug) myPear::DEBUG(__METHOD__.'() '.b_time::period($this->timeMn,$this->timeMx));
+    //    if ($this->debug) MSG::DEBUG(__METHOD__.'() '.b_time::period($this->timeMn,$this->timeMx));
   }
 
   function dbg($text=' ',$forced=False){

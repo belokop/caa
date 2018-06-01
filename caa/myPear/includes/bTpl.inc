@@ -74,7 +74,7 @@ class bTpl{
     if ((int)$this->id)    $_POST['_selected_template'] = $this->id;
     else                   $this->id = @$_POST['_selected_template'];
 
-    if (!(int)$this->id) myPear::H1('Select the template');
+    if (!(int)$this->id) MSG::H1('Select the template');
     //else    print x('h4','Select another template');
 
     $templates = array();
@@ -131,7 +131,7 @@ class bTpl{
 
     $this->get();
     
-    if ($t = @$this->record['tpl_title']) myPear::H1($t);
+    if ($t = @$this->record['tpl_title']) MSG::H1($t);
 
     switch($this->mode){
       
@@ -189,7 +189,7 @@ class bTpl{
     $this->dbg($this->tpl_title_default);
     ob_start();
 
-    myPear::H1($this->id);
+    MSG::H1($this->id);
 
     list($tpl_title,$tpl_body,$tpl_render)  = $this->_getRecord();
 
@@ -271,7 +271,7 @@ class bTpl{
       $text = preg_replace(';(&lt.|<)([\s\:\w\/]*)(&gt.|>);',"$highlight_bad &lt;\\2&gt; $highlight_",$text);
     }
 
-    if ($nbad = substr_count($text,$highlight_bad)) myPear::WARNING("The template has $nbad broken token".($nbad>1 ? 's' : ''));
+    if ($nbad = substr_count($text,$highlight_bad)) MSG::WARNING("The template has $nbad broken token".($nbad>1 ? 's' : ''));
 
     $text = str_replace($highlight_bad,"<span class='".$this->token_bad."Text'>",$text);
     $text = str_replace($highlight_ok, "<span class='".$this->token.    "Text'>",$text);
@@ -293,7 +293,7 @@ class bTpl{
     list($tpl_title_old,$tpl_body_old,$tpl_render_old) = $this->_getRecord(True);
     
     if ($tpl_body===$tpl_body_old && $tpl_title===$tpl_title_old){
-      myPear::MESSAGE("There is no changes for $table $tpl_title, the record is not updated ");
+      MSG::MESSAGE("There is no changes for $table $tpl_title, the record is not updated ");
     }else{
       if (!(int)$this->id)	b_debug::internalError("missing record");
       $q[] = myPear_db()->quote($tpl_title,True,'tpl_title');
@@ -315,7 +315,7 @@ class bTpl{
   function edit(){
     $this->dbg("$this->mode $this->id $this->tpl_title_default");
     ob_start();
-    myPear::H1($this->id);
+    MSG::H1($this->id);
 
     list($tpl_title,$tpl_body,$tpl_render) = $this->_getRecord();
     if (function_exists($tpl_render)) $description = $tpl_render('SHOW_DESCRIPTION');

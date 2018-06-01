@@ -20,7 +20,7 @@ class bMailer_prp extends bMailer{
     $this->dbg();
     if ($preprint instanceof bForm) $this->prp_formDB = $preprint->formDB;
     elseif(!empty($preprint))       $this->prp_formDB = $preprint;
-    $owner = myPear::getInstance('bForm_Avatar',$this->prp_formDB['prp_avid']);
+    $owner = loader::getInstance('bForm_Avatar',$this->prp_formDB['prp_avid']);
     switch($action){
     case 'Reserved':
       $login = $this->packPWD_axi(bAuth::$av);
@@ -57,9 +57,9 @@ You can correct eventual typos at any time (button \"edit\"), you may also cance
   function informCensor($action,$preprint){
     if (cnf_CLI)    return;
     $this->dbg();
-    $owner = myPear::getInstance_new('bForm_Avatar',$preprint->getValue('prp_avid'));
+    $owner = loader::getInstance_new('bForm_Avatar',$preprint->getValue('prp_avid'));
     foreach(PRP_censors()->getUnitMemberIDs() as $av_id){
-      $av = myPear::getInstance('bForm_Avatar',$av_id);
+      $av = loader::getInstance('bForm_Avatar',$av_id);
       if ($av->ID != $owner->ID) $this->send($this->packPWD_axi($av),
 					     $av->getEmail(),
 					     bForm_prp::_serial($preprint->formDB)." $action for ".b_fmt::unescape($owner->fmtName('fl')),
@@ -127,7 +127,7 @@ You can correct eventual typos at any time (button \"edit\"), you may also cance
       $tit = "Preprint $action ".b_time::long_date($this->prp_formDB["prp_tm"]);
       if (bAuth::$av) $act = "$action by: ".b_fmt::unescape(bAuth::$av->fmtName('fl'));
     }
-    $owner = myPear::getInstance('bForm_Avatar',$this->prp_formDB['prp_avid']);
+    $owner = loader::getInstance('bForm_Avatar',$this->prp_formDB['prp_avid']);
     return join("\n",array($tit,
 			   "Number:  ".bForm_prp::_serial($this->prp_formDB),
 			   "Field:   ".PRP::$fields[$this->prp_formDB['prp_field']],

@@ -192,7 +192,7 @@ function vm_compat_update_54(){
     }
     if (!empty($removed_ids)) $msg[] = str_repeat('&nbsp;',3)."removed $n_removed lease_id: ".join(', ',$removed_ids);
   }
-  if (!empty($msg)) myPear::WARNING(join('<br>',$msg));
+  if (!empty($msg)) MSG::WARNING(join('<br>',$msg));
 }
 
 
@@ -231,7 +231,7 @@ function vm_compat_update_53(){
     default:
       // assign the unknown project to OA 
       b_debug::_debug($msg="Unexpected project type='$type' id=$id",True);
-      myPear::WARNING_T($msg);
+      MSG::WARNING_T($msg);
       myPear_db()->query("UPDATE abs_visits SET v_projectid = 31026 WHERE v_projectid=$id",True);
       myPear_db()->query("DELETE FROM zzz_list_members WHERE lm_id=$id",True);
     }
@@ -302,7 +302,7 @@ function vm_compat_update_49_2_Kronor_Hostel(){
   b_debug::xxx();
   locateAndInclude('bForm_vm_Hut');
   
-  $h_2kr = myPear::getInstance_new('bForm_vm_Hut',array('hut_name'=>'2 Kronor Hostel'),'strict');
+  $h_2kr = loader::getInstance_new('bForm_vm_Hut',array('hut_name'=>'2 Kronor Hostel'),'strict');
   if (empty($h_2kr)){
     $h_2kr = new bForm_vm_Hut('empty');
     $h_2kr->updateDB(array('hut_name'=>'2 Kronor Hostel',
@@ -311,9 +311,9 @@ function vm_compat_update_49_2_Kronor_Hostel(){
 			   ));
   }
   
-  $r = myPear::getInstance_new('bForm_vm_Room',array('a_hutid'=>$h_2kr->ID),'strict');
+  $r = loader::getInstance_new('bForm_vm_Room',array('a_hutid'=>$h_2kr->ID),'strict');
   if (empty($r)) {
-    $r = myPear::getInstance_new('bForm_vm_Room',array('a_name'=>'2 Kronor Hostel'),'strict');
+    $r = loader::getInstance_new('bForm_vm_Room',array('a_name'=>'2 Kronor Hostel'),'strict');
     $r->updateDB(array('a_name' => 'Bed',
 		       'a_hutid'=> $h_2kr->ID,
 		       ));
@@ -326,7 +326,7 @@ function vm_compat_update_49_2_Kronor_Hostel(){
 			 'hut_city'=>'Stockholm',
 			 'hut_code'=>'H',
 			 ));
-  $r = myPear::getInstance_new('bForm_vm_Room',5495);
+  $r = loader::getInstance_new('bForm_vm_Room',5495);
   $r->updateDB(array('a_name' => 'Bed',
 		     'a_hutid'=> $h_2kr->ID,
 		     ));
@@ -344,7 +344,7 @@ function vm_compat_update_49_visits($where){
   $holder->listEntries();
   $list = ob_get_contents();
   ob_end_clean();
-  myPear::MESSAGE($list);
+  MSG::MESSAGE($list);
 }
 
 
@@ -356,7 +356,7 @@ function vm_compat_update_49(){
   if ($dejaVu++) return;
   b_debug::xxx();
   if (myPear_db()->columnExists('a_quantity','abs_rooms')){
-    myPear::MESSAGE("Conversion is already done!");
+    MSG::MESSAGE("Conversion is already done!");
     return;
   }
 
@@ -499,7 +499,7 @@ function vm_compat_update_49(){
   //
   // Matsällskapet has 5 rooms with optional extra bed 
   //
-  $hutm = myPear::getInstance_new('bForm_vm_Hut',array('hut_name'=>'Matsällskapet'),array('fatal'));
+  $hutm = loader::getInstance_new('bForm_vm_Hut',array('hut_name'=>'Matsällskapet'),array('fatal'));
   $a_name = 'Room with kitchenet & extra bed';
   b_debug::xxx("Creating <em>$a_name</em> in ".$hutm->name());
   $r = new bForm_vm_Room('empty');
@@ -517,7 +517,7 @@ function vm_compat_update_49(){
       // See the pivot
       $a_root = new bForm_vm_Room(update49_get_pivot($d1));
       if (count(array_keys($d1)) == 1){ //  && !empty($d1['root'])){
-	myPear::MESSAGE(x('h3',"OK=".$a_root->ID."=========================$hut_name.$a_name "));
+	MSG::MESSAGE(x('h3',"OK=".$a_root->ID."=========================$hut_name.$a_name "));
 	$ids  = array(0);
 	$id2xs= array(bList_vm_accommodationOptions::id2x($a_root->ID));
       }else{
@@ -527,8 +527,8 @@ function vm_compat_update_49(){
 	  $a_root->getForm();
 	  $ob = ob_get_contents();
 	  ob_end_clean();
-	  myPear::MESSAGE(x('h3','============================'.$a_root->name()));
-	  myPear::MESSAGE($ob);
+	  MSG::MESSAGE(x('h3','============================'.$a_root->name()));
+	  MSG::MESSAGE($ob);
 	}
 	$id2xs = $ids = array();
 	foreach ($d1 as $a_id=>$room){
@@ -539,7 +539,7 @@ function vm_compat_update_49(){
 	}
       }
       sort($ids);
-            myPear::MESSAGE('a_ids='.implode(',',$ids));	
+            MSG::MESSAGE('a_ids='.implode(',',$ids));	
 
       myPear_db()->qquery("UPDATE abs_leases SET lease_aid = ".$a_root->ID." WHERE lease_aid = ".join(' OR lease_aid = ',$ids),True);
       $ids2delete = array_diff($ids,array($a_root->ID));
@@ -635,10 +635,10 @@ function vm_compat_update_49_set_prices($accOptions=Null,$array){
   b_debug::xxx();
   foreach($array as $hut_name=>$hut_data){
     if (empty($hut_data)) continue;
-    $hut = myPear::getInstance_new('bForm_vm_Hut',array('hut_name'=>$hut_name),array('fatal'));
+    $hut = loader::getInstance_new('bForm_vm_Hut',array('hut_name'=>$hut_name),array('fatal'));
     b_debug::xxx("Updating options for ".$hut->name());
     if (!empty($accOptions) && !is_object($accOptions)){
-      myPear::DEBUG(__function__."($accOptions): Activate VM_accommodationOptions($accOptions)"); 
+      MSG::DEBUG(__function__."($accOptions): Activate VM_accommodationOptions($accOptions)"); 
       $accOptions = VM_accommodationOptions($accOptions);
     }
     foreach($hut_data as $a_capacity=>$data){
@@ -673,7 +673,7 @@ function vm_compat_update_49_check_lease_aid($id){
 function vm_compat_update_49_convert_accommodationOptions($r,$ids,$id2xs,$a_id2remove){
   
   b_debug::xxx();
-    myPear::MESSAGE('id2xs='.implode(',',$id2xs));	
+    MSG::MESSAGE('id2xs='.implode(',',$id2xs));	
 
   $q = myPear_db()->qquery("SELECT lm_id,lm_key,lm_option FROM zzz_list_members LEFT JOIN zzz_lists ON lm_lid=l_id".
 			   " WHERE l_class = 'bList_vm_accommodationOptions' AND lm_option REGEXP '".join('|',$id2xs)."'", True);
@@ -701,8 +701,8 @@ function vm_compat_update_49_convert_accommodationOptions($r,$ids,$id2xs,$a_id2r
       if (0) var_dump(($matches=array_intersect($id2xs,array_keys($lm_option))),
 		      array_diff(array_keys($lm_option),$matches));
       myPear_db()->qquery("UPDATE zzz_list_members SET lm_option = '".serialize($lm_option)."' WHERE lm_id=$r[lm_id]",True);
-      //      myPear::MESSAGE($hut->name()."-$r[lm_key]; lm_option=".b_fmt::joinX(', ',$lm_option));
-      //      myPear::MESSAGE("matches=".join(', ',$matches));
+      //      MSG::MESSAGE($hut->name()."-$r[lm_key]; lm_option=".b_fmt::joinX(', ',$lm_option));
+      //      MSG::MESSAGE("matches=".join(', ',$matches));
     }
   }
   
@@ -797,7 +797,7 @@ function vm_compat_update_49_parser($r,&$table){
 		   );  
   $a_name    = trim(preg_replace(array_keys($fixes),array_values($fixes),$a_name));
   $a_comment = trim(preg_replace('/Studio Standard/i','Studio Medium',$a_comment));
-  if ($a_comment != $x) myPear::DEBUG("a_comment:<br>$x<br>$a_comment");
+  if ($a_comment != $x) MSG::DEBUG("a_comment:<br>$x<br>$a_comment");
   
   // Strip out the capacity from the room name
   $a_name= trim(str_replace('['.$r['a_capacity'].']','',$a_name));
@@ -914,11 +914,11 @@ function vm_compat_update_49_parser($r,&$table){
   if (!empty($a_comment))      $now[] = $a_comment;
   
   if (empty($a_name) || ($a_name == '???a_name')){
-    myPear::DEBUG("a_pay=$a_pay;  a_name=$a_name");
+    MSG::DEBUG("a_pay=$a_pay;  a_name=$a_name");
     
     $w=join(' ### OOO ### ',$was);
     $n=join(' ### NNN ### ',$now);
-    myPear::DEBUG($r['hut_name']."<br>$w<br>$n");
+    MSG::DEBUG($r['hut_name']."<br>$w<br>$n");
   }
 
   $reply = array($a_name,$a_pay,$sharable,$a_comment,$pay_comment);
@@ -987,7 +987,7 @@ function vm_compat_update_45(){
   $q = myPear_db()->qquery("SELECT v_policy,v_eid FROM abs_visits WHERE v_eid > 0 AND v_policy > 1",cnf_dev);
   while($r = myPear_db()->next_record($q)){
     if (bForm_vm_Visit::_getPolicy(VM_V_payTrip,$r)){
-      $v = myPear::getInstance_new('bForm_vm_Event',$r['v_eid'],'fatal');
+      $v = loader::getInstance_new('bForm_vm_Event',$r['v_eid'],'fatal');
       $v->setPolicy(VM_E_payTrip,1,True);
     }
   }
@@ -1013,10 +1013,10 @@ function vm_compat_update_42(){
   // Update the already accepted visitors
   $q = myPear_db()->qquery("SELECT v_id,v_eid FROM abs_visits WHERE v_status='".STATUS_YES."' AND v_eid > 0 AND v_start > ".b_time::txt2unix('2016-03-20'),cnf_dev);
   while($r = myPear_db()->next_record($q)){
-    $e = myPear::getInstance_new('bForm_vm_Event',$r['v_eid'],'fatal',array('abs_events','e_id'));
+    $e = loader::getInstance_new('bForm_vm_Event',$r['v_eid'],'fatal',array('abs_events','e_id'));
     if (VM::outOfScope($e)) continue;
     
-    $v = myPear::getInstance_new('bForm_vm_Visit',$r['v_id'],array('nocache','fatal'),array('abs_visits','v_id'));
+    $v = loader::getInstance_new('bForm_vm_Visit',$r['v_id'],array('nocache','fatal'),array('abs_visits','v_id'));
     $v->setPolicy(VM_V_provideOffice,1);
   }
 }
@@ -1035,7 +1035,7 @@ function vm_compat_update_41(){
       $was = $e_v_policy = $e->get_e_v_policy();
       // Add new policies
       $e->set_e_v_policy(VM::$description[VISIT_TYPE_PROGRAM]['p']);
-      if ($was != $e_v_policy)	myPear::DEBUG($e->name()." - adding policies ".join(', ',array_diff($e_v_policy,$was)));
+      if ($was != $e_v_policy)	MSG::DEBUG($e->name()." - adding policies ".join(', ',array_diff($e_v_policy,$was)));
     }
   }
 
@@ -1080,9 +1080,9 @@ function vm_compat_update_40(){
     if (0){
       $v = new bForm_vm_Visit($r['v_id']);
       $exp = $v->hookExp();
-      myPear::DEBUG(sprintf("%s  est=%d pay=%d",$v->av->fmtName('Lf'),$exp->getValue('exp_perdiem_est'),$exp->getValue('exp_perdiem')));
+      MSG::DEBUG(sprintf("%s  est=%d pay=%d",$v->av->fmtName('Lf'),$exp->getValue('exp_perdiem_est'),$exp->getValue('exp_perdiem')));
     }else{
-      //      myPear::DEBUG(sprintf("%s  est=%d pay=%d",bForm_Avatar::_fmtName('Lf',$r),$r['exp_perdiem_est'],$r['exp_perdiem']));
+      //      MSG::DEBUG(sprintf("%s  est=%d pay=%d",bForm_Avatar::_fmtName('Lf',$r),$r['exp_perdiem_est'],$r['exp_perdiem']));
       $t->prt(array('v_id'=>$r['v_id'],
 		    'who'=>bForm_Avatar::_fmtName('Lf',$r),
 		    'est'=>$r['exp_perdiem_est'],
@@ -1129,7 +1129,7 @@ function vm_compat_update_38(){
 	$n_changes++;
 	$old = $r['v_policy'];
 	$r['v_policy'] = b_mask::set($old, $p, 0);
-	// myPear::DEBUG("$n_changes - DROP $p (bit $pp) $old -> $r[v_policy]");
+	// MSG::DEBUG("$n_changes - DROP $p (bit $pp) $old -> $r[v_policy]");
       }
     }
     if ($n_changes) myPear_db()->qquery("UPDATE abs_visits SET v_policy=$r[v_policy] WHERE v_id=$r[v_id]",True);
@@ -1236,7 +1236,7 @@ function vm_compat_update_37(){
 	}
       }
     }
-    if (!is_object($av)) myPear::DEBUG("??? $r[v_host_avid]");
+    if (!is_object($av)) MSG::DEBUG("??? $r[v_host_avid]");
   }
   myPear_update_DBdefaults(array('abs_visits' =>array('int(11)' =>array('v_host_avid'))),'NULL');
 }
@@ -1349,7 +1349,7 @@ function vm_compat_update_33(){
   $q = myPear_db()->qquery("SELECT * FROM abs_rooms WHERE a_name REGEXP '^Hotel'",True);
   while($r = myPear_db()->next_record($q)){
     $hotel_name = preg_replace('/\[.*/','',trim(str_ireplace('Hotel','',$r['a_name'])));
-    myPear::DEBUG("$hotel_name <= ".$r['a_name']);
+    MSG::DEBUG("$hotel_name <= ".$r['a_name']);
     $hotels[] = $hotel_name;
   }
   
@@ -1414,7 +1414,7 @@ function vm_compat_update_33(){
   // Sanity, check that I did not forget anything
   $q = myPear_db()->qquery("SELECT * FROM  abs_rooms WHERE a_hutid = 0 OR a_hutid IS NULL",True);
   while($r = myPear_db()->next_record($q)){
-    myPear::WARNING_T("No hut for $r[a_name]");
+    MSG::WARNING_T("No hut for $r[a_name]");
   }  
 }
 
@@ -1459,7 +1459,7 @@ function vm_compat_update_32(){
 					 'um_status'=>''),
 				   $um_id);
       }else{
-	myPear::WARNING_T("????? Can't hook av_identity='$who'");
+	MSG::WARNING_T("????? Can't hook av_identity='$who'");
       }
     }
   }
@@ -1488,7 +1488,7 @@ function vm_compat_update_30(){
     $av=bForm_Avatar::hook(array('av_identity'=>'hvzm'));
     if (!VM_managers()->isMember($av->ID)){
       if (is_object($av))    VM_managers()->add_unitMember($av->ID);
-      else myPear::WARNING_T("??? Can't hook av_identity='hvzm'");
+      else MSG::WARNING_T("??? Can't hook av_identity='hvzm'");
     }
   }
   */  
@@ -1580,8 +1580,8 @@ function vm_compat_update_23(){
   $q = myPear_db()->qquery("SELECT * FROM `abs_visits` WHERE v_type = '_COLL' AND v_group = ''");
   while($r = myPear_db()->next_record($q)){
     $ok = 0;
-    $v = myPear::getInstance_new('bForm_vm_Visit',$r['v_id']); 
-    myPear::DEBUG("Missing v_group: $r[v_id] - ".$v->name().' <em>'.$v->host().'</em>');
+    $v = loader::getInstance_new('bForm_vm_Visit',$r['v_id']); 
+    MSG::DEBUG("Missing v_group: $r[v_id] - ".$v->name().' <em>'.$v->host().'</em>');
     if ($v->av_host){
       if (!empty($fix2[$v->av_host->ID])){
 	$ok++;
@@ -1698,13 +1698,13 @@ function vm_compat_update_18(){
 	  myPear_db()->query("UPDATE `abs_visits` SET `v_group` = '$g' WHERE $av_id=$av->ID AND v_group='' AND v_eid=0 AND v_type != '_RENT'");
 	}
       }else{
-	myPear::WARNING_T("no user '$l'");
+	MSG::WARNING_T("no user '$l'");
 	continue;
       }
     }
     $q=myPear_db()->query("SELECT * FROM `abs_visits` LEFT JOIN zzz_avatars ON v_host_avid=av_id WHERE v_eid=0 AND v_group='' AND v_type != '_RENT' GROUP BY av_id");
     while($r = myPear_db()->next_record($q)){
-      myPear::WARNING_T("v_group?? $r[av_identity] $r[av_firstname] $r[av_lastname]");
+      MSG::WARNING_T("v_group?? $r[av_identity] $r[av_firstname] $r[av_lastname]");
     }
   }
 }

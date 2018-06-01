@@ -28,10 +28,10 @@ if (!function_exists('bForm_massage_POST')){
 			    'prp_local'      => 'f-preprint.pdf',
 			    );
       
-      myPear::getClassFromID($id);
-      if (myPear::getClassFromID($id,'bForm_jam_Position')){
+      loader::getClassFromID($id);
+      if (loader::getClassFromID($id,'bForm_jam_Position')){
 	$_FILES_pre_massaged = $_FILES;
-	$q = myPear_db()->qquery("SELECT * FROM ".myPear::$_getClassFromID['t']." WHERE ".myPear::$_getClassFromID['i']." = $id",cnf_dev);
+	$q = myPear_db()->qquery("SELECT * FROM ".loader::$_getClassFromID['t']." WHERE ".loader::$_getClassFromID['i']." = $id",cnf_dev);
 	while($r = myPear_db()->next_record($q)) $formDB = $r;
 	foreach($_FILES as $name=>$data){
 	  if (!empty($files[$name]) && ($data['error'] == 4)){
@@ -45,7 +45,7 @@ if (!function_exists('bForm_massage_POST')){
 	}
 	if ($_FILES != $_FILES_pre_massaged) b_debug::print_r($_FILES,'_FILES massaged');
       }else{
-	myPear::DEBUG("can't hook id=$id");
+	MSG::DEBUG("can't hook id=$id");
 	b_debug::traceBack();
       }
     }

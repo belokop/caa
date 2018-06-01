@@ -13,10 +13,10 @@ class bMailer_jam extends bMailer{
 		       $pos=Null){
     
     if(!JAM_access()->may_sendMails()){
-      myPear::ERROR('Mail sending cancelled by JAM_access()->may_sendMails()');
+      MSG::ERROR('Mail sending cancelled by JAM_access()->may_sendMails()');
       b_debug::traceBack();
     }elseif(is_object($pos) && !$pos->isConsidered(True)){    
-      myPear::ERROR("Position '".$pos->getValue('pos_nickname')."' is not considered, email to '$to' not sent");
+      MSG::ERROR("Position '".$pos->getValue('pos_nickname')."' is not considered, email to '$to' not sent");
     }else{      
       parent::send($to, $subject, $message, $syslog_thisMail, $no_preview);
     }
@@ -42,7 +42,7 @@ class bMailer_jam extends bMailer{
     $this->no_preview = True;
     $this->dbg();
 
-    $ap = myPear::getInstance('bForm_jam_Applicant',$ap_id);
+    $ap = loader::getInstance('bForm_jam_Applicant',$ap_id);
     $applicant_name = $ap->av->fmtName('fl');
     $position_title = $ap->pos->name();
  
@@ -84,7 +84,7 @@ Best regards,
     $this->no_preview = True;
     
     if ($ap->isStatus(JAM_ap_revoked)){
-      myPear::WARNING_T("Revoked application");
+      MSG::WARNING_T("Revoked application");
     }else{
       $this->informAdmin('application');
       $this->send(array($ap->av),
@@ -116,7 +116,7 @@ Good luck with your application.
     $this->no_preview = True;
     $this->dbg();
 
-    $ap = myPear::getInstance('bForm_jam_Applicant',$ap_id);
+    $ap = loader::getInstance('bForm_jam_Applicant',$ap_id);
     $ap->check_formDB();
 
     // re-pack the errors list
@@ -131,7 +131,7 @@ Good luck with your application.
     }
 
     if (!$errors) {
-      myPear::WARNING("No errors in the application, the mail is NOT send");
+      MSG::WARNING("No errors in the application, the mail is NOT send");
       return;
     }
 
@@ -168,8 +168,8 @@ Good luck with your application.
     $this->no_preview = True;
     $this->dbg();
 
-    $av  = myPear::getInstance('bForm_Avatar_jam',$av_id);
-    $pos = myPear::getInstance('bForm_jam_Position',$pos_id);
+    $av  = loader::getInstance('bForm_Avatar_jam',$av_id);
+    $pos = loader::getInstance('bForm_jam_Position',$pos_id);
     $this->send($av->getEmail(),
 		'Applications for the "'.$pos->name().'"',
 		'Dear '.bForm_Avatar::_fmtName('f',$av->formDB).",
@@ -204,7 +204,7 @@ members of the Research Committee, who will evaluate the applicants.
     $this->dbg();
 
     if ($ap->isStatus(JAM_ap_revoked)){
-      myPear::WARNING_T("Revoked application");
+      MSG::WARNING_T("Revoked application");
     }else{
       $this->send(array($av),
 		  $av->getEmail(),

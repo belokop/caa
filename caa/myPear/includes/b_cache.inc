@@ -34,7 +34,7 @@ class b_cache {
   function __construct($arg,$type='globals') {  
     if (b_cnf::get('nocache',False)) $this->noCache = True;
     if ($this->noCache){
-      myPear::WARNING(b_cache."($type) IS OFF");
+      MSG::WARNING(b_cache."($type) IS OFF");
     }else{
 
       if (empty($arg)) b_debug::internalError("missing cache id");
@@ -127,7 +127,7 @@ class b_cache {
 	  $debug_a = array();
 	  foreach($cache_array[b_cache] as $hash_id=>$v){
 	    if (is_array($v))                             $f_value = 'array('.count($v).' elements)';
-	    elseif($f_value=myPear::getClassFromID($v))$f_value.= "($v)"; 
+	    elseif($f_value=loader::getClassFromID($v))$f_value.= "($v)"; 
 	    else          	                          $f_value = b_fmt::strcut(b_fmt::_($v),66,'...');
 	    $debug_a[] = $f_value;
 	  }
@@ -136,7 +136,7 @@ class b_cache {
 	}
       }
       static $restN = 0;
-      myPear::WARNING_T("b_cache reset #".(++$restN),$this);
+      MSG::WARNING_T("b_cache reset #".(++$restN),$this);
       
     case 'reset':
       $cache_array[b_cache] = array();

@@ -36,7 +36,7 @@ function _myPear_install_bDB($module) {
 		$query = trim($query);
 		if (!empty($query)) myPear_db()->query($query);
 	      }
-	      myPear::MESSAGE(sprintf("Creating $module database table %s@%s.%s",myPear_db()->Database,myPear_db()->Host,$table));
+	      MSG::MESSAGE(sprintf("Creating $module database table %s@%s.%s",myPear_db()->Database,myPear_db()->Host,$table));
 	    }
 	  }
 	}
@@ -45,7 +45,7 @@ function _myPear_install_bDB($module) {
       variable_set('api_install_'.$module,'ok');
     }
   }else{
-    myPear::WARNING($msg = "myPear database is not configured");
+    MSG::WARNING($msg = "myPear database is not configured");
     myPear::_SETUP('db',$msg);
   }  
 }

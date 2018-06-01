@@ -64,7 +64,7 @@ class b_cache_file{
       if (!isset($_SESSION['garbageCollection'])){
 	$cmd = 'find '.$this->cacheArea.' -mount -type f -atime +1 -exec rm -rvf {} \; 2>&1';
 	$out = trim(`$cmd 2>&1`);
-	if (cnf_dev && !empty($out)) myPear::DEBUG(get_class($this).'->garbageCollection: '.x('pre',$out));
+	if (cnf_dev && !empty($out)) MSG::DEBUG(get_class($this).'->garbageCollection: '.x('pre',$out));
 	$_SESSION['garbageCollection'] = $cmd;
       }
     }
@@ -166,8 +166,9 @@ class b_cache_file{
 	list($class,$method) = explode('::',$function);
 	switch($class){
 	case 'myPear':
+	case 'MSG':
 	  switch(count($args)){
-	  case 1:  myPear::$method($args[0]);                          break;
+	  case 1:  $class::$method($args[0]);                  break;
 	  default: b_debug::internalError(count($args)." $function arguments, please complete the switch");
 	  }
 	  break;
@@ -242,7 +243,7 @@ class b_cache_file{
 	    fwrite($fp, $content);
 	    fclose($fp);
 	  }else{
-	    myPear::WARNING_T("can't write ".$this->file);
+	    MSG::WARNING_T("can't write ".$this->file);
 	  }
 	  
 	  // cache the inner css & js definitions
@@ -252,7 +253,7 @@ class b_cache_file{
 	      fwrite($fp, join("\n",self::$cmsCache)."\n");
 	      fclose($fp);
 	    }else{
-	      myPear::WARNING_T("can't write ".$this->file.'.cms');
+	      MSG::WARNING_T("can't write ".$this->file.'.cms');
 	    }
 	  }
 	}else{
@@ -284,7 +285,7 @@ class b_cache_file{
     if (self::$cachePosible && ($force || bAuth::authenticated())){
       $cmd = 'rm -rfv '.self::$cacheArea_auth.'/* 2>&1; chmod -R a+rw '.self::$cacheArea_auth.' 2>&1';
       $out = trim(`$cmd`);
-      if (cnf_dev && !empty($out)) myPear::DEBUG(__METHOD__."($cmd)<br/>".x('pre',$out));
+      if (cnf_dev && !empty($out)) MSG::DEBUG(__METHOD__."($cmd)<br/>".x('pre',$out));
     }
   }
 

@@ -38,7 +38,7 @@ class myPear_taskManager extends myPear_base{
 	b_vars::delete($taskID,$module);
       }
       myPear_logs()->syslog("Explicitly remove ".$this->doing($task));
-      myPear::WARNING("Removing ".$this->doing($task));
+      MSG::WARNING("Removing ".$this->doing($task));
     }
   }
 
@@ -67,7 +67,7 @@ class myPear_taskManager extends myPear_base{
 
     $taskManager = b_vars::get(taskManager_ID,Null,True);
     if (empty($taskManager)){
-      myPear::MESSAGE("There is no tasks in the queue for now");
+      MSG::MESSAGE("There is no tasks in the queue for now");
     }else{
       $header=array('n'         =>'#',
 		    '_cmt'      => ' ',
@@ -120,7 +120,7 @@ class myPear_taskManager extends myPear_base{
 	  }
 
 	  // Add the human readable name
-	  if ($class = myPear::getClassFromID(@$task['args'][0],'class')){
+	  if ($class = loader::getClassFromID(@$task['args'][0],'class')){
 	    $task['_av'] = $class->name();
 	  }
 
@@ -141,11 +141,11 @@ class myPear_taskManager extends myPear_base{
 					       $confirm=True);
 	  }elseif(($task['end']+TM_clean_log_time*24*3600 < time()) || (@$_REQUEST['tm_clean_once']==='yes')){
 	    myPear_logs()->syslog($msg="Clean completed $module::".$task['var_name']);
-	    myPear::WARNING($msg);
+	    MSG::WARNING($msg);
 	    b_vars::delete($task['var_name'],$module);
 	    continue;
 	  }elseif(@$_REQUEST['tm_clean_lock_once']==='yes'){
-	    myPear::WARNING('tm_clean_lock_once');
+	    MSG::WARNING('tm_clean_lock_once');
 	    continue;
 	  }else{
 	    $n_ended++;
@@ -155,7 +155,7 @@ class myPear_taskManager extends myPear_base{
 	  }
 	  
 	  if ($_av_dev = @$task['av_dev']){
-	    $av = myPear::getInstance_new('bForm_Avatar',$_av_dev,'fatal');
+	    $av = loader::getInstance_new('bForm_Avatar',$_av_dev,'fatal');
 	    $task['_av_dev'] = $av->getEmail();
 	  } 
 	  $t->prt($task);
@@ -214,7 +214,7 @@ class myPear_taskManager extends myPear_base{
       $extras = array('start'=>time());
       if ((cnf_dev || cnf_demo) && bAuth::authenticated()){
 	$extras['av_dev'] = bAuth::$av_authenticated->ID;
-	myPear::WARNING(sprintf('Set <em>%s</em>  as the task submitter',bAuth::$av_authenticated->name()));
+	MSG::WARNING(sprintf('Set <em>%s</em>  as the task submitter',bAuth::$av_authenticated->name()));
       }
       
       // Get the new task name
@@ -262,7 +262,7 @@ class myPear_taskManager extends myPear_base{
     // Write the lock record
     b_vars::set('taskManager_lock',array('time'=>time()),myPear_MODULE);
     $this->lock_start = time();
-    if ($this->lock_start != time()) myPear::MESSAGE("Lock acquired in ".b_time::delta(time(),$this->lock_start));
+    if ($this->lock_start != time()) MSG::MESSAGE("Lock acquired in ".b_time::delta(time(),$this->lock_start));
   }
   
   /*
@@ -288,15 +288,15 @@ class myPear_taskManager extends myPear_base{
       if ($release_if_deadlock){
 	// Wait for the lock to disapier...
 	if ((time() - $locked_at) > 60*$deadlock){
-	  myPear::WARNING(sprintf("taskManager is locked for %s, remove the deadlock",b_time::delta(time(),$locked_at)));
+	  MSG::WARNING(sprintf("taskManager is locked for %s, remove the deadlock",b_time::delta(time(),$locked_at)));
 	  $this->lock_release();
 	  $reply = False;
 	}else{
 	  sleep($wait_for);
 	}
       }else{
-	// if ($this->lock_start != time()) myPear::MESSAGE(date('Y-m-d H:i:s ',$this->lock_start)." TaskManager is last locked in ".b_time::delta(time(),$this->lock_start));
-	if ($locked_at != time()) myPear::MESSAGE("TaskManager is locked since ".b_time::delta(time(),$locked_at).date(' (Y-m-d H:i:s) ',$locked_at));
+	// if ($this->lock_start != time()) MSG::MESSAGE(date('Y-m-d H:i:s ',$this->lock_start)." TaskManager is last locked in ".b_time::delta(time(),$this->lock_start));
+	if ($locked_at != time()) MSG::MESSAGE("TaskManager is locked since ".b_time::delta(time(),$locked_at).date(' (Y-m-d H:i:s) ',$locked_at));
 	break; // Lock is there, we no not want to know more...
       }
     }
@@ -365,9 +365,9 @@ class myPear_taskManager extends myPear_base{
 	  
 	  // Transmit the developer email, the mails from tasks started by the developer should be sent back to him
 	  if ($av_dev = @$task['av_dev']){
-	    $av = myPear::getInstance_new('bForm_Avatar',$av_dev,'fatal');
+	    $av = loader::getInstance_new('bForm_Avatar',$av_dev,'fatal');
 	    $GLOBALS['task_report_to'] = $av->getEmail();
-	    myPear::WARNING(sprintf("<em>%s</em> id declared as the task submitter (debug mode)",$av->getEmail()));
+	    MSG::WARNING(sprintf("<em>%s</em> id declared as the task submitter (debug mode)",$av->getEmail()));
 	  }else{
 	    unset($GLOBALS['task_report_to']);
 	  }
@@ -395,7 +395,7 @@ class myPear_taskManager extends myPear_base{
 	    }else{
 	      // Method does not exist...
 	      $msg = sprintf("Method %s()->%s does not exist can't execute the task.<br/>Task ignored and declared to be completed...",$class,$task['function']);
-	      myPear::ERROR($msg);
+	      MSG::ERROR($msg);
 	      b_debug::xxx($msg);
 	      $OK = True;
 	    }
@@ -420,7 +420,7 @@ class myPear_taskManager extends myPear_base{
 	      $this->set($task['var_name'],$task,array('end'=>time()),$module);
 	    }
 	  }else{
-	    myPear::ERROR($this->doing($task).' FAILED');
+	    MSG::ERROR($this->doing($task).' FAILED');
 	  }
 	}
 	$this->lock_release();
@@ -432,7 +432,7 @@ class myPear_taskManager extends myPear_base{
 
     // Print a summary information
     if (!empty($info)){
-      myPear::INFO($info,__CLASS__.' - Executing collected tasks'); 
+      MSG::INFO($info,__CLASS__.' - Executing collected tasks'); 
       // Print comments to the html file, to be extracted by a cron job
       printf("<!--\n%s - executing collected tasks\n",__CLASS__);
       foreach($info as $i) print b_fmt::unEscape(strip_tags($i))."\n";

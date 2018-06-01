@@ -50,7 +50,7 @@ class bForm_ea_Office extends bForm{
 
   function getForm(){
     
-    myPear::H1($this->name());
+    MSG::H1($this->name());
     
     $this->getFormOpen();    
     $this->formBlock('Office',

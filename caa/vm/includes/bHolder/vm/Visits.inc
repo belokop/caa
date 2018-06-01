@@ -10,7 +10,7 @@ class bHolder_vm_Visits extends bHolder_vm{
 
     $this->where = array(1);
     if ($this->av_id=@$_GET['av_id'])  $this->where[] = "v_avid = '$this->av_id'";
-    if (b_cnf::getValue('showClashingVisits')) myPear::H1(b_fmt::redText("Clashing entries in the database"));
+    if (b_cnf::getValue('showClashingVisits')) MSG::H1(b_fmt::redText("Clashing entries in the database"));
   }
 
   function header() {
@@ -29,7 +29,7 @@ class bHolder_vm_Visits extends bHolder_vm{
 
   function rejectRecord(){
     if (b_cnf::getValue('showClashingVisits')){
-      $visit = myPear::getInstance_new('bForm_vm_Visit',$this->rec['v_id'],array('strict','fatal'));
+      $visit = loader::getInstance_new('bForm_vm_Visit',$this->rec['v_id'],array('strict','fatal'));
       $this->clashingID = $visit->getClashingVisits_byDate($this->rec['v_start'],$this->rec['v_end']);
       return (!empty($this->clashingID));
     }
@@ -53,7 +53,7 @@ class bHolder_vm_Visits extends bHolder_vm{
     $url = b_url::same("?form=vm_Visit&mode=RO&id=".$this->rec['v_id']);
     $this->rec['name'] = bForm_Avatar::_fmtName('Lf',$this->rec);
     if ($c=$this->clashingID) {
-      $visit = myPear::getInstance_new('bForm_vm_Visit',$this->rec['v_id'],array('strict','fatal'));
+      $visit = loader::getInstance_new('bForm_vm_Visit',$this->rec['v_id'],array('strict','fatal'));
       $this->Clashes[$visit->ID] = $c;
       $exp = $visit->getExp();
       if ($visit->exp_arePaid() && (int)$exp->ID) $exp->unlock(); // reopen the clashing object

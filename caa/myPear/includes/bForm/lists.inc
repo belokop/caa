@@ -6,8 +6,8 @@ locateAndInclude('bForm');
 
 class bForm_lists extends bForm {
 
-  public static $_dbg_color = 'limeText';
-  public static $_debug = True; 
+  public static $_dbg_color = 'grText';
+  public static $_debug = False; 
 
   var $modalRW_enabled = True;
 
@@ -48,14 +48,21 @@ class bForm_lists extends bForm {
    * Get uploadInit_path from the "parent" bList class 
    */
   function uploadInit_path($module_path=array(),$module=Null){
-    return $this->bList->uploadInit_path();
+    return $this->bList->uploadInit_path($module_path,$module);
+  }
+
+  /*
+   *
+   */
+  function valid_fileType($name,$extensions,$display_name=''){
+    return $this->bList->valid_fileType($name,$display_name);
   }
   
   /*
    * construct a file name to be uploaded
    */
   function uploadedFile_name($name,$argsP=array(),$ext=True){
-    $reply = $this->bList->uploadedFile_name($name,$ext);
+    $reply = $this->bList->uploadedFile_name($name,$argsP,$ext);
     $this->dbg($reply);
     return $reply;
   }

@@ -45,7 +45,7 @@ class bCover_2017 extends myPear_base{
 		$this->request[$pivot]['day9']  <$hole['day9']){
 	      list($start_of_line,$end_of_line) = $this->addEntryToSolution($hole_pivot,$pivot);
 	      $fits_a_hole = True;
-	      myPear::WARNING_T("!!!!!!!! Fits a hole",$this);
+	      MSG::WARNING_T("!!!!!!!! Fits a hole",$this);
 	      if (self::$_debug) $this->pivot_debug($hole_pivot);
 	    }
 	  }

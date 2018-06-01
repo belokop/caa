@@ -103,7 +103,7 @@ class bForm_vm_Hut extends bForm_vm {
    */
   function getForm(){
     
-    myPear::H1($this->name());
+    MSG::H1($this->name());
 
     $this->getFormOpen();    
     
@@ -169,7 +169,7 @@ class bForm_vm_Hut extends bForm_vm {
   function setAsDefault($status='on',$verbose=True){
     if ($status != $this->isDefault()){
       $this->updateDB(array('hut_status' => $status));
-      if ($verbose)	myPear::MESSAGE("Set ".$this->name()." as a default accommodation");
+      if ($verbose)	MSG::MESSAGE("Set ".$this->name()." as a default accommodation");
     }
   }
   
@@ -215,7 +215,7 @@ class bForm_vm_Hut extends bForm_vm {
       $a_qs = array_unique($a_qs);
       if (count($a_qs) != 1){
 	sort($a_qs);
-	myPear::ERROR("Configuration error: ambigious \"total rooms\" (".join(',',$a_qs).") for ".$this->name().
+	MSG::ERROR("Configuration error: ambigious \"total rooms\" (".join(',',$a_qs).") for ".$this->name().
 		      "<br><strong><em>In total $get_total_rooms room</em> is used</strong>");
       }
       sort($a_capacities);	
@@ -247,7 +247,7 @@ class bForm_vm_Hut extends bForm_vm {
   }
 
   //  public static function _getCapacity($hut_id){
-  //    $hut = myPear::getInstance_new('bForm_vm_Hut',$hut_id,'fatal');
+  //    $hut = loader::getInstance_new('bForm_vm_Hut',$hut_id,'fatal');
   //    $reply = $hut->getCapacity();
   //    return $reply; 
   //  }

@@ -25,12 +25,12 @@ class bHolder_jam extends bHolder{
   
   private $dejaVulistEntries = 0;
   function listEntries(){
-    if ($n=$this->dejaVulistEntries++) myPear::WARNING_T("$n-th entry to ".$this."->listEntries");
+    if ($n=$this->dejaVulistEntries++) MSG::WARNING_T("$n-th entry to ".$this."->listEntries");
     $this->_open();
     
     $header = $this->header();  // sets also title
     if (!isset($_GET['sBy']) || empty($header[$_GET['sBy']])){
-      if(isset($_GET['sBy'])) myPear::WARNING_T("sBy: \"$_GET[sBy]\" ==> \"$this->sortBy_default\"");
+      if(isset($_GET['sBy'])) MSG::WARNING_T("sBy: \"$_GET[sBy]\" ==> \"$this->sortBy_default\"");
       $_GET['sBy'] = $this->sortBy_default;
     }
     
@@ -70,7 +70,7 @@ class bHolder_jam extends bHolder{
 			    " ORDER BY pos_deadline DESC");
     $list = array();
     while ($r = myPear_db()->next_record($q)){ 
-      $pos = myPear::getInstance('bForm_jam_Position',$r['pos_id']);
+      $pos = loader::getInstance('bForm_jam_Position',$r['pos_id']);
       if (!$onlyConsidered || $pos->isConsidered()){
 	if ($IDonly) $list[] =  $pos->ID;
 	else         $list[] =  $pos;

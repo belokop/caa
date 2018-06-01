@@ -114,7 +114,7 @@ class bHolder_jam_Positions extends bHolder_jam{
    * Check that the position is visible by the logged in person
    */
   function rejectRecord(){ 
-    $this->pos = myPear::getInstance('bForm_jam_Position',$this->rec['pos_id'],'fatal');
+    $this->pos = loader::getInstance('bForm_jam_Position',$this->rec['pos_id'],'fatal');
     if(!$this->pos->isReadable()){
       $reply = True;
     }elseif ($this->pos->isStatus(JAM_pos_in_preparation) ||

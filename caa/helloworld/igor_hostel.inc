@@ -205,7 +205,7 @@ function igor_hr($t){
   $t->trc();
 }
 
-myPear::H1('Ну вот мы и в CERN\'е... Hostel calculator','reset');
+MSG::H1('Ну вот мы и в CERN\'е... Hostel calculator','reset');
 
 $f = new bForm_Igor();
 ob_start();

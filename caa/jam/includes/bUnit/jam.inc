@@ -37,7 +37,7 @@ class bUnit_jam extends bUnit{
 
     // First hook the position
     if (empty($pos_id)) $pos_id = JAM_posID();
-    $this->pos = myPear::getInstance('bForm_jam_Position',$pos_id,array('strict','fatal'));
+    $this->pos = loader::getInstance('bForm_jam_Position',$pos_id,array('strict','fatal'));
     if (empty($this->pos)) b_debug::internalError("empty pos_id. Can't be");
 
     // Then appeal to the parents
@@ -67,15 +67,15 @@ class bUnit_jam extends bUnit{
    *
    */
   function getForm(){
-    if ($av_id = myPear::_GET_and_unset('toggle')){
+    if ($av_id = b_cnf::_GET_and_unset('toggle')){
       $status = self::_getStatus($this->getUnitMember($av_id));
       $toggle = ($status==JAM::status(JAM_review_private) 
 		 ?        JAM::status(JAM_review_public) 
 		 :        JAM::status(JAM_review_private));
-      $av = myPear::getInstance('bForm_Avatar_jam',$av_id);
+      $av = loader::getInstance('bForm_Avatar_jam',$av_id);
       $this->add_unitMember($av,$verbose=False,$um_status=$toggle);
       $_GET['action'] = 'show';
-      myPear::MESSAGE($av->name()."'s ".JAM::status($toggle,'d'));
+      MSG::MESSAGE($av->name()."'s ".JAM::status($toggle,'d'));
     }
     parent::getForm();
  }
@@ -130,7 +130,7 @@ class bUnit_jam extends bUnit{
     if ($this->rank==RANK_jam_SC1 || 
 	$this->rank==RANK_jam_SC2){
       $status = self::_getStatus($rec);
-      $av = myPear::getInstance('bForm_Avatar_jam',$rec['av_id'],'strict');
+      $av = loader::getInstance('bForm_Avatar_jam',$rec['av_id'],'strict');
       $button = ($av->isWritable()
 		 ? array('X'=>1,
 			 'l'=>b_url::same("?toggle=$rec[av_id]"),

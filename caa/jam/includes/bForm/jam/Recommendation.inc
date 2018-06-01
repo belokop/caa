@@ -154,7 +154,7 @@ class bForm_jam_Recommendation extends bForm_jam {
       if (!$isReceived && $rec_submitdate){
 	$errors[] = "isReceived()=NO, but rec_submitdate=$rec_submitdate";
       }
-      foreach($errors as $e) myPear::WARNING_T("$e ".$this->ap->name().' <--- '.$this->av->name(),$this); 
+      foreach($errors as $e) MSG::WARNING_T("$e ".$this->ap->name().' <--- '.$this->av->name(),$this); 
     }
     return count($errors);
   }
@@ -190,7 +190,7 @@ class bForm_jam_Recommendation extends bForm_jam {
   function __clean_cache(){
     $this->hook_ap_av();
     if (is_object($this->av)) $this->av->__clean_cache();
-    myPear::getInstance(get_class($this), $this->ID, 'clean');
+    loader::getInstance(get_class($this), $this->ID, 'clean');
   }
 
   /*
@@ -198,7 +198,7 @@ class bForm_jam_Recommendation extends bForm_jam {
    */
   protected function getValue_validate_empty($name,&$value=Null){
     $msg = parent::getValue_validate_empty($name,$value);
-    if (myPear::is_empty($value)){
+    if (b_posix::is_empty($value)){
       if ($name == 'rec_letter_file')	$msg = '';
     }
     return $msg;
@@ -307,7 +307,7 @@ class bForm_jam_Recommendation extends bForm_jam {
    */
   function readDefRecord(){ // getValue is called, DANGEROUS !!! 
 
-    if (myPear::is_int($this->ID)) {
+    if (b_posix::is_int($this->ID)) {
       $w[] = $this->TABLEID.'='.$this->ID;
     }elseif (is_object($this->av) && is_object($this->ap)){
       $w[] = "av_id = ".$this->av->ID;
@@ -408,7 +408,7 @@ class bForm_jam_Recommendation extends bForm_jam {
   function getForm() {
     $this->hook_ap_av();
     if (is_object($this->ap)){
-      print myPear::H1(bText::_("Recommendation for").' '.(is_object($this->ap)?$this->ap->av->fmtName('Lf'):'????'),'noTranslate');
+      print MSG::H1(b_t::_("Recommendation for").' '.(is_object($this->ap)?$this->ap->av->fmtName('Lf'):'????'),'noTranslate');
       if (!$this->getFile())	$this->MODE = 'RW';
       
       $this->formDB['_virt_rec_referee'] = $this->av->name();
@@ -423,7 +423,7 @@ class bForm_jam_Recommendation extends bForm_jam {
       //      $this->closeForm('submit recommendation');
       $this->closeForm();
     }else{
-      myPear::ERROR("Sorry, can not upload the reference letter");
+      MSG::ERROR("Sorry, can not upload the reference letter");
     }
   }
 

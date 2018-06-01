@@ -96,7 +96,7 @@ class b_reg{
   public static function remove_module($module){
     self::dbg();
     if (empty(self::$_SQLidentities[$module])){
-      myPear::WARNING_T("module \"$module\" is not in the registry");
+      MSG::WARNING_T("module \"$module\" is not in the registry");
     }else{
       $bLists = $bUnits = $tables = array();
       foreach(self::$_SQLidentities[$module] as $class=>$descr){
@@ -131,18 +131,18 @@ class b_reg{
       
       // remove the sql tables
       foreach($bLists as $l_id=>$l_name){
-	myPear::MESSAGE("removing bList \"$l_name\"");
+	MSG::MESSAGE("removing bList \"$l_name\"");
 	bList::deleteList($l_id);
       }
 
       foreach($bUnits as $u_id=>$u_name){
-	myPear::MESSAGE("removing bUnit \"$u_name\"");
+	MSG::MESSAGE("removing bUnit \"$u_name\"");
 	bUnit::deleteUnit($u_id);
       }
       
       foreach(array_unique($tables) as $t){
 	if (myPear_db()->tableExists($t)){
-	  myPear::MESSAGE("removing table \"$t\"");
+	  MSG::MESSAGE("removing table \"$t\"");
 	  myPear_db()->qquery("DROP TABLE IF EXISTS $t",True);
 	}
       }
@@ -227,38 +227,42 @@ class b_reg{
       self::dbg(__METHOD__."($class)");
       
       // Substitute name by the known identity
-      if (is_string($identities)) $identities = myPear::$sql_identities[$identities];
+      if (is_string($identities)) $identities = loader::$sql_identities[$identities];
       
       // Get the SQL table and record ID from the parent class (bList | bForm_Avatar) 
       if (empty($identities['t']) && !empty($identities['p'])){
-	if (empty(myPear::$sql_identities[$identities['p']])) b_debug::traceBack("Can't match $class");
-	foreach(array_diff(array_keys(myPear::$sql_identities[$identities['p']]),
+	if (empty(loader::$sql_identities[$identities['p']])) b_debug::traceBack("Can't match $class");
+	foreach(array_diff(array_keys(loader::$sql_identities[$identities['p']]),
 			   array_keys($identities)) as $k){
-	  $identities[$k] = myPear::$sql_identities[$identities['p']][$k];
+	  $identities[$k] = loader::$sql_identities[$identities['p']][$k];
 	}
       }
 
       // Create the table if it does not exist
-      self::_createIfNotExists($identities['t'],$module);    
-
-      // Register the SQL tables & record_IDs.
-      if (!empty($identities['i'])){      
-	// Register the EA objects both in EA_MODULE & myPear_MODULE
-	// since EA functionality (except API) is "built-in" in myPear 
-	// and might be used by other modules without installing EA_MODULE 
-	$modules = ($module == EA_MODULE
-		    ? array($module,myPear_MODULE)
-		    : array($module));
-	// Register bList & bUnit classes
-	foreach($modules as $m){
-	  b_reg_bList::register($m,$class,$identities);
+      if (empty($identities['t'])){
+	MSG::WARNING_T("No SQL table found for module '$module' class '$class'. ".var_export($identities));
+      }else{
+	self::_createIfNotExists($identities['t'],$module);    
+	
+	// Register the SQL tables & record_IDs.
+	if (!empty($identities['i'])){      
+	  // Register the EA objects both in EA_MODULE & myPear_MODULE
+	  // since EA functionality (except API) is "built-in" in myPear 
+	  // and might be used by other modules without installing EA_MODULE 
+	  $modules = (defined('EA_MODULE') && ($module == EA_MODULE)
+		      ? array($module,myPear_MODULE)
+		      : array($module));
+	  // Register bList & bUnit classes
+	  foreach($modules as $m){
+	    b_reg_bList::register($m,$class,$identities);
+	  }    
 	}    
-      }    
-      
-      // Report if something went wrong
-      if (!($ok = (!myPear_db()->isReady() ||  
-		   (myPear_db()->isReady() && myPear_db()->tableExists($identities['t']))))){
-	myPear::WARNING("Can't start ".strToUpper($module).": SQL table '$identities[t]' does not exist");
+	
+	// Report if something went wrong
+	if (!($ok = (!myPear_db()->isReady() ||  
+		     (myPear_db()->isReady() && myPear_db()->tableExists($identities['t']))))){
+	  MSG::WARNING("Can't start ".strToUpper($module).": SQL table '$identities[t]' does not exist");
+	}
       }
     }
   }
@@ -268,14 +272,18 @@ class b_reg{
    */
   static function _fill_SQL_ids($identities,$module,$class,$myPear_also=False){
     if (myPear_db()->isReady()){
-      $modules = (($module == EA_MODULE) && $myPear_also
+      $modules = (defined('EA_MODULE') && ($module == EA_MODULE) && $myPear_also
 		  ? array($module,myPear_MODULE)
 		  : array($module));
       foreach($modules as $m){
-	self::$_SQLidentities[$m][$class] = array('t'=>$identities['t'],
-						  'i'=>$identities['i']);
-	$identities['m'] = $m;
-	foreach($identities as $k=>$v) myPear::$sql_identities[$class][$k] = $v;
+	if (empty($identities['t'])){
+	  // if (cnf_dev) b_debug::var_dump($identities,"No SQL table found for $m::$class");
+	}else{
+	  self::$_SQLidentities[$m][$class] = array('t'=>$identities['t'],
+						    'i'=>$identities['i']);
+	  $identities['m'] = $m;
+	  foreach($identities as $k=>$v) loader::$sql_identities[$class][$k] = $v;
+	}
       }
     }
   }
@@ -294,11 +302,11 @@ class b_reg{
 	if (file_exists($table_sql = "$path/sql/$table.sql")){
 	  $sql = trim(file_get_contents($table_sql));
 	  if (empty($sql)) b_debug::internalError("SQL definition file \"$table_sql\" empty");
-	  myPear::MESSAGE(sprintf('%s - creating SQL table `%s` on %s@%s',strToUpper($module),$table,myPear_db()->Database,myPear_db()->Host));
+	  MSG::MESSAGE(sprintf('%s - creating SQL table `%s` on %s@%s',strToUpper($module),$table,myPear_db()->Database,myPear_db()->Host));
 	  foreach(explode(';',$sql) as $query) if (!empty($query)) myPear_db()->qquery($query,cnf_dev);
 	  myPear_db()->reset_cache();
 	}else{
-	  myPear::ERROR("The expected file \"$table_sql\" does not exist");
+	  MSG::ERROR("The expected file \"$table_sql\" does not exist");
 	}
       }
     }
@@ -324,8 +332,8 @@ class b_reg{
 	// sql identities DO NOT DEPEND ON THE MODULE !!!
 	// Get the first one which is not emty...
 	foreach(self::$_SQLidentities as $m=>$ids){
-	  if (!myPear::is_empty($t=@$ids[$class]['t']) &&
-	      !myPear::is_empty($i=@$ids[$class]['i'])) return array('t'=>$t,'i'=>$i);
+	  if (!b_posix::is_empty($t=@$ids[$class]['t']) &&
+	      !b_posix::is_empty($i=@$ids[$class]['i'])) return array('t'=>$t,'i'=>$i);
 	}
       }else{
 	if (empty(self::$_SQLidentities[$module][$class]['t'])){
@@ -394,7 +402,7 @@ class b_reg{
     switch($what){
       
     case 'c2m': // class -> module
-      return @myPear::$sql_identities[$module]['m'];
+      return @loader::$sql_identities[$module]['m'];
       break;
 
     case 'path':
@@ -485,7 +493,7 @@ class b_reg_bList{
    * Get the bList description back from the registry.
    * Update the list columns 'l_member_title'
    */
-  public static function set__l_name__l_member_title($bList,$keys){
+  public static function _set__l_name__l_member_title($bList,$keys){
 
     $list_name = get_class($bList);
     $isbUnit = (strpos($list_name,'bUnit') !== False);
@@ -500,7 +508,7 @@ class b_reg_bList{
 	if (b_reg::$current_module == myPear_MODULE){
 	  foreach(self::$_bLists as $module=>$classes){
 	    if (in_array($list_name,array_keys($classes))){
-	      myPear::WARNING_T("$list_name found in module '$module', current_module='".b_reg::$current_module."'");
+	      MSG::WARNING_T("$list_name found in module '$module', current_module='".b_reg::$current_module."'");
 	      $current_module = $module;
 	    }
 	  }
@@ -519,9 +527,9 @@ class b_reg_bList{
 	  return array($l_name,$l_member_title);
 	}
       }else{
-	if(cnf_dev){myPear::WARNING("$list_name is not in the registry !");
-	  myPear::WARNING("$list_name is not in the registry !!");
-	  myPear::WARNING("$list_name is not in the registry !!!");
+	if(cnf_dev){MSG::WARNING("$list_name is not in the registry !");
+	  MSG::WARNING("$list_name is not in the registry !!");
+	  MSG::WARNING("$list_name is not in the registry !!!");
 	  b_debug::xxx("???? Где $list_name");
 	  b_debug::traceBack("$list_name is not in the registry !!!!");
 	}
@@ -531,9 +539,9 @@ class b_reg_bList{
     // The bList / bUnit is unknown to the registry,
     // which might happen when the unit is invoked during the start-up by the auto-login.
     // Inform myPear and the developer that the class is not properly initialized
-    myPear::$__construct_notComplited[] = get_class($bList);
+    loader::$__construct_notComplited[] = get_class($bList);
     $msg = "no registry information (yet?) for ".$bList->__toString();
-    myPear::WARNING_T($msg);
+    MSG::WARNING_T($msg);
     // b_debug::traceBack($msg);
     return array('???','???');
   }
@@ -555,7 +563,7 @@ class b_reg_bUnit{
 
     // Register the SQL tables & record_IDs.
     // Since EA module is "built-in" in myPear, register EA objects both in EA_MODULE & myPear_MODULE
-    $modules = ($module == EA_MODULE
+    $modules = (defined('EA_MODULE') && ($module == EA_MODULE)
 		? array($module,myPear_MODULE)
     		: array($module));
     foreach($modules as $m){

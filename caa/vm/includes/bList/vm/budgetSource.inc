@@ -28,7 +28,7 @@ class bList_vm_budgetSource extends bList_vm{
     // First hook the event
     if (empty($e_id)) $e_id = VM::$e->ID;
     if ($e_id instanceof bForm_vm_Event) $this->e = $e_id;
-    else      $this->e = myPear::getInstance_new('bForm_vm_Event',$e_id,'strict');
+    else      $this->e = loader::getInstance_new('bForm_vm_Event',$e_id,'strict');
     */
     parent::__construct($e_id);
     
@@ -101,7 +101,7 @@ class bList_vm_budgetSource extends bList_vm{
 	// if it is not yet done OR it was removed by the upper checkup
 	if (!$this->get_budgetSource($default_only=True,$verbose=False)){
 	  b_debug::traceBack();
-	  myPear::MESSAGE('Creating budget source record for "'.$this->e->name().'"');
+	  MSG::MESSAGE('Creating budget source record for "'.$this->e->name().'"');
 	  $this->addMember(array('lm_key'   => $budget_message,
 				 'lm_value' => $defaultEventBudget,
 				 'lm_status'=>($defaultEventBudget > 0 ? VM_budgetL : VM_budgetS)));
@@ -118,7 +118,7 @@ class bList_vm_budgetSource extends bList_vm{
     if (empty($this->project_code)){
       if (VM_administrator_here){
 	$name = (is_object($this->e) ? x('"',$this->e->name()) : 'The event');
-	myPear::WARNING(x('em',"$name does not have an associated ".myOrg_name." project code, reimbursement not possible"));
+	MSG::WARNING(x('em',"$name does not have an associated ".myOrg_name." project code, reimbursement not possible"));
       }
     } 
     return $this->project_code;
@@ -196,7 +196,7 @@ class bList_vm_budgetSource extends bList_vm{
     $this->r['lm_status'] = x('em',$this->r['lm_status']);
   }
 
-  function draw_summary() {
+  protected function draw_summary() {
     if (count($this->get_budgetSource() > 1)){
       $this->t->prt(array('lm_value'=>'<hr/>'));
       $this->t->prt(array('lm_value'=>x('strong',b_fmt::escape(b_fmt::money($this->total)))));

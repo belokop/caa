@@ -37,7 +37,7 @@ class bUnit_ea_members extends bUnit_ea {
     set_time_limit(0);
 
     myPear_db()->transaction('start');
-    myPear::MESSAGE_open(sprintf("Rebuilding %s",myOrg($this->myOrg_ID)->name()));
+    MSG::MESSAGE_open(sprintf("Rebuilding %s",myOrg($this->myOrg_ID)->name()));
     foreach($this->getUnitMemberIDs() as $av_id){
       if (empty($av_id)){
 	if (cnf_dev) b_debug::traceBack("empty unit member???");
@@ -46,7 +46,7 @@ class bUnit_ea_members extends bUnit_ea {
       }
       ob_start();
       $av = new bForm_Avatar_ea($av_id);
-      myPear::MESSAGE_add($av->fmtName('Lf'),True);
+      MSG::MESSAGE_add($av->fmtName('Lf'),True);
       $av->want_legacy_maildb = $av->isE(True) && (myOrg($this->myOrg_ID)->getCode() == 'nordita');
       $av->getForm();
       $av->adjust_status();
@@ -68,7 +68,7 @@ class bUnit_ea_members extends bUnit_ea {
       // We do not need an output, hence just kill it
       unset($x);
     }
-    myPear::MESSAGE_close();
+    MSG::MESSAGE_close();
     $this->get_memberInfo(0,0,'reset');
     myPear_logs()->add('rebuild',0,$this->name());
     myPear_db()->transaction('end');
@@ -124,7 +124,7 @@ class bUnit_ea_members extends bUnit_ea {
    *
    */
   protected function setPageHeader() {
-    myPear::H1($this->see_only,'reset');
+    MSG::H1($this->see_only,'reset');
   }
   
   /*
@@ -237,8 +237,8 @@ class bUnit_ea_members extends bUnit_ea {
 	b_debug::internalError("???");
       }
     }
-    //    myPear::DEBUG(sprintf("%s - %s %s - %s --> %s",$this->see_only,$rec['um_status'],@$rec['role2'],$empType,var_export($reply,True)));
-    //    myPear::DEBUG(sprintf('%s',var_export(@$rec['role2'],True)));
+    //    MSG::DEBUG(sprintf("%s - %s %s - %s --> %s",$this->see_only,$rec['um_status'],@$rec['role2'],$empType,var_export($reply,True)));
+    //    MSG::DEBUG(sprintf('%s',var_export(@$rec['role2'],True)));
     return $reply;
   }
 
@@ -393,7 +393,7 @@ class bUnit_ea_members extends bUnit_ea {
   function setMemberAccess($av_id,$acl){
     if ($this->isMember($av_id)){
       $this->updateMember(array('acl'=>$acl, 'um_avid'=>$av_id),$this->get_memberInfo($av_id,'um_id'));
-      myPear::MESSAGE($this->get_memberInfo($av_id,'sfl').' - set access level to "'.($acl===EA_acl_public ? 'public' : 'protected').'"');
+      MSG::MESSAGE($this->get_memberInfo($av_id,'sfl').' - set access level to "'.($acl===EA_acl_public ? 'public' : 'protected').'"');
     }
   }
   
@@ -578,7 +578,7 @@ class bUnit_ea_members extends bUnit_ea {
    */
   function remind_password($av_id) {
     locateAndInclude('bMailer_ea');
-    myPear::H1('empty');
+    MSG::H1('empty');
     EA_mailer()->remind_password($av_id);
   }
 }
