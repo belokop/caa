@@ -811,8 +811,10 @@ The request came from the web interface from computer '".gethostbyaddr($_SERVER[
     
     $login_widget = self::login_widget($mode,$message,$error_message,$userLabel,$pwdLabel,$submitLabel,$post_action,'check');
     
-    if ($returnWidget)  return (string)$login_widget;
-    else                bJS()->modal_inline('login',$login_widget,True,True);
+  //if (fancybox3)        print  (string)$login_widget;
+    if (fancybox3)        drupal_add_region_content('content', $login_widget);
+    elseif ($returnWidget)return (string)$login_widget;
+    else                  bJS()->modal_inline('login',$login_widget,True,True);
     return False;
   }
   
@@ -824,7 +826,7 @@ The request came from the web interface from computer '".gethostbyaddr($_SERVER[
     ob_start();
     $t = new b_table('','<div class="login_prompt centralized">'.
 		     (($m=$message) ? x("div class='login_message'",$m) : '').
-		     "<form name='login'  method='POST' action='".b_url::same("?login=$flagToAutoCheck")."'>");
+		     "\n<form name='login'  method='POST' enctype='multipart/form-data' action='".b_url::same("?login=$flagToAutoCheck")."'>");
     
     $t->tr(str_replace(array("\r","\n"),"<br/>",$error_message),
 	   'colspan=3 class="login_error"');
