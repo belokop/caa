@@ -292,7 +292,7 @@ function bAuth(){
 	$_SESSION[CONST_cnfOptions]['superUser_here'] = False;
       }
     }
-    define('superUser_here', $_SESSION[CONST_cnfOptions]['superUser_here']);
+    if (!defined('superUser_here')) define('superUser_here', $_SESSION[CONST_cnfOptions]['superUser_here']);
     
     
     // Set the current module
@@ -418,11 +418,14 @@ function myPear_setConstants(){
     if (cnf_dev)            define('cnf_demo',False);
     else                    define('cnf_demo',preg_match('/(test|norosx|^192.168|130.242.129.1[01])/',@$_SERVER["HTTP_HOST"]));
   }
-  if (cnf_dev && cnf_inside_fb) MSG::DEBUG(cnf_inside_fb_iframe
-					      ?'cnf_inside_fb_iframe YES'
-					      :(cnf_inside_fb_ajax
-						?'cnf_inside_fb_ajax YES'
-						:''));
+  if (cnf_dev){
+    b_debug::_debug(sprintf("fancybox3='%s', cnf_inside_fb='%s'",var_export(fancybox3,True),var_export(cnf_inside_fb,True)),True);
+    if (cnf_inside_fb) MSG::DEBUG(cnf_inside_fb_iframe
+				  ?'cnf_inside_fb_iframe YES'
+				  :(cnf_inside_fb_ajax
+				    ?'cnf_inside_fb_ajax YES'
+				    :''));
+  }
 }
 
 /*
@@ -789,7 +792,10 @@ function myPear_clean_once(){
       sort($clean_once);
       parse_str(preg_replace('/^.*\?/','',$clean_once[0]),$request);
       foreach(array('function','arg1_once','arg2_once') as $a){
-	if (!empty($request[$a])) $_GET[$a] = $_REQUEST[$a] = $request[$a];
+	if (!empty($request[$a])){
+	  $_GET[$a] = $_REQUEST[$a] = $request[$a];
+	  b_debug::_debug("impose \$_GET[$a] = '$request[$a]'",True);
+	}
       }
     }
   }else{

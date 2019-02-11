@@ -198,9 +198,12 @@ class bHolder_prp_preprints extends bHolder{
 		 ? x("a href='$l'",$title)
 		 : $title);
      }elseif ($url=$this->rec['prp_archive']){
+       $use_modal = False;
        $reply = ($this->rec["prp_status"] == PRP_CANCELED
 		 ? $title
-		 : bJS()->modal_iframe($url,$title,'',True));
+		 : ($use_modal
+		    ? bJS()->modal_iframe($url,$title,'',True)
+		    : x("a href='$l'",$title)));
      }elseif($this->rec['prp_local']){
        $p = new bForm_prp($this->rec['prp_id']);
        $l = $p->url_local();

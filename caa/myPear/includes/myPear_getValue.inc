@@ -8,6 +8,10 @@ locateAndInclude('myPear_base');
 
 class myPear_getValue extends myPear_base{
 
+  var $MODE    = 'RO';
+  var $ID      = 0;
+  var $block_ID= 0;
+
   public $TABLE           = Null;
   public $TABLEID         = Null;
   public $TABLE_member    = Null;
@@ -21,6 +25,7 @@ class myPear_getValue extends myPear_base{
   public $r = array();  // current member while making a list of all members
 
   public $varsModified = array();
+  public $vars_noTranslation = array();
   public $vars = array();
 
   public $show_gv = False;
@@ -77,13 +82,28 @@ class myPear_getValue extends myPear_base{
   }
 
   /*
+   * A helper
+   * [a,b] => [a=>getValue(a),b=>getValue(b)]
+   */
+  function args2args($fields){
+    $reply = array();
+    if (!is_array($fields)){
+      foreach(func_get_args() as $arg) $f[] = $arg;
+      $fields = $f;
+    }
+    foreach($fields as $f) $reply[$f] = ($f==$this->TABLEID
+					 ? $this->ID
+					 : $this->getValue($f));
+    return $reply;
+  }
+
+  /*
    *
    */
   function __toString(){  
     $ids = array($this->ID,$this->MODE);
     if ($t=$this->block_ID) $ids[] = "block=$t";
     return get_class($this) . '('.implode(',',$ids).')';
-    return str_replace('bForm_','',get_class($this)) . '('.implode(',',$ids).')';
   }
 
   /*
@@ -607,6 +627,7 @@ class myPear_getValue extends myPear_base{
 	  // does not work for bList, where the definition of fields is
 	  // dynamic... Need a better idea...
 	  // This is just a workaround...
+	  $this->vars_noTranslation[$name] = $descr;
 	  $this->vars[$name] = (!trim($descr) || (get_class($this)=='bForm')
 				? $descr
 				: $this->vars[$name] = b_t::_(array('key'=>$name,'item'=>$descr)));

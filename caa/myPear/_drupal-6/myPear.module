@@ -5,20 +5,17 @@
  */
 function myPear_init() {
   static $dejaVu = 0;
-  require_once drupal_get_path('module','myPear').'/config.inc';
   if (!$dejaVu++){
+    require_once drupal_get_path('module','myPear').'/config.inc';
     // 
     // Load the essential classes - translation, authentication, etc.
     // The other required files will be autoloaded by the applications only if needed.
     //
     $path = drupal_get_path('module','myPear');
     drupal_add_js ("$path/js/myPear.js",'file');
-
     drupal_add_css("$path/css/myPear.css");
     drupal_add_css("$path/css/bIcal.css");
     drupal_add_css("$path/css/messages.css");
-    // drupal_add_css("$path/css/drp.css");
-    b_cms::setTheme();
 
     //
     // Workaround... 
@@ -73,6 +70,7 @@ function myPear_menu() {
 		  );
   
   // Build the menu
+  locateAndInclude('myPear');
   $menu = myPear::_MENU()->build_menuTree('_myPear_output');
 
   /*  
@@ -106,6 +104,7 @@ replaced by a simple config.priv.php file...
  * Implementation of hook_menu_link_alter()
  */
 function template_hook_menu_link_alter(&$item, $menu) {
+  //  var_dump("----------------------------------------".__function__);
   global $dividers;
   if (empty($dividers)) $dividers = array();
   foreach(array_unique($dividers) as $divider){
@@ -120,10 +119,13 @@ function template_hook_menu_link_alter(&$item, $menu) {
  * Implementation of hook_preprocess_menu_link()
  */
 function template_hook_preprocess_menu_link(&$variables) {
+  //  var_dump("----------------------------------------".__function__);
   if (!defined('divider')) define('divider','divider'); // Menu divider
   if (in_array(divider,$variables['element']['#localized_options'])){
     $variables['element']['#attributes']['class'][] = divider;
   }
+  $variables['element']['#attributes']['class'][] = 'page-load-progress';
+  $variables['element']['#attributes']['class'] = array_unique($variables['element']['#attributes']['class']);
 }
 
 /*

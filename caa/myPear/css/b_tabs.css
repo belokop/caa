@@ -6,7 +6,7 @@
 
 #b_tabs, 
 #b_tabs1{
-   overflow-x:auto;
+/* overflow-x:auto; */
 }
 
 #b_tabs1{
@@ -47,7 +47,8 @@
     height: 31px;
     line-height: 0.65em;
     position: relative;
-    margin_top: 20px;
+    margin-top: 0;
+    margin-bottom: 2em;
     width: 100%;
     z-index: 10;
 }

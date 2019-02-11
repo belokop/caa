@@ -49,15 +49,15 @@ class myPear_base{
       
       if (!is_array($arg1)) $arg1 = array($arg1);
       foreach($arg1 as $k=>$v){
-	if (is_bool($v))   {$boolOK=True; $arg1[$k] = (bool)($v || static::$_debug || $arg2);}
-	if (is_object($v))  $objectOK=True; 
-	if (is_string($v))  $stringOK=True; 
+	if (is_bool($v))   {$boolOK   =True; $arg1[$k] = (bool)($v || static::$_debug || $arg2);}
+	if (is_object($v))  $objectOK =True; 
+	if (is_string($v))  $stringOK =True; 
 	if (is_numeric($v)) $numericOK=True; 
       }
-      if (empty($boolOK))    $arg1[] = (bool)(static::$_debug || $arg2);
-      if (empty($stringOK))  $arg1[] = static::$_dbg_color;
-      if (empty($numericOK)) $arg1[] = 2+$arg3;
-      if (empty($objectOK))  $arg1[] = $this;
+      if (!@$boolOK)    $arg1[] = (bool)(static::$_debug || $arg2);
+      if (!@$stringOK)  $arg1[] = (string)static::$_dbg_color;
+      if (!@$numericOK) $arg1[] = (int)2+$arg3;
+      if (!@$objectOK)  $arg1[] = $this;
       //      if (is_string($arg0))if (trim(strip_tags($arg0)) === 'event 267906') var_dump(static::$_dbg_color,static::$_dbg_color);
       return b_debug::_debug($arg0,$arg1);
     default: 

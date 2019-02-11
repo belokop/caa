@@ -1,4 +1,11 @@
 /*
+ * Full size image
+ */
+function stor(URL) {
+    window.open(URL, "stor", "toolbar=no,location=no,directories=no,status=no,menubar=no,width=750,height=600,screenX=0,screenY=0,top=0,left=0,scrollbars=yes,resizable=yes");
+}
+
+/*
  * <input title="should i do it?" value="submit me" name="http://cnn.com" onclick="submitConfirm(this)" type="submit" />
  */
 function submitConfirm(obj) {

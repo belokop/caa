@@ -103,10 +103,121 @@ function myPear_updates(){
 
       // Fix collation
       myPear_set_collation();
+
+      // Look for the orphelin lists, print warnings.
+      // The reason for those lists MUST be found... 
+      //      myPear_find_orphelins();
     }
     myPear_db()->noAutoCommit('end');
     bTiming()->cpu();
   }
+}
+
+/*
+ *
+ */
+myPear_find_orphelins();
+function myPear_find_orphelins(){
+  //
+  // Remove empty emp. records
+  //  
+  $q = myPear_db()->qquery("SELECT *,COUNT(l_parent) AS conut  FROM zzz_lists  ".
+			   " LEFT JOIN zzz_avatars ON l_parent = av_id ".
+			   " WHERE l_class = 'bList_eaEmpRecords' ".
+			   " GROUP BY l_parent ".
+			   " HAVING conut!=1 ORDER BY l_id ",cnf_dev);
+  $count = 0;
+  $toDelete = array();
+  while($r = myPear_db()->next_record($q)){
+    
+    $qq = myPear_db()->qquery("SELECT *  FROM zzz_lists  ".
+			      " LEFT JOIN zzz_list_members ON lm_lid = l_id ".
+			      " WHERE l_class = 'bList_eaEmpRecords' AND l_parent = $r[l_parent] ",
+			      cnf_dev);
+    b_debug::_debug((++$count) ." - duplication count = ".$r['conut']." =================================== ".bForm_Avatar::_fmtName('Lf',$r),True);
+    
+    while($rr = myPear_db()->next_record($qq)){
+	if (empty($rr['lm_id'])){
+	  $toDelete[] = $rr['l_id'];
+	  $rr['lm_id'] = 'NULL';
+	}
+	b_debug::_debug(sprintf('duplication l_id=%s lm_id=%s',$rr['l_id'],$rr['lm_id']),True);
+    }
+  }
+  // Delete the garbage
+  foreach($toDelete as $l_id) bList::deleteList($l_id);
+
+  //
+  // Continue cleanup
+  //
+  static $lists = array('bList_eaEmpRecords'         => array('t' =>'zzz_avatars',
+							      'i' =>'av_id',
+							      'i2'=>'av_id2'),
+			'bList_orgGroups'            =>array(),
+			'bList_orgEmpTypes'          =>array(),
+			'bList_vm_reimbursementRates'=>array(),
+			'bList_vm_budgetSource'      =>array(),
+			'bList_vm_projects'          =>array(),
+			'bList_vm_socialEvents'      =>array(),
+			'bList_vm_socialEventRates'  =>array(),
+			);
+  b_debug::_debug(starting);
+  foreach($lists as $l_class=>$p){
+    if (empty($p)) continue;
+    $toMerge = array();
+    b_debug::_debug('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> '.$l_class,cnf_dev);
+    $q = myPear_db()->qquery("SELECT * FROM `zzz_lists` ". 
+			     " LEFT JOIN $p[t] ON (".
+			     " l_parent = $p[i] ".
+			     " ) WHERE l_class = '$l_class'",cnf_dev);
+    $select = array(
+		    '227035',// '51327',
+		    '125499',// '96873'
+		    );
+    while($r = myPear_db()->next_record($q)){
+      if (0) if (in_array($r['l_parent'],$select)) b_debug::print_r($r,
+							     (empty($r['av_lastname'])?"l_parent=$r[l_parent]":"$r[av_firstname] $r[av_lastname]"));
+
+      $id = $p['i'];
+      if (empty($r[$id])){
+	//
+	// The parent record is missing (orphelin)
+	//
+	b_debug::_debug(sprintf("========================================= l_parent=%s",$r['l_parent']),True);
+	// Check av_id2 for this orphelin list
+	if (@$p['i2'] === 'av_id2'){
+	  $qq = myPear_db()->query(sprintf('SELECT * FROM `zzz_avatars` WHERE av_id2 REGEXP "[[:<:]]%s[[:>:]]"',$r['l_parent']),
+				   cnf_dev);
+	  if (myPear_db()->num_rows($qq)){
+	    while($rr = myPear_db()->next_record($qq)){
+	      b_debug::_debug(sprintf("- %s-->%s ----------------------- %s",$r['l_parent'],$rr['av_id'],bForm_Avatar::_fmtName('Lf',$rr)),True);
+	      if (empty($toMerge[$rr['av_id']])) $toMerge[$rr['av_id']] = array();
+	      $toMerge[$rr['av_id']][] = $r['l_parent'];
+	    }
+	  }else{
+	    // No parent avatar found, drop the (presumably) spurios list
+	    b_debug::_debug("??? av_id=$r[l_parent] not found...",True);
+	    bList::deleteList($r['l_id']);
+	  }
+	}
+      }else{
+	//
+	// Good, the parent record is linked to the list
+	//
+	/*
+	  if ($r['l_parent'] != $r[$id])  b_debug::print_r($r,"l_parent != $id");
+	  if (0) if (in_array($r['l_parent'],
+			    explode(',',$r[$p['i2']]))) b_debug::print_r($r,"$r[av_firstname] $r[av_lastname]");
+	*/
+      }
+    }
+
+    // Merge the lists...
+    foreach($toMerge as $avKeep_ID=>$drops){
+      foreach($drops as $avDrop_ID) bForm_Avatar::merge_lists($avDrop_ID,$avKeep_ID,$verbose=True); // $verbose='dryrun');
+    }
+  }
+  b_debug::_debug(exiting);
 }
 
 /*

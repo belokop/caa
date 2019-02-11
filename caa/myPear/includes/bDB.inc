@@ -206,8 +206,11 @@ class bDB extends mysqli{
    */
   function qquery($query,$debug=False){
     if (!$this->isReady)   return Null;
+    $this->qquery_no_debug = ($debug === 'no');
     $this->dbg_qquery = (bool)$debug;
-    return $this->query($query);
+    $reply = $this->query($query);
+    $this->qquery_no_debug = False;
+    return $reply;
   }
 
 
@@ -540,6 +543,7 @@ class bDB extends mysqli{
       return;
     }
 
+    if ($this->qquery_no_debug) return;
     if (!self::$_debug &&
 	!$this->dbg_qquery && 
 	!$this->dbg_changes) return;
@@ -577,17 +581,27 @@ class bDB extends mysqli{
   /*
    *
    */
+  private $qquery_no_debug = False;
   protected function dbg($text,$flags=array()){
-    if (!is_array($flags)) $flags = array($flags);
-    foreach($flags as $f){
+    if(!$this->qquery_no_debug){
+      if (!is_array($flags)) $flags = array($flags);
+      foreach($flags as $f){
       if    (is_bool($f)) $debug_force = $f;
       elseif(is_numeric($f)) {}
       elseif(is_string($f)) $color = $f;
-    }
-    if (!isset($debug_force)) $debug_force = False;
+      }
+      if (!isset($debug_force)) $debug_force = False;
     if (!isset($color)      ) $color = 'lgreenText';
-
+    
     b_debug::_debug($text,array($color,2,$this,(static::$_debug || $this->dbg_qquery || $debug_force)));
+    }
+  }
+
+  /*
+   *
+   */
+  function __toString(){
+    return get_class($this);
   }
 }
       

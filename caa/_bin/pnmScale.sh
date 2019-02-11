@@ -59,7 +59,14 @@ destDir=`dirname "$destfile"`
 
 # Just copy the image to the destination if its size is too small,
 # otherwise rescale it
-if   [ $imageH -le $height -a $imageW -le $height ]; then
+if [ $3 = 'strict' ]; then
+  # The height must be stricly $4, with is irrelevant
+    if   [ $imageH -le $height ]; then
+	cp -pf "$from" "$destfile"
+	chmod a+r "$destfile"
+	exit 0
+    fi
+elif   [ $imageH -le $height -a $imageW -le $height ]; then
     cp -pf "$from" "$destfile"
     chmod a+r "$destfile"
     exit 0

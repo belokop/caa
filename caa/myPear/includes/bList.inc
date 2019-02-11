@@ -47,7 +47,8 @@ class bList extends myPear_getValue{
    * @param return  the list class instance or Null
    */
   static public function getListInstance($argsP,$bList='',$createIfMissing=False){
-
+    b_debug::_debug(starting);
+    //    b_debug::traceBack();
     if (strpos($bList,'bList')!==False){
       if (is_numeric($argsP))  $argsP = array('l_parent'=>$argsP);
       elseif(is_object($argsP))$argsP = array('l_parent'=>$argsP->ID);
@@ -55,11 +56,11 @@ class bList extends myPear_getValue{
     }else{
       if (is_numeric($argsP))  $argsP = array('u_parent'=>$argsP);
     }
-      
     $instance_ID = b_crypt::hash(serialize(array_merge(array('list'=>$bList),$argsP)));
 
     static $instances = array();
     if (isset($instances[$instance_ID])){
+      b_debug::_debug(exiting);
       return $instances[$instance_ID];      
     }
 
@@ -70,8 +71,10 @@ class bList extends myPear_getValue{
 			    ($argsP['u_parent'] == myPear_MODULE &&  $argsP['u_rank'] == RANK__superuser));
       if (!$valid_combination){      
 	MSG::WARNING("The basic 'bUnit' class might be used only for the Organization-wide units.<br/>Please create a separate class.");
+	b_debug::_debug(exiting);
 	return Null;
       }
+      b_debug::_debug(exiting);
       return ($instances[$instance_ID] = new bUnit($argsP['u_parent'],$argsP['u_rank']));
     }
     
@@ -120,29 +123,38 @@ class bList extends myPear_getValue{
     if (isset($instances[$instance_ID])){
       $reply = $instances[$instance_ID];     
     }elseif($createIfMissing && $parent_ID && locateAndInclude($bList)){
+      // var_dump(__method__.' '.var_export("$bList($parent_ID)",True));      
       $reply = $instances[$instance_ID] = new $bList($parent_ID);
     }else{
       $reply = Null;
     }
     b_debug::_debug($reply,static::$_debug);
+    b_debug::_debug(exiting);
     return $reply;
   }
 
   /*
    * Delete the list and its members
    */
-  static public function deleteList($l_id,$membersOnly=False){
+  static public function deleteList($arg,$membersOnly=False){
     $debug = (cnf_dev || cnf_CLI || cnf_show_db);
-    if (is_object($l_id))  $l_id = $l_id->ID;
+    if (is_object($arg))  $arg = $arg->ID;
+    if (!is_array($arg))  $arg = array('l_id'=>$arg);
  
     // print message
-    if ($debug){
-      $q = myPear_db()->query("SELECT * FROM zzz_lists WHERE l_id = '$l_id'");
-      while ($r = myPear_db()->next_record($q)) b_debug::_debug("id=$l_id parent=\"$r[l_parent]\" class=\"$r[l_class]\", created=$r[l_timestamp]",True);
+    $q = myPear_db()->query("SELECT * FROM zzz_lists WHERE ".($msg=b_fmt::joinX(' AND ',$arg,"'")),True);
+    while ($r = myPear_db()->next_record($q)){
+      $l_id[] = $r['l_id'];
+      $lm_lid[] = $r['l_id'];
+      b_debug::_debug("id=$r[l_id] parent=\"$r[l_parent]\" class=\"$r[l_class]\", created=$r[l_timestamp]",True);
     }
+
     // delete the records
-    myPear_db()->qquery("DELETE FROM zzz_list_members WHERE lm_lid = '$l_id'",$debug);
-    if (!$membersOnly) myPear_db()->qquery("DELETE FROM zzz_lists WHERE l_id = '$l_id'",$debug);
+    if (isset($l_id)){
+      MSG::WARNING("Deleting spurious records<br>$msg");
+      myPear_db()->qquery("DELETE FROM zzz_list_members WHERE lm_lid IN (".join(',',$lm_lid).")",$debug);
+      if (!$membersOnly) myPear_db()->qquery("DELETE FROM zzz_lists WHERE l_id IN (".join(',',$l_id).")",$debug);
+    }
   }
   
   /*
@@ -263,8 +275,8 @@ class bList extends myPear_getValue{
     $this->dbg("----------------------------------------------------------------");
     
     // "Rank" is zero for bLists, check that it is as expected    
-    $this->rank = (int)$rank;
-    if(($this instanceof bUnit) && ($this->rank <= 0)){
+    $this->rank = $rank;
+    if(($this instanceof bUnit) && ((int)$this->rank <= 0)){
       b_debug::internalError("Wrong invocation, rank='$rank'");
     }
     
@@ -406,58 +418,58 @@ class bList extends myPear_getValue{
   private $bList_isJustCreated = False;
   private function readDefRecord(){
     $just_created = False;
-    if (myPear_db()->isReady()){    
-      // find the record in the db
-      if(empty($this->ID)){
-	$w = array(myPear_db()->quote($this->parent_ID,1,$this->keys['parent']),
-		   myPear_db()->quote(get_class($this),1,$this->keys['class']));
-	if(isset($this->keys['rank'])) $w[] = myPear_db()->quote($this->rank,1,'u_rank');
-      }else{
-	$w = array(myPear_db()->quote($this->ID,1,$this->TABLEID));
-      }
-      
-      // The result of this query must be either unique or empty.
-      // If it is not, then something is wrong...
-      $q = myPear_db()->query("SELECT ".$this->TABLEID." FROM ".$this->TABLE." WHERE ".join(' AND ',$w));
-      if ($alarm = (cnf_dev && (($n=myPear_db()->num_rows($q)) > 1))) b_debug::print_r($w,b_debug::__()." !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! $n records");
-      while ($r = myPear_db()->next_record($q)){
-	if ($alarm) b_debug::print_r($r,get_class($this).'->'.__FUNCTION__.'()');
-	$this->ID = $r[$this->TABLEID];
-      }
-      
-      //
-      // Create the list root record if it does not exists yet.
-      //
-      if (empty($this->ID)){
-      	// Create the list root record,
-	// The list members will be hooked to it when requested
-	$this->ID = bMaster()->reserve_masterCounter();
-	$w[] = $this->TABLEID . '=' . $this->ID;
-
-	// Get the default class name and member title from the configuration file.
-	// They might be changed later (TBI)
-	list($l_name,$l_member_title) = $this->set__l_name__l_member_title($this,$this->keys);
-	$w[] = $this->keys['name']    . "='$l_name'";
-	$w[] = $this->keys['memberT'] . "='$l_member_title'";
-	
-	myPear_db()->query("INSERT INTO ".$this->TABLE." SET " . join(',',$w));
-	$just_created = True;
-	
-      }
-      
-      //
-      // We are sure now that the list exists, read the root record
-      //
-      $q = myPear_db()->query("SELECT * FROM $this->TABLE ".$this->readDefRecord_joinTables()." WHERE $this->TABLEID = $this->ID");
-      while ($r = myPear_db()->next_record($q)) $this->formDB = $formDB = $r; 	  
-      
-      // Just to be sure...
-      if (empty($formDB[$this->keys['name']]) || 
-      	  empty($formDB[$this->keys['memberT']])) $this->set__l_name__l_member_title($this,$this->keys);
-      
-      // Announce the list creation  
-      if ($just_created) $this->message_createList();
+    if (!myPear_db()->isReady()) return;
+    
+    // find the record in the db
+    if(empty($this->ID)){
+      $w = array(myPear_db()->quote($this->parent_ID,1,$this->keys['parent']),
+		 myPear_db()->quote(get_class($this),1,$this->keys['class']));
+      if    (isset($this->keys['u_rank'])) $w[] = myPear_db()->quote($this->rank,  1,'u_rank');
+      elseif(isset($this->l_name))         $w[] = myPear_db()->quote($this->l_name,1,'l_name');
+    }else{
+      $w = array(myPear_db()->quote($this->ID,1,$this->TABLEID));
     }
+    
+    // The result of this query must be either unique or empty.
+    // If it is not, then something is wrong...
+    $q = myPear_db()->qquery("SELECT ".$this->TABLEID." FROM ".$this->TABLE." WHERE ".join(' AND ',$w),cnf_dev);
+    if ($alarm = (cnf_dev && (($n=myPear_db()->num_rows($q)) > 1))) b_debug::print_r($w,b_debug::__()." !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! $n records");
+    while ($r = myPear_db()->next_record($q)){
+      if ($alarm) b_debug::print_r($r,get_class($this).'->'.__FUNCTION__.'()');
+      $this->ID = $r[$this->TABLEID];
+    }
+    
+    //
+    // Create the list root record if it does not exists yet.
+    //
+    if (empty($this->ID)){
+      // Create the list root record,
+      // The list members will be hooked to it when requested
+      $this->ID = bMaster()->reserve_masterCounter();
+      $w[] = $this->TABLEID . '=' . $this->ID;
+      
+      // Get the default class name and member title from the configuration file.
+      // They might be changed later (TBI)
+      list($l_name,$l_member_title) = $this->set__l_name__l_member_title($this,$this->keys);
+      if (!preg_grep("/=.*$l_name/",$w)) $w[] = sprintf("%s='%s'",$this->keys['name'],$l_name);
+      $w[] = sprintf("%s='%s'",$this->keys['memberT'],$l_member_title);
+	
+      myPear_db()->qquery("INSERT INTO ".$this->TABLE." SET " . join(',',$w),cnf_dev);
+      $just_created = True;
+    }
+    
+    //
+    // We are sure now that the list exists, read the root record
+    //
+    $q = myPear_db()->query("SELECT * FROM $this->TABLE ".$this->readDefRecord_joinTables()." WHERE $this->TABLEID = $this->ID");
+    while ($r = myPear_db()->next_record($q)) $this->formDB = $formDB = $r; 	  
+    
+    // Just to be sure...
+    if (empty($formDB[$this->keys['name']]) || 
+	empty($formDB[$this->keys['memberT']])) $this->set__l_name__l_member_title($this,$this->keys);
+    
+    // Announce the list creation  
+    if ($just_created) $this->message_createList();
   }
 
   /*
@@ -1172,7 +1184,7 @@ class bList extends myPear_getValue{
   function get_action($code,$myGet=array()){
     $myGet['resetcache_once'] = 1;
     $reply = b_url::same('?'.($args=b_fmt::joinX('&',$this->get_action_array($code)).'&'.b_fmt::joinX('&',$myGet)));
-    $this->dbg($reply);
+    //    $this->dbg($reply);
     return $reply;
   }
 
@@ -1318,7 +1330,6 @@ class bList extends myPear_getValue{
     $reply = ($this->isMemberEditable()
 	      ?  b_btn::link('ICON_edit',$this->get_action('edit'))
 	      :  '');
-    $this->dbg($reply);
     return $reply;
   }
 
@@ -1327,7 +1338,6 @@ class bList extends myPear_getValue{
 	      ? b_btn::link('ICON_drop',$this->get_action('drop'),
 			    "onClick='return confirm(\"Really delete this record?\");'")
 	      : '');
-    $this->dbg($reply);
     return $reply;
   }
 
@@ -1429,7 +1439,7 @@ class bList extends myPear_getValue{
 			       $confirm=True);
     }
     $reply = array_merge($reply,$this->extra_buttons);
-    $this->dbg($reply,cnf_dev);
+    //    $this->dbg($reply,cnf_dev);
     return $reply;
   }
   
@@ -1488,8 +1498,8 @@ class bList extends myPear_getValue{
    * Possible to edit this member?
    */
   protected function isMemberEditable(){
-    $reply = $this->isWritable() && ($this->r['lm_status'] !== 'RO');
-    $this->dbg($reply);
+    $reply = (($this->r['lm_status'] !== 'RO') && (bool)$this->isWritable());
+    $this->dbg(sprintf("%s - %s",$this->r['lm_status'],var_export($reply,True)),cnf_dev);
     return $reply;
   }
 
@@ -1511,9 +1521,9 @@ class bList extends myPear_getValue{
   /*
    * Wrapper around bForm_lists
    */
+  private $dejaVu_bForm = 0;
   protected function bForm($variables,$inversed=False){
-    static $dejaVu = 0;
-    if ($dejaVu++) return;
+    if ($this->dejaVu_bForm++) return;
     locateAndInclude('bForm_lists');
     if (empty($this->f)) $this->f = new bForm_lists($this,$variables,$inversed);
     $this->f->tips        = $this->tips;

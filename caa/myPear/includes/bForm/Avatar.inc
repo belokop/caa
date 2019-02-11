@@ -226,6 +226,7 @@ class bForm_Avatar extends bForm {
   private static $basic_Avatar  = False;
   private static $return_asArray= False;
   public static function hook($data, $doNotCreate=False){
+    b_debug::_debug(starting);
     bTiming()->cpu(__METHOD__);
     // if (preg_grep('/printPolicies/',bTiming()->call_stack)) b_debug::traceBack();
 
@@ -285,6 +286,7 @@ class bForm_Avatar extends bForm {
     bTiming()->cpu();
 
     self::$basic_Avatar = False;
+    b_debug::_debug(exiting);
     if (self::$return_asArray) return $av_pivot;
     else                       return array_pop($av_pivot);
   }
@@ -402,7 +404,7 @@ class bForm_Avatar extends bForm {
 	foreach($hooks as $hook){
 	  $hook = trim($hook);
 	  if ($item=='av_email')      $searchString = "`$item` = '".$hook.'\' OR `av_email2` REGEXP \'[[:<:]]'.$hook.'[[:>:]]\'';
-	  elseif($item=='av_identity')$searchString = "`$item` = '".$hook.'\' OR `'.$item.'` REGEXP \'[[:<:]]'.$hook.'[[:>:]]\'';
+	  elseif($item=='av_identity')$searchString = "`$item` = '".$hook.'\' OR `'.$item.'` REGEXP \'[[:<:]]('.str_replace(',','|',$hook).')[[:>:]]\'';
 	  else	                      $searchString = "`$item`='$hook'";
 	  
 	  // Instantiate the Avatar if it is found in the database
@@ -512,9 +514,10 @@ class bForm_Avatar extends bForm {
    * Merge 2 Avatar objects
    */
   public static function merge($avDrop_ID,$avKeep_ID,$dryRun=False,$tablesToConsider=array()){
-    $verbose = (bool)(cnf_show_db||cnf_show_mrg||cnf_CLI);
+    $verbose = (bool)(cnf_show_db||cnf_show_mrg||cnf_CLI||cnf_dev);
     if ($avDrop_ID === $avKeep_ID) return;
     
+    b_debug::_debug(starting);
     $avKeep = new bForm_Avatar::$bForm_Avatar($avKeep_ID); 
     $avKeep->setPWD($pwd='',$updateDB=False);
 
@@ -527,6 +530,7 @@ class bForm_Avatar extends bForm {
       $avDrop_formDB = $av->formDB;
       $avDrop_ID = $toDelete = $av->ID;
     }else{
+      b_debug::_debug(exiting);
       return;
     }
 
@@ -548,6 +552,7 @@ class bForm_Avatar extends bForm {
     if (!empty($dataNotFit)){
       MSG::WARNING("Sorry, but it is not possible to merge Avatars $avDrop_ID & $avKeep_ID, the merged data does not fit the database".
 		      x("ul",b_fmt::joinMap("li",$dataNotFit)));
+      b_debug::_debug(exiting);
       return;
     }
     
@@ -613,18 +618,8 @@ class bForm_Avatar extends bForm {
     $avKeep->updateDB(array_merge($updates,
 				  $tidy_email),$verbose);
     
-    // Check the lists, catch the situation when both the "old" and the "new" objects are parents 
-    // Reassign the "old members" to the "new parent"
-    if (myPear_db()->num_rows($qq=myPear_db()->query("SELECT l_id FROM zzz_lists WHERE l_parent = $avKeep_ID"))){
-      while($rr=myPear_db()->next_record($qq)){
-	$l_id = $rr['l_id'];
-	$q = myPear_db()->query("SELECT l_id FROM zzz_lists WHERE l_parent = $avDrop_ID");
-	while($r=myPear_db()->next_record($q)){
-	  myPear_db()->qquery("UPDATE zzz_list_members SET lm_lid = $l_id WHERE lm_lid = $r[l_id]",$verbose);
-	  myPear_db()->qquery("DELETE FROM zzz_lists WHERE l_id = $r[l_id]",$verbose);
-	}
-      }
-    }
+    // Check the lists
+    self::merge_lists($avDrop_ID,$avKeep_ID,$verbose);
     
     // Update all the other objects in the database
     $a = array_merge(array('zzz_lists'       =>array('l_parent'), 
@@ -653,7 +648,36 @@ class bForm_Avatar extends bForm {
 	b_os::exec($cmd,'>>>');
       }
     }
+    b_debug::_debug(exiting);
   }
+
+  /*
+   *
+   */
+  public static function merge_lists($avDrop_ID,$avKeep_ID,$verbose){
+    b_debug::_debug(starting);
+    // Check the lists, catch the situation when both the "old" and the "new" objects are parents 
+    // Reassign the "old members" to the "new parent"
+    if (myPear_db()->num_rows($qq=myPear_db()->query("SELECT l_id FROM zzz_lists WHERE l_parent = $avKeep_ID"))){
+      while($rr=myPear_db()->next_record($qq)){
+	$l_id = $rr['l_id'];
+	$q = myPear_db()->query("SELECT l_id FROM zzz_lists WHERE l_parent = $avDrop_ID");
+	while($r=myPear_db()->next_record($q)){
+	  $sql_update = "UPDATE zzz_list_members SET lm_lid = $l_id WHERE lm_lid = $r[l_id]";
+	  $sql_delete = "DELETE FROM zzz_lists WHERE l_id = $r[l_id]";
+	  if ($verbose === 'dryrun'){
+	    b_debug::_debug(join('<br/>',array('',$sql_update,$sql_delete)),True);
+	  }else{
+	    myPear_db()->qquery($sql_update,$verbose);
+	    myPear_db()->qquery($sql_delete,$verbose);
+	  }
+	}
+      }
+    }
+    b_debug::_debug(exiting);
+  }
+    
+
   
   /*
    * build the list of _avid fields
@@ -983,7 +1007,7 @@ class bForm_Avatar extends bForm {
     $rec['av_lastname']  = trim(strip_tags($rec['av_lastname']));
     for($n=0; $n<strlen($format); $n++){
       switch($item=substr($format,$n,1)){
-      case 's': if ($s=@$rec['av_salutation'])$reply[] = b_t::_(array('item'=>$s,'key'=>"_$s")); break;
+      case 's': if ($s=@$rec['av_salutation'])$reply[] = b_t::_(array('item'=>$s,'key'=>"text;$s")); break;
       case ',': $reply[] = ',';                                          break;
       case 'i': $reply[] =          'id='.$rec['av_id'];                 break;
       case 'f': $reply[] = b_fmt::ucWords($rec['av_firstname']);         break;
@@ -1005,10 +1029,12 @@ class bForm_Avatar extends bForm {
       default:
       }
     }
-    
+
     if ($reply[count($reply)-1] == '&#44;') array_pop($reply);
     if ($reply[count($reply)-1] == ',')     array_pop($reply);
-    $name = str_replace('- ','-',str_replace(' ,',',',str_replace('> ','>',join(' ',$reply))));
+    $name = str_replace(array('- ',' ,','> '),
+			array('-' ,',' ,'>'),
+			join(' ',$reply));
     if (cnf_CLI) $escape = False;
     if ($escape) $name = no_wrap(b_fmt::escape($name,'<'));
     return $name;
@@ -1091,6 +1117,14 @@ class bForm_Avatar extends bForm {
     return (empty($buffer['av_identity'])
 	    ? array()
 	    : explode(',',$buffer['av_identity']));
+  }
+
+  /* 
+   * Does the account have given identity?
+   */
+  function hasIdentity($identity){
+    if (!is_array($identity)) $identity = explode(',',$identity);
+    return (count(array_intersect($identity,$this->getIdentity())) > 0);
   }
   
   /*

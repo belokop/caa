@@ -49,7 +49,7 @@ function vm_menu_link_alter(&$item, $menu) {
  * Implementation of hook_preprocess_menu_link()
  */
 function vm_preprocess_menu_link(&$variables) {
-  template_hook_preprocess_menu_link($variables);
+  return template_hook_preprocess_menu_link($variables);
 }
 
 /*

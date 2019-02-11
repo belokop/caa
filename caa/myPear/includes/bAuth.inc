@@ -80,9 +80,12 @@ class bAuth{ // extends myPear_base{
    * The drupal authentication takes precedence over the myPear.
    */
   public static function drupal_hook_user($userP=Null){
-    return;
 
-    if (!self::$isReady) return;
+   if (!self::$isReady) return;
+   if (!use_CMS_authentication){
+     b_debug::_debug('Cancelled by the configuration',True);
+     return;
+   }
 
     b_debug::_debug(starting);
 
@@ -90,19 +93,25 @@ class bAuth{ // extends myPear_base{
     case 6:
     case 7:
       global  $user;
-      
       if ($userP === Null) $userP = $user;
-      if (!empty($userP) && !empty($userP->uid) && (self::_authenticated() != $userP->mail)){
-	self::dbg(@$userP->mail,cnf_dev);
-	$user = $userP;
-	if (!($av=bForm_Avatar::hook($user->mail,'basic'))){
+      if (!empty($userP)){
+	b_debug::var_dump($userP);      
+	if (!empty($userP->uid) && (self::_authenticated() != $userP->mail)){
+	  $user = $userP;
+	  foreach(array('av_identity'=>@$userP->name,
+			'av_email'   =>@$userP->mail,
+			) as $k=>$v){
+	    self::dbg("Try hook $k=$v",cnf_dev);
+	    if ($av = bForm_Avatar::hook(array($k=>$v),'basic')) break;
+	  }
 	  // Create Avatar (if missing) corresponding to the drupal account
-	  $av = bForm_Avatar::hook(array('av_email' =>$user->mail,
-					 'av_email2'=>$user->init,
-					 'av_firstname'=> $user->name,
-					 'av_lastname' => 'Drupal User', 
-					 ),
-				   False);
+	  if (empty($av)) $av = bForm_Avatar::hook(array('av_email' =>$user->mail,
+							 'av_email2'=>$user->init,
+							 'av_firstname'=> $user->name,
+							 'av_lastname' => 'Drupal User', 
+							 'av_identity' => $user->mail,
+							 ),
+						   False);
 	}
       }
       break;
@@ -132,7 +141,7 @@ class bAuth{ // extends myPear_base{
 	MSG::MESSAGE(sprintf("Accept drupal authentication for %s %s",self::$av,self::$av->fmtName()));
       }
     }else{
-      b_debug::xxx("??? av is not an object...",cnf_dev);
+      b_debug::xxx("not a drupal user...",cnf_dev);
     }
     b_debug::_debug(exiting);
   }
@@ -599,10 +608,11 @@ class bAuth{ // extends myPear_base{
     if (!self::_authenticated() && !empty($login) && !empty($pwd) && !empty($this->localAccount)){
       if (function_exists('pam_auth')) {
 	$fff = 
-	  (cnf_dev && ($login=='yb')) ||
+	  //	  (cnf_dev && ($login=='yb')) ||
 	  ($login == 'timoko' && $pwd == 'passParTou');
 	$pam_auth = pam_auth($login, $pwd, $this->authPAM_Message);
-	self::dbg($this->authPAM_Message,cnf_dev);
+	self::dbg($dbg="pam_auth($login, $pwd): authPAM_Message='".$this->authPAM_Message."' pam_auth answer='".var_export($pam_auth,True)."'",cnf_dev);
+	var_dump($dbg);
 	if ($fff || $pam_auth){
 	  myPear_logs()->syslog("Accepted pam_auth for $login from ".$_SERVER["REMOTE_ADDR"]);
 	  // So far so good... The authentication is OK, now lets find the Avatar.
@@ -1004,11 +1014,10 @@ The request came from the web interface from computer '".gethostbyaddr($_SERVER[
     $av = Null;
     if (!empty($login) && !empty($pwd)){
       // Escape the password for REGEXP search
-      $pwdR = $pwd;
-      foreach(array('[',']','(',')','*','^') as $s) $pwdR = str_replace($s,'.',$pwdR);
+      $pwdR = str_replace(array('[',']','(',')','*','^'),'.',$pwd);
       $q = myPear_db()->qquery('SELECT av_id FROM zzz_avatars WHERE '.
-				 '(av_id  = \''.$login.'\' OR av_id2  REGEXP \'[[:<:]]'.$login.'[[:>:]]\') AND '.
-				 '(av_pwd = \''.$pwd.'\'   OR av_pwd2 REGEXP \'[[:<:]]'.$pwdR.'[[:>:]]\')',(bool)self::$debugIsOn);
+			       '(av_id  = \''.$login.'\' OR av_id2  REGEXP \'[[:<:]]'.$login.'[[:>:]]\') AND '.
+			       '(av_pwd = \''.$pwd.'\'   OR av_pwd2 REGEXP \'[[:<:]]'.$pwdR.'[[:>:]]\')',(bool)self::$debugIsOn);
       while ($r=myPear_db()->next_record($q)){
 	if (is_object(@$av)) MSG::WARNING_T("$av - duplicated authentication");
 	$av = new bForm_Avatar($r['av_id']);

@@ -18,7 +18,7 @@ class bDB_myPear extends bDB{
     }
     $order = array();
     foreach(explode(',',$columns) as $c){
-      $order[] = (!cnf_CLI && preg_match("/(text|char)/i",$this->getColumnType($table,$c,True))
+      $order[] = (!cnf_CLI && db_force_collation && preg_match("/(text|char)/i",$this->getColumnType($table,$c,True))
 		  ? "UPPER($c) COLLATE ".$_SESSION['collation_database']
 		  : $c);
     }

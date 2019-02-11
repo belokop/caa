@@ -20,9 +20,6 @@ class bForm extends myPear_getValue{
   }
 
 
-  var $MODE    = 'RO';
-  var $ID      = 0;
-  var $block_ID= 0;
   public $timestamp  = 0;  // the timestamp of the last file checked
 
   public $vars = array('_post_bForm_ID_once'   => 'ID of the form sent',

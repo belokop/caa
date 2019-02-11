@@ -81,7 +81,7 @@ $(document).ready(function() {
   function __construct() {
   
     // Load jQuery, first js, then css - js takes much longer to load
-    $this->add_js_file( 'jquery.js'    ,myPear_js.'../jquery/');
+    $this->add_js_file((fancybox3 ? 'jquery3.js' : 'jquery1.js'),myPear_js.'../jquery/');
     $this->add_js_file( 'jquery-ui.js' ,myPear_js.'../jquery/');
     $this->add_css_file('jquery-ui.css',myPear_js.'../jquery/');
     if (cnf_inside_fb)  $this->add_css_file('content-only.css',myPear_css,'content');
@@ -455,7 +455,7 @@ $(document).ready(function() {
    * on click gets "display='block'" attribute.
    *
    * This works fine, the only problem is the performance - 
-   * the should be not many such blocks on the page
+   * there should be not many such blocks on the page
    *
    * The preffered widget is fancybox since it is more efficient,
    * but its current implementation requires the 'widget-enabled' template.
@@ -515,9 +515,12 @@ $(document).ready(function() {
    *
    */
   private function modal_open(&$url,$type=''){
-    $this->add_css_file('jquery.fancybox.css',myPear_js.'../jquery/jquery.fancybox/');
-    $this->add_js_file ('jquery.fancybox.js', myPear_js.'../jquery/jquery.fancybox/');
-
+    $fb = myPear_js . (fancybox3
+		       ? '../jquery/jquery.fancybox3/'
+		       : '../jquery/jquery.fancybox2/');
+    $this->add_css_file('jquery.fancybox.css',$fb);
+    $this->add_js_file ('jquery.fancybox.js', $fb);
+    
     $url = trim($url);
     if (!empty($url)){
       if (strpos($url,'http') !== 0){

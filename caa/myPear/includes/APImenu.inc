@@ -235,7 +235,7 @@ class APImenu extends myPear_base{
       return Null;
 
     case tab__syslog:
-      $reply = (defined('EA_ORG_manager_here') && EA_ORG_manager_here);
+      $reply = $this->accessSyslog();
       break;
       
     case 'bred':
@@ -250,6 +250,10 @@ class APImenu extends myPear_base{
     if ($reply !== Null)    $this->dbg($reply,array(cnf_show_a));
     return $reply;
    }
+   protected function accessSyslog(){
+     return (defined('EA_ORG_manager_here') && EA_ORG_manager_here);
+   }
+
 
   /*
    * Process commonly used tabs

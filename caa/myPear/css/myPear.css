@@ -164,17 +164,20 @@ td.width0    { width:2%; padding-left: 1px ! important; padding-right: 1px ! imp
  */
 .buttons_line{
     position: static;
-    width: 100%;
     height: auto;
     min-height: 15px;
+/*  width: 100%; */
+    width: -moz-max-content;
+    margin-left: auto;
+    margin-right: auto;
     margin-top: 20px;	
 }
 
 .buttons_line ul{
     position: relative;
     float: left;
-    top:  50%;
-    left: 25%;
+    top:  1.5em;
+    left: 50%;
     transform: translate(-50%, -50%);
     list-style: none;
     text-align: center;
@@ -355,7 +358,10 @@ div.archived{
  */
 div.login_prompt{
     width:333px;
-    background: transparent;
+    background: white;
+    margin-left: auto;
+    margin-right: auto;
+    border-radius: 15px;
 }
 
 table{

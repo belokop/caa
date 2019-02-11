@@ -1,5 +1,50 @@
 Changes log                                                                                                                                                             
                                                                                                                                                                                  
+2019-02-11, Version 5.3.225,
+D       myPear/jquery/jquery-1.8.3.js
+A       myPear/jquery/jquery-3.3.1.min.js
+D       myPear/jquery/jquery.fancybox
+A       myPear/jquery/jquery.fancybox-3.3.5
+A       myPear/jquery/jquery.fancybox-3.3.5/jquery.fancybox.css
+A       myPear/jquery/jquery.fancybox-3.3.5/jquery.fancybox.js
+A       myPear/jquery/jquery.fancybox-3.3.5/jquery.fancybox.min.css
+A       myPear/jquery/jquery.fancybox-3.3.5/jquery.fancybox.min.js
+A       myPear/jquery/jquery.fancybox2
+A       myPear/jquery/jquery.fancybox3
+D       myPear/jquery/jquery.js
+A       myPear/jquery/jquery1.js
+A       myPear/jquery/jquery3.js
+                                                                                                                                                                                 
+2019-02-11, Version 5.3.224,
+D       myPear/jquery/jquery-1.8.3.js
+A       myPear/jquery/jquery-3.3.1.min.js
+D       myPear/jquery/jquery.fancybox
+A       myPear/jquery/jquery.fancybox-3.3.5
+A       myPear/jquery/jquery.fancybox-3.3.5/jquery.fancybox.css
+A       myPear/jquery/jquery.fancybox-3.3.5/jquery.fancybox.js
+A       myPear/jquery/jquery.fancybox-3.3.5/jquery.fancybox.min.css
+A       myPear/jquery/jquery.fancybox-3.3.5/jquery.fancybox.min.js
+A       myPear/jquery/jquery.fancybox2
+A       myPear/jquery/jquery.fancybox3
+D       myPear/jquery/jquery.js
+A       myPear/jquery/jquery1.js
+A       myPear/jquery/jquery3.js
+                                                                                                                                                                                 
+2019-02-11, Version 5.3.223,
+D       myPear/jquery/jquery-1.8.3.js
+A       myPear/jquery/jquery-3.3.1.min.js
+D       myPear/jquery/jquery.fancybox
+A       myPear/jquery/jquery.fancybox-3.3.5
+A       myPear/jquery/jquery.fancybox-3.3.5/jquery.fancybox.css
+A       myPear/jquery/jquery.fancybox-3.3.5/jquery.fancybox.js
+A       myPear/jquery/jquery.fancybox-3.3.5/jquery.fancybox.min.css
+A       myPear/jquery/jquery.fancybox-3.3.5/jquery.fancybox.min.js
+A       myPear/jquery/jquery.fancybox2
+A       myPear/jquery/jquery.fancybox3
+D       myPear/jquery/jquery.js
+A       myPear/jquery/jquery1.js
+A       myPear/jquery/jquery3.js
+                                                                                                                                                                                 
 2018-01-17, Version 5.3.222,
                                                                                                                                                                                  
 2017-12-19, Version 5.3.221,

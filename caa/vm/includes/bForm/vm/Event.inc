@@ -22,6 +22,8 @@ class bForm_vm_Event extends bForm_vm {
 
     // Follow changes in the policy definition
     if ($this->getValue('e_end') < time()) $this->set_e_v_policy(VM::$description[VISIT_TYPE_PROGRAM]['p']);
+    // Workaround
+    //    if ($this->ID == 401523) $this->setPolicy(VM_E_archived,0,False);
   }
 
   /*
@@ -376,7 +378,9 @@ class bForm_vm_Event extends bForm_vm {
   }
 
   public function isArchived(){
-    return $this->getPolicy(VM_E_archived);
+    $reply = $this->getPolicy(VM_E_archived);
+    $this->dbg($reply,cnf_dev);
+    return $reply;
   }
 
   /*

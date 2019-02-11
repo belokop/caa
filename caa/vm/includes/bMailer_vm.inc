@@ -591,7 +591,7 @@ Visit information:
 	    $this->visit->getPolicy(VM_V_welcomeMailSent)){
       $case = 'welcome_mail_sent';
 
-    }elseif ($this->visit->av->isOrganizer($this->visit->e->ID)){
+    }elseif (is_object($this->visit->av) && $this->visit->av->isOrganizer($this->visit->e->ID)){
       $case = 'is_organizer';
 
     }elseif ($this->visit->av->isE(True)){
@@ -599,12 +599,15 @@ Visit information:
     }
     
     // Exit if the visitor is not concerned
+    $v_name = (is_object($this->visit->av)
+	       ? $this->visit->av->fmtName('fl')
+	       : "??? Empty avatar");
     if (!empty($case)){
       if (in_array(VM_V_infoMailNC,array_keys($this->visit->getPolicies()))){
 	$this->visit->setPolicy(VM_V_infoMailNC,1);
       }
       $reply = CONST_not_concerned;
-      $this->dbg("$reply, $case ".x('em',$this->visit->av->fmtName('fl')));
+      $this->dbg("$reply, $case ".x('em',$v_name));
       self::$_debug = $debug_sv;
       return $reply;
     }
@@ -615,7 +618,7 @@ Visit information:
       $reply = ($this->visit->getPolicy(VM_V_infoMailQueued)
 		? in_queue
 		: $VM_V_infoMailSent);
-      $this->dbg("$reply, ".x('em',$this->visit->av->fmtName('fl')));
+      $this->dbg("$reply, ".x('em',$v_name));
       self::$_debug = $debug_sv;
       return $reply;
     }

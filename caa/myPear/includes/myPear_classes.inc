@@ -21,18 +21,19 @@ class b_t{
   // Backwards compat...
   static $acceptNewEntries, $doTranslation, $dropAfterSKIP;
 
+  //
+  static $may_inviteEditTranslation = True;
+
   /*
-   * A workaround... Translation might be called before the myPear startup is complited
+   * A better version... Translation might be called before the myPear startup is complited
    */
-  static function current_module($filter="art|hrm"){
-    static $reply = Null;
-    if (empty($reply)){
-      if (!preg_match("/^($filter)/",@$_REQUEST['q'],$match)) $match=array('myPear','myPear');
-      $reply = $match[1];
-      // if (defined('cnf_dev'))
-	b_debug::_debug($reply,self::$_debug);
-    }
-    return $reply;;
+  static function current_module($filter=".*"){
+    // Custom list of valid modules
+    if (function_exists('current_module_custom')) $filter = call_user_func('current_module_custom');
+    if (!preg_match("/^($filter)/",@$_REQUEST['q'],$match)) $match=array('myPear','myPear');
+    $module = $match[1];
+    b_debug::_debug($module,self::$_debug);
+    return $module;
   }
 
   /*
@@ -41,7 +42,7 @@ class b_t{
   static function TT_locales($not_tt_SQL_based=False){
     static $TT_locales = Null;
     if ($TT_locales === Null){
-      if (tt_SQL_based && !$not_tt_SQL_based){
+      if (!$not_tt_SQL_based){
 	$q = myPear_db()->qquery("SELECT * FROM zzz_tt_locales",cnf_dev);
 	while($r=myPear_db()->next_record($q)) $TT_locales[$r['l_locale']] = array('l_flag'    =>$r['l_flag'],
 										   'l_currency'=>$r['l_currency'],
@@ -142,92 +143,23 @@ class b_t{
    * Load the translation table
    */
   private static function TT_load(){
-
-    if (tt_SQL_based) {
-      //
-      // SQL based TT
-      //
-      if (!empty(self::$TT)) return;
-      foreach(array(myPear_MODULE,self::current_module()) as $module){
-	$count = 0;
-	$q = myPear_db()->qquery("SELECT * FROM zzz_tt WHERE tt_module = '$module' ORDER BY tt_key",cnf_dev);
-	while($r=myPear_db()->next_record($q)){
-	  self::$TT[$r['tt_key']]['_']            = $r['tt_default']; 
+    
+    if (!empty(self::$TT)) return;
+    foreach(array(myPear_MODULE,self::current_module()) as $module){
+      $count = 0;
+      $q = myPear_db()->qquery("SELECT * FROM zzz_tt WHERE tt_module = '$module' ORDER BY tt_key",cnf_dev);
+      while($r=myPear_db()->next_record($q)){
+	self::$TT[$r['tt_key']]['_']            = $r['tt_default']; 
 	  self::$TT[$r['tt_key']][$r['tt_locale']]= $r['tt_translated']; 
-	}
-	b_debug::_debug("$module - ".($count=count(array_keys(self::$TT))-$count)." keys",self::$_debug);
       }
-    }else{    
-      //
-      // Files-base TT
-      //
-      $module = self::current_module();
-      if (!empty(self::$TT_module[$module])) return;
-      b_debug::_debug($module,self::$_debug);
-    
-      // Create the translation file for the first entry
-      self::TT_create();
-      
-      // Load the translation table
-      require(self::TT_path());
-      
-      // Save the keys used by the module, we will need them when will update the tr.table
-      self::TT_extract_keys($module);
+      b_debug::_debug("$module - ".($count=count(array_keys(self::$TT))-$count)." keys",self::$_debug);
     }
   }
 
   /*
    *
    */
-  private static function TT_extract_keys($module){
-    if (tt_SQL_based) b_debug::internalError('Should not happen...');
-    if (empty($module)) $module = self::current_module();
-    if (!empty(self::$TT_module[$module])) return;
-
-    // Create first the myPear keys
-    if (($module != 'myPear') && empty(self::$TT_module['myPear'])) self::TT_extract_keys('myPear');
-    
-    $src_tmp = "/tmp/$module/tt.php";
-    ob_start();
-    system("rm -rf ".dirname($src_tmp)."; mkdir -p ".dirname($src_tmp));
-    
-    system($cmd = sprintf("cat %s | sed s/self:://g | grep -v ^require > %s",
-			  realpath(self::TT_path($module)),
-			  $src_tmp));
-    $err = ob_get_contents();
-    ob_end_clean();
-    
-    $TT = array();
-    require($src_tmp);
-    self::$TT_module[$module] = $TT;
-   
-    // Substitute the '_' & see the intersecting values 
-    foreach(array('art','hrm','myPear') as $m1){
-      if (empty(self::$TT_module[$m1])) continue;
-      foreach(self::$TT_module[$m1] as $key=>$d){
-	foreach($d as $l=>$v){
-	  if (($l != '_') && in_array($v,self::$same_as_reference)){
-	    b_debug::_debug("$key/$l => '".self::$TT_module[$m1][$key]['_']."'",self::$_debug);
-	    self::$TT_module[$m1][$key][$l] = self::$TT[$key][$l] = self::$TT_module[$m1][$key]['_'];
-	  }
-	}
-      }
-      foreach(array('art','hrm','myPear') as $m2){
-	if (empty(self::$TT_module[$m2])) continue;
-	if ($m1 === $m2) continue;
-	if (defined('cnf_dev') && ($module !== 'myPear')) b_debug::print_r(array_intersect(array_keys(self::$TT_module[$m1]),
-											   array_keys(self::$TT_module[$m2])),x('span class="boldText redText"',
-																"$m1/$m2"));
-      }
-    }
-    //    b_debug::_debug(array_keys(self::$TT_module),self::$_debug);
-  }
-
-
-  /*
-   *
-   */
-  static $keys2skip = array('_timestamp','_id2?','_pwd2?'); //	if (preg_match('/(_\w*ids?|_cc)$/',$field)){
+  static $keys2skip = array('_timestamp','_id2?','_pwd2?'); 
   static function set_keys2skip($keys){
     self::$keys2skip = array_unique(array_merge(self::$keys2skip,$keys));
   }
@@ -248,16 +180,16 @@ class b_t{
 	    : False);
   }
 
-  private static function b_t_short_txt($text){
-    return self::escape(strlen($text) > b_t_long_text
-			? mb_strcut($text, 0, b_t_long_text, "UTF-8") . ' ...' 
+  private static function b_t_short_txt($text,$max=b_t_long_text){
+    return self::escape(strlen($text) > $max
+			? mb_strcut($text, 0, $max, "UTF-8") 
 			: $text);
   }
   
   /*
    *
    */
-  private static function TT_return_result($reply,$key,$case){
+  private static function TT_return_result($reply,$case){
     b_debug::_debug("'$reply'".(in_array($case,array('OK')) ? "" : " ($case)"),array(2,'greenText',self::$_debug));
     return str_replace('&apos;',"'",$reply);
   }
@@ -265,11 +197,11 @@ class b_t{
   /*
    *
    */
-  public  static function noPointToTranslate($key,$value='Not set',$class=Null,$option=''){
+  public static function noPointToTranslate($key,$value='Not set',$class=Null,$option=''){
     
     // Catch the "obvious cases"
     $reply = False;
-    if (!$reply) $reply = (($R['outOfScope'] = (is_object($class) && !myPear_db()->columnExists($key,loader::$sql_identities[get_class($class)]['t']))) ||
+    if (!$reply) $reply = (($R['outOfScope'] = (is_object($class) && !myPear_db()->columnExists($key,@loader::$sql_identities[get_class($class)]['t']))) ||
 			   ($R['isHidden']   = (is_object($class) && in_array($key,$class->isHidden))) ||
 			   ($R['OK']         = self::$no_need_to_translate) ||
 			   ($R['outOfMod']   = !in_array(self::current_module(),self::$modules)) 
@@ -291,8 +223,7 @@ class b_t{
 		($R['html']    =($value != strip_tags($value)))      ||
 		($R['http']    =(strpos($value,'http:/' ) === 0))    ||
 		($R['https']   =(strpos($value,'https:/') === 0))    ||
-	      //($R['notA_Z']  =!preg_match('/[\sa-z\p{Cyrillic}]+/ui',$value))||
-		($R['notA_Z']  =!preg_match('/[\sa-z\p{Cyrillic}]+/i',$value))||
+		($R['notA_Z']  =!preg_match('/[\sa-z\p{Cyrillic}]+/ui',$value))||
 		($R['bForm']   = preg_match("/($b)/", $value))        ||       
 		($R['image']   = preg_match("/($s)$/i",$value))       ||       
 		($R['date']    = preg_match("/^[x\-\,\d\s\/]*$/ui",$value))  ||      // 200 x 300, 1900-2000
@@ -311,6 +242,19 @@ class b_t{
 	    : False);
   }
     
+  /*
+   *
+   */
+  private static function TT_substituteIfEmpty($key,$to,$substituteIfEmpty){
+    $reply = ($substituteIfEmpty
+	      ? Null
+	      : (self::$no_need_to_translate===b_t_reference 
+		 ? (string)@self::$TT[$key]['_']
+		 : (string)@self::$TT[$key][$to]
+		 ));
+    //    if ($reply)      b_debug::_debug(var_export($reply,True),cnf_dev);
+    return $reply;
+  }
   
   /*
    * Translator
@@ -319,7 +263,29 @@ class b_t{
   private static $no_need_to_translate = False;
   static function _($text,$no_need_to_translate=False,$substituteIfEmpty=True){
 
-    if (!in_array(self::current_module(),self::$modules)) return $text;
+    // Not to be translated
+    if (!in_array(($m=self::current_module()),self::$modules)){
+      //      b_debug::_debug("'$m' is not to be translated",cnf_dev);
+      if (is_string($text)){
+	$reply = $text;
+      }elseif (is_array($text)){
+	if (!empty($text['item'])){
+	  $reply = $text['item'];
+	}else{
+	  $class = array_shift($text);
+	  $field = array_shift($text);
+	  $reply = (!empty($text)
+		    ? array_shift($text)
+		    : $class->getValue($field));
+	}	
+      }
+      if (!isset($reply)){
+	b_debug::var_dump(is_object($text) ? "----------object ".get_class($text) : $text);
+	$reply = $text;
+      }
+      b_debug::_debug($reply,array('greenText',self::$_debug));
+      return $reply;
+    }
 
     // Load the trabslation table if not yet done
     self::TT_load();
@@ -345,6 +311,8 @@ class b_t{
     if ($indexed = is_array($text)){
       if (!empty($text['key'])){
 	$key  = $text['key'];
+	if (($reply=self::TT_substituteIfEmpty($key,$to,$substituteIfEmpty)) !== Null) return self::TT_return_result($reply,'no_substituteIfEmpty');
+
 	$text = (empty(self::$TT[$key])
 		 ? @$text['item']
 		 : self::$TT[$key]['_']);
@@ -359,17 +327,21 @@ class b_t{
 	$text  = (empty($text)
 		  ? $class->getValue($field)
 		  : array_shift($text));
-	if(empty($key))             return self::TT_return_result($text,$key,'empty key');     
-	if(!is_numeric($class->ID)) return self::TT_return_result($text,$key,"ID=".$class->ID);
-	if (!$substituteIfEmpty){
-	  $reply = (self::$no_need_to_translate===b_t_reference // || self::same_as_reference(@self::$TT[$key][$to])
-		    ? (string)@self::$TT[$key]['_']
-		    : (string)@self::$TT[$key][$to]);
-	  return self::TT_return_result($reply,$key,'no_substituteIfEmpty');
-	}
+	if(empty($key))             return self::TT_return_result($text,'empty key');     
+	if(!is_numeric($class->ID)) return self::TT_return_result($text,"ID=".$class->ID);
+	if (($reply=self::TT_substituteIfEmpty($key,$to,$substituteIfEmpty)) !== Null) return self::TT_return_result($reply,'no_substituteIfEmpty');
 	
 	// Is the translation nesessary?
-	if ($r=self::noPointToTranslate($field,$text,$class)) return self::TT_return_result($text,$key,$r);
+	if ($r=self::noPointToTranslate($field,$text,$class)) return self::TT_return_result($text,$r);
+
+	// For the newly created entry resolve the TWIK problem
+	if (!self::TT_block_exists($key)){
+	  // The "default value" is essential for names only (insider info :-)
+	  $tt_default = (strpos($field,'name') === False
+			 ? $field.' '.$class->ID
+			 : $text);
+	  self::TT_add_block($key,$text,'',$tt_default);
+	}
       }
     }
     
@@ -388,7 +360,7 @@ class b_t{
     // Non-indexed translation, get key from the text if posible
     // (the non-indexed entries come usually from bHolder instances)
     if (empty($key)){
-      if ($r=self::noPointToTranslate(0,$text,@$class)) return self::TT_return_result($text,0,$r);
+      if ($r=self::noPointToTranslate(0,$text,@$class)) return self::TT_return_result($text,$r);
       if (empty($text)){
 	$key = '???';
       }else{
@@ -405,8 +377,9 @@ class b_t{
 	  }
 	}
 	if (!($key = @$text2key[$text])){
+	  b_debug::internalError("Nonindexed text '$text'");
 	  MSG::INFO("Nonindexed text '$text'");
-	  $key = 'text;' . self::b_t_short_txt($text);
+	  $key = 'text;' . b_fmt::translit(self::b_t_short_txt($text,12),True);
 	}
       }
     }
@@ -418,18 +391,17 @@ class b_t{
     //
     // No need to translate?
     //
-    if ($r=self::noPointToTranslate($key,$text,Null,$to)) return self::TT_return_result($reply,$key,$r);
+    if ($r=self::noPointToTranslate($key,$text,Null,$to)) return self::TT_return_result($reply,$r);
     
     // Workaround(?) hook the known non-indexed expressions
-    if (!self::TT_block_exists($key) && is_numeric($key)){
+    // Would be nice to create a reversed translation table...
+    if (!self::TT_block_exists($key) && ((strpos($key,'text;')!==False) || is_numeric($key))){
       foreach(self::$TT as $k=>$d){
 	if (empty($d['_'])){
 	  var_dump("??? empty reference text='$k'",$d);
-	}elseif (self::escape($text_original) == $d['_']){
-	  //	  if (self::same_as_reference(self::$TT[$k][$to])) return self::TT_return_result($ob.$text_original.$cb,$k,'OK'); // $ob.$text_original.$cb;
+	}elseif (strToLower(self::escape($text_original)) == strToLower($d['_'])){
 	  self::$TT[$key] = self::$TT[$k];
 	  self::$TT[$key]['hooked'] = 'x';
-	  // var_dump("Hook $k $text_original");
 	  break;
 	}
       }
@@ -437,6 +409,10 @@ class b_t{
     
     // Do it...
     if (self::TT_block_exists($key)){      
+
+      // Shortcut
+      if (strpos(self::$TT[$key][$to],cnf_emptyString)!==False) return self::TT_return_result('','empty'); 
+    
       // Try to translate
       if (!empty(self::$TT[$key][$to])){  // The translation is known 
 	// if (self::same_as_reference(self::$TT[$key][$to])) self::$TT[$key][$to] = self::$TT[$key]['_'];
@@ -451,19 +427,24 @@ class b_t{
     }
     
     // Print invitation to fix the translation
-    if (empty(self::$TT[$key][$to])){
+    if (self::$may_inviteEditTranslation && empty(self::$TT[$key][$to])){
+      b_debug::_debug("empty TT[$key][$to]",cnf_dev);
       MSG::MESSAGE($object_field
-		   ? sprintf("%s(%s) %s",get_class($class),$class->ID,$field)
-		   : sprintf("Please update %s/%s dictionary for '".self::b_t_short_txt($text)."'",self::current_module(),$to));;
+		   ? $class->invite2editObjectTT($field,$to) 
+		   : self::invite2editCommonTT($key,$to,$text));
       $case = 'to be provided';
     }
-    //    if (!empty($case) && ($case !== 'OK')) b_debug::_debug($case,True);
-    //    if($ob || $cb)  b_debug::var_dump("$reply",__method__);
     if (in_array((string)$reply,self::$same_as_reference)) $reply = self::$TT[$key]['_'];
     if (in_array((string)$reply,self::$same_as_reference)) b_debug::internalError("reply = '$reply'");
-    return self::TT_return_result($reply,$key,'OK');
+    return self::TT_return_result($reply,'OK');
   }
 
+  private static function invite2editCommonTT($key,$to,$text){
+    return (function_exists($f=strToUpper(self::current_module()).'_invite2editCommonTT')
+	    ? call_user_func($f,$key,$to,$text)
+	    : sprintf("Please update %s/%s dictionary for '".self::b_t_short_txt($text)."'",self::current_module(),$to));
+  }
+  
   /*
    *
    */
@@ -479,7 +460,7 @@ class b_t{
     }
 
     // No need to translate?    
-    if (self::noPointToTranslate($field,'Not set',$class)) return Null;
+    //???    if (self::noPointToTranslate($field,'Not set',$class)) return Null;
     
     if (!myPear_db()->columnExists($field,loader::$sql_identities[get_class($class)]['t'])){
       if (self::$_debug){
@@ -509,6 +490,7 @@ class b_t{
    *
    */
   static function TT_block_exists($key){
+    if (empty($key)) b_debug::internalError("Empty argument \"key\"");
     self::TT_load();
     $reply = isset(self::$TT[$key]);
     if (!$reply) b_debug::_debug($reply,self::$_debug);
@@ -519,14 +501,18 @@ class b_t{
    *
    */
   static function TT_update_block($locale,$key,$translated_text){
-    if (tt_SQL_based){ b_debug::traceBack('Not yet ready...'); return; }
-
+    
     $translated_text = self::escape($translated_text);
-    if (self::$TT[$key][$locale] == $translated_text){
+    if (@self::$TT[$key][$locale] === $translated_text){
       MSG::MESSAGE("No changes in the translation table :-)");
       return;
     }
-
+    
+    $module = self::current_module();
+    if (($g=self::TT_guess_locale($translated_text)) != $locale){
+      MSG::MESSAGE("??? Imposed $locale, but guessed $g");
+    }
+    
     if (!self::TT_block_exists($key)){
       //
       // Simple case, new block arrives
@@ -535,135 +521,253 @@ class b_t{
       self::TT_add_block($key,$translated_text,$locale);
     }else{
       //
-      // More tricky, an existing block is updated
+      // An existing block is updated
       //
-
-      $locale_text = self::TT_guess_locale($translated_text);
-
       b_debug::_debug("update block",self::$_debug);
-      self::$TT[$key][$locale] = self::$TT_module[self::current_module()][$key][$locale] = $translated_text;
       
-      //
-      // Update the file by just rewriting it      
-      $output_file = sprintf("/tmp/%s/translation.php",self::current_module());
-      $output_file = self::TT_path();
-      self::TT_create($output_file,$reset=True);
-
-      foreach (self::$TT_module[self::current_module()] as $key=>$d){
-	// Save block
-	$separator = "\n";
-	foreach(array_merge(array('_'),array_keys(self::TT_locales())) as $locale){
-	  file_put_contents($output_file,
-			    sprintf($separator."self::\$TT['%s']['%s'] = '%s';\n",
-				    $key,
-				    $locale,
-				    $d[$locale]),
-			    FILE_APPEND);
-	  $separator = '';
-	}
+      $locale_text = self::TT_guess_locale($translated_text);
+      $translated_text = self::escape($translated_text);
+      
+      // Update the translation table
+      self::$TT[$key][$locale] = $translated_text;
+      while(empty($tt_id)){
+	$q = myPear_db()->query("SELECT tt_id FROM zzz_tt WHERE tt_key = '$key' AND tt_locale = '$locale' AND tt_module = '$module'");
+	while($r = myPear_db()->next_record($q)) $tt_id = $r['tt_id'];
+	if (!empty($tt_id)) break;
+	// Fix on the fly...
+	MSG::ERROR("??? tt_key is not found for '$locale', adding the record");
+	myPear_db()->query("INSERT INTO zzz_tt (tt_key,tt_locale,tt_module) VALUES('$key','$locale','$module')",True);
       }
-      MSG::MESSAGE(__method__."($locale,$key,$translated_text) => $output_file",True);
+
+      myPear_db()->qquery("UPDATE zzz_tt SET tt_translated = '$translated_text' WHERE tt_id = $tt_id",cnf_dev);
+
+      // Update the translit table, just one record
+      call_user_func(array(search(),'TT_update_translit_line'),
+		     'zzz_tt',
+		     array('tt_id'        => $tt_id,
+			   'tt_translated'=> $translated_text),
+		     'UPDATE');
     }
+    MSG::MESSAGE(__method__."($locale,$key,$translated_text) => $module",True);
   }
   
   /*
    * Add one block to the dictionary, save it on disk
    */
-  static function TT_add_block($key,$text_original,$locale_original=array()){
+  static function TT_add_block($key,$tt_translated,$tt_locale='',$tt_default=''){
     
     if ( empty($key))            b_debug::traceBack('??? empty key');
     if ( empty($key) || !empty(self::$TT[$key]['hooked'])) return;
     if (!empty(self::$TT[$key])) b_debug::internalError("TT[$key] already exists");
-    if ( empty($text_original))  b_debug::internalError('??? empty text_original');
+    if ( empty($tt_translated) && empty($tt_default))  b_debug::internalError('??? empty text_original');
 
     // Guess the module
     self::init();
     $module = (myPear_db()->columnExists($key)
 	       ? myPear_MODULE
 	       : b_t::current_module());
-
     
     // Guess the language
-    if (!is_array($locale_original)) $locale_original = array($locale_original);
-    if (empty($locale_original))     $locale_original = array(self::TT_guess_locale($text_original));
+    if (empty($tt_locale))     $tt_locale = self::TT_guess_locale($tt_translated);
 
     // Fill the block
-    self::$TT[$key]['_'] = self::escape($text_original);
-
-    if (tt_SQL_based){ 
-      $insert = array('tt_module' => "'$module'",
-		      'tt_key'    => "'$key'",
-		      'tt_default'=> "'".self::$TT[$key]['_']."'");
-    }else{
-      file_put_contents(self::TT_path(), 
-			sprintf("\nself::\$TT['%s']['_'] = '%s';\n",
-				$key,
-				self::$TT[$key]['_']),
-			FILE_APPEND);
+    $tt_translated = self::escape($tt_translated);
+    $tt_default = (empty($tt_default)
+		   ? $tt_translated
+		   : self::escape($tt_default));
+    self::$TT[$key]['_'] = $tt_default;
+    
+    if(!function_exists('TT_join_escaped')){
+      function TT_join_escaped($arg){
+	foreach($arg as $a) $a_escaped[] = "'$a'";
+	return join(',',$a_escaped);
+      }
     }
-
+    $insert = array('tt_key'    => $key,
+		    'tt_module' => $module,
+		    'tt_default'=> $tt_default);
     foreach(array_keys(self::TT_locales()) as $locale){
-      self::$TT[$key][$locale] = (in_array($locale,$locale_original)
-				  ? (count($locale_original)==1 ? self::$TT[$key]['_'] : '_')
-				  : '');
-      if (tt_SQL_based){ 
-	$insert['tt_locale']     = "'$locale'";
-	$insert['tt_translated'] = "'".self::$TT[$key][$locale]."'";
-	$sql = sprintf("INSERT INTO zzz_tt (%s) VALUES (%s)",join(',',array_keys($insert)),join(',',array_values($insert)));
-	myPear_db()->qquery($sql,True);
-      }else{
-	file_put_contents(self::TT_path(), 
-			  sprintf("self::\$TT['%s']['%s'] = '%s';\n",
-				  $key,
-				  $locale,
-				  self::$TT[$key][$locale]),
-			  FILE_APPEND);
-      }	
+      self::$TT[$key][$locale] = ($locale == $tt_locale ? $tt_translated : '');
+      $insert['tt_locale']     = $locale;
+      $insert['tt_translated'] = self::$TT[$key][$locale];
+      $sql = sprintf("INSERT INTO zzz_tt (%s) VALUES (%s)",join(',',array_keys($insert)),TT_join_escaped(array_values($insert)));
+      myPear_db()->qquery($sql,True);
+      // Update the search tables
+      call_user_func(array(search(),'TT_update_translit_line'),'zzz_tt',$insert);
     }
-    if (!tt_SQL_based) self::$TT_module[$module][$key] = self::$TT[$key];
-    b_debug::_debug(sprintf("Add block TT[$module][$key][_] = $text_original"),array(cnf_dev,'redText'));
+    b_debug::_debug(sprintf("Add block TT[$module][$key][$tt_locale] = $tt_translated"),array(cnf_dev,'redText'));
   }
   
   /*
    *
    */
-  static function escape($text){
-    $escaped = b_fmt::escape($text);
-    foreach(array(',','.') as $i) $escaped = str_replace(b_fmt::escape($i),$i,$escaped);
-    $escaped = str_replace("\n","_CR_",
-			   str_replace("<em>","_EMO_",
-				       str_replace("</em>","_EMC_",
-						   $escaped)));
-    return $escaped;
-  }
-  
-  /*
-   *
-   */
+  public static $escapes = array("\n"   => "_CR_",
+				 "\r"   => "_CR_",
+				 "<br>" => "_;_",
+				 "<em>" => "_IO_",
+				 "</em>"=> "_IC_",
+				 "<li>" => "_LIO_",
+				 "</li>"=> "_LIC_",
+				 "<ul>" => "_ULO_",
+				 "</ul>"=> "_ULC_",
+				 "</p><p class='subtitle'>" => "_H2O_",
+				 "</p><p>" => "_H2C_",
+				 "</p><div class='b-incut__small i-left'>"  => "_ILO_",
+				 "</p><div class='b-incut__small i-right'>" => "_IRO_",
+				 "</div><p>" => "_ILC_",
+				 "</div> <p>"=> "_IRC_",
+				 "'"    => "&apos;",
+				 '©'    => "_COPY_",
+				 );
+ /*
+  * The unEscapes are array_merge($escapes, $unEscapes)
+  */
+ public static $unEscapes = array('_EMO_' => '<em style=font-size:smaller>', 
+				  '_EMC_' => '</em>',
+				);
+
+
+ /*
+  * Beutify a bit text for being edited by a human
+  */
+ static function tidyLine($text,$newLine="\n"){
+   static $ba = array('_ILO_',
+		      '_ILC_',
+		      '_IRO_',
+		      '_IRC_',
+		      '_ULO_',
+		      '_ULC_');
+   static $a  = array('_H2C_',
+		      '_LIC_',
+		      '_IMGC_');
+   static $b  = array('_;_',
+		      '_;;_',
+		      '_H2O_',
+		      '_LIO_',
+		      '_IMGO_');
+   $reply= str_replace(array("\n\n\n","\n\n"),"\n",
+		       preg_replace("/(".implode('|',array_merge($b,$ba)).")/",$newLine.'\\1',
+				    preg_replace("/(".implode('|',array_merge($a,$ba)).")/",'\\1'.$newLine,
+						 str_replace(array("\n",
+								   "\r",
+								   "_CR_"),'',$text))));
+   if ($reply !== $text) b_debug::_debug($reply,True);
+   return $reply;
+ }
+
+ /*
+  *
+  */
+ static function escape($text){
+   // Remove all "new lines" 
+   $escaped = b_fmt::escape(str_replace(array("\n","\r","_CR_","   ","  ")," ",$text));
+
+   // Get back some escapes which are not TT specific
+   foreach(array(',','.') as $i) $escaped = str_replace(b_fmt::escape($i),$i,$escaped);
+
+   // Translation specific escapes
+   $escaped = str_replace(array_keys(self::$escapes),array_values(self::$escapes),$escaped);
+
+   if (cnf_dev && ($escaped !== strip_tags($escaped))) var_dump(__method__,$escaped,strip_tags($escaped)); 
+   return $escaped;
+ }
+
+ /*
+  *
+  */
   static function unEscape($text){
-    // Decode WWW link(s)
-    while (strpos($text,'_AO_') !== False){
-      $r = preg_match("/(_AO_([^;]*);([^_]*)_AC_)/",$text,$m);
-      $href = (preg_match("/av_id=(\d*)/",$m[2],$mm)
-	       ? sprintf('?id=%s&form=%s&q=%s',$mm[1],preg_replace('/_[a-z]*$/','_person',$_GET['form']),$_GET['q'])
-	       : $m[2]);
-      $a = x("a href='$href'",$m[3]);
-      //      var_dump($m,$a,$_GET);
-      $text = str_replace($m[1],$a,$text);
-      //if (strpos($text,'_AO_') === False) break;
+
+    //
+    // Init
+    static $search, $id__form;
+    if (empty($id__form)){
+      $id__form = array('img_id'=>'ART_xImage',
+			'av_id' =>'person',
+			'c_id'  =>'collection');
+      
+      $search = join('|',array_keys($id__form));
     }
-    $unEscaped = str_replace(array('_;_',
-				   '&apos;',
-				   '_EMO_', 
-				   '_EMC_',
-				   '_CR_'),
-			     array('<br>',
-				   "'",  
-				   '<em style=font-size:smaller>',
-				   '</em>',
-				   "\n"),
+    
+    //
+    // unescape http: & https:
+    if (strpos($text,"http")===0){
+      $reply = array();
+      // Make the non-secure links "modal"
+      foreach(explode(';',$text) as $h){
+	$line[] = (strpos($text,'https') !== False
+		   ? x("a href='$h'",$h)
+		   : bJS()->modal_iframe($h,$h)); // $dd = "<a href='$dd'>$dd</a>";
+      }
+      $text = join('<br>',$line);
+    }
+
+    //
+    // Unescape images
+    //    "_IMGO_ <img src>;<any text>  _IMGC_"
+    if (strpos($text,'_IMGO_') !== False){    
+      $reply = '';
+      foreach(explode('_IMGO_',$text) as $line){
+	if (strpos($line,'_IMGC_') === False){
+	  $reply .= $line;
+	}else{
+	  $d = explode('_IMGC_',$line,2);
+	  $dd = explode(';',$d[0]);
+	  $reply .= "<img data-fancybox='images' src='$dd[0]' alt='No image' />\n".
+	    (empty($dd[1])?'':x("p",$dd[1])).
+	    (string)$d[1];
+	}
+      }
+      $text = $reply;
+    }
+    
+    //
+    // Unescape anchor, it might be as follows: (Note only "<any text>" might be missing
+    //    "_AO_ (av_id|c_id|img_id)=<id>;<any text> _AC_"
+    //    "_AO_ <href>;<href img>;<any text> _AC"
+    //    "_AO_ <href>;<any text> _AC_"
+    if (strpos($text,'_AO_') !== False){    
+      $reply = '';
+      $fb = "data-fancybox data-type=iframe data-options={'smallBtn':true,'toolbar':false} href=javascript:;";
+      foreach(explode('_AO_',$text) as $line){
+	$match = Null;
+	if (strpos($line,'_AC_') === False){	  // Syntax error...
+	  $reply .= $line;
+	}elseif(preg_match("/(^[^;]*);([^;]*);(.*)_AC_(.*)?/",$line,$match)){
+	  // Clickable Image
+	  // ----------- "_AO_ <href>;<img src>;<any text> _AC"
+	  foreach($match as $k=>$v) $match[$k] = trim($v);
+	  $reply .= ($x=x("a $fb data-src='$match[1]'","<img src='$match[2]' alt='No image'/>\n".
+			  x("p",$match[3]))) . $match[4];
+	}elseif(preg_match("/($search)[\s+]?=[\s+]?([^;]*)[\s+]?;[\s+]?(.*)_AC_(.*)?/",$line,$match)){
+	  // A page within the site, use fancybox iframe
+	  // --- "_AO_ (c_id|av_id|img_id)=<id>;<any text> _AC_"
+	  $url = ($match[1] == 'img_id'
+		  ? ART_xImage($match[2])
+		  : b_url::same("?id=$match[2]&form=" . ART::_bForm($id__form[$match[1]])));
+	  $reply .= x("a $fb data-src='$url'",$match[3]) . $match[4];
+	}elseif(preg_match("/^([^;]*);(.*)_AC_(.*)?/",$line,$match)){ // ------------------- "_AO_ <href>;<any text> _AC_"
+	  $reply .= x("a $fb data-src='$match[1]'",$match[2]) . $match[3];
+	}else{
+	  MSG::ERROR("??? Syntax error in '$line'");
+	}
+      }
+      $text = $reply;
+    }
+
+    //
+    // Unescape TT specific <p>...</p>
+    if (strpos($text,'_;;_') !== False) $text = x('p',str_replace("_;;_","</p>\n<p>",$text));
+
+    //
+    // Unescape the remaining TT specific tags
+    $unEscaped = str_replace(array_merge(array_values(self::$escapes),array_keys  (self::$unEscapes)),
+			     array_merge(array_keys  (self::$escapes),array_values(self::$unEscapes)),
 			     b_fmt::unEscape($text));
-    return $unEscaped;
+
+    // Sanity...
+    if ((strpos($text,'_AO_') !== False) || (strpos($text,'_AC_') !== False)) MSG::ERROR("_AO_/_AC_ mismatch<br>$text");
+
+    return trim($unEscaped);
   }
   
   /*
@@ -676,8 +780,11 @@ class b_t{
 	if ($lang == b_cnf::get('b_t_lang')) continue;
 	$s[] = x("a href='?".$_SERVER['QUERY_STRING']."&b_t_lang=$lang'","<img src='".myPear_images."flags/$flag[l_flag]"."'/>");
       }
-      if ($extras) $s[] = $extras;
-      $selector = x('ul style="font-size:0.5em;list-style:none"',
+      if ($extras){
+	if (!is_array($extras)) $extras = array($extras);
+	$s = array_merge($s,$extras);
+      }
+      $selector = x('ul style="font-size:0.75em;list-style:none;color:#000"',
 		    b_fmt::joinMap('li style="float:left;padding-left:10px;"',$s));
     }
     return $selector;
@@ -1384,7 +1491,6 @@ class SSN{
       ($tmp > 9) ? $sum += 1 + ($tmp % 10) : $sum += $tmp; ($n == 2) ? $n = 1 : $n = 2;
     }
     $reply = (bool)(!(($sum + $pnr[9]) % 10));
-    //    if($reply)    var_dump($pnr,self::$matches);
     return (bool)$reply;
   }
 
@@ -1466,7 +1572,7 @@ class MSG{
   
   static public function WARNING  ($text,$class=Null){
     b_debug::_debug($text,array(2,True,'bold-text'),'warning');
-    b_debug::_debug($text,array(2,cnf_dev,'redText'));
+    b_debug::_debug($text,array(2,cnf_dev,'redText',$class));
   }
 
   static public function WARNING_T($text,$class=Null){
@@ -1619,7 +1725,6 @@ class MSG{
 	}
       }
     }
-    b_debug::_debug($text,cnf_dev);
     return '';
   }
   
@@ -1628,7 +1733,6 @@ class MSG{
     $reply = (empty($text) || @$dejaVu[mb_strToLower($text)]++ || (mb_strToLower($text) == mb_strToLower(self::H1('get')))
 	      ? ''
 	      : '<h2>'.b_fmt::escape(b_t::_($text,$noTranslate)).'</h2>'); 
-    b_debug::xxx($reply);
     return $reply;
   }
   
@@ -2014,7 +2118,7 @@ class b_btn{
       if (!is_array($submits)) $submits = array($submits);
       $reply =
 	x("div style='clear:both'",'').
-	x('div class="buttons_line online_only"',
+	x('div class="buttons_line only_online"',
 	  x('ul',
 	    b_fmt::joinMap('li',$submits))).
 	x("div style='clear:both'",'');
@@ -2036,8 +2140,7 @@ class b_fmt{
    */
   static function translit($text,$killSpaces=False){
     $text = preg_replace("/&([a-z])[a-z]+;/i", "$1", 
-			 htmlentities(//b_fmt::unEscape(
-				      str_replace(array('&lt;','&gt;','/','?','"',"'",'(',')','[',']','”','«','»','’','_'),
+			 htmlentities(str_replace(array('&lt;','&gt;','/','?','"',"'",'(',')','[',']','”','«','»','’','_'),
 						  '',
 						  $text)));
     if ($killSpaces) $text = str_replace(' ','_',$text);
@@ -2610,26 +2713,6 @@ class b_fmt{
     return $line;
   }
   
-  static function unEscape_OBSOLETE($line,$mode=''){
-    global $escapes, $escape_url;
-
-    self::escape_init();
-
-    if (empty($mode)){
-      // fill the 
-      foreach ($escapes as $f=>$t) $line = str_ireplace($t,$f,$line);
-      foreach (array('&nbsp;'=>' ',
-		     '&lt;'  =>'<',
-		     '&gt;'  =>'>',
-		     '&#46;' =>'.',
-		     '&quot;'=> '"',
-		     )as $f=>$t) $line = str_ireplace($f,$t,$line);
-    }else{
-      foreach ($escape_url as $f=>$t) $line = str_ireplace($t,$f,$line);
-    }
-    return $line;
-  }
-  
   static function join($a){
     if (b_fmt::isArrayAssociative($a)){
       return b_fmt::joinX(',',$a,'','=>');
@@ -2686,9 +2769,9 @@ class b_fmt{
     return join("\n",$r);
   }
 
-  public static function strcut($text, $maxL, $postfix='', $doNotCutWord=True) {
+  public static function strcut($text, $maxL, $textOverflow='', $doNotCutWord=True) {
     if (strlen($text) > $maxL) $text = str_replace('&nbsp;',' ',$text);
-    return self::htmlwrap($text,$maxL,$postfix,$cutAfterFirstWrap=True,$exact_cut=!$doNotCutWord);
+    return self::htmlwrap($text,$maxL,$textOverflow,$cutAfterFirstWrap=True,$exact_cut=!$doNotCutWord);
   }
   /*
    * 'wordwrap', but ignoring html tags
@@ -2906,41 +2989,33 @@ class b_fmt{
   public static $image_size = array();
   public static $image_size_string = '';
   static function isImage($path,$get_size=False) {
-    b_debug::_debug($path,cnf_dev);
-    if ($reply = (file_exists($path) && !is_dir($path))){ 
-      if ($reply = in_array(exif_imagetype($path),
-                            array(IMAGETYPE_GIF , IMAGETYPE_JPEG ,IMAGETYPE_PNG , IMAGETYPE_BMP))){
-        // Optionally get the image size
-        if (!b_posix::is_empty($get_size)){
-	  static::$image_size = array();
-	  static::$image_size_string = '';
-	}else{
-          $a = getimagesize($path);
-	  static::$image_size = array($a[0],$a[1]);
-	  if ($get_size == 0){
-	    $c = 1;
-	    static::$image_size_string = '';
-	  }else{
-	    $max_size = $get_size;
-	    if (  ($a[1] <= $max_size) && ($a[0] <= $max_size)) $c = 1;
-	    elseif($a[1] <= $a[0])                              $c = $max_size / $a[0];
-	    else                                                $c = $max_size / $a[1];
-	    static::$image_size_string = sprintf("max-width='%s' max-height='%s'",
-						 (int)round($a[0]*$c),
-						 (int)round($a[1]*$c));
-/*	    
-	    if (  ($a[1] <= $max_size) && ($a[0] <= $max_size)) $c = 100;
-	    elseif($a[1] <= $a[0])                              $c = round(100 * $max_size / $a[0]);
-	    else                                                $c = round(100 * $max_size / $a[1]);
-	    static::$image_size_string = sprintf("width='%s' height='%s'","$c%","$c%");
-*/	    
-	  }
+    if ($reply = ((file_exists($path) && !is_dir($path)) &&
+		  in_array(($exif=exif_imagetype($path)),array(IMAGETYPE_GIF, IMAGETYPE_JPEG,IMAGETYPE_PNG, IMAGETYPE_BMP)))){
+      // Optionally get the image size
+      static::$image_size = array();
+      static::$image_size_string = '';
+      if ($get_size){
+	$a = getimagesize($path);
+	static::$image_size = array($a[0],$a[1]);
+	if((int)$get_size > 1){
+	  $max_size = $get_size;
+	  if (  ($a[1] <= $max_size) && ($a[0] <= $max_size)) $c = 1;
+	  elseif($a[1] <= $a[0])                              $c = $max_size / $a[0];
+	  else                                                $c = $max_size / $a[1];
+	  $w = min($a[0],(int)round($a[0]*$c));
+	  static::$image_size_string = sprintf("max-width='%s' max-height='%s'",
+					       (int)round($a[0]*$c),
+					       (int)round($a[1]*$c));
+	  static::$image_size_string = sprintf("width='%s'",
+					       min($a[0],(int)round($a[0]*$c)));
 	  b_debug::_debug("size=".var_export(static::$image_size,True).
 			  " string=".var_export(static::$image_size_string,True),cnf_dev);
-        }
+	}else{
+	  b_debug::_debug("size=".var_export(static::$image_size,True),cnf_dev);
+	}
       }
     }
-    b_debug::_debug($reply,cnf_dev);
+    b_debug::_debug(var_export($reply,true)." - $path",cnf_dev);
     return $reply;
   }
 
@@ -3266,20 +3341,12 @@ class b_debug extends myPear_base{
 
     // Get the class identifiers (name, ID, mode)
     if (is_object($class)){
-      $classArgs = array();
-      if    ($class instanceof bUnit) {$classArgs[] = $class->parent_ID; $classArgs[] = $class->rank; }
-      elseif($class instanceof bList)  $classArgs[] = $class->parent_ID; 
-      elseif ($id=@$class->ID)         $classArgs[] = $id;
-      elseif ($id=@$class->id)         $classArgs[] = $id;
-      elseif ($id=@$class->parent_ID)  $classArgs[] = $id;
-      if($class instanceof myPear_getValue)      $classArgs[] = $class->MODE;
-      $clas = get_class($class) . "(".join(',',$classArgs).")";      
+      $clas = self::parse_value($class);
     }elseif (is_string($class) && !empty($class)){
       $clas = $class;
-      //      var_dump($clas);
     }
 
-    $calls = debug_backtrace(false);
+    $calls = debug_backtrace();
     while (True){
       if (isset($calls[$level])){
 	$call = $calls[$level];
@@ -3293,7 +3360,9 @@ class b_debug extends myPear_base{
     if (@$call['type']=='->' && !empty($clas) && $clas!='b_debug')   $call['class'] = $clas;
 
     if (!is_array($call['args'])) $call['args'] = array();
-    $args = array();  foreach($call['args'] as $a) {
+    $args = array(); 
+    foreach($call['args'] as $a) {
+    /*
       $classArgs = array();
       if (is_object($a) && ($id=@$a->ID))  $classArgs[] = $id;
       if (is_object($a) && ($id=@$a->MODE))$classArgs[] = $id;
@@ -3301,6 +3370,8 @@ class b_debug extends myPear_base{
       elseif (is_object($a))   $args[] = get_class($a);      
       elseif (is_array($a))    $args[] = 'array('.b_fmt::join($a).')';
       else                     $args[] = $a;
+    */
+      $args[] = self::parse_value($a);
     }
     $reply = str_replace('[','',
 			 str_replace(']','',
@@ -3308,6 +3379,7 @@ class b_debug extends myPear_base{
 									   @$call['function'], 
 									   "(".join(',',$args).")",
 									   ($includeLine ? ' line '.@$call['line'] : ''))))));
+
     $inside = 0;  
     return $reply;
   }
@@ -3496,7 +3568,7 @@ class b_debug extends myPear_base{
     }
 
     if ($toPrint || cnf_debug){    
-      $caller =  self::__((isset($level)?$level:3) , @$class);
+      $caller =  self::__((isset($level)?$level:3), @$class);
       if (($text === True) || ($text === Null) || ($text === False))  $text = var_export($text,True);
       $text   = preg_replace(';/[a-zA-Z/]*/trunk/;','&lt;trunk&gt;/',str_replace(getcwd(),'&lt;cwd&gt;',$text));
       $text   = x('em',b_fmt::strcut($text,222,'...'));
@@ -3530,7 +3602,7 @@ class b_debug extends myPear_base{
   } 
 
   /*
-   * Another debug facility
+   * Another debug helper
    *   $max_a_m = 3; // number of array elements to parse
    *   $max_s_l = 30;// maximal string length 
    */
@@ -3538,7 +3610,19 @@ class b_debug extends myPear_base{
   public static function parse_value($arg,$max_a_m=3,$max_s_l=30){
     if (strpos(self::$current_class,'bDB')!== False) $max_s_l = 999; // show the full DB query string
     if (is_object($arg)){
-      $arg = $arg->__toString();
+      // $arg = $arg->__toString(); // __toString() is not always up-to-date
+      $a = array();
+      if($arg instanceof bUnit) {
+	$a[] = $arg->parent_ID; 
+	$a[] = $arg->rank; 
+      }elseif($arg instanceof bList) {
+	$a[] = var_export($arg->parent_ID,True);
+	if(isset($arg->l_name)) $a[] = var_export($arg->l_name,True);
+      }else{
+	if(($id=@$arg->ID)||($id=@$arg->id)||($id=@$arg->parent_ID)) $a[] = $id;
+	if($arg instanceof myPear_getValue) $a[] = $arg->MODE;
+      }
+      $arg = str_replace("'","",get_class($arg) . "(".join(',',$a).")");      
     }elseif(is_array($arg)){
       if (empty($arg)) $arg = '[]';
       else{
@@ -3562,7 +3646,6 @@ class b_debug extends myPear_base{
       if (strip_tags(trim($arg)) !== trim($arg)) $arg = b_fmt::escape($arg);
       $arg = "'$arg'"; // as var_export does...
     }else{
-      //      var_dump($arg);
       $arg = var_export($arg,True);
     }
     return $arg;
@@ -3582,7 +3665,6 @@ class b_debug extends myPear_base{
       }
       $args[] = $p;
     }
-    //    if (!empty($args)) var_dump($args);
     return $args;
   }
 
@@ -3591,24 +3673,16 @@ class b_debug extends myPear_base{
    */
   public static function parse_tb_entry($call,$class=Null){
     
-    // Parse the parent class    
-    $classArgs = array();
-    if (is_object($class) && ($call['type']==='->')){
-      if    ($class instanceof bUnit) {$classArgs[] = $class->parent_ID; $classArgs[] = $class->rank; }
-      elseif($class instanceof bList)  $classArgs[] = $class->parent_ID; 
-      elseif ($id=@$class->ID)         $classArgs[] = $id;
-      elseif ($id=@$class->id)         $classArgs[] = $id;
-      elseif ($id=@$class->parent_ID)  $classArgs[] = $id;
-      if($class instanceof bForm)      $classArgs[] = $class->MODE;
-    }
-
     foreach(array('class','type') as $f) if (empty($call[$f])) $call[$f] = '';
-    $reply = sprintf("%s%s%s%s(%s)",
-		     (empty($class) ? $call['class'] : get_class($class)), 
-		     ($call['type'] === '->' ? x('(',join(',',$classArgs)) : ''),
+    $class = (is_object($class) 
+	      ? self::parse_value($class)
+	      : $call['class'].($call['type']=='::'?'':'()'));
+    $reply = sprintf("%s%s%s(%s)",
+		     $class,
 		     $call['type'],
 		     $call['function'],
 		     join(', ',self::parse_tb_arguments($call['args'])));
+    if (strpos($reply,'()')===0) $reply = substr($reply,2);
     return $reply;
   }
 
@@ -3655,7 +3729,7 @@ class b_debug extends myPear_base{
       $toPrint = $c['p'];
       $is_numeric = 1;
     }
-   
+	
     // Start & End of a logical block
     if ((self::$starting_exiting = is_string($txt)) && ($message_class=='debug')){
       $s_e_s = (strpos($txt,starting) !== False);
@@ -3667,7 +3741,6 @@ class b_debug extends myPear_base{
     }else{
       self::$starting_exiting = $s_e_s = $s_e_e = False;
     }
-
     
     if ($toPrint){    
       if (cnf_dev || in_array($message_class,array('debug','SICK'))){
@@ -5043,16 +5116,6 @@ class b_crypt{
   public static function urlize($str, $delimiter='', $replace=array()) {
     if(!empty($replace)) $str = str_replace((array)$replace, ' ', $str);
     return b_fmt::translit(trim($str));
-
-    $clean = iconv('UTF-8', 'ASCII//TRANSLIT', $str);
-    if ($clean === False){
-      MSG::WARNING_T("iconv('UTF-8', 'ASCII//TRANSLIT', $str) FAILED");
-      $clean = html_entity_decode(htmlentities($str, ENT_QUOTES, 'UTF-8'), ENT_QUOTES , 'ISO-8859-15');
-    }
-    $clean = preg_replace("/[^a-zA-Z0-9\/_|+ -]/", '', $clean);
-    $clean = strToLower(trim($clean, '-'));
-    $clean = preg_replace("/[\/_|+ -]+/", $delimiter, $clean);
-    return $clean;
   }
 
   private static function hex2int ( $val ) {
@@ -5651,7 +5714,7 @@ class b_url{
     
     // Get the final clean list
     $_myGET = $myGET;
-    $_url['modal_once'] = bJS()->modal_once();
+    if (!fancybox3) $_url['modal_once'] = bJS()->modal_once();
     if (!is_array($_myGET)) $_myGET = array();
     foreach(array_diff(array_keys($_url),
 		       array_keys($_myGET),
@@ -6004,9 +6067,14 @@ class b_os{
     return $ret;
   }
 
+  /*
+   *
+   */
   static function max_upload_size(){
     $max_upload_size = min(($p=self::php_settings('post_max_size')), ($f=self::php_settings('upload_max_filesize')));
-    b_debug::_debug(($max_upload_size/1024/1024)."MB (max post=".($p/1024/1024)."MB max_file=".($f/1024/1024)."MB)",cnf_dev);
+    b_debug::_debug(sprintf("%dMB (post_max_size=%dMB upload_max_filesize=%dMB",
+			    (int)$max_upload_size/1024/1024,(int)$p/1024/1024,(int)$f/1024/1024),
+		    True);
     return $max_upload_size;
   }
 

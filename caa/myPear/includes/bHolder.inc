@@ -39,6 +39,7 @@ class bHolder extends myPear_base{
 
   public $report_emptySelection = True;
   public $close_t_on_exit = True;
+  public $tab = Null;
 
   protected $left_join = array();
 

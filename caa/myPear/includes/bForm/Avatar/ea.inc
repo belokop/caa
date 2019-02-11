@@ -59,7 +59,7 @@ function ea_myPage($av_id=Null){
     $tabs = array('Personal data','CV','Employment');
     if (is_object(bAuth::$av)){
       if (!method_exists(bAuth::$av,'isE')) bForm_Avatar::set_context(bAuth::$av);
-      if (bAuth::$av->isE() || bAuth::$av->isV()) $tabs[] = 'Contacts';
+      if (cnf_useContactsUnit && (bAuth::$av->isE() || bAuth::$av->isV())) $tabs[] = 'Contacts';
     }
     $b_tabs = new b_tabs_myPear($tabs);
     foreach($tabs as $k=>$tab){

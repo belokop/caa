@@ -4,13 +4,19 @@ ini_set("allow_url_fopen", true);
 //var_dump(file_get_contents('php://input'));
 
 // myPear module 
-$releaseDate = '2018-01-17';
-define('myPear_VERSION','5.3.222');
+$releaseDate = '2019-02-11';
+define('myPear_VERSION','5.3.225');
 define('myPear_MODULE', 'myPear');
 define('myPear_DATE',    $releaseDate);
 
 // Protection against attacks...
 if (isset($_GET['id']) && !in_array($_GET['id'],array('new','empty'))) $_REQUEST['id'] = $_GET['id'] = (string)((int)$_GET['id']);
+
+// Do use collation in "ORDER BY" close (does not work if the database is not created carefully :-)
+define('db_force_collation',False);
+
+// Do not use CMS (drupal) authentication
+define('use_CMS_authentication',False);
 
 /*
  * Initialize various file repositories,
@@ -101,6 +107,10 @@ define('cnf_useTrickyHeader',!cnf_localhost);
 
 // Set the session life time to 8 hours
 define('myPear_autoLogoutTime',8 * 3600);
+
+// To use or not to use the unit "contacts"
+define('cnf_useContactsUnit',False);
+
 
 /*
  * The query string is normally encoded, decode it.
@@ -273,6 +283,7 @@ case 'wp':
  * Unfortunately i can't find a reliable way to detect that we are in the 'iframe' modal window,
  * while for 'ajax' this is possible
  */
+define('fancybox3',False);
 if (!defined('cnf_inside_fb')){
     define('cnf_inside_fb_ajax', isset($_SERVER['HTTP_X_REQUESTED_WITH']) &&
            strToLower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest');
@@ -280,6 +291,7 @@ if (!defined('cnf_inside_fb')){
     define('cnf_inside_fb',  cnf_inside_fb_iframe || cnf_inside_fb_ajax);
     if (cnf_inside_fb_iframe) $_GET['modal_once'] = 'iframe';
 }
+
 
 // Add "slash" at the end of the path
 if ($cwd = str_replace(DOCUMENT_ROOT.DIRECTORY_SEPARATOR,'',dirname(__FILE__).DIRECTORY_SEPARATOR)) $cwd .= DIRECTORY_SEPARATOR;
@@ -304,6 +316,7 @@ foreach(array('myPear',
 	      'myPear_classes',
 	      'myPear_functions',
 	      ) as $m) require_once (join(DIRECTORY_SEPARATOR,array(dirname(__FILE__),'includes',"$m.inc")));
+//b_debug::_debug(sprintf("fancybox3='%s', cnf_inside_fb='%s'",var_export(fancybox3,True),var_export(cnf_inside_fb,True)),cnf_dev);
 
 /*
  * Start session and initialise remaining constants
