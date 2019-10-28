@@ -150,6 +150,7 @@ function EA_member_here(){
 function myPear_register_config($config_file){
   static $cache = array();
   if (empty($cache['C'])) $cache['C'] = array();
+  $config_file = realpath($config_file);
   if (!in_array(md5($config_file),$cache['C'])){
     
     // Get the php include path when there is no modules loaded yet

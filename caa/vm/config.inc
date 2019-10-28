@@ -842,9 +842,13 @@ class VM extends myPear{
       if (bForm_vm_Expenses::_exp_arePaid($argv)) $reply = False;
     }
 
-    if (!defined('VM_manager_here') || VM_manager_here) return True;
-    if (superUser_here)        return True;
-    if (!is_object(bAuth::$av))return False;
+    if (!defined('VM_manager_here') || VM_manager_here) $reply = True;
+    if (superUser_here)                                 $reply = True;
+    if (!is_object(bAuth::$av))                         $reply = False;
+    if (isset($reply)){
+      b_debug::_debug((bool)$reply,cnf_show_a||cnf_show_acl);
+      return $reply;
+    }
     
     bTiming()->cpu(__function__);
     switch($what){

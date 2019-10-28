@@ -5,6 +5,7 @@
 // if we are not in the CMS environment...
 if (file_exists($f='../myPear/config.inc'))  require_once $f;
 if (function_exists('drupal_get_path') && file_exists($f=drupal_get_path('module','myPear').'/includes/drupal8_compat.inc')) require_once $f;
+if (function_exists('myPear_register_config')) myPear_register_config(__FILE__);
 
 // register the module in myPear registry
 $releaseDate = '2019-02-11';
