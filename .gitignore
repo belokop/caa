@@ -1,0 +1,19 @@
+# private config files
+config.priv.inc
+passwd
+# various tests
+tests/
+*.php
+j2j*
+m2m*
+v2v*
+w2w*
+test_Mail_Queue/
+caa/jam/*.sh
+# editing tools
+tools/
+e.sh
+editor.sh
+sql_utf8.sh
+# saved files
+*.sv

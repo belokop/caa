@@ -47,28 +47,18 @@ Supported arguments:
   /*
    *
    */
-  function getCategoryInfo($category='270',$args='') {
-    $this->dbg('=================================================');
-    $url = sprintf("%s%s?catinfo=%s",AGENDA_URL,$this->tools_url,270);
-    //    $xml   = simplexml_load_string(`curl http://agenda.nordita.org/tools/getConf.py?catinfo=270`);
-    $xml   = simplexml_load_string($this->curl($url)); 
-    $json  = json_encode($xml);
-    $array = json_decode($json,TRUE);
-    return $array;
-  }
-
-  /*
-   *
-   */
   function getCategory($category='270',$args='') {
     if ($this->debug) print "\n================================= \$agenda->getCategory('$category','$args')\n\n";
-    return $this->parser("cat=$category&$args");
+    $reply = (USE_INDICO
+	      ? b_debug::internalError('Not Yet Implemented...')
+	      : $this->parser("cat=$category&$args"));
+    return $reply;
   }
   
   /*
    *
    */
-  function getConference($conference='',$args='') {
+  function getConference($conference,$args='') {
     if ($this->debug) print "\n================================== \$agenda->getConference('$conference','$args')\n\n";
     return $this->parser("conf=$conference&$args");
   }

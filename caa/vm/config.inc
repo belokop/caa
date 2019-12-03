@@ -8,6 +8,15 @@ define('VM_MODULE'   , 'vm');
 define('VM_VERSION','5.13.56');
 
 //
+// Links the Agenda system
+//
+if (!defined('USE_INDICO')) define('USE_INDICO',True);
+if (!defined('AGENDA_URL')) define('AGENDA_URL',(USE_INDICO
+                                                 ? 'https://indico.nordita.org/'
+                                                 : 'https://agenda.albanova.se/'));
+//define('AGENDA_URL','http://agenda.nordita.org/');
+
+//
 // transition problems...
 //
 if (function_exists('drupal_get_path') && is_file($f=drupal_get_path('module','myPear').'/includes/drupal8_compat.inc')) require_once $f;

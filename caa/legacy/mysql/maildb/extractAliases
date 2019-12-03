@@ -1,0 +1,25 @@
+#! /bin/bash
+
+function selectU() {
+    u=$1
+    for al in `grep -i ": $u$" /etc/postfix.maps/maildb|awk -F: '{print $1}'`; do
+	echo "   $al"
+    done
+}
+
+[ "$1" = "users" ] && {
+    for user in `cat /etc/passwd|grep home/|awk -F: '{print $1}'|sort`; do 
+	echo $user
+#    selectU $user
+	for alias in `selectU $user`; do
+	    echo "   $alias"
+	    selectU  $alias
+	done
+    done
+} || {
+    sort -u /etc/postfix.maps/maildb | grep @lists.su.se$ | while read list alias; do
+	echo $list | sed s/://
+	echo "   $alias"
+    done
+}
+exit 0

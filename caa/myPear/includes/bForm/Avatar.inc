@@ -1078,8 +1078,13 @@ class bForm_Avatar extends bForm {
   }
   
   function getEmails(){
-    return b_fmt::RFC_2822($this->getValue('av_email',True,True).','.
-			   $this->getValue('av_email2',True,True));
+    return self::_getEmails(array('av_email' =>$this->getValue('av_email',True,True),
+				  'av_email2'=>$this->getValue('av_email2',True,True)));
+  }
+  
+  static function _getEmails($buffer){
+    return b_fmt::RFC_2822($buffer['av_email'].','.
+			   $buffer['av_email2']);
   }
   
   function getLastLogin(){
@@ -1095,11 +1100,23 @@ class bForm_Avatar extends bForm {
    */
   static function knownIdentity($av_identity){
     $reply = False;
-    $av_identity = trim($av_identity);
-    if (!empty($av_identity) && preg_match('/^[a-zA-Z0-9]*$/',$av_identity)){
-      $q = myPear_db()->query("SELECT av_id,av_identity FROM zzz_avatars WHERE av_identity REGEXP '$av_identity'");
-      while ($r=myPear_db()->next_record($q)){
-	if ($reply = in_array($av_identity,self::_getIdentity($r))) break;
+    if ($av_identity = trim($av_identity)){
+      // First check for user name 
+      if (preg_match('/^[a-zA-Z0-9]*$/',$av_identity)){
+	$q = myPear_db()->query("SELECT av_id,av_identity FROM zzz_avatars WHERE av_identity REGEXP '$av_identity'");
+	while ($r=myPear_db()->next_record($q)){
+	  if ($reply = in_array($av_identity,self::_getIdentity($r))) break;
+	}
+      }elseif($av_email = b_fmt::RFC_2822($av_identity)){
+	// Then for the e-mail
+	$re = join('|',$av_email);
+	$q = myPear_db()->query("SELECT av_id,av_identity,av_email,av_email2 FROM zzz_avatars WHERE av_email REGEXP '$re' OR av_email2 REGEXP '$re' OR av_email = '$re'");
+	while ($r=myPear_db()->next_record($q)){
+	  if ($reply = array_intersect($av_email,b_fmt::RFC_2822($r['av_email'].','.$r['av_email2']))){
+	    $logins = self::_getIdentity($r);
+	    $reply = array_pop($logins);
+	  }
+	}
       }
     }
     b_debug::xxx($reply);
@@ -1109,14 +1126,14 @@ class bForm_Avatar extends bForm {
   /*
    * Return local account(s) username(s)
    */
-  function getIdentity(){
-    return self::_getIdentity(array('av_identity'=>$this->getValue('av_identity',True,True))); 
+  function getIdentity($identity='av_identity'){
+    return self::_getIdentity(array($identity=>$this->getValue($identity,True,True))); 
   }
   
-  static function _getIdentity($buffer){
-    return (empty($buffer['av_identity'])
+  static function _getIdentity($buffer,$identity='av_identity'){
+    return (empty($buffer[$identity])
 	    ? array()
-	    : explode(',',$buffer['av_identity']));
+	    : explode(',',$buffer[$identity]));
   }
 
   /* 

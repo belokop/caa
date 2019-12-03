@@ -358,12 +358,11 @@ class b_reg{
       $already_done[$module] = True;
     }else{
       foreach (self::get_modules(True) as $m=>$config){
+	if (!defined($m)) continue;
 	if (!empty($module) && (($m != $module) || class_exists($module,False))){
 	  b_debug::xxx('ok');
-	  continue;
-	}
-	if (!@$already_done[$m] && file_exists($config)){ 
-	  self::dbg($config);
+	}elseif (!@$already_done[$m] && file_exists($config)){ 
+	  b_debug::_debug("config=".$config,True);
 	  require_once $config; 
 	  $already_done[$m] = True;
 	}

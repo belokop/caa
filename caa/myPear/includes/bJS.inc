@@ -139,6 +139,7 @@ $(document).ready(function() {
    *
    */
   function add_css_inline($text) {
+    if (cnf_CLI) return;
     static $dejaVu = array();
     if (!@$dejaVu[$text]++ && trim($text)){
       b_cache_file::CMS(__METHOD__,array($text));
@@ -178,6 +179,7 @@ $(document).ready(function() {
    */
   function add_css_file($objectP, $root=myPear_css, $media='all'){
     static $dejaVu = array();
+    if (cnf_CLI) return;
     $object = str_replace('//','/',"$root/$objectP");
     if (!@$dejaVu[$object]++){
       b_cache_file::CMS(__METHOD__,array($objectP,$root,$media));
@@ -228,6 +230,7 @@ $(document).ready(function() {
    */
   function add_js_file($objectP, $root=myPear_js){
     static $dejaVu = array();
+    if (cnf_CLI) return;
     $object = str_replace('//','/',"$root/$objectP");
     if (!@$dejaVu[$object]++){
       foreach(array('min','pack') as $p){
@@ -278,6 +281,7 @@ $(document).ready(function() {
    */
   function add_js_inline($js_code,$custom_jQuery=True) {
     static $dejaVu = array(), $count=0;
+    if (cnf_CLI) return;
     if (!@$dejaVu[$js_code . $custom_jQuery]++){
       $js_code = preg_replace(";on[cC]lick=\'[^\']*\';",'',b_fmt::compact_html($js_code,True));
       b_cache_file::CMS(__METHOD__,array($js_code,$custom_jQuery));

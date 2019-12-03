@@ -31,6 +31,7 @@ class bList_orgEmpTypes extends bList{
   function __construct($org_id){
 
     // Initialise the EA module access class
+    require_once(dirname(__FILE__).'/../../../ea/config.inc');
     locateAndInclude('APIaccess_ea');
     if (function_exists('EA_access')) EA_access()->getRank();
 

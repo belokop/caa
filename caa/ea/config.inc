@@ -12,6 +12,7 @@ $releaseDate = '2019-02-11';
 define('EA_VERSION','5.5.18');
 
 myOrg();
+if (!defined('EA_MODULE')) b_debug::internalError("EA_MODULE is not yet defined");
 b_reg::add_module(EA_MODULE,array('v' =>EA_VERSION,
 				  'r' =>$releaseDate,
 				  'c' =>__FILE__,

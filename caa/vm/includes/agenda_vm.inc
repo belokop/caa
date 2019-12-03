@@ -11,6 +11,9 @@ locateAndInclude('bList_vm_agendaEvents');
 // The applications deadline should be at least a month before the event starts 
 define('application_deadline',30 * 24 * 3600); 
 
+define('INDICO_TOKEN','.json?pretty=yes&nocache=yes&ak=88646c7d-2aed-42d5-8550-72ac45e99f0c');
+#define('INDICO_TOKEN','.json?pretty=yes&nocache=yes');
+
 class agenda_vm extends agenda{
   
   public $lookBackFor = 30; // by default look back for 30 days, ignore the previous events
@@ -27,14 +30,9 @@ class agenda_vm extends agenda{
     *
     */
    public function getCategoryURL($categId){
-     return AGENDA_URL."/categoryDisplay.py?categId=$categId";
-   }
-
-   /*
-    *
-    */
-   public function getCatInfoURL($categId){
-     $reply = AGENDA_URL."/tools/getConf.py?catinfo=".$categId;
+     $reply = (USE_INDICO
+	       ? AGENDA_URL."/category/$categId/"
+	       : AGENDA_URL."/categoryDisplay.py?categId=$categId");
      $this->dbg($reply,True);
      return $reply;
    }
@@ -42,8 +40,23 @@ class agenda_vm extends agenda{
    /*
     *
     */
+   public function getCatInfoURL($categId){
+     $reply = (USE_INDICO
+	       ? AGENDA_URL."/export/categ/".$categId.INDICO_TOKEN
+	       : AGENDA_URL."/tools/getConf.py?catinfo=".$categId);
+     $this->dbg($reply,True);
+     return $reply;
+   }
+   
+   /*
+    *
+    */
    public function getEventURL($confId){
-     return AGENDA_URL."/conferenceDisplay.py?confId=$confId";
+     $reply = (USE_INDICO
+	       ? AGENDA_URL."/event/$confId/"
+	       : AGENDA_URL."/conferenceDisplay.py?confId=$confId");
+     $this->dbg($reply,True);
+     return $reply;
    }
    
    /*
@@ -51,73 +64,206 @@ class agenda_vm extends agenda{
     */
    public function getRegistrantURL($confId,$registrantId=Null){
      if (empty($registrantId)) return $this->getEventURL($confId);
-     else return AGENDA_URL."/confModifRegistrants.py/modification?registrantId=$registrantId&confId=$confId";
+     $reply = (USE_INDICO
+	       ? AGENDA_URL."/event/$confId/registrations/$registrantId/"
+	       : AGENDA_URL."/confModifRegistrants.py/modification?registrantId=$registrantId&confId=$confId");
+     $this->dbg($reply,True);
+     return $reply;
    }
    
-  /*
-   * Get list of conferences for the Category directly from the indico server
-   */
-  public function getConferences($cat){
-    $reply = array();
-    foreach($this->getCategory($cat) as $conf) $reply[] = $conf['id'];
-    return $reply;
-  }
+   /*
+    * @param $confId  conference ID:
+    * @param $args    details of the conference
+    */
+   public function getConference($confId,$args=''){
+     
+     b_debug::_debug(starting);
+     // Parce arguments if the "parser notation" is used
+     if(preg_match("/conf=(\d*)&?(.*)$/",$confId,$match)){
+       $confId = $match[1];
+       $args = "$args&".$match[2];
+     }
 
-  /*
-   *
-   */
-  public function sync($conferences_to_sync=array()){
-    static $alreadySyncing = 0;
-    if ($alreadySyncing++) return;
+     if (USE_INDICO){
+       
+       // Read the conference information and convert it to the VM-friendly format
+       $converted = $this->indicoToVM(AGENDA_URL."/export/event/$confId" . INDICO_TOKEN, 
+				      array('results' => array('start'    => 'startDate',
+							       'end'      => 'endDate',
+							       'title'    => 'title',
+							       'id'       => 'id',
+							       'regstart' => 'reg_start',
+							       'regend'   => 'reg_end',
+							       'attenders'=> '', 
+							       'room'     => 'room',
+							       'chair'    => '', 
+							       'chairs'   => 'chairs',
+							       'registrant' => '')));
+       $conference = $converted['results'][0];
+       
+       // Read the registrants data it to the VM-friendly format
+       /* The following items are not used:
+	*       $unused = array('nights',
+	*      	          'event_id',
+	*                 'ticket_uuid');
+	*
+	*/
+       $converted = $this->indicoToVM(AGENDA_URL."/export/event/$confId/registrants" . INDICO_TOKEN,
+				      array('results' => array('id'               => 'friendly_id',
+							       'familyname'       => 'last_name',
+							       'firstname'        => 'first_name',
+							       'salutation'       => 'title',
+							       'registrationdate' => 'registrationdate',
+							       'country'          => 'country', 
+							       'address'          => 'address',
+							       'city'             => 'city',
+							       'position'         => 'position',
+							       'phone'            => 'phone',
+							       'fax'              => 'fax',
+							       'email'            => 'email',
+							       'emailHash'        => 'emailHash',
+							       'institution'      => 'affiliation',
+							       'arrivaldate'      => 'arrival_date',
+							       'departuredate'    => 'departure_date',
+							       'accommodation'    => 'choice',
+							       'homepage'         => 'homepage',
+							       'gsf_250'          => 'gsf'),
+					    'registration_dates'=> array('regstart'=> 'reg_start',
+									 'regend'  => 'reg_end')));
+       
+       $conference['registrant'] = $converted['results'];
+       $conference['regstart']   = $converted['registration_dates'][0]['regstart'];
+       $conference['regend']     = $converted['registration_dates'][0]['regend'];
+       $conference['attenders']  = count($conference['registrant']);
+       
+       $reply = array($conference['start'] => $conference);
+     }else{
+       $reply = parent::getConference($confId,$args);
+     }
+     b_debug::_debug(exiting);
+     return $reply;
+   }
+   
+   /*
+    *
+    */
+   private function indicoToVM($url,$elements){
+     
+     $reply = array();
+     $data_indico = json_decode($this->curl($url),True);
 
-    bTiming()->cpu(__function__);
-    set_time_limit(0);
-    $this->dbg(starting);
-    MSG::H1("Syncing visitors database with Agenda");
+     // Extract the "main result"     
+     foreach($elements as $element=>$conversion_table){
+       $reply[$element] = array();
+       foreach($data_indico[$element] as $result){
+	 $r = array();
+	 foreach($conversion_table as $k_VM=>$k_indico){
+	   if (isset($result[$k_indico])){
+	     switch($k_indico){
+	     case 'gsf':
+	       // Hook the GSFs (General Submit Form) - optional fields added by the event organizers
+	       $n = 250;
+	       foreach ($result[$k_indico] as $gsf){
+		 foreach ($gsf as $k=>$v){
+		   if (is_array($v)) {
+		     var_dump($v);
+		     die('???');
+		   }
+		   $r['gsf_'.($n++)] = "CAPTION:".(empty($k)?'Comment':$k)."VALUE:${v}";
+		 }
+	       }
+	       break;
+	       // case 'registrationdate':
+	       // case 'reg_start':
+	       // case 'reg_end':
+	     case 'startDate': // from the "standard" indico export procedure
+	     case 'endDate':   // from the "standard" indico export procedure
+	       $r[$k_VM] = $result[$k_indico]['date'];
+	       break;
+	     case 'chairs':
+	       $r[$k_VM] = $r['chair'] = array();
+	       foreach ($result[$k_indico] as $chair){
+		 $av = array();
+		 foreach(array('av_firstname' => 'first_name',
+			       'av_lastname'  => 'last_name',
+			       'av_institute' => 'affiliation',
+			       'av_email'     => 'email',
+			       'emailHash'    => 'emailHash',
+			       ) as $k_v=>$k_i){
+		   if (!empty($chair[$k_i])) $av[$k_v] = $chair[$k_i];
+		 }
+		 $r[$k_VM][] = $av;
+		 $r['chair'][] = join(', ',array(strToUpper($av['av_lastname']),$av['av_firstname']));
+	       }
+	       break;
+	     default:
+	       $r[$k_VM] = $result[$k_indico];
+	     }
+	     //	     unset($result[$k_indico]);
+	   }
+	 }
+	 $reply[$element][] = $r;
+       }
+     }
+     return $reply;
+   }			  
 
-    // Update list of events
-    VM_agendaEvents()->syncEventsInCategories(False);
 
-    myPear_logs()->doNotLog = True;
-
-    $this->noCache = True; 
-    
-    if (empty($conferences_to_sync)){
-      if (($conf=@$_GET['conf'])){
-	$conferences_to_sync[] = "conf=$conf&show_reg=all";
-      }else{
-	// Get the list of events which we need from the Agenda holder,
-	$events = array();
-	foreach(VM_agendaEvents()->getMembers() as $m) $events[] = ($m['lm_key'].'='.$m['lm_value']);
-
-	foreach ($events as $a){
-	  foreach ($this->parser($a) as $ev_id=>$program) {
-	    if ($p_id = @$program['id']){
-	      if (b_time::txt2unix($program['end']) + $this->lookBackFor * 3600*24 < b_time::noon()){ // ignore the past
-		if (empty($_GET['refresh_once']) && loader::getInstance_new('bForm_vm_Event',array('e_code'=>$p_id),array('nocache','strict'))) continue;
-	      }elseif(b_time::txt2unix($program['end']) < b_time::noon(2009,11,1)){ // ignore the pre-ABS era...
-		if (empty($_GET['refresh_once']) && loader::getInstance_new('bForm_vm_Event',array('e_code'=>$p_id),array('nocache','strict'))) continue;
-	      }
-	      $conferences_to_sync[] = join('&',array("conf=$p_id",
-						      "show_reg=all"));
-	    }
-	  }
-	}
-      }	
-    }	
-    
-    //... test  $conferences_to_sync = array('conf=1125&show_contrib=all');
-    //    $c = array_shift($conferences_to_sync);
-    //    $conferences_to_sync = array($c);
-
-    /* now process the recent events only */
-    foreach ($conferences_to_sync as $args){
-      myPear_db()->noAutoCommit('start');
-      foreach ($this->parser($args) as $ev_id=>$program) {
+   /*
+    *
+    */
+   public function sync($conferences_to_sync=array()){
+     static $alreadySyncing = 0;
+     if ($alreadySyncing++) return;
+     
+     bTiming()->cpu(__function__);
+     set_time_limit(0);
+     $this->dbg(starting);
+     MSG::H1("Syncing visitors database with Agenda");
+     
+     // Update list of events
+     VM_agendaEvents()->syncEventsInCategories(False);
+     
+     myPear_logs()->doNotLog = True;
+     
+     $this->noCache = True; 
+     
+     if (empty($conferences_to_sync)){
+       if (($conf=@$_GET['conf'])){
+	 $conferences_to_sync[] = "conf=$conf&show_reg=all";
+       }else{
+	 // Get the list of events which we need from the Agenda holder,
+	 $events = array();
+	 foreach(VM_agendaEvents()->getMembers() as $m) $events[] = ($m['lm_key'].'='.$m['lm_value']);
+	 
+	 foreach ($events as $a){
+	   foreach($this->getConference($a) as $ev_key=>$program){ 
+	     if ($p_id = @$program['id']){
+	       if (b_time::txt2unix($program['end']) + $this->lookBackFor * 3600*24 < b_time::noon()){ // ignore the past
+		 if (empty($_GET['refresh_once']) && loader::getInstance_new('bForm_vm_Event',array('e_code'=>$p_id),array('nocache','strict'))) continue;
+	       }elseif(b_time::txt2unix($program['end']) < b_time::noon(2009,11,1)){ // ignore the pre-ABS era...
+		 if (empty($_GET['refresh_once']) && loader::getInstance_new('bForm_vm_Event',array('e_code'=>$p_id),array('nocache','strict'))) continue;
+	       }
+	       $conferences_to_sync[] = join('&',array("conf=$p_id",
+						       "show_reg=all"));
+	     }
+	   }
+	 }
+       }	
+     }	
+     
+     //... test  $conferences_to_sync = array('conf=1125&show_contrib=all');
+     //    $c = array_shift($conferences_to_sync);
+     //    $conferences_to_sync = array($c);
+     
+     /* now process the recent events only */
+     foreach ($conferences_to_sync as $args){
+       myPear_db()->noAutoCommit('start');
+       foreach ($this->getConference($args) as $ev_key=>$program) {
 	$this->dbg(starting);
 	$program['title'] = strip_tags($program['title']);
 	if (count($conferences_to_sync) == 1) MSG::MESSAGE(x('h3',"Syncing ".x('em',$program['title'])));
-
+	
 	$allRegistrants = array();
 
 	// The applications deadline should be at least a month before the event starts 

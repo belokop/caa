@@ -238,7 +238,7 @@ class b_table{
 }
 
 class box extends b_table {
-  function box($cmds,$tt='code',$br='<br/>',$bgcolor='#E3EAF6') { 
+  function __construct($cmds,$tt='code',$br='<br/>',$bgcolor='#E3EAF6') { 
     $this->open("class='b_box'");
     $this->tr($this->x($tt,nbsp(join("$br\n",$cmds))));
     $this->close();

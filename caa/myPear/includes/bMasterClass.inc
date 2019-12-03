@@ -141,7 +141,9 @@ class bMasterClass{
    *
    */
   public function get_masterModule($module){
-    return $this->getOption('masterModule',$module);
+    $reply =  $this->getOption('masterModule',$module);
+    b_debug::_debug($reply);
+    return $reply;
   }
   
   /*

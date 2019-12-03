@@ -40,35 +40,59 @@ class bList_vm_agendaEvents extends bList_vm{
    *     ...
    */
   function getCategoryInfo($catID){
-    static $cats = array();
+    static $cats  = array();
     static $confs = array();
     
+    // Use cache if available
     if (empty($cats[$catID])){
-      $url = VM_agenda()->getCatInfoURL($catID);
-      $xml = `curl $url`; 
-      $xml = simplexml_load_string($xml);
-      $json= json_encode($xml);
-
-      if (!is_array(json_decode($json,True))){
+      $data = VM_agenda()->curl(VM_agenda()->getCatInfoURL($catID));
+      $data_array = json_decode($json = (USE_INDICO
+					 ? $data
+					 : json_encode(simplexml_load_string($data))),
+				True);
+      if (!is_array($data_array)){
 	MSG::ERROR("Can't contact agenda system...");
 	b_debug::var_dump($json,"Can't contact agenda system...");
 	return array(Null,null);
       } 
       
-      foreach(json_decode($json,TRUE) as $categories){
-	foreach ($categories as $k=>$v){
-	  switch($k){
-	  case 'id':
-	    $id = $v;
-	    break;
-	  case 'name':
-	    $cats[$id] = $v;
-	    break;
-	  case 'event':
-	    $confs = array();
-	    foreach($v as $data){
-	      foreach(array('title','start','protected') as $item){
-		if (!empty($data[$item])) $confs[$data['id']][$item] = $data[$item];
+      if (USE_INDICO){
+	// Parse the 'eventCategories' object, extract the category title
+	foreach($data_array['additionalInfo']['eventCategories'] as $cat){
+	  foreach($cat['path'] as $k=>$path){
+	    if (empty($path['id'])) continue;
+	    if (empty($cats) && ($path['id'] == $catID)){
+	      $cats[$catID] = $path['name'];
+	      b_debug::_debug(sprintf("Found category name '%s'\n",  $cats[$catID]),True);
+	      break 2;
+	    }
+	  }
+	}
+	// Parse the 'results' object
+	foreach($data_array['results'] as $result){
+	  //printf("categoryId %4d %13s%6d - %s\n",$result['categoryId'],$result['type'],$result['id'],$result['title']);
+	  $confs[$result['id']] = array('title'=>$result['title'],
+				      //'start'=>b_time::txt2unix($result['startDate']['date'],$result['startDate']['time']),
+					'start'=>$result['startDate']['date'],
+					);
+	  if ($result['hasAnyProtection']) $confs[$result['id']]['protected'] = 'yes';
+	}
+      }else{  // Indico v0.93
+	foreach($data_array as $categories){
+	  foreach ($categories as $k=>$v){
+	    switch($k){
+	    case 'id':
+	      $id = $v;
+	      break;
+	    case 'name':
+	      $cats[$id] = $v;
+	      break;
+	    case 'event':
+	      $confs = array();
+	      foreach($v as $data){
+		foreach(array('title','start','protected') as $item){
+		  if (!empty($data[$item])) $confs[$data['id']][$item] = $data[$item];
+		}
 	      }
 	    }
 	  }
@@ -77,6 +101,7 @@ class bList_vm_agendaEvents extends bList_vm{
       ksort($confs,SORT_NUMERIC);
     }
     $reply = array($cats[$catID],$confs);
+    // print_r($reply);
     return $reply;
   }
 

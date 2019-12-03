@@ -1,0 +1,5 @@
+#! /usr/local/bin/perl 
+
+require "adb.config";
+
+print @ARGV[0], " -> ", &config::ip2name(@ARGV[0]), "\n";

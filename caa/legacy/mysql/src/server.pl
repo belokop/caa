@@ -1,0 +1,416 @@
+#! /usr/bin/perl 
+#                              Iouri Belokopytov 1999 
+#                                                2000
+#                                                2001
+#                                                2002
+#                                                2005
+#            
+
+BEGIN { (my $dir=`dirname $0`)=~s/\n//; unshift (@INC, $dir);}
+
+push @ARGV, ($_=<>) unless @ARGV;
+
+require 5.004;
+use strict;
+#use getOptions;
+use POSIX qw(locale_h); #setlocale(LC_CTYPE,"C");
+use Sys::Syslog qw(:DEFAULT setlogsock);
+use ConfigDB;
+use DBclient; 
+use Mysql;
+use sql;
+
+++$|; 
+my $HLO   = 'hlo';        ###############################################
+$main::debug = 0;
+$postfix::debug = $main::debug;
+
+my $SORTED = "order_by"; ################################################### sql clauses
+my $GROUP  = "group_by";
+my $WHERE  = "where";
+
+my %allCls = (
+	       $SORTED => "ORDER BY clause",
+	       $GROUP  => "GROUP BY clause",
+	       $WHERE  => "WHERE clause",
+	       );
+
+my $SET    = "set";     ######################################### Commands
+my $UNSET  = "unset";
+my $RESET  = "reset";   # Do nothing if the value is the same, unset otherwise
+my $ADD    = "add";
+my $SHOW   = "show";
+my $LIST   = "list";
+my $SEARCH = "search";
+my $HELP   = "help";
+my $REMOVE = "remove";
+my $MV     = "mv";
+my $DUMP   = "dump";
+my $MAINT  = "maintenance";
+my $IF     = "if"; 
+
+
+my $E = 'E';          ######################################### regexp (shortcuts to clauses)
+my %allReg = (
+	      );
+
+my $DEBUG      = "debug";     ##### IF conditions 
+my $IFFULL     = "full"; 
+my $IFNOUPDATE = "noupdate"; 
+my $IFNOSNMP   = "nosnmp"; 
+my $IFDDSEP    = "ddsep";
+my $IFCMSEP    = "cmsep";
+my $IFHTML     = "html";
+my $IFARTIFACT = "artifact";
+my $IFCLEANIP  = "cleanip";
+my %allIf =(
+	    $IFFULL     => "Print all record data (normally only ".$sql::linesMax." repetetive lines are shown)",   
+	    $IFNOUPDATE => "No writing to the DB", 
+	    $IFNOSNMP   => "No SNMP query", 
+	    $IFCLEANIP  => "'$main::DB -$MAINT -if $IFCLEANIP' deletes hosts without IP assigned",
+	    $IFDDSEP    => "",
+	    $IFCMSEP    => "",
+	    $IFHTML     => "",
+	    $IFARTIFACT => "",
+	    $DEBUG      => "Debug",
+	    );
+
+my %allCmd=(
+	    $SHOW  => "Show record (default)",      
+	    $HELP  => "This text",  
+	    $LIST  => "List selected fields",
+	    $MV    => "Move (rename) a record",
+	    $REMOVE=> "Remove a record",     
+	    $ADD   => "Forced record creation (eg no DNS entry required for hostdb)",     
+	    $SET   => "(Re)set field values",     
+	    $UNSET => "Delete fields from the record",        
+	    $RESET => "(NOT RECOMMENDED) Do nothing if the value is the same, 'unset' otherwise",
+#	    $DUMP  => "ASCII dump of the database",        
+	    $MAINT => "Check database consistancy, read data from all daemons",
+	    $SEARCH=> "Search for a text string (both in keys and values)",
+	    $IF    => join (' ', keys %allIf),
+	    $E => "\"xxx -E\" is a shortcut for \"-".uc("$WHERE ".($main::DB =~ /host/ ? 'host' : 'user'))." like '%xxx%'\"",
+	    );
+
+
+my $csep = '///';
+my %commands = ();
+my %clauses  = ();
+my ($regexp, 
+    $subCheckValue, $subDaemonUpdate, $subMaintenance,
+    $subSortFields, $subPrtField, $subTreatArgument, 
+    );
+
+#&getOptions (\%allCmd,
+# 	      \%commands) or die $!;
+
+ openDB: { &sql::opendb ($main::DB); }
+
+ getArguments: {
+   $ARGV[0]=~ s/^\s+//; 
+   (my $commandLine = ($ARGV[0]=~/^-/ ? "":"-$SHOW ").join ' ',@ARGV) =~ s/(\s+)?=(\s+)?/=/g;
+   
+   foreach my $item (split /\s\-/, 
+		     " $commandLine"){
+    next unless $item;
+    my ($c, $value) = split /\s+/, $item, 2;  $c = lc $c;
+    if ($c eq $IF) {
+      foreach my $i (split /\s+/, $value){
+	$i = uty::getAbbr (lc $i, keys %allIf)
+	  or die "*** Cant parse '-$IF $value'\n";
+	$main::ifs{$i}++;
+      }}
+    elsif ($c eq lc $E){
+      $regexp = uc "-$E"; }
+    elsif ($c eq 'alias'){
+      system('/bin/bash /usr/pkg/maildb/pro/extractAliases users');
+      exit; }
+    elsif ($c eq 'aliasml'){
+      system('/bin/bash /usr/pkg/maildb/pro/extractAliases lists');
+      exit; }
+    elsif ($c eq 'getmac') {
+      my $reply = lc `/sbin/arping -f $value -w1|grep 'Unicast reply'`;
+      $reply =~ /\[(.*)\]/;
+      my $mac = $1;
+      if (!$mac) {
+	$reply = `/bin/ping $value -w 1`;
+#	system ("/sbin/arp $value");
+	$mac   = lc `/sbin/arp $value|grep ether|awk '{print $3}'`;
+      }
+#     print "reply=$reply";
+      print "$mac\n";
+#      system ("/sbin/arping -f $value -w1|grep 'Unicast reply'|awk '{print $5}'|tr A-Z a-z|sed -e 's/\[//g' -e 's/\]//g'");
+      exit; }
+    elsif ($c eq $HLO) { 
+      $value =~ s/\.physto\.se//;
+      foreach (split /\s+/,$value){ my($k,$v)=split /\=/; $main::hlo{$k} ||= $v;}}
+    elsif (my $cmd = uty::getAbbr ($c, keys %allCmd, keys %allIf)){
+      $commands{$cmd} = '' unless defined $commands{$cmd};
+      $commands{$cmd} = ($cmd =~ /^($LIST|$ADD|$SET|$UNSET|$RESET|$MAINT)$/) 
+	? join $csep,&sql::abbrFields(split(/\s+/,$value)),$commands{$cmd}
+        : join ' ',$value,$commands{$cmd};
+      $commands{$cmd} =~ s/\#/ /g;
+      $commands{$cmd} =~ s/(\s|$csep)+$//g;
+      if ($allIf{$cmd}) { $main::ifs{$cmd}++; delete $commands{$cmd}; }         
+    }elsif(my $cls = uty::getAbbr ($c, keys %allCls)){
+      my @a = split /\s+/ , $value;
+      $cls  =~ s/_/ /g;
+      $clauses{$cls} = join ' ' , &sql::abbrFields($a[0]) , @a[1..$#a]; 
+    }else{ die "*** Cant parse '-$c $value'\n"; }
+  }
+  
+ initUnderlyingPackage: { # load subroutines specific for the each database
+     my @specificSubs;
+     @specificSubs = &adb::init    (\%main::hlo, \%main::ifs)  if $main::DB eq 'adb';
+     @specificSubs = &maildb::init (\%main::hlo, \%main::ifs)  if $main::DB eq 'maildb';
+     @specificSubs = &hostdb::init (\%main::hlo, \%main::ifs)  if $main::DB =~ 'hostdb';
+     
+     ($subCheckValue, 
+      $subDaemonUpdate, 
+      $subMaintenance, 
+      $subSortFields, 
+      $subPrtField, 
+      $subTreatArgument,
+      ) = @specificSubs; 
+ }
+  
+  
+ completeCommands:{
+
+     # An ordinary user is not supposeed to debug the database...
+     #$main::debug = $main::ifs{$DEBUG} if &main::administrator($main::hlo{iam});
+     #$sendmail::debug = $postfix::debug  = $main::debug;
+     
+     # Assume the caller host or user name as the argument in case of invoking without arguments
+     $commands{$SHOW} = ($main::DB eq 'maildb') ? $main::hlo{iam} : $main::hlo{host} unless %commands;
+
+     # Deploy the record names
+     if ($subTreatArgument) {
+	 $commands{$SHOW} = &$subTreatArgument ($commands{$SHOW}, $regexp);
+     }else{     
+	 # Apply general Mysql regexp for the record names. 
+	 # Better to be done in the database-specif way, like searching DNS for hostdb.
+	 # Just supply $subTreatArgument
+	 if ($regexp || $commands{$SEARCH}) {
+	     my $toShow = $commands{$SHOW};
+	     $sql::WHEREclause = &sql::getID()." REGEXP '".($toShow || '%')."'";
+	     $sql::WHEREclause.= " AND ".$clauses{$WHERE}  if $clauses{$WHERE};
+	     $sql::WHEREclause.= " OR aliases RLIKE '".$toShow."'" if $sql::tables{aliases} && $toShow;
+	     $commands{$SHOW}  = join (' ', &sql::get(undef,undef,&sql::getID())) || $toShow;
+	 }     
+     }     
+     $sql::WHEREclause = $clauses{$WHERE}  if $clauses{$WHERE};
+    
+    
+    logAccess: {
+      my $toShow = $commands{$SHOW};
+      my $c = "$main::DB $toShow ";
+      foreach (keys %commands) {$c .= uc(" -$_ \"").$commands{$_}."\""  unless /$SHOW/; }
+      foreach (keys %clauses)  {$c .= uc(" -$_ \"").$clauses{$_}."\""; }
+      $c .= " -IF " . join(' ',keys %main::ifs)  if %main::ifs;
+      $c =~ s/\s+-$SHOW\s+/ /i; $c =~ s/($csep|\s+)/ /g;
+      if (1) {
+	  openlog ("$main::DB-server", 'ndelay', 'user');
+	  syslog ("info",
+		  "%s %s -HLO iam=%s host=%s", 
+		  $c, $regexp, $main::hlo{iam}, $main::hlo{host}, );
+      }else{
+	  (my $host = `hostname`) =~ s/\.\w+\.\w+\n//; 
+	  (my $date = `date +"%b %d %T"`) =~ s/\n//;
+	  foreach my $log (split /\;/,$main::logfile){
+	      unless (&emu::warning ("Can\'t write to log file: $!",
+				     !(open L,">>".$log))) {
+		  printf L 
+		      "%s %s %s: %s@%s %s %s\n", 
+		      $date, $host, $main::DB, $main::hlo{iam}, $main::hlo{host}, 
+		      $c, $regexp||''; 
+		  close  L; }
+	  }
+      }
+      print "\n$c\n\n"   if $main::debug;
+    }}
+ }
+
+
+
+
+executeCommandsNP: { 
+  
+  &sql::untie;
+  
+  &logout() if &sql::prtHelp (exists $commands{$HELP},
+			      \%allCmd, 
+			      \%allCls, 
+			      \%allIf, 
+			      $main::DB
+			     );
+  
+  &logout() if defined $commands{$MV} &&
+      (&sql::move      ($subCheckValue,
+			split (/\s/, $commands{$MV})) ||
+       &sql::prtRecord((split (/\s/, $commands{$MV}))[1], 
+		       undef,
+		       !$main::ifs{$IFFULL},
+		       $subSortFields, 
+		       $subPrtField, 
+		       ));
+  
+  &logout() if defined $commands{$SEARCH} &&
+      &sql::prtRecord (undef, $commands{$SEARCH});
+  
+  &logout() if grep('pers_number',$commands{$LIST}) && !&main::administrator;
+  &logout() if &sql::prtList ($commands{$SHOW},
+			      (defined   $main::ifs{$IFDDSEP}
+			       ?':'
+			       : defined $main::ifs{$IFCMSEP}?',':" "),
+			      \%clauses,
+			      split (/$csep/,$commands{$LIST}));
+  
+  &logout() 
+    if   $subMaintenance &&  exists $commands{$MAINT} &&
+    &$subMaintenance  (join (' ',split /$csep/,$commands{$MAINT}),
+		       $commands{$SHOW});
+}
+
+
+executeCommandsPerParameter: { 
+  foreach my $record (sort split /\s/, $commands{$SHOW}) {
+    print "\n";     print "Start ======== $record\n" if $main::debug;
+    
+    &sql::tie ($record);
+    next if
+      !$main::ARGSmac &&
+      emu::warning( "There is no '$record' record in the $main::DB\n",
+		    !(exists $commands{$ADD} ||
+		      exists $commands{$SEARCH} ||
+		      &sql::getField ($record, &sql::getID())));
+    
+    foreach my $c ($ADD, $SET, $UNSET){
+      next unless defined $commands{$c}; my %hash = ();
+      foreach (split /$csep/,$commands{$c}) { my($c,$v) = split /=/,$_,2;
+					       $hash{$c} = $v; }
+      if ($main::ARGSmac && $c eq $SET) {
+	# set mac address location
+	&setLocation(lc $record,
+		     \%hash);
+      }else{
+	&sql::set ($record,
+		   \%hash, 
+		   $subCheckValue,
+		   $c);
+        &host2arp (lc $record,
+		   \%hash)
+	  if $c eq $SET;
+      }
+    }
+    
+    
+    next if defined $commands{$REMOVE} &&
+      &sql::delete ($record, $subCheckValue);
+    
+    
+    &$subDaemonUpdate ($record)  
+      if $subDaemonUpdate && !$main::ifs{$IFNOUPDATE};
+    
+    
+    if (defined $commands{$RESET}){
+      my %hash = ();
+      my $ID;
+      foreach (split /$csep|\s+/,$commands{$RESET}) {
+	my($c,$v) = split /=/,$_,2; $c = lc $c;
+	$ID = &sql::getID($c) unless $ID;			
+	my ($ov)   = &sql::getField($record, $c);
+#	    print "$ID -------------- $c -------- '$ov' <-> '$v'\n";
+	$hash{$c}  = $v  if ($ov ne $v) # unset if changed
+	  && ($v && $c !~ /best_up|opsys|interf/i); # Not elegant... 
+      }
+      &sql::set ($record,
+		 \%hash, 
+		   $subCheckValue,
+		 'set');
+    }
+    
+    unless ($main::ARGSmac) {
+      &sql::prtRecord($record,
+		      undef,
+		      !$main::ifs{$IFFULL},
+		      $subSortFields, 
+		      $subPrtField, 
+		      ) 
+	or print "*** Empty '$record' record...\n"; }
+  }
+}
+
+
+&logout();
+
+sub host2arp($$) {
+  # Get the argumants from "hostdb -set" and tries to fill the
+  # ARP location field.
+  # The weak point here is that this routine trusts the ARP of
+  # the record...
+  my ($host,$inputHash) = @_;
+  return unless $main::DB eq 'hostdb';
+
+  my $sth = $sql::DBH->query("SELECT arp FROM master WHERE host='$host'");
+  if (my %hash = $sth->fetchhash) {
+    (my $arp = $hash{arp}) =~ s/~.*//;
+    &setLocation (lc $arp, $inputHash);
+  }
+}
+
+sub setLocation {
+  my ($mac, $inputHash) = @_; return unless $mac;
+  my (%newData, $cmd, $where, $query, @set, $sth, %fields);
+
+  # check that there is any info for the location table
+  # just return if there is no "our" piece of information on input
+  my $table = 'macs';
+  if ($sth = $sql::DBH->query("DESCRIBE $table")) {
+    while (my %hash = $sth->fetchhash) {
+      foreach my $c (keys %hash) {
+	++$fields{$hash{$c}} if $c eq 'Field' &&  $hash{$c} ne 'id'; }}}
+  foreach (keys %$inputHash) { next if $fields{$_};
+#			       print "setLocation: ignore $_=",$$inputHash{$_},"\n";
+			       delete $$inputHash{$_}; }
+  return unless %fields && %$inputHash;
+  
+  
+  # check the existing data and update if there are changes
+  $sth = $sql::DBH->query("SELECT * FROM $table WHERE mac='$mac' ".
+			   "ORDER BY time DESC LIMIT 1");
+  if (my %hash = $sth->fetchhash){ 
+    $cmd   = 'UPDATE';
+    $where = " WHERE mac='$mac'";
+    foreach my $c (keys %hash) {
+      next if $c eq 'id' || !$$inputHash{$c} || $$inputHash{$c} eq $hash{$c};
+#     printf "%10s -> %s\n", $hash{$c},$$inputHash{$c};
+      $newData{$c} = $$inputHash{$c};
+    }
+  }else{
+    $cmd          = 'REPLACE';
+    %newData      = %$inputHash;
+    $newData{mac} = $mac;
+  }
+  $newData{time}  = time;
+
+  foreach my $fld (keys %newData) {
+    push @set, $fld."='".$newData{$fld}."'"
+      if $newData{$fld};
+  }
+
+  $query = "$cmd $table SET ".join(',',@set).$where;
+# print "setLocation: $query\n";
+  $sql::DBH->query($query) or
+    print $sql::DBH->errmsg;
+}
+
+sub logout { &sql::untie ();
+	     &emu::mail();
+	     print "\n";
+	     exit 1;  }
+
+sub swap   { my ($l, $r) = @_;
+	     $_[0] = $r if $r;
+	     $_[1] = $l if $l; }
+#

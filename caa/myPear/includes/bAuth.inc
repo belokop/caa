@@ -671,18 +671,20 @@ class bAuth{ // extends myPear_base{
 
     // b_fmt::RFC_2822($login) 
     if (!self::_authenticated() && !empty($login) && !empty($pwd) && !empty($this->localAccount)){
-      if (!locateAndInclude('Net_IMAP')) MSG::WARNING_T("Net_IMAP is not installed");
+      if (!($f=locateAndInclude('Net_IMAP'))) MSG::WARNING_T("Net_IMAP is not installed");
+      else b_debug::_debug($f);
       if (class_exists('Net_IMAP',False)){
 	$pear = new PEAR();
 	foreach ($GLOBALS['imapServers'] as $domain=>$s){
 	  foreach($s['imap'] as $srv){
+	    b_debug::_debug("Trying $srv");
 	    $imap = new Net_IMAP($srv,$s['port'],False);
 	    $imap->setTimeout(1);
 	    $e = $imap->login($login, $pwd, true, false);
 	    if ($pear->isError($e)){
-	      self::dbg("NO - $srv ".$e->message,cnf_show_a);
+	      b_debug::_debug("NO - $srv ".$e->message,cnf_show_a);
 	    }else{
-	      self::dbg("YES - $srv",cnf_show_a);
+	      b_debug::_debug("YES - $srv",cnf_show_a);
 	      myPear_logs()->syslog("Accepted Net_IMAP for $login@$domain from ".$_SERVER["REMOTE_ADDR"]);
 	      $this->password_ok  = True;
 	      if (!(self::$av = bForm_Avatar::hook(array('av_identity'=>$login),'basic'))) {
@@ -694,9 +696,10 @@ class bAuth{ // extends myPear_base{
 	    }
 	  }
 	}
-	self::dbg(False,cnf_show_a);
+	b_debug::_debug(False,cnf_show_a);
       }else{
-	myPear_logs()->syslog("WARNING Net_IMAP is not installed");
+	myPear_logs()->syslog($msg="WARNING Net_IMAP is not installed");
+	b_debug::_debug($msg);
       }    
     }
     self::dbg($this->password_ok);
