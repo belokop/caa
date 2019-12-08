@@ -417,7 +417,7 @@ function myPear_setConstants(){
   // Demo site has "test" as part of the name
   if (!defined('cnf_demo')){
     if (cnf_dev)            define('cnf_demo',False);
-    else                    define('cnf_demo',preg_match('/(test|norosx|^192.168|130.242.129.1[01])/',@$_SERVER["HTTP_HOST"]));
+    else                    define('cnf_demo',preg_match('/(test|nor(lx|osx)|^192.168|130.242.129.1[01])/',@$_SERVER["HTTP_HOST"]));
   }
   if (cnf_dev){
     b_debug::_debug(sprintf("fancybox3='%s', cnf_inside_fb='%s'",var_export(fancybox3,True),var_export(cnf_inside_fb,True)),True);

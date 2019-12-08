@@ -219,7 +219,7 @@ class agenda_vm extends agenda{
      bTiming()->cpu(__function__);
      set_time_limit(0);
      $this->dbg(starting);
-     MSG::H1("Syncing visitors database with Agenda");
+     MSG::H1("Syncing visitors database with Agenda ".x('code',AGENDA_URL));
      
      // Update list of events
      VM_agendaEvents()->syncEventsInCategories(False);
