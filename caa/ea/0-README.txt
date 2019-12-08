@@ -2,59 +2,9 @@ Changes log
                                                                                                                                                                                  
 2019-02-11, Version 5.5.18,
                                                                                                                                                                                  
-2019-02-11, Version 5.5.17,
-                                                                                                                                                                                 
-2019-02-11, Version 5.5.16,
-                                                                                                                                                                                 
-2017-09-19, Version 5.5.15,
-                                                                                                                                                                                 
-2017-07-06, Version 5.5.14,
-                                                                                                                                                                                 
-2017-07-06, Version 5.5.13,
-                                                                                                                                                                                 
-2017-07-01, Version 5.5.12,
-                                                                                                                                                                                 
-2017-06-25, Version 5.5.11,
-                                                                                                                                                                                 
-2017-06-24, Version 5.5.10,
-                                                                                                                                                                                 
-2017-06-10, Version 5.5.9,
-                                                                                                                                                                                 
-2017-05-30, Version 5.5.8,
-                                                                                                                                                                                 
-2017-05-30, Version 5.5.7,
-                                                                                                                                                                                 
 2017-05-30, Version 5.5.6,
 D       ea/acc2ea.php
 D       ea/ssn2ea.php
-                                                                                                                                                                                 
-2017-05-11, Version 5.5.5,
-                                                                                                                                                                                 
-2017-04-25, Version 5.5.4,
-                                                                                                                                                                                 
-2017-04-25, Version 5.5.3,
-                                                                                                                                                                                 
-2017-04-18, Version 5.5.2,
-                                                                                                                                                                                 
-2017-04-18, Version 5.5.1,
-                                                                                                                                                                                 
-2017-04-14, Version 5.4.rc7,
-                                                                                                                                                                                 
-2017-04-07, Version 5.4.rc6,
-                                                                                                                                                                                 
-2017-04-04, Version 5.4.rc5,
-                                                                                                                                                                                 
-2017-04-04, Version 5.4.rc4,
-                                                                                                                                                                                 
-2017-03-06, Version 5.4.rc3,
-                                                                                                                                                                                 
-2017-03-05, Version 5.32,
-                                                                                                                                                                                 
-2017-02-26, Version 5.31,
-                                                                                                                                                                                 
-2017-02-26, Version 5.30,
-                                                                                                                                                                                 
-2017-02-22, Version 5.29,
                                                                                                                                                                                  
 2017-02-15, Version 5.28,
 A       ea/_drupal-8/src

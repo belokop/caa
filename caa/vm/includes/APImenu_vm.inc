@@ -1,13 +1,9 @@
 <?php
 
 // Load dependencies
-if (function_exists('locateAndInclude')){
-  locateAndInclude('APImenu_ea','fatal');
-  require_once(dirname(__FILE__).'/vm_functions.inc');
-  require_once(dirname(__FILE__).'/vm_updates.inc');
-}elseif (file_exists($f=str_replace('/vm/','/ea/',__FILE__))){
-  require_once $f;
-}
+require_once(str_replace(array('/vm/','_vm'),array('/ea/','_ea'),__FILE__));
+require_once(dirname(__FILE__).'/vm_functions.inc');
+require_once(dirname(__FILE__).'/vm_updates.inc');
 		    
 /*
  * Define all the tabs/menus used in VM module

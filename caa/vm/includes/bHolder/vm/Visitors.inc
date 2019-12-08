@@ -3,7 +3,8 @@
  * Tricks:
  * - to endorse an event WITHOUT sending emails to the organizers add "&showen=1&" to the URL 
  */
-locateAndInclude(array('bForm_vm_Lease',
+locateAndInclude(array('vm_functions',
+		       'bForm_vm_Lease',
 		       'bForm_vm_Visit',
 		       'bHolder_vm'));
 
