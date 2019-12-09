@@ -1,9 +1,0 @@
-name: Visits Manager 
-description: Administration portal to manage various aspects of visits: apartments & offices lease, budget monitoring, setting social events, etc.
-type: module
-package: myPear
-project: YB
-core: 8.x
-dependencies: 
- - ea
-version: 8.x-5.13.56

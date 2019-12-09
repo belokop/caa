@@ -1,7 +1,0 @@
-name: myPear core
-type: module
-description: myPear core classes & functions
-package: myPear
-project: YB
-version: 8.x-5.3.225
-core: 8.x

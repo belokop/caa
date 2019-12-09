@@ -1,1 +1,0 @@
-../_drupal-7/myPear.admin.inc

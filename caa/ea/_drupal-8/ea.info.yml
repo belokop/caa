@@ -1,9 +1,0 @@
-name: Employees & Alumni
-description: Managing Employees & Alumni for a (mid-sized) organization
-package: myPear
-dependencies: 
- - myPear
-project: YB
-type: module
-core: 8.x
-version: 8.x-5.5.18
