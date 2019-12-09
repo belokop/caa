@@ -4,8 +4,8 @@
  * Visitors Manager (VM) configuration file
  */
 $releaseDate = '2019-12-15';
-define('VM_MODULE'   , 'vm');
-define('VM_VERSION','5.13.56');
+define('VM_MODULE' ,'vm');
+define('VM_VERSION','5.14');
 
 //
 // Links the Agenda system

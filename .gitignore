@@ -21,7 +21,10 @@ sql_utf8.sh
 # saved files
 *.sv
 
-# Not used any more, keep for reference
+# Not used for now, keep for reference
+igor_hostel.inc
 bTCPDF.inc
+/_tcpdf/*
+/_fpdi/*
 /_joomla/*
-
+/_drupal-8/*
