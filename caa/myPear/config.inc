@@ -86,7 +86,7 @@ if (!defined('cnf_CLI'))       define('cnf_CLI',empty($_SERVER["HTTP_USER_AGENT"
 if (!defined('cnf_localhost')) define('cnf_localhost',
 				      (bool)(preg_match('/^((.*)?::1$|127.0.0.1|local)/',trim(@$_SERVER["REMOTE_ADDR"])) &&
 					     (strpos(__FILE__,'/trunk/') !==False or
-					      strpos(__FILE__,'_github_')!==False)));
+					      strpos(__FILE__,'/github/')!==False)));
 
 // Set a shortcut "Processing task manager queue", see class "myPear_taskManager"
 define('cnf_myPear_taskManager',0 && isset($_REQUEST['myPear_taskManager']));
