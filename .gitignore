@@ -24,7 +24,7 @@ sql_utf8.sh
 # Not used for now, keep for reference
 igor_hostel.inc
 bTCPDF.inc
-/_tcpdf/*
+*/_tcpdf/
 /_fpdi/*
 /_joomla/*
 /_drupal-8/*

@@ -8,13 +8,12 @@ define('VM_MODULE' ,'vm');
 define('VM_VERSION','5.14');
 
 //
-// Links the Agenda system
+// Links the Agenda system, either 0.93 or 2.2
 //
 if (!defined('USE_INDICO')) define('USE_INDICO',True);
 if (!defined('AGENDA_URL')) define('AGENDA_URL',(USE_INDICO
-                                                 ? 'https://indico.nordita.org/'
+                                                 ? 'https://agenda.albanova.se/' // 'https://indico.nordita.org/'
                                                  : 'https://agenda.albanova.se/'));
-//define('AGENDA_URL','http://agenda.nordita.org/');
 
 //
 // transition problems...
