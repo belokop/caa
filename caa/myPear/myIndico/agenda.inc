@@ -1,6 +1,7 @@
 <?php
 /* 
- * Get UTF-8 encoded conferens data.                            YB 2009-02-26
+ * Parse the Indico_v0.9 export output, get UTF-8 encoded data.                         YB 2009-02-26
+ *
  */
 class agenda {
 
@@ -49,9 +50,7 @@ Supported arguments:
    */
   function getCategory($category='270',$args='') {
     if ($this->debug) print "\n================================= \$agenda->getCategory('$category','$args')\n\n";
-    $reply = (USE_INDICO
-	      ? b_debug::internalError('Not Yet Implemented...')
-	      : $this->parser("cat=$category&$args"));
+    $reply = $this->parser("cat=$category&$args");
     return $reply;
   }
   
@@ -72,30 +71,30 @@ Supported arguments:
     return $reply;
   }
 
- function parser($args){
-   $this->dbg();
-   if (defined('cnf_CLI') && !cnf_CLI)  set_time_limit(0);
-   $structues = 'registrant|contribution';
-   $reply  = $bufer = array();
-   $lastKey= 'No key';
-   $url = AGENDA_URL.$this->tools_url.$args;
+  function parser($args){
+    $this->dbg();
+    if (defined('cnf_CLI') && !cnf_CLI)  set_time_limit(0);
+    $structures = 'registrant|contribution';
+    $reply  = $bufer = array();
+    $lastKey= 'No key';
+    $url = AGENDA_URL.$this->tools_url.$args;
 
-   b_debug::_debug($url,cnf_dev);
-   foreach (preg_split("/\n/",$this->curl($url)) as $line) {
-     if (strstr($line,'=') !== False){
-       list($key,$value) = explode('=',$line,2); $key = mb_strToLower($key);
-       if ($value && $key) {
-	 $key = preg_replace('/_date$/'  ,'',$key);
-	 //$key = preg_replace("/_[0-9]*$/",'',$key);
-	 if ($key == 'start'){
-	   $ID = $value; 
-	   $nChairs = 0;
-	 }
-	  if (preg_match("/^($structues)$/i",$key,$r)) {
+    if (class_exists('b_debug',0)) b_debug::_debug($url,cnf_dev);
+    foreach (preg_split("/\n/",$this->curl($url)) as $line) {
+      if (strstr($line,'=') !== False){
+	list($key,$value) = explode('=',$line,2); $key = mb_strToLower($key);
+	if ($value && $key) {
+	  $key = preg_replace('/_date$/'  ,'',$key);
+	  //$key = preg_replace("/_[0-9]*$/",'',$key);
+	  if ($key == 'start'){
+	    $ID = $value; 
+	    $nChairs = 0;
+	  }
+	  if (preg_match("/^($structures)$/i",$key,$r)) {
 	    if ($bufer)                 $reply[$ID][$lastKey][] = $bufer;
 	    $bufer = array();
 	    $lastKey = $r[1];
-	  }elseif (preg_match("/^($structues)_/i",$key,$r)) {
+	  }elseif (preg_match("/^($structures)_/i",$key,$r)) {
 	    if ($key==$r[1].'_structure' && $value=='end'){
 	      $reply[$ID][$lastKey][] = $bufer;
 	      $bufer = array();
@@ -129,8 +128,8 @@ Supported arguments:
   }
   
   function curl($url){
-    bTiming()->cpu(__FUNCTION__);
-    $this->dbg(starting);
+    if (function_exists('bTiming')) bTiming()->cpu(__FUNCTION__);
+    if (defined('starting'))    $this->dbg(starting);
     if (function_exists ("curl_setopt")) {
       $ch = curl_init();
       curl_setopt($ch, CURLOPT_URL, $url);
@@ -149,19 +148,23 @@ Supported arguments:
       $page = `$page 2>/dev/null`;
     }
     $this->dbg(count(explode("\n",$page)).' lines on output');
-    $this->dbg(exiting);
-    bTiming()->cpu();
+    if (defined('exiting'))    $this->dbg(exiting);
+    if (function_exists('bTiming')) bTiming()->cpu();
     return $page;
   }
 
   function __toString() { return get_class($this); }
 
   protected function dbg($o='',$t1='',$t2=''){
-    if (is_string($o)){
-      b_debug::_debug($o,array(3,'fuchsiaText',cnf_dev,$this));
+    if (class_exists('b_debug',0)){
+      if (is_string($o)){
+	b_debug::_debug($o,array(3,'fuchsiaText',cnf_dev,$this));
+      }else{
+	b_debug::_debug($o->name().' '.b_time::period($o->getValue($t1,1),$o->getValue($t2,1)),
+			array('T',3, cnf_dev));
+      }
     }else{
-      b_debug::_debug($o->name().' '.b_time::period($o->getValue($t1,1),$o->getValue($t2,1)),
-		      array('T',3, cnf_dev));
+      print_r($o);
     }
   }
 }

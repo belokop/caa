@@ -113,7 +113,8 @@ function _hw_body() {
 
   
   print "<h2>Source code of this page</h2>";
-  print "<a href='http://code.google.com/p/norweb/source/browse/trunk/helloworld/_drupal-6/helloworld.module' class='page-load-progress'>
+  print // "<a href='http://code.google.com/p/norweb/source/browse/trunk/helloworld/_drupal-6/helloworld.module' class='page-load-progress'>
+    "<a href='https://github.com/belokop/caa/tree/master/caa/helloworld/_drupal-6/helloworld.module' class='page-load-progress'>
          See the source code of this demo here 
          </a>";
   

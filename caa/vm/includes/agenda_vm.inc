@@ -30,9 +30,7 @@ class agenda_vm extends agenda{
     *
     */
    public function getCategoryURL($categId){
-     $reply = (USE_INDICO
-	       ? AGENDA_URL."/category/$categId/"
-	       : AGENDA_URL."/categoryDisplay.py?categId=$categId");
+     $reply = AGENDA_URL."/categoryDisplay.py?categId=$categId";
      $this->dbg($reply,True);
      return $reply;
    }
@@ -41,9 +39,7 @@ class agenda_vm extends agenda{
     *
     */
    public function getCatInfoURL($categId){
-     $reply = (USE_INDICO
-	       ? AGENDA_URL."/export/categ/".$categId.INDICO_TOKEN
-	       : AGENDA_URL."/tools/getConf.py?catinfo=".$categId);
+     $reply = AGENDA_URL . $this->tools_url . "catinfo=$categId";
      $this->dbg($reply,True);
      return $reply;
    }
@@ -52,9 +48,7 @@ class agenda_vm extends agenda{
     *
     */
    public function getEventURL($confId){
-     $reply = (USE_INDICO
-	       ? AGENDA_URL."/event/$confId/"
-	       : AGENDA_URL."/conferenceDisplay.py?confId=$confId");
+     $reply = AGENDA_URL."/conferenceDisplay.py?confId=$confId";
      $this->dbg($reply,True);
      return $reply;
    }
@@ -64,13 +58,26 @@ class agenda_vm extends agenda{
     */
    public function getRegistrantURL($confId,$registrantId=Null){
      if (empty($registrantId)) return $this->getEventURL($confId);
-     $reply = (USE_INDICO
+     $reply = (INDICO_2
 	       ? AGENDA_URL."/event/$confId/registrations/$registrantId/"
 	       : AGENDA_URL."/confModifRegistrants.py/modification?registrantId=$registrantId&confId=$confId");
      $this->dbg($reply,True);
      return $reply;
    }
-   
+
+   /*
+    * @param $catId   category ID
+    * @param $args    details level
+    */
+   function getCategory($catId='270',$args='') {
+     b_debug::_debug(starting);
+     $reply = (INDICO_2
+	       ? json_decode($this->curl(AGENDA_URL.$this->tools_url."cat=$catId&$args"),True)
+	       : parent::getCategory($catId,$args));
+     b_debug::_debug(exiting);
+     return $reply;
+   }
+
    /*
     * @param $confId  conference ID:
     * @param $args    details of the conference
@@ -79,12 +86,27 @@ class agenda_vm extends agenda{
      
      b_debug::_debug(starting);
      // Parce arguments if the "parser notation" is used
+     if(preg_match("/conf=(\d*)/",$confId,$match)){
+       $args = $confId;
+       $confId = $match[1];
+     }
+     b_debug::_debug(AGENDA_URL.$this->tools_url."conf=$confId&$args",True);
+     $reply = (INDICO_2
+	       ? json_decode($this->curl(AGENDA_URL.$this->tools_url."conf=$confId&$args"),True)
+	       : parent::getConference($confId,$args));
+     b_debug::_debug(exiting);
+     return $reply;
+   }
+
+   public function getConference_obsolete($confId,$args=''){
+     b_debug::_debug(starting);
+     // Parce arguments if the "parser notation" is used
      if(preg_match("/conf=(\d*)&?(.*)$/",$confId,$match)){
        $confId = $match[1];
        $args = "$args&".$match[2];
      }
 
-     if (USE_INDICO){
+     if (INDICO_2){   // obsolete...
        
        // Read the conference information and convert it to the VM-friendly format
        $converted = $this->indicoToVM(AGENDA_URL."/export/event/$confId" . INDICO_TOKEN, 

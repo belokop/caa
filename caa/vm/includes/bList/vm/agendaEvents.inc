@@ -46,7 +46,7 @@ class bList_vm_agendaEvents extends bList_vm{
     // Use cache if available
     if (empty($cats[$catID])){
       $data = VM_agenda()->curl(VM_agenda()->getCatInfoURL($catID));
-      $data_array = json_decode($json = (USE_INDICO
+      $data_array = json_decode($json = (INDICO_2
 					 ? $data
 					 : json_encode(simplexml_load_string($data))),
 				True);
@@ -56,50 +56,28 @@ class bList_vm_agendaEvents extends bList_vm{
 	return array(Null,null);
       } 
       
-      if (USE_INDICO){
-	// Parse the 'eventCategories' object, extract the category title
-	foreach($data_array['additionalInfo']['eventCategories'] as $cat){
-	  foreach($cat['path'] as $k=>$path){
-	    if (empty($path['id'])) continue;
-	    if (empty($cats) && ($path['id'] == $catID)){
-	      $cats[$catID] = $path['name'];
-	      b_debug::_debug(sprintf("Found category name '%s'\n",  $cats[$catID]),True);
-	      break 2;
-	    }
-	  }
-	}
-	// Parse the 'results' object
-	foreach($data_array['results'] as $result){
-	  //printf("categoryId %4d %13s%6d - %s\n",$result['categoryId'],$result['type'],$result['id'],$result['title']);
-	  $confs[$result['id']] = array('title'=>$result['title'],
-				      //'start'=>b_time::txt2unix($result['startDate']['date'],$result['startDate']['time']),
-					'start'=>$result['startDate']['date'],
-					);
-	  if ($result['hasAnyProtection']) $confs[$result['id']]['protected'] = 'yes';
-	}
-      }else{  // Indico v0.93
-	foreach($data_array as $categories){
-	  foreach ($categories as $k=>$v){
-	    switch($k){
-	    case 'id':
-	      $id = $v;
-	      break;
-	    case 'name':
-	      $cats[$id] = $v;
-	      break;
-	    case 'event':
-	      $confs = array();
-	      foreach($v as $data){
-		foreach(array('title','start','protected') as $item){
+      foreach($data_array as $categories){
+	foreach ($categories as $k=>$v){
+	  switch($k){
+	  case 'id':
+	    $id = $v;
+	    break;
+	  case 'name':
+	    $cats[$id] = $v;
+	    break;
+	  case 'event':
+	    $confs = array();
+	    foreach($v as $data){
+	      foreach(array('title','start','protected') as $item){
 		  if (!empty($data[$item])) $confs[$data['id']][$item] = $data[$item];
-		}
 	      }
 	    }
 	  }
 	}
       }
-      ksort($confs,SORT_NUMERIC);
     }
+    ksort($confs,SORT_NUMERIC);
+
     $reply = array($cats[$catID],$confs);
     // print_r($reply);
     return $reply;
@@ -205,8 +183,13 @@ class bList_vm_agendaEvents extends bList_vm{
   function getFormAdd_OK(){
     if ($reply = parent::getFormAdd_OK()){
       if(@$_POST['lm_key'] === 'cat'){
-	list($_POST['a_name'],$confs) = $this->getCategoryInfo($_POST['lm_value']); 
-	$this->new_item = array('category',x('"',$_POST['a_name']));
+	list($name,$confs) = $this->getCategoryInfo($_POST['lm_value']);
+	if (empty($name)){
+	  $reply = False;
+	}else{
+	  $_POST['a_name'] = $name;
+	  $this->new_item = array('category',x('"',$_POST['a_name']));
+	}
       }elseif(@$_POST['lm_key'] === 'conf'){
 	$confId = $_POST['lm_value'];
 	VM_agenda()->sync(array("conf=$confId&show_reg=all"));
