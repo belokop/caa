@@ -6,12 +6,22 @@
 /*
  * Query VM database
  */
+  /*
 function VM_query($where=array(1),$join_rooms=(' LEFT JOIN abs_leases ON v_id = lease_vid '
 					       .'LEFT JOIN abs_rooms ON a_id = lease_aid '
 					       .'LEFT JOIN abs_huts ON hut_id = a_hutid '
 					       // .'LEFT JOIN abs_expenses ON v_id = exp_vid '
 					       // .'LEFT JOIN abs_offices  ON v_oid = o_id'
 					       )){
+  */
+function VM_query($where='?',$join_rooms='?'){
+  if ($where == '?')      $where = array(1);
+  if ($join_rooms == '?') $join_rooms = (' LEFT JOIN abs_leases ON v_id = lease_vid '
+					 .'LEFT JOIN abs_rooms ON a_id = lease_aid '
+					 .'LEFT JOIN abs_huts ON hut_id = a_hutid '
+					 // .'LEFT JOIN abs_expenses ON v_id = exp_vid '
+					 // .'LEFT JOIN abs_offices  ON v_oid = o_id'
+					 );
   b_debug::_debug();
   $query = "SELECT av_id,av_lastname,av_firstname,av_city,av_institute,av_email,av_residentship "
     .",v_id,v_type,v_policy,v_host_avid,v_start,v_end,v_avid,v_status,v_acc_wish,v_eid,v_projectid,v_accompaning,v_gsf "
