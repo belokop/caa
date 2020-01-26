@@ -557,8 +557,9 @@ class bForm_vm_Lease extends bForm_vm{
   /*
    * Return the lease name without instantiating the Lease class
    */
-  public static function _queryLease($lease_ids,$select='*',$leftJoin=(" LEFT JOIN abs_visits     ON lease_vid = v_id ". 
-								       " LEFT JOIN zzz_avatars    ON v_avid = av_id ")){ 
+  public static function _queryLease($lease_ids,$select='*',$leftJoin='?'){
+    if ($leftJoin == '?') $leftJoin=(" LEFT JOIN abs_visits     ON lease_vid = v_id ".
+				     " LEFT JOIN zzz_avatars    ON v_avid = av_id ");
     bTiming()->cpu(__function__);
     if (!is_array($lease_ids)) $lease_ids = array($lease_ids);
     foreach($lease_ids as $lease_id){

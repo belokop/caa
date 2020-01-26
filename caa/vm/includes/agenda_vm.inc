@@ -11,8 +11,9 @@ locateAndInclude('bList_vm_agendaEvents');
 // The applications deadline should be at least a month before the event starts 
 define('application_deadline',30 * 24 * 3600); 
 
-define('INDICO_TOKEN','.json?pretty=yes&nocache=yes&ak=88646c7d-2aed-42d5-8550-72ac45e99f0c');
-#define('INDICO_TOKEN','.json?pretty=yes&nocache=yes');
+$token = '&cache=no';
+if (!empty($GLOBALS['API_keys'])) $token .= '&ak='.$GLOBALS['API_keys'];
+define('INDICO_TOKEN',$token);
 
 class agenda_vm extends agenda{
   
@@ -39,6 +40,7 @@ class agenda_vm extends agenda{
     *
     */
    public function getCatInfoURL($categId){
+     // It is safe to cache the category info, it is not changed often
      $reply = AGENDA_URL . $this->tools_url . "catinfo=$categId";
      $this->dbg($reply,True);
      return $reply;
@@ -72,7 +74,7 @@ class agenda_vm extends agenda{
    function getCategory($catId='270',$args='') {
      b_debug::_debug(starting);
      $reply = (INDICO_2
-	       ? json_decode($this->curl(AGENDA_URL.$this->tools_url."cat=$catId&$args"),True)
+	       ? json_decode($this->curl(AGENDA_URL.$this->tools_url."cat=$catId&$args".INDICO_TOKEN),True)
 	       : parent::getCategory($catId,$args));
      b_debug::_debug(exiting);
      return $reply;
@@ -92,144 +94,11 @@ class agenda_vm extends agenda{
      }
      b_debug::_debug(AGENDA_URL.$this->tools_url."conf=$confId&$args",True);
      $reply = (INDICO_2
-	       ? json_decode($this->curl(AGENDA_URL.$this->tools_url."conf=$confId&$args"),True)
+	       ? json_decode($this->curl(AGENDA_URL.$this->tools_url."conf=$confId&$args".INDICO_TOKEN),True)
 	       : parent::getConference($confId,$args));
      b_debug::_debug(exiting);
      return $reply;
    }
-
-   public function getConference_obsolete($confId,$args=''){
-     b_debug::_debug(starting);
-     // Parce arguments if the "parser notation" is used
-     if(preg_match("/conf=(\d*)&?(.*)$/",$confId,$match)){
-       $confId = $match[1];
-       $args = "$args&".$match[2];
-     }
-
-     if (INDICO_2){   // obsolete...
-       
-       // Read the conference information and convert it to the VM-friendly format
-       $converted = $this->indicoToVM(AGENDA_URL."/export/event/$confId" . INDICO_TOKEN, 
-				      array('results' => array('start'    => 'startDate',
-							       'end'      => 'endDate',
-							       'title'    => 'title',
-							       'id'       => 'id',
-							       'regstart' => 'reg_start',
-							       'regend'   => 'reg_end',
-							       'attenders'=> '', 
-							       'room'     => 'room',
-							       'chair'    => '', 
-							       'chairs'   => 'chairs',
-							       'registrant' => '')));
-       $conference = $converted['results'][0];
-       
-       // Read the registrants data it to the VM-friendly format
-       /* The following items are not used:
-	*       $unused = array('nights',
-	*      	          'event_id',
-	*                 'ticket_uuid');
-	*
-	*/
-       $converted = $this->indicoToVM(AGENDA_URL."/export/event/$confId/registrants" . INDICO_TOKEN,
-				      array('results' => array('id'               => 'friendly_id',
-							       'familyname'       => 'last_name',
-							       'firstname'        => 'first_name',
-							       'salutation'       => 'title',
-							       'registrationdate' => 'registrationdate',
-							       'country'          => 'country', 
-							       'address'          => 'address',
-							       'city'             => 'city',
-							       'position'         => 'position',
-							       'phone'            => 'phone',
-							       'fax'              => 'fax',
-							       'email'            => 'email',
-							       'emailHash'        => 'emailHash',
-							       'institution'      => 'affiliation',
-							       'arrivaldate'      => 'arrival_date',
-							       'departuredate'    => 'departure_date',
-							       'accommodation'    => 'choice',
-							       'homepage'         => 'homepage',
-							       'gsf_250'          => 'gsf'),
-					    'registration_dates'=> array('regstart'=> 'reg_start',
-									 'regend'  => 'reg_end')));
-       
-       $conference['registrant'] = $converted['results'];
-       $conference['regstart']   = $converted['registration_dates'][0]['regstart'];
-       $conference['regend']     = $converted['registration_dates'][0]['regend'];
-       $conference['attenders']  = count($conference['registrant']);
-       
-       $reply = array($conference['start'] => $conference);
-     }else{
-       $reply = parent::getConference($confId,$args);
-     }
-     b_debug::_debug(exiting);
-     return $reply;
-   }
-   
-   /*
-    *
-    */
-   private function indicoToVM($url,$elements){
-     
-     $reply = array();
-     $data_indico = json_decode($this->curl($url),True);
-
-     // Extract the "main result"     
-     foreach($elements as $element=>$conversion_table){
-       $reply[$element] = array();
-       foreach($data_indico[$element] as $result){
-	 $r = array();
-	 foreach($conversion_table as $k_VM=>$k_indico){
-	   if (isset($result[$k_indico])){
-	     switch($k_indico){
-	     case 'gsf':
-	       // Hook the GSFs (General Submit Form) - optional fields added by the event organizers
-	       $n = 250;
-	       foreach ($result[$k_indico] as $gsf){
-		 foreach ($gsf as $k=>$v){
-		   if (is_array($v)) {
-		     var_dump($v);
-		     die('???');
-		   }
-		   $r['gsf_'.($n++)] = "CAPTION:".(empty($k)?'Comment':$k)."VALUE:${v}";
-		 }
-	       }
-	       break;
-	       // case 'registrationdate':
-	       // case 'reg_start':
-	       // case 'reg_end':
-	     case 'startDate': // from the "standard" indico export procedure
-	     case 'endDate':   // from the "standard" indico export procedure
-	       $r[$k_VM] = $result[$k_indico]['date'];
-	       break;
-	     case 'chairs':
-	       $r[$k_VM] = $r['chair'] = array();
-	       foreach ($result[$k_indico] as $chair){
-		 $av = array();
-		 foreach(array('av_firstname' => 'first_name',
-			       'av_lastname'  => 'last_name',
-			       'av_institute' => 'affiliation',
-			       'av_email'     => 'email',
-			       'emailHash'    => 'emailHash',
-			       ) as $k_v=>$k_i){
-		   if (!empty($chair[$k_i])) $av[$k_v] = $chair[$k_i];
-		 }
-		 $r[$k_VM][] = $av;
-		 $r['chair'][] = join(', ',array(strToUpper($av['av_lastname']),$av['av_firstname']));
-	       }
-	       break;
-	     default:
-	       $r[$k_VM] = $result[$k_indico];
-	     }
-	     //	     unset($result[$k_indico]);
-	   }
-	 }
-	 $reply[$element][] = $r;
-       }
-     }
-     return $reply;
-   }			  
-
 
    /*
     *

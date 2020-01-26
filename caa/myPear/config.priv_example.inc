@@ -1,9 +1,9 @@
 <?php
 
-//
-// Settings for the MySQL database.
-// The database must exist and be writable by the user
-//
+/*
+ * Settings for the MySQL database.
+ * The database must exist and be writable by the user
+ */
 
 // Database engine class (NOT TO BE CHANGED!)
 $GLOBALS['DBengine'] = $DBengine = 'bDB_myPear';
@@ -17,10 +17,10 @@ foreach(array('host'  =>'localhost',
   $GLOBALS[$DBengine][$item] = $v;
 }
 
-//
-// Settings for the SMTP mail server
-// Set user/passwd to the valid username/password if your server uses authentication.
-//
+/*
+ * Settings for the SMTP mail server
+ * Set user/passwd to the valid username/password if your server uses authentication.
+ */
 foreach(array('host'  =>'smtp.example.com',
               'port'  =>'25',
               'user'  =>'',
@@ -30,9 +30,9 @@ foreach(array('host'  =>'smtp.example.com',
   $GLOBALS["bMailer_$item"] = $v;
 }
 
-//
-// Settings for the IMAP mail server(s)
-//
+/*
+ * Settings for the IMAP mail server(s)
+ */
 $GLOBALS['imapServers'] = array('example.com' => array('imap'=>array('ssl://imap.example.com','imap.example.com'),
 						       'port'=>993,
 						       'alias'=>array('example.com','another.example.com')),
@@ -40,3 +40,8 @@ $GLOBALS['imapServers'] = array('example.com' => array('imap'=>array('ssl://imap
 						       'port'=>993,
 						       'alias'=>array('gmail.com'))
 				);
+
+/*
+ * Indico API keys
+ */
+$GLOBALS['API_keys'] = 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx';

@@ -10,7 +10,8 @@ define('VM_VERSION','5.14');
 //
 // Links the Agenda system, either 0.93 or 2.2
 //
-if (!defined('AGENDA_URL')) define('AGENDA_URL','https://agenda.albanova.se/');
+//if (!defined('AGENDA_URL')) define('AGENDA_URL','https://agenda.albanova.se/');
+if (!defined('AGENDA_URL')) define('AGENDA_URL','https://indico.fysik.su.se/');
 if (!defined('INDICO_2')) define('INDICO_2',True);
 
 //

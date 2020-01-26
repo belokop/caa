@@ -434,7 +434,7 @@ class bCover_vm extends bCover_2010 {
     case 'Cotenants': 
       $q = (empty($this->leases_current)
 	    ? Null
-	    : bForm_vm_Lease::_queryLease($this->leases_current);
+	    : bForm_vm_Lease::_queryLease($this->leases_current));
       $q = Null;
       break;
     }
