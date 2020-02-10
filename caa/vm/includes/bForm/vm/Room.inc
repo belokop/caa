@@ -323,7 +323,7 @@ class bForm_vm_Room extends bForm_vm {
   /*
    *
    */
-  private static function _parse_room_price($rec,$e_class,$cotenants=array()){
+  public static function _parse_room_price($rec,$e_class,$cotenants=array()){
     if (!$rec['a_id'] || !$rec['hut_id']) return Null;
 
     $price_basic = (empty($e_class)
@@ -331,22 +331,32 @@ class bForm_vm_Room extends bForm_vm {
 		    : VM_accommodationOptions($e_class)->get_a_value($rec['a_id'],$rec['hut_id'],'a_price'));
 
     $ndays = b_time::diff($rec['lease_end'],$rec['lease_start']);
-    if (empty($ndays)) b_debug::internalError('??? empty ndays',$rec);
+    if (empty($ndays)){
+      MSG::ERROR('Accommodation requested for a visit for ZERO days...');
+      return 0;
+    }
     
     if (strpos($price_basic,'=') === False){
       $reply = (int)($price_basic * 12 / 365); // convert monthly -> daily price
     }else{
       $extra_charge_for_second_tenant = 0;
-      $reply = 999999;
-      foreach(explode(',',$price_basic) as $item){
-	list($limit,$value) = explode('=',$item);
-	if (is_numeric($limit)) { 
-	  if ($ndays <= $limit) $reply = min($reply,$value); 
-	}elseif ($limit == 'cot'){
-	  $extra_charge_for_second_tenant = $value;
-	}else{
-	  b_debug::internalError("Unpredicted price option '$item'",$rec);
+      if (substr_count($price_basic,'=') !== substr_count($price_basic,',')+1){
+	// Check syntax
+	MSG::ERROR("Wrong rent price \"$price_basic\"");
+	$reply = (int)($price_basic * 12 / 365); // convert monthly -> daily price
+      }else{
+	$price_matrix = array();
+	foreach(explode(',',str_replace(' ','',$price_basic)) as $item){
+	  list($limit,$value) = explode('=',$item);
+	  if (is_numeric($limit)) {
+	    if ($ndays <= $limit) $price_matrix[sprintf("%03d",$limit)] = $value;
+	  }elseif ($limit == 'cot'){
+	    $extra_charge_for_second_tenant = $value;
+	  }
 	}
+	ksort($price_matrix);
+	$reply = array_values($price_matrix);
+	$reply = $reply[0];
       }
       if (count($cotenants) >= 2)  $reply += $extra_charge_for_second_tenant;
     }

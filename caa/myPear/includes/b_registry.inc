@@ -354,7 +354,7 @@ class b_reg{
   public static function load_module($module=Null){
     static $already_done = array();
     if (!empty($module) && ($config = bMaster()->get_masterModule($module))){
-      if (!@$already_done[$module]) require_once $config; 
+      if (!@$already_done[$module] && file_exists($config)) require_once $config; 
       $already_done[$module] = True;
     }else{
       foreach (self::get_modules(True) as $m=>$config){
