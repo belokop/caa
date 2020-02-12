@@ -249,6 +249,7 @@ class bForm_vm_Room extends bForm_vm {
   public static function _getReceipt($formDB=array(),$nDays){
     $a_id = @$formDB['a_id'];
     $extraApFee = 0;
+    b_debug::_debug("nDays = $nDays",cnf_dev);
     $e = (empty($formDB['v_eid'])
 	  ? Null
 	  : loader::getInstance_new('bForm_vm_Event',$formDB['v_eid'],array('strict','fatal')));

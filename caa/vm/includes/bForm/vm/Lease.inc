@@ -835,8 +835,9 @@ function __clean_cache(){}
    *
    */
   private function nDays(){
-    return (int)((b_time::_($this->getValue('lease_end')) - 
-		  b_time::_($this->getValue('lease_start')))/86400);
+    $ndays = b_time::diff($this->getValue('lease_end'),$this->getValue('lease_start'));
+    b_debug::_debug("ndays=$ndays",True);
+    return $ndays;
   }
   
   /*
