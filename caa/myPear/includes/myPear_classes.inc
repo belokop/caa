@@ -2783,18 +2783,18 @@ class b_fmt{
     $lenstr = strlen($str);
     $maxLength = $maxLengthP;
     for($i=0; $i<$lenstr; $i++){
-      if($str{$i} == '<'){
+      if($str[$i] == '<'){
 	  $openTag = true;
-	  $newStr .= $str{$i};
+	  $newStr .= $str[$i];
 	  continue;
       }
-      if (!$ignore_rest || $openTag) $newStr .= $str{$i};
-      if(($openTag) && ($str{$i} == '>')){
+      if (!$ignore_rest || $openTag) $newStr .= $str[$i];
+      if(($openTag) && ($str[$i] == '>')){
 	$openTag = false;
 	continue;
       }
       if(!$openTag){
-	if($str{$i} == ' '){
+	if($str[$i] == ' '){
 	  if ($count == 0) {
 	    if (!$ignore_rest) $newStr = substr($newStr,0, -1);
 	    continue;
@@ -2804,12 +2804,12 @@ class b_fmt{
 	}
 	$count++;
 	if(($count==$maxLength) && !$exact_cut){
-	  if (@$str{$count} != ' ') $maxLength++;
+	  if (@$str[$count] != ' ') $maxLength++;
 	}else{
 	  $maxLength = $maxLengthP;
 	}
 	if($count==$maxLength){
-	  if (@$str{$i+1} != ' ' && $lastspace && ($lastspace < $count)) {
+	  if (@$str[$i+1] != ' ' && $lastspace && ($lastspace < $count)) {
 	    $tmp = ($count - $lastspace)* -1;
 	    if (!$ignore_rest || $openTag) $newStr = substr($newStr,0, $tmp) . $char;
 	    $ignore_rest = $cutAfterFirstWrap;
@@ -3439,7 +3439,7 @@ class b_debug extends myPear_base{
   }
 
   static function _($txt,$t2='',$t3='',$forced=False,$color='blackText') {
-    if (is_string($t3) && ($t3 == 'M'))   {$txt = "----------- $t2"; $t2=$t3=''; $forced = cnf_show_m; $color='fuchsiaText'; }
+    if (is_string($t3) && ($t3 == 'M'))   { $txt = "----------- $t2"; $t2=$t3=''; $forced = cnf_show_m; $color='fuchsiaText'; }
     if (is_bool($t2) && count(func_get_args()==2)) { $t2=''; $forced=True; }
     if (cnf_debug || $forced){
       if (is_null($t2))  $t2 = 'NULL';

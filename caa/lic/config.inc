@@ -1,8 +1,11 @@
 <?php
 
-$releaseDate = '2019-12-15';
-define('LIC_VERSION','5.14');
+$releaseDate = '2020-03-19';
+define('LIC_VERSION','5.16');
 define('LIC_MODULE'  , 'lic');
+
+$GLOBALS['comsol_names'] = array('comsol','acdc','serial', 'waveoptics', 'clientserver',
+				 );
 
 b_cnf::variable_set('LIC_mathlmPort',16286);
 
@@ -52,7 +55,7 @@ function lic_tidySoft() {
   if (preg_match('/(maple)(\d+)/i',     @$regs[1],$rr))   $regs = $rr;
   if (preg_match('/^(mechanisms|motion_|id_|iges|step_)|assemblies|gateway|_modeling|draft|nx_/i',@$regs[1])) $regs[1] = 'ideas';
   if (preg_match('/ug_pcb_/i',                                                                    @$regs[1])) $regs[1] = 'ideas';
-  if (preg_match('/^(comsol|acdc|serial)/i',@$regs[1]))   $regs[1] = 'comsol';
+  if (preg_match('/^('.join('|',$GLOBALS['comsol_names']).')/i',@$regs[1]))                                   $regs[1] = 'comsol';
   if (preg_match('/0000000000/',        @$regs[1]))       $regs = array();
   if (preg_match('/^(i000|i233|ibfd5)/',@$regs[1]))       $regs = array();
   return  @$regs[1];

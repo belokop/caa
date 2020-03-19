@@ -76,6 +76,7 @@ class b_tabs_myPear extends myPear_base{
   private $cnf_bTabs = 0;
   function __construct($tabs=array(),$selected=0){
    
+    if (!function_exists('bJS')) require_once (dirname(__FILE__).'/myPear_functions.inc');
     print "\n<!-- ".__method__." start -->\n";
 
     // Load the styles

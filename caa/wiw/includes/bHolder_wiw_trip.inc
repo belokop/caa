@@ -34,7 +34,7 @@ class bHolder_wiw_trip extends bHolder{
       print x("form action='".b_url::same()."' method='post'",
 	      x('strong','Select the traveler').
 	      $f->selectMenu_exec('av_id',$ids,"onchange='submit()'",$onlyRW=True));
-    }else{
+    }elseif(is_object(bAuth::$av)){
       $this->av_id = bAuth::$av->ID;
     }
 
