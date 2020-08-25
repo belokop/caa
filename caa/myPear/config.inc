@@ -133,7 +133,7 @@ if (!isset($_GET['showe'])) { $_REQUEST['showe'] = $_GET['showe'] = 1; define('c
 // $_GET['debug'] = $_GET['nodrupal'] = $_GET['showl'] = 1; define('cnf_show_l',True);
 // $_GET['authdebug'] = $_GET['warnings'] = $_GET['debug'] = $_GET['showi'] = $_GET['nodrupal'] = $_GET['YBhere'] = $_GET['dev'] = 0;
 if (cnf_localhost && !cnf_myPear_taskManager){
-  error_reporting(E_ALL); 
+  error_reporting(E_ALL & ~E_NOTICE); 
   if (!cnf_CLI) foreach(array(
 			      'warnings', 'showdb', 'showd', 'timing', 
 			      // 'showpv','showgv',

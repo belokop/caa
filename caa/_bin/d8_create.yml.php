@@ -1,5 +1,5 @@
 <?php
-error_reporting(E_ALL); 
+error_reporting(E_ALL & ~E_NOTICE); 
 session_start();
 
 if (!function_exists('t')){

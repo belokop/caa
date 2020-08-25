@@ -17,8 +17,8 @@ class myPear_taskManager extends myPear_base{
   public function __construct(){
 
     // Eventually add a new task, i.e. put the following command into the task execution queue:
-    //  - method $_REQUEST{addTask_class_once}->$_REQUEST{addTask_function_once}
-    //  - arguments $_REQUEST{addTask_args_once}
+    //  - method $_REQUEST[addTask_class_once]->$_REQUEST[addTask_function_once]
+    //  - arguments $_REQUEST[addTask_args_once]
     $addTask_class_once    = (string)@$_REQUEST['addTask_class_once'];
     $addTask_function_once = (string)@$_REQUEST['addTask_function_once'];
     $addTask_args_once     = (string)@$_REQUEST['addTask_args_once'];

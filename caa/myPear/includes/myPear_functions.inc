@@ -852,7 +852,7 @@ function start_myPear(){
   if (cnf_dev)    b_cnf::set('warnings', True);
   
   // Turn off all error reporting in the production & demo modes
-  if (cnf_dev || b_cnf::get('warnings'))  error_reporting(E_ALL);
+  if (cnf_dev || b_cnf::get('warnings'))  error_reporting(E_ALL & ~E_NOTICE);
   else                                    error_reporting(0);  
     
   // some useful strings
