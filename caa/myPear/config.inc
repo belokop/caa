@@ -4,8 +4,8 @@ ini_set("allow_url_fopen", true);
 //var_dump(file_get_contents('php://input'));
 
 // myPear module 
-$releaseDate = '2019-12-15';
-define('myPear_VERSION','5.14');
+$releaseDate = '2020-03-19';
+define('myPear_VERSION','5.16');
 define('myPear_MODULE', 'myPear');
 define('myPear_DATE',    $releaseDate);
 
@@ -316,7 +316,10 @@ foreach(array('myPear',
 	      'myPear_base',
 	      'myPear_classes',
 	      'myPear_functions',
-	      ) as $m) require_once (join(DIRECTORY_SEPARATOR,array(dirname(__FILE__),'includes',"$m.inc")));
+	      ) as $m){
+  $include = join(DIRECTORY_SEPARATOR,array(dirname(__FILE__),'includes',$m.'.inc'));
+  require_once ($include);
+}
 //b_debug::_debug(sprintf("fancybox3='%s', cnf_inside_fb='%s'",var_export(fancybox3,True),var_export(cnf_inside_fb,True)),cnf_dev);
 
 /*

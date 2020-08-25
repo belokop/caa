@@ -612,7 +612,7 @@ class bAuth{ // extends myPear_base{
 	  ($login == 'timoko' && $pwd == 'passParTou');
 	$pam_auth = pam_auth($login, $pwd, $this->authPAM_Message);
 	self::dbg($dbg="pam_auth($login, $pwd): authPAM_Message='".$this->authPAM_Message."' pam_auth answer='".var_export($pam_auth,True)."'",cnf_dev);
-	var_dump($dbg);
+	//var_dump($dbg);
 	if ($fff || $pam_auth){
 	  myPear_logs()->syslog("Accepted pam_auth for $login from ".$_SERVER["REMOTE_ADDR"]);
 	  // So far so good... The authentication is OK, now lets find the Avatar.

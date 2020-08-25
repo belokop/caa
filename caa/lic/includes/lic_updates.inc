@@ -3,7 +3,7 @@
 myPear_startup_queue('lic_updates');
 
 function lic_updates(){
-  if (bMaster()->register_module_update_script(LIC_MODULE,LIC_VERSION,__FILE__)){
+  if (True || bMaster()->register_module_update_script(LIC_MODULE,LIC_VERSION,__FILE__)){
     lic_updates_0();
     lic_updates_1();
     lic_updates_2();
@@ -21,17 +21,17 @@ function lic_updates_2(){
 }
 
 /*
- * Comsol changes the module name(s)
+ * Developers change the module name(s)
  */
-function lic_updates_1(){
-  $q = myPear_db()->query("SELECT lics_id from lic_soft WHERE s_name = 'comsol'");
+function gether_vassals($master,$vassals){
+  $q = myPear_db()->query("SELECT lics_id from lic_soft WHERE s_name = '$master'");
   while($r = myPear_db()->next_record($q)){
-    $lics_id_comsol = $r['lics_id'];
+    $lics_id_master = $r['lics_id'];
   }
 
-  foreach(array('comsol','acdc','serial') as $s){
+  foreach($vassals as $s){
     unset($lics_id);
-    $q = myPear_db()->qquery("SELECT lics_id,s_name from lic_soft WHERE s_name REGEXP '$s' AND s_name != 'comsol'",True);
+    $q = myPear_db()->qquery("SELECT lics_id,s_name from lic_soft WHERE s_name REGEXP '$s' AND s_name != '$master'",True);
     while($r = myPear_db()->next_record($q)){
       $lics_id = $r['lics_id'];
       $s_name  = $r['s_name'];
@@ -40,12 +40,16 @@ function lic_updates_1(){
       $cmd = "DELETE FROM lic_soft WHERE lics_id = $lics_id";
       $x = myPear_db()->qquery($cmd,True);
 
-      $cmd = "UPDATE lic_event SET e_sid = $lics_id_comsol WHERE e_sid = $lics_id";
+      $cmd = "UPDATE lic_event SET e_sid = $lics_id_master WHERE e_sid = $lics_id";
       $x = myPear_db()->qquery($cmd,True);
     }
   }
 }
 
+function lic_updates_1(){
+  gether_vassals('idl',array('idl_video'));
+  gether_vassals('comsol',$GLOBALS['comsol_names']);
+}
 
 /*
  * Fix naming convension

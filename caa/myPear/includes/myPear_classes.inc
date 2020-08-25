@@ -3439,7 +3439,7 @@ class b_debug extends myPear_base{
   }
 
   static function _($txt,$t2='',$t3='',$forced=False,$color='blackText') {
-    if (is_string($t3) && ($t3 == 'M'))   {$txt = "----------- $t2"; $t2=$t3=''; $forced = cnf_show_m; $color='fuchsiaText'; }
+    if (is_string($t3) && ($t3 == 'M'))   { $txt = "----------- $t2"; $t2=$t3=''; $forced = cnf_show_m; $color='fuchsiaText'; }
     if (is_bool($t2) && count(func_get_args()==2)) { $t2=''; $forced=True; }
     if (cnf_debug || $forced){
       if (is_null($t2))  $t2 = 'NULL';
